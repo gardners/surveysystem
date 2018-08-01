@@ -1,3 +1,4 @@
+
 struct question {
   // Unique identifier
   char *uid;
@@ -51,7 +52,7 @@ struct question {
   // Try to populate automatically using a sensor.
   // Only meaningful for lat,lon, where GPS is used, and for date/time
   // questions, where the current date and time are acquired.
-#define FLAG_AutoPopulateSensor 128
+
 
   // Text rendering of default value.
   // Will be parsed for numeric answer types
