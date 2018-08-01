@@ -1,10 +1,14 @@
 SRCDIR=	src
 INCDIR= include
 
-HEADERS=	Makefile \
+STATICHEADERS=	Makefile \
 		$(INCDIR)/survey.h \
 		$(INCDIR)/serialisers.h \
-		$(INCDIR)/question_types.h
+
+GENERATEDHEADERS=$(INCDIR)/question_types.h
+GENERATEDSRCS=	$(SRCDIR)/question_types.c
+
+HEADERS=	$(STATICHEADERS) $(GENERATEDHEADERS)
 
 CC=	clang
 COPT=	-Wall -O3 -g -Iinclude
@@ -16,7 +20,7 @@ all:	test_serialisers
 	$(CC) $(COPT) -c $< -o $@
 
 
-$(INCDIR)/question_types.h:	$(INCDIR)/survey.h $(HEADERS)
+$(INCDIR)/question_types.h:	$(INCDIR)/survey.h $(STATICHEADERS)
 	grep QTYPE_ $(INCDIR)/survey.h | cut -c8- | sort -k2n -t' ' | tail -1 | awk -F' ' '{ printf("#define NUM_QUESTION_TYPES %s\n",$$2); }' >$@
 	echo "extern char *question_type_names[1+NUM_QUESTION_TYPES+1];" >>$@
 
@@ -34,4 +38,4 @@ test_serialisers:	$(SRCDIR)/serialisers.o $(SRCDIR)/test_serialisers.o $(SRCDIR)
 
 
 clean:
-	rm $(SRCDIR)/*.o $(INCDIR)/question_types.h $(SRCDIR)/question_types.c
+	rm $(SRCDIR)/*.o $(GENERATEDHEADERS) $(GENERATEDSRCS)
