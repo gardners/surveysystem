@@ -7,7 +7,7 @@ SRCDIR=	src/
 all:	test_serialisers
 
 %.o:	%.c	$(HEADERS)
-	$(CC) $(COPT) -c $<
+	$(CC) $(COPT) -c $< -o $@
 
 test_serialisers:	$(SRCDIR)/serialisers.o $(SRCDIR)/test_serialisers.o
-	$(CC) $(COPT) -o $@ $< $(LOPT)
+	$(CC) $(COPT) -o $@ $^ $(LOPT)
