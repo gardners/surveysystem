@@ -3,6 +3,8 @@
 
 */
 
+#include <string.h>
+
 #include "survey.h"
 
 int escape_string(char *in,char *out,int max_len)
@@ -26,7 +28,7 @@ int escape_string(char *in,char *out,int max_len)
   return retVal;
 }
 
-int space_check(int append_len,int exising_len,int max_len)
+int space_check(int append_len,int existing_len,int max_len)
 {
   int retVal=0;
   if ((existing_len+append_len)>max_len) retVal=-1;
@@ -34,6 +36,10 @@ int space_check(int append_len,int exising_len,int max_len)
 }
 
 #define APPEND_STRING(NEW,NL,O,L) { strcpy(&O[L],NEW); L+=NL; }
+
+#define SERIALISE_BEGIN(O,L,ML) { int encoded_len=0; const int encoded_max_len=65536; char encoded[encoded_max_len]; L=0;
+
+#define SERIALISE_COMPLETE(O,L,ML) if (L>0) { L--; O[L]=0; }  }
 
 #define SERIALISE_STRING(S,O,L,ML) \
   encoded_len=escape_string(S,encoded,encoded_max_len); \
