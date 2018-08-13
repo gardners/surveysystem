@@ -65,16 +65,16 @@ int space_check(int append_len,int existing_len,int max_len)
 
 #define SERIALISE_COMPLETE(O,L,ML) if (L>0) { L--; O[L]=0; }  }
 
-#define SERIALISE_THING(S,O,L,ML,SERIALISER) \
+#define SERIALISE_THING(S,SERIALISER)	     \
   encoded_len=SERIALISER(S,encoded,encoded_max_len); \
   if (encoded_len<0) break; \
-  if (space_check(encoded_len,L,ML)) break; \
-  APPEND_STRING(encoded,encoded_len,O,L); \
-  APPEND_COLON(O,L,ML);
+  if (space_check(encoded_len,len,max_len)) break; \
+  APPEND_STRING(encoded,encoded_len,out,len); \
+  APPEND_COLON(out,len,max_len);
 
-#define SERIALISE_STRING(S,O,L,ML) SERIALISE_THING(S,O,L,ML,escape_string);
-#define SERIALISE_INT(S,O,L,ML) SERIALISE_THING(S,O,L,ML,serialise_int);
-#define SERIALISE_LONGLONG(S,O,L,ML) SERIALISE_THING(S,O,L,ML,serialise_longlong);
+#define SERIALISE_STRING(S) SERIALISE_THING(S,escape_string);
+#define SERIALISE_INT(S) SERIALISE_THING(S,serialise_int);
+#define SERIALISE_LONGLONG(S) SERIALISE_THING(S,serialise_longlong);
 
 int serialise_question_type(int qt,char *out,int out_max_len)
 {
@@ -96,16 +96,16 @@ int serialise_question(struct question *q,char *out,int max_len)
   do {
     SERIALISE_BEGIN(out,len,max_len);
     
-    SERIALISE_STRING(q->uid,out,len,max_len);
-    SERIALISE_STRING(q->question_text,out,len,max_len);
-    SERIALISE_STRING(q->question_html,out,len,max_len);
-    SERIALISE_THING(q->type,out,len,max_len,serialise_question_type);
-    SERIALISE_INT(q->flags,out,len,max_len);
-    SERIALISE_STRING(q->default_value,out,len,max_len);
-    SERIALISE_LONGLONG(q->min_value,out,len,max_len);
-    SERIALISE_LONGLONG(q->max_value,out,len,max_len);
-    SERIALISE_INT(q->decimal_places,out,len,max_len);
-    SERIALISE_INT(q->num_choices,out,len,max_len);
+    SERIALISE_STRING(q->uid);
+    SERIALISE_STRING(q->question_text);
+    SERIALISE_STRING(q->question_html);
+    SERIALISE_THING(q->type,serialise_question_type);
+    SERIALISE_INT(q->flags);
+    SERIALISE_STRING(q->default_value);
+    SERIALISE_LONGLONG(q->min_value);
+    SERIALISE_LONGLONG(q->max_value);
+    SERIALISE_INT(q->decimal_places);
+    SERIALISE_INT(q->num_choices);
 
     // Trim terminal separator character
     SERIALISE_COMPLETE(out,len,max_len);
