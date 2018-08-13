@@ -57,6 +57,9 @@ int space_check(int append_len,int existing_len,int max_len)
   return retVal;
 }
 
+#define DESERIALISE_BEGIN(O,L,ML) { int offset=0; 
+#define DESERIALISE_COMPLETE(O,L,ML) if (offset<L) { fprintf(stderr,"Junk at end of serialised object\n"); retVal=-1; break; } }
+
 #define APPEND_STRING(NEW,NL,O,L) { strcpy(&O[L],NEW); L+=NL; }
 
 #define APPEND_COLON(O,L,ML) { if (space_check(1,L,ML)) break; O[L++]=':'; O[L]=0; }
@@ -109,6 +112,22 @@ int serialise_question(struct question *q,char *out,int max_len)
 
     // Trim terminal separator character
     SERIALISE_COMPLETE(out,len,max_len);
+    
+    retVal=0;
+  } while(0);
+
+  return retVal;
+}
+
+int deserialise_question(char *in,struct question *q)
+{
+  int retVal=-1;
+  int len=0;
+  do {
+    DESERIALISE_BEGIN(out,len,max_len);
+
+    // Check that we are at the end of the input string
+    DESERIALISE_COMPLETE(out,len,max_len);
     
     retVal=0;
   } while(0);
