@@ -115,3 +115,28 @@ int serialise_question(struct question *q,char *out,int max_len)
 
   return retVal;
 }
+
+int serialise_answer(struct answer *a,char *out,int max_len)
+{
+  int retVal=-1;
+  int len=0;
+  do {
+    SERIALISE_BEGIN(out,len,max_len);
+    
+    SERIALISE_STRING(a->uid);
+    SERIALISE_LONGLONG(a->value);
+    SERIALISE_LONGLONG(a->lat);
+    SERIALISE_LONGLONG(a->lon);
+    SERIALISE_LONGLONG(a->time_begin);
+    SERIALISE_LONGLONG(a->time_end);
+    SERIALISE_INT(a->time_zone_delta);
+    SERIALISE_INT(a->dst_delta);
+
+    // Trim terminal separator character
+    SERIALISE_COMPLETE(out,len,max_len);
+    
+    retVal=0;
+  } while(0);
+
+  return retVal;
+}
