@@ -4,6 +4,7 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "survey.h"
@@ -57,8 +58,102 @@ int space_check(int append_len,int existing_len,int max_len)
   return retVal;
 }
 
-#define DESERIALISE_BEGIN(O,L,ML) { int offset=0; 
+int deserialise_parse_field(char *in,int *in_offset,char *out)
+{
+  int retVal=0;
+  int offset=*in_offset;
+  int olen=0;
+
+  do {
+    if (offset) {
+      if (in[offset]!=':') { retVal=-1; break; }
+      else offset++;
+    }
+    
+    out[olen]=0;
+    if (!in) { retVal=-1; break; }
+    if (!in[0]) { retVal=-1; break; }
+    for(offset=0;in[offset]&&(olen<16383)&&in[offset]!=':';olen++)
+      {
+	// Allow some \ escape characters
+	if (in[offset]=='\\') {
+	  if (!in[offset+1]) { retVal=-1; break; }
+	  switch (in[offset+1]) {
+	  case ':': out[olen++]=in[offset+1]; break;
+	  case 'r': out[olen++]='\r'; break;
+	  case 'n': out[olen++]='\n'; break;
+	  case 'b': out[olen++]='\b'; break;
+	  default:
+	    fprintf(stderr,"Illegal escape character 0x%02x\n",in[offset+1]);
+	    retVal=-1;
+	    break;
+	  }
+	  offset++;
+	  out[olen]=0;
+	} else {
+	  out[olen++]=in[offset];
+	  out[olen]=0;
+	}
+      }
+    *in_offset=offset;
+    
+  } while(0);
+  
+  return retVal;  
+}
+
+int deserialise_int(char *field,int *s)
+{
+  int retVal=0;
+  do {
+    if (!field) { retVal=-1; break; }
+    if (!strlen(field)) { retVal=-1; break; }
+    int offset=0;
+    if (field[offset]=='-') offset++;
+    for(int i=offset;field[i];i++)
+      if (field[i]<'0'||field[i]>'9') { retVal=-1; break; }
+    if (!retVal) *s=atoi(field);
+    
+  } while(0);
+  return retVal;
+}
+
+int deserialise_longlong(char *field,long long *s)
+{
+  int retVal=0;
+  do {
+    if (!field) { retVal=-1; break; }
+    if (!strlen(field)) { retVal=-1; break; }
+    int offset=0;
+    if (field[offset]=='-') offset++;
+    for(int i=offset;field[i];i++)
+      if (field[i]<'0'||field[i]>'9') { retVal=-1; break; }
+    if (!retVal) *s=atoll(field);
+    
+  } while(0);
+  return retVal;
+}
+
+
+int deserialise_string(char *field,char **s)
+{
+  int retVal=0;
+  *s=NULL;
+  if (!field) retVal=-1; else *s=strdup(field);
+  if (!*s) retVal=-1;
+  return retVal;
+}
+
+#define DESERIALISE_BEGIN(O,L,ML) { int offset=0; char field[16384]; 
 #define DESERIALISE_COMPLETE(O,L,ML) if (offset<L) { fprintf(stderr,"Junk at end of serialised object\n"); retVal=-1; break; } }
+#define DESERIALISE_NEXT_FIELD() if (deserialise_parse_field(in,&offset,field)) { retVal=-1; break; }
+#define DESERIALISE_THING(S,DESERIALISER) \
+  DESERIALISE_NEXT_FIELD();		  \
+  DESERIALISER(field,&S);
+#define DESERIALISE_INT(S) DESERIALISE_THING(S,deserialise_int)
+#define DESERIALISE_STRING(S) DESERIALISE_THING(S,deserialise_string)
+#define DESERIALISE_LONGLONG(S) DESERIALISE_THING(S,deserialise_longlong)
+
 
 #define APPEND_STRING(NEW,NL,O,L) { strcpy(&O[L],NEW); L+=NL; }
 
@@ -125,6 +220,17 @@ int deserialise_question(char *in,struct question *q)
   int len=0;
   do {
     DESERIALISE_BEGIN(out,len,max_len);
+
+    DESERIALISE_STRING(q->uid);
+    DESERIALISE_STRING(q->question_text);
+    DESERIALISE_STRING(q->question_html);
+    DESERIALISE_THING(q->type,deserialise_question_type);
+    DESERIALISE_INT(q->flags);
+    DESERIALISE_STRING(q->default_value);
+    DESERIALISE_LONGLONG(q->min_value);
+    DESERIALISE_LONGLONG(q->max_value);
+    DESERIALISE_INT(q->decimal_places);
+    DESERIALISE_INT(q->num_choices);
 
     // Check that we are at the end of the input string
     DESERIALISE_COMPLETE(out,len,max_len);
