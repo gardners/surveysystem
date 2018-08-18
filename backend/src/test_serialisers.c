@@ -53,8 +53,13 @@ int main(int argc,char **argv)
 	else if ((!deserialise_result)&&qst[i].shouldPassP) {
 	  // Deserialised successfully, so make sure the field values
 	  // all match
-	  fprintf(stderr,"\r[PASS \n");
-	  pass++;
+	  if (compare_questions(&d,qst[i].question)) {
+	    fprintf(stderr,"\r[FAIL \n  FAIL: Original and serialised-then-deserialised question structures differ\n");
+	    fail++;
+	  } else {
+	    fprintf(stderr,"\r[PASS \n");
+	    pass++;
+	  }
 	}
 	else if ((deserialise_result)&&(!qst[i].shouldPassP)) {
 	  fprintf(stderr,"\r[PASS \n");

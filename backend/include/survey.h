@@ -99,3 +99,6 @@ struct answer {
   int dst_delta;
   
 };
+
+
+int compare_questions(struct question *q1, struct question *q2);
