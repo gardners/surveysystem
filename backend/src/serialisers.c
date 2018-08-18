@@ -187,6 +187,20 @@ int serialise_question_type(int qt,char *out,int out_max_len)
   return retVal;
 }
 
+int deserialise_question_type(char *field,int *s)
+{
+  int retVal=-1;
+  do {
+    for(int qt=1;qt<NUM_QUESTION_TYPES;qt++)
+      if (!strcasecmp(field,question_type_names[qt])) {
+	retVal=0;
+	*s=qt;
+      }
+  } while (0);
+
+  return retVal;  
+}
+
 int serialise_question(struct question *q,char *out,int max_len)
 {
   int retVal=-1;
