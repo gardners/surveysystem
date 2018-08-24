@@ -10,6 +10,8 @@
 #include "survey.h"
 #include "question_types.h"
 
+#define REPORT_IF_FAILED() { if (retVal) fprintf(stderr,"%s:%d: %s() failed.\n",__FILE__,__LINE__,__FUNCTION__); }
+
 int escape_string(char *in,char *out,int max_len)
 {
   int retVal=0;
@@ -28,6 +30,7 @@ int escape_string(char *in,char *out,int max_len)
     }
   }
   if (retVal==0) retVal=out_len;
+  REPORT_IF_FAILED();
   return retVal;
 }
 
@@ -38,6 +41,7 @@ int serialise_int(int in,char *out,int max_len)
   snprintf(temp,16,"%d",in);
   if (strlen(temp)>=max_len) retVal=-1;
   else { strcpy(out,temp); retVal=strlen(temp); }
+  REPORT_IF_FAILED();
   return retVal;
 }
 
@@ -48,6 +52,7 @@ int serialise_longlong(long long in,char *out,int max_len)
   snprintf(temp,32,"%lld",in);
   if (strlen(temp)>=max_len) retVal=-1;
   else { strcpy(out,temp); retVal=strlen(temp); }
+  REPORT_IF_FAILED();
   return retVal;
 }
 
@@ -55,6 +60,7 @@ int space_check(int append_len,int existing_len,int max_len)
 {
   int retVal=0;
   if ((existing_len+append_len)>max_len) retVal=-1;
+  REPORT_IF_FAILED();
   return retVal;
 }
 
@@ -66,18 +72,22 @@ int deserialise_parse_field(char *in,int *in_offset,char *out)
 
   do {
     if (offset) {
-      if (in[offset]!=':') { retVal=-1; break; }
+      if (in[offset]!=':') {
+	retVal=-1;
+	fprintf(stderr,"Expected : at offset %d of '%s'\n",offset,in);
+	break;
+      }
       else offset++;
     }
     
     out[olen]=0;
-    if (!in) { retVal=-1; break; }
+    if (!in) { retVal=-1; fprintf(stderr,"in is NULL\n"); break; }
     if (!in[0]) { retVal=-1; break; }
-    for(offset=0;in[offset]&&(olen<16383)&&in[offset]!=':';olen++)
+    for(;in[offset]&&(olen<16383)&&in[offset]!=':';offset++)
       {
 	// Allow some \ escape characters
 	if (in[offset]=='\\') {
-	  if (!in[offset+1]) { retVal=-1; break; }
+	  if (!in[offset+1]) { retVal=-1; fprintf(stderr,"String ends in \\\n"); break; }
 	  switch (in[offset+1]) {
 	  case ':': out[olen++]=in[offset+1]; break;
 	  case 'r': out[olen++]='\r'; break;
@@ -95,6 +105,12 @@ int deserialise_parse_field(char *in,int *in_offset,char *out)
 	  out[olen]=0;
 	}
       }
+    REPORT_IF_FAILED();
+    if (retVal) {
+      fprintf(stderr,"in_offset=%d, offset=%d, out='%s', in='%s'\n",
+	      *in_offset,offset,out,in);
+    }
+
     *in_offset=offset;
     
   } while(0);
@@ -115,6 +131,7 @@ int deserialise_int(char *field,int *s)
     if (!retVal) *s=atoi(field);
     
   } while(0);
+  REPORT_IF_FAILED();
   return retVal;
 }
 
@@ -131,6 +148,7 @@ int deserialise_longlong(char *field,long long *s)
     if (!retVal) *s=atoll(field);
     
   } while(0);
+  REPORT_IF_FAILED();
   return retVal;
 }
 
@@ -141,6 +159,7 @@ int deserialise_string(char *field,char **s)
   *s=NULL;
   if (!field) retVal=-1; else *s=strdup(field);
   if (!*s) retVal=-1;
+  REPORT_IF_FAILED();
   return retVal;
 }
 
@@ -148,10 +167,10 @@ int deserialise_string(char *field,char **s)
 #define DESERIALISE_COMPLETE(O,L,ML) if (offset<L) { fprintf(stderr,"Junk at end of serialised object\n"); retVal=-1; break; } }
 #define DESERIALISE_NEXT_FIELD() if (deserialise_parse_field(in,&offset,field)) { retVal=-1; break; }
 #define DESERIALISE_THING(S,DESERIALISER) \
-  DESERIALISE_NEXT_FIELD();		  \
-  DESERIALISER(field,&S);
+  DESERIALISE_NEXT_FIELD();				\
+  if (DESERIALISER(field,&S)) { retVal=-1; break; }
 #define DESERIALISE_INT(S) DESERIALISE_THING(S,deserialise_int)
-#define DESERIALISE_STRING(S) DESERIALISE_THING(S,deserialise_string)
+#define DESERIALISE_STRING(S) DESERIALISE_THING(S,deserialise_string);
 #define DESERIALISE_LONGLONG(S) DESERIALISE_THING(S,deserialise_longlong)
 
 
@@ -179,11 +198,15 @@ int serialise_question_type(int qt,char *out,int out_max_len)
   int retVal=0;
   do {
     if (qt<1) {retVal=-1; break;}
+    REPORT_IF_FAILED();
     if (qt>NUM_QUESTION_TYPES) {retVal=-1; break;}
+    REPORT_IF_FAILED();
     if (strlen(question_type_names[qt])>=out_max_len) {retVal=-1; break;}
+    REPORT_IF_FAILED();
     strcpy(out,question_type_names[qt]); retVal=strlen(out);
   } while (0);
 
+  REPORT_IF_FAILED();
   return retVal;
 }
 
@@ -195,9 +218,10 @@ int deserialise_question_type(char *field,int *s)
       if (!strcasecmp(field,question_type_names[qt])) {
 	retVal=0;
 	*s=qt;
-      }
+      } 
   } while (0);
 
+  REPORT_IF_FAILED();
   return retVal;  
 }
 
@@ -230,7 +254,7 @@ int serialise_question(struct question *q,char *out,int max_len)
 
 int dump_question(FILE *f,char *msg,struct question *q)
 {
-  int retVal=-1;
+  int retVal=0;
   do {
     fprintf(f,"%s:\n",msg);
     fprintf(f,"  uid='%s\n",q->uid);
@@ -245,7 +269,6 @@ int dump_question(FILE *f,char *msg,struct question *q)
     fprintf(f,"  decimal_places=%d\n",q->decimal_places);
     fprintf(f,"  num_choices=%d\n",q->num_choices);
 
-    retVal=0;
   } while(0);
 
   return retVal;
@@ -253,7 +276,7 @@ int dump_question(FILE *f,char *msg,struct question *q)
 
 int deserialise_question(char *in,struct question *q)
 {
-  int retVal=-1;
+  int retVal=0;
   int len=0;
   do {
     DESERIALISE_BEGIN(out,len,max_len);
@@ -272,7 +295,6 @@ int deserialise_question(char *in,struct question *q)
     // Check that we are at the end of the input string
     DESERIALISE_COMPLETE(out,len,max_len);
     
-    retVal=0;
   } while(0);
 
   return retVal;
