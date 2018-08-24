@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "survey.h"
+#include "errorlog.h"
 #include "question_types.h"
 
 #define REPORT_IF_FAILED() { if (retVal) fprintf(stderr,"%s:%d: %s() failed.\n",__FILE__,__LINE__,__FUNCTION__); }
@@ -19,18 +20,17 @@ int escape_string(char *in,char *out,int max_len)
   for(int i=0;in[i];i++) {
     switch(in[i]) {
     case ':':
-      if (out_len>=max_len) retVal=-1;
+      if (out_len>=max_len) { LOG_ERROR("escaped version of string is too long",out); }
       else out[out_len++]=in[i];
       break;
     default:
-      if (out_len>=max_len) retVal=-1;
+      if (out_len>=max_len) { LOG_ERROR("escaped version of string is too long",out); }
       else out[out_len++]=':';
-      if (out_len>=max_len) retVal=-1;
+      if (out_len>=max_len) { LOG_ERROR("escaped version of string is too long",out); }
       else out[out_len++]=in[i];
     }
   }
   if (retVal==0) retVal=out_len;
-  REPORT_IF_FAILED();
   return retVal;
 }
 
@@ -38,10 +38,11 @@ int serialise_int(int in,char *out,int max_len)
 {
   int retVal=0;
   char temp[16];
-  snprintf(temp,16,"%d",in);
-  if (strlen(temp)>=max_len) retVal=-1;
-  else { strcpy(out,temp); retVal=strlen(temp); }
-  REPORT_IF_FAILED();
+  do {
+    snprintf(temp,16,"%d",in);
+    if (strlen(temp)>=max_len) { LOG_ERROR("integer converts to over-long string",temp); }
+    else { strcpy(out,temp); retVal=strlen(temp); }
+  } while (0);
   return retVal;
 }
 
@@ -49,18 +50,20 @@ int serialise_longlong(long long in,char *out,int max_len)
 {
   int retVal=0;
   char temp[32];
-  snprintf(temp,32,"%lld",in);
-  if (strlen(temp)>=max_len) retVal=-1;
-  else { strcpy(out,temp); retVal=strlen(temp); }
-  REPORT_IF_FAILED();
+  do {
+    snprintf(temp,32,"%lld",in);
+    if (strlen(temp)>=max_len) { LOG_ERROR("long long converts to over-long string",temp); }
+    else { strcpy(out,temp); retVal=strlen(temp); }
+  } while (0);
   return retVal;
 }
 
 int space_check(int append_len,int existing_len,int max_len)
 {
   int retVal=0;
-  if ((existing_len+append_len)>max_len) retVal=-1;
-  REPORT_IF_FAILED();
+  do {
+    if ((existing_len+append_len)>max_len) { LOG_ERROR("Insufficient space to append next string",""); }
+  } while (0);
   return retVal;
 }
 
@@ -73,29 +76,27 @@ int deserialise_parse_field(char *in,int *in_offset,char *out)
   do {
     if (offset) {
       if (in[offset]!=':') {
-	retVal=-1;
-	fprintf(stderr,"Expected : at offset %d of '%s'\n",offset,in);
+	LOG_ERROR("Expected : before next field\n",&in[offset]);
 	break;
       }
       else offset++;
     }
     
     out[olen]=0;
-    if (!in) { retVal=-1; fprintf(stderr,"in is NULL\n"); break; }
-    if (!in[0]) { retVal=-1; break; }
+    if (!in) LOG_ERROR("input string is NULL","");
+    if (!in[0]) LOG_ERROR("input string is empty","");
     for(;in[offset]&&(olen<16383)&&in[offset]!=':';offset++)
       {
 	// Allow some \ escape characters
 	if (in[offset]=='\\') {
-	  if (!in[offset+1]) { retVal=-1; fprintf(stderr,"String ends in \\\n"); break; }
+	  if (!in[offset+1]) LOG_ERROR("String ends in \\\n",in);
 	  switch (in[offset+1]) {
 	  case ':': out[olen++]=in[offset+1]; break;
 	  case 'r': out[olen++]='\r'; break;
 	  case 'n': out[olen++]='\n'; break;
 	  case 'b': out[olen++]='\b'; break;
 	  default:
-	    fprintf(stderr,"Illegal escape character 0x%02x\n",in[offset+1]);
-	    retVal=-1;
+	    LOG_ERROR("Illegal escape character\n",&in[offset+1]);
 	    break;
 	  }
 	  offset++;
@@ -122,16 +123,15 @@ int deserialise_int(char *field,int *s)
 {
   int retVal=0;
   do {
-    if (!field) { retVal=-1; break; }
-    if (!strlen(field)) { retVal=-1; break; }
+    if (!field) LOG_ERROR("field is NULL","");
+    if (!strlen(field)) LOG_ERROR("field is empty string","");
     int offset=0;
     if (field[offset]=='-') offset++;
     for(int i=offset;field[i];i++)
-      if (field[i]<'0'||field[i]>'9') { retVal=-1; break; }
+      if (field[i]<'0'||field[i]>'9') LOG_ERROR("integer field contains non-digit",field);
     if (!retVal) *s=atoi(field);
     
   } while(0);
-  REPORT_IF_FAILED();
   return retVal;
 }
 
@@ -139,16 +139,15 @@ int deserialise_longlong(char *field,long long *s)
 {
   int retVal=0;
   do {
-    if (!field) { retVal=-1; break; }
-    if (!strlen(field)) { retVal=-1; break; }
+    if (!field) LOG_ERROR("field is NULL","");
+    if (!strlen(field)) LOG_ERROR("field is empty string","");
     int offset=0;
     if (field[offset]=='-') offset++;
     for(int i=offset;field[i];i++)
-      if (field[i]<'0'||field[i]>'9') { retVal=-1; break; }
+      if (field[i]<'0'||field[i]>'9') LOG_ERROR("long long field contains non-digit",field);
     if (!retVal) *s=atoll(field);
     
   } while(0);
-  REPORT_IF_FAILED();
   return retVal;
 }
 
@@ -156,19 +155,21 @@ int deserialise_longlong(char *field,long long *s)
 int deserialise_string(char *field,char **s)
 {
   int retVal=0;
-  *s=NULL;
-  if (!field) retVal=-1; else *s=strdup(field);
-  if (!*s) retVal=-1;
-  REPORT_IF_FAILED();
+  do {
+    *s=NULL;
+    if (!field) { LOG_ERROR("field is NULL",""); }
+    else *s=strdup(field);
+    if (!*s) { LOG_ERROR("field is empty string",""); }
+  } while (0);
   return retVal;
 }
 
 #define DESERIALISE_BEGIN(O,L,ML) { int offset=0; char field[16384]; 
-#define DESERIALISE_COMPLETE(O,L,ML) if (offset<L) { fprintf(stderr,"Junk at end of serialised object\n"); retVal=-1; break; } }
-#define DESERIALISE_NEXT_FIELD() if (deserialise_parse_field(in,&offset,field)) { retVal=-1; break; }
+#define DESERIALISE_COMPLETE(O,L,ML) if (offset<L) { LOG_ERROR("Junk at end of serialised object",""); } }
+#define DESERIALISE_NEXT_FIELD() if (deserialise_parse_field(in,&offset,field)) { LOG_ERROR("failed to parse next field",&in[offset]); }
 #define DESERIALISE_THING(S,DESERIALISER) \
   DESERIALISE_NEXT_FIELD();				\
-  if (DESERIALISER(field,&S)) { retVal=-1; break; }
+  if (DESERIALISER(field,&S)) { LOG_ERROR("call to " #DESERIALISER " failed",field); }
 #define DESERIALISE_INT(S) DESERIALISE_THING(S,deserialise_int)
 #define DESERIALISE_STRING(S) DESERIALISE_THING(S,deserialise_string);
 #define DESERIALISE_LONGLONG(S) DESERIALISE_THING(S,deserialise_longlong)
@@ -176,7 +177,7 @@ int deserialise_string(char *field,char **s)
 
 #define APPEND_STRING(NEW,NL,O,L) { strcpy(&O[L],NEW); L+=NL; }
 
-#define APPEND_COLON(O,L,ML) { if (space_check(1,L,ML)) break; O[L++]=':'; O[L]=0; }
+#define APPEND_COLON(O,L,ML) { if (space_check(1,L,ML)) { LOG_ERROR("serialised string too long",""); } O[L++]=':'; O[L]=0; }
 
 #define SERIALISE_BEGIN(O,L,ML) { int encoded_len=0; const int encoded_max_len=65536; char encoded[encoded_max_len]; L=0;
 
@@ -197,12 +198,9 @@ int serialise_question_type(int qt,char *out,int out_max_len)
 {
   int retVal=0;
   do {
-    if (qt<1) {retVal=-1; break;}
-    REPORT_IF_FAILED();
-    if (qt>NUM_QUESTION_TYPES) {retVal=-1; break;}
-    REPORT_IF_FAILED();
-    if (strlen(question_type_names[qt])>=out_max_len) {retVal=-1; break;}
-    REPORT_IF_FAILED();
+    if (qt<1) LOG_ERROR("was asked to serialise an illegal question type","");
+    if (qt>NUM_QUESTION_TYPES) LOG_ERROR("was asked to serialise an illegal question type","");
+    if (strlen(question_type_names[qt])>=out_max_len) LOG_ERROR("question type name too long",question_type_names[qt]);
     strcpy(out,question_type_names[qt]); retVal=strlen(out);
   } while (0);
 
@@ -212,22 +210,24 @@ int serialise_question_type(int qt,char *out,int out_max_len)
 
 int deserialise_question_type(char *field,int *s)
 {
-  int retVal=-1;
+  int retVal=0;
   do {
-    for(int qt=1;qt<NUM_QUESTION_TYPES;qt++)
+    int qt;
+    for(qt=1;qt<NUM_QUESTION_TYPES;qt++)
       if (!strcasecmp(field,question_type_names[qt])) {
 	retVal=0;
 	*s=qt;
-      } 
+	break;
+      }
+    if (qt==NUM_QUESTION_TYPES) LOG_ERROR("invalid question type name",field);
   } while (0);
 
-  REPORT_IF_FAILED();
   return retVal;  
 }
 
 int serialise_question(struct question *q,char *out,int max_len)
 {
-  int retVal=-1;
+  int retVal=0;
   int len=0;
   do {
     SERIALISE_BEGIN(out,len,max_len);
@@ -246,7 +246,6 @@ int serialise_question(struct question *q,char *out,int max_len)
     // Trim terminal separator character
     SERIALISE_COMPLETE(out,len,max_len);
     
-    retVal=0;
   } while(0);
 
   return retVal;
@@ -302,7 +301,7 @@ int deserialise_question(char *in,struct question *q)
 
 int serialise_answer(struct answer *a,char *out,int max_len)
 {
-  int retVal=-1;
+  int retVal=0;
   int len=0;
   do {
     SERIALISE_BEGIN(out,len,max_len);
@@ -319,7 +318,6 @@ int serialise_answer(struct answer *a,char *out,int max_len)
     // Trim terminal separator character
     SERIALISE_COMPLETE(out,len,max_len);
     
-    retVal=0;
   } while(0);
 
   return retVal;

@@ -5,6 +5,7 @@
 #include <strings.h>
 
 #include "survey.h"
+#include "errorlog.h"
 #include "serialisers.h"
 
 struct question_serialiser_test {
@@ -72,11 +73,15 @@ int main(int argc,char **argv)
 	if (deserialise_result&&qst[i].shouldPassP) {
 	  // Deserialisation failed when it should have succeeded.
 	  fprintf(stderr,"\r[FAIL \n  FAIL: serialised string triggered an error during deserialisate\n");
+	    fprintf(stderr,"Internal error log:\n");
+	  dump_errors(stderr);
 	  fail++;
 	}
 	else if ((!deserialise_result)&&(!qst[i].shouldPassP)) {
 	  // Deserialiation passed when it should have failed.
 	  fprintf(stderr,"\r[FAIL \n  FAIL: invalid serialised string did not trigger an error during deserialisation\n");
+	    fprintf(stderr,"Internal error log:\n");
+	  dump_errors(stderr);
 	  fail++;
 	}
 	else if ((!deserialise_result)&&qst[i].shouldPassP) {
@@ -86,6 +91,8 @@ int main(int argc,char **argv)
 	    fprintf(stderr,"\r[FAIL \n  FAIL: Original and serialised-then-deserialised question structures differ\n");
 	    dump_question(stderr,"Deserialised result",&d);
 	    dump_question(stderr,"Expected result",&qst[i].question);
+	    fprintf(stderr,"Internal error log:\n");
+	    dump_errors(stderr);
 	    fail++;
 	  } else {
 	    fprintf(stderr,"\r[PASS \n");
