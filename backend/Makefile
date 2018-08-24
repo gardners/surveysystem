@@ -2,11 +2,21 @@ SRCDIR=	src
 INCDIR= include
 
 STATICHEADERS=	Makefile \
+		$(INCDIR)/errorlog.h \
 		$(INCDIR)/survey.h \
-		$(INCDIR)/serialisers.h \
+		$(INCDIR)/serialisers.h
+
+STATICSRCS=	$(SRCDIR)/serialisers.c \
+		$(SRCDIR)/errorlog.c
 
 GENERATEDHEADERS=$(INCDIR)/question_types.h
 GENERATEDSRCS=	$(SRCDIR)/question_types.c
+
+COREOBJS=	$(SRCDIR)/errorlog.o \
+		$(SRCDIR)/serialisers.o \
+		$(SRCDIR)/question_types.o
+TESTOBJS=	$(COREOBJS) \
+		$(SRCDIR)/test_serialisers.o
 
 HEADERS=	$(STATICHEADERS) $(GENERATEDHEADERS)
 
@@ -32,7 +42,7 @@ $(SRCDIR)/question_types.c:	$(INCDIR)/survey.h $(HEADERS)
 	grep QTYPE_ $(INCDIR)/survey.h | cut -f2- -d_ | sort -k2n -t' ' | awk -F' ' '{ printf("  \"%s\",\n",$$1); }' >>$@
 	echo "  \"end of list\"};" >> $@
 
-test_serialisers:	$(SRCDIR)/serialisers.o $(SRCDIR)/test_serialisers.o $(SRCDIR)/question_types.c
+test_serialisers:	$(TESTOBJS)
 	$(CC) $(COPT) -o $@ $^ $(LOPT)
 
 
