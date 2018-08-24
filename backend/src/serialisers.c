@@ -228,6 +228,29 @@ int serialise_question(struct question *q,char *out,int max_len)
   return retVal;
 }
 
+int dump_question(FILE *f,char *msg,struct question *q)
+{
+  int retVal=-1;
+  do {
+    fprintf(f,"%s:\n",msg);
+    fprintf(f,"  uid='%s\n",q->uid);
+    fprintf(f,"  question_text='%s'\n",q->question_text);
+    fprintf(f,"  question_html='%s'\n",q->question_html);
+    fprintf(f,"  question type=%s\n",
+	    ((q->type>=1)&&(q->type<=NUM_QUESTION_TYPES)) ? question_type_names[q->type]: "<unknown>");
+    fprintf(f,"  flags=0x%08X\n",q->flags);
+    fprintf(f,"  default_value=\"%s\"\n",q->default_value);
+    fprintf(f,"  min_value=%lld\n",q->min_value);
+    fprintf(f,"  max_value=%lld\n",q->max_value);
+    fprintf(f,"  decimal_places=%d\n",q->decimal_places);
+    fprintf(f,"  num_choices=%d\n",q->num_choices);
+
+    retVal=0;
+  } while(0);
+
+  return retVal;
+}
+
 int deserialise_question(char *in,struct question *q)
 {
   int retVal=-1;

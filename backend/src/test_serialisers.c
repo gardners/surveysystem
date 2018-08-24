@@ -1,5 +1,7 @@
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <strings.h>
 
 #include "survey.h"
@@ -12,13 +14,22 @@ struct question_serialiser_test {
 #define DIRECTION_DESERIALISE 2
   int direction;
   char *serialised;
-  struct question *question;
+  struct question question;
 };
 
 struct question_serialiser_test qst[]={
 
-  {"Empty string not accepted",0,DIRECTION_DESERIALISE,"",NULL},
-  {NULL,-1,-1,NULL,NULL}
+  {"Empty string not accepted",0,DIRECTION_DESERIALISE,"",{NULL}},
+  {"Simple serialised question",1,DIRECTION_SERIALISE|DIRECTION_DESERIALISE,
+   "dummyuid:"
+   "What is the answer to life, the universe and everything?:"
+   "<div>What is the answer to life, the universe and everything?</div>:"
+   "INT:0:42:0:100:0:-1",
+   {"dummyuid",
+    "What is the answer to life, the universe and evrything?",
+    "<div>What is the answer to life, the universe and evrything?</div>",
+    QTYPE_FIXEDPOINT,0,"42",0,100,0,-1}},
+  {NULL,-1,-1,NULL,{NULL}}
 };
 
 int main(int argc,char **argv)
@@ -53,8 +64,10 @@ int main(int argc,char **argv)
 	else if ((!deserialise_result)&&qst[i].shouldPassP) {
 	  // Deserialised successfully, so make sure the field values
 	  // all match
-	  if (compare_questions(&d,qst[i].question)) {
+	  if (compare_questions(&d,&qst[i].question)) {
 	    fprintf(stderr,"\r[FAIL \n  FAIL: Original and serialised-then-deserialised question structures differ\n");
+	    dump_question(stderr,"Deserialised result",&d);
+	    dump_question(stderr,"Expected result",&qst[i].question);
 	    fail++;
 	  } else {
 	    fprintf(stderr,"\r[PASS \n");
