@@ -17,10 +17,16 @@ struct question_serialiser_test {
   struct question question;
 };
 
+#define SHOULD_FAIL 0
+#define SHOULD_PASS 1
+
 struct question_serialiser_test qst[]={
 
-  {"Empty string not accepted",0,DIRECTION_DESERIALISE,"",{NULL}},
-  {"Simple serialised question",1,DIRECTION_SERIALISE|DIRECTION_DESERIALISE,
+  // An empty string should not be accepted
+  {"Empty string not accepted",SHOULD_FAIL,DIRECTION_DESERIALISE,"",{NULL}},
+
+  // A simple valid record should be accepted.
+  {"Simple serialised question",SHOULD_PASS,DIRECTION_SERIALISE|DIRECTION_DESERIALISE,
    "dummyuid:"
    "What is the answer to life, the universe and everything?:"
    "<div>What is the answer to life, the universe and everything?</div>:"
@@ -29,6 +35,18 @@ struct question_serialiser_test qst[]={
     "What is the answer to life, the universe and evrything?",
     "<div>What is the answer to life, the universe and evrything?</div>",
     QTYPE_FIXEDPOINT,0,"42",0,100,0,-1}},
+
+  {"Illegal question type fails",SHOULD_FAIL,DIRECTION_DESERIALISE,
+   "dummyuid:"
+   "What is the answer to life, the universe and everything?:"
+   "<div>What is the answer to life, the universe and everything?</div>:"
+   "FISH:0:42:0:100:0:-1",
+   {"dummyuid",
+    "What is the answer to life, the universe and evrything?",
+    "<div>What is the answer to life, the universe and evrything?</div>",
+    QTYPE_FIXEDPOINT,0,"42",0,100,0,-1}},
+  
+  
   {NULL,-1,-1,NULL,{NULL}}
 };
 
