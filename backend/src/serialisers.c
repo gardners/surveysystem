@@ -323,16 +323,14 @@ int serialise_answer(struct answer *a,char *out,int max_len)
   return retVal;
 }
 
-#define COMPARE_INT(S) { if (q1->S>q2->S) result=1; else if (q1->S<q2->S) result=-1; else result=0; if (result) break; }
+#define COMPARE_INT(S) { printf("Comparing %lld and %lld\n",(long long)q1->S,(long long)q2->S); if (q1->S>q2->S) retVal=1; else if (q1->S<q2->S) retVal=-1; else retVal=0; if (retVal) break; }
 #define COMPARE_LONGLONG(S) COMPARE_INT(S)
-#define COMPARE_STRING(S) { if ((!q1->S)||(!q2->S)) result=-1; else result=strcmp(q1->S,q2->S); if (result) break; }
+#define COMPARE_STRING(S) { if ((!q1->S)||(!q2->S)) retVal=-1; else retVal=strcmp(q1->S,q2->S); if (retVal) break; }
 
 int compare_questions(struct question *q1, struct question *q2)
 {
   int retVal=0;
   do {
-    int result;
-
     COMPARE_STRING(uid);
     COMPARE_STRING(question_text);
     COMPARE_STRING(question_html);

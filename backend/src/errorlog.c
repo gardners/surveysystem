@@ -6,6 +6,12 @@
 char error_messages[MAX_ERRORS][1024];
 int error_count=0;
 
+void clear_errors(void)
+{
+  error_count=0;
+  return;
+}
+
 void dump_errors(FILE *f)
 {
   for(int i=0;i<error_count;i++)
