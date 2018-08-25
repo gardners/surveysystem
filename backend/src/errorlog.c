@@ -29,7 +29,7 @@ int remember_error(const char *file,const int line, const char *function,const c
     exit(-1);
   }
 
-  snprintf(error_messages[error_count+1],1024,
+  snprintf(error_messages[error_count],1024,
 	   "%s:%d:%s(): %s (data='%s')",
 	   file,line,function,message,data);
   error_count++;
