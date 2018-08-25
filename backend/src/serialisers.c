@@ -19,17 +19,25 @@ int escape_string(char *in,char *out,int max_len)
   int out_len=0;
   for(int i=0;in[i];i++) {
     switch(in[i]) {
+    case '\r': case '\n': case '\t': case '\b':
+      if (out_len>=max_len) { LOG_ERROR("escaped version of string is too long",out); }
+      else out[out_len++]='\\';
+      if (out_len>=max_len) { LOG_ERROR("escaped version of string is too long",out); }
+      else out[out_len++]=in[i];
+      break;
     case ':':
+      if (out_len>=max_len) { LOG_ERROR("escaped version of string is too long",out); }
+      else out[out_len++]=':';
       if (out_len>=max_len) { LOG_ERROR("escaped version of string is too long",out); }
       else out[out_len++]=in[i];
       break;
     default:
       if (out_len>=max_len) { LOG_ERROR("escaped version of string is too long",out); }
-      else out[out_len++]=':';
-      if (out_len>=max_len) { LOG_ERROR("escaped version of string is too long",out); }
       else out[out_len++]=in[i];
+      break;
     }
   }
+  out[out_len]=0;
   if (retVal==0) retVal=out_len;
   return retVal;
 }
@@ -255,14 +263,19 @@ int dump_question(FILE *f,char *msg,struct question *q)
 {
   int retVal=0;
   do {
+    char temp[8192];
     fprintf(f,"%s:\n",msg);
-    fprintf(f,"  uid='%s\n",q->uid);
-    fprintf(f,"  question_text='%s'\n",q->question_text);
-    fprintf(f,"  question_html='%s'\n",q->question_html);
+    escape_string(q->uid,temp,8192);
+    fprintf(f,"  uid='%s'\n",temp);
+    escape_string(q->question_text,temp,8192);
+    fprintf(f,"  question_text='%s'\n",temp);
+    escape_string(q->question_html,temp,8192);
+    fprintf(f,"  question_html='%s'\n",temp);
     fprintf(f,"  question type=%s\n",
 	    ((q->type>=1)&&(q->type<=NUM_QUESTION_TYPES)) ? question_type_names[q->type]: "<unknown>");
     fprintf(f,"  flags=0x%08X\n",q->flags);
-    fprintf(f,"  default_value=\"%s\"\n",q->default_value);
+    escape_string(q->default_value,temp,8192);
+    fprintf(f,"  default_value='%s'\n",temp);
     fprintf(f,"  min_value=%lld\n",q->min_value);
     fprintf(f,"  max_value=%lld\n",q->max_value);
     fprintf(f,"  decimal_places=%d\n",q->decimal_places);
@@ -323,9 +336,9 @@ int serialise_answer(struct answer *a,char *out,int max_len)
   return retVal;
 }
 
-#define COMPARE_INT(S) { printf("Comparing %lld and %lld\n",(long long)q1->S,(long long)q2->S); if (q1->S>q2->S) retVal=1; else if (q1->S<q2->S) retVal=-1; else retVal=0; if (retVal) break; }
+#define COMPARE_INT(S) { if (q1->S>q2->S) { LOG_ERROR(#S " fields do not match",""); }  else if (q1->S<q2->S) { LOG_ERROR(#S " fields do not match",""); } else retVal=0; if (retVal) break; }
 #define COMPARE_LONGLONG(S) COMPARE_INT(S)
-#define COMPARE_STRING(S) { if ((!q1->S)||(!q2->S)) retVal=-1; else retVal=strcmp(q1->S,q2->S); if (retVal) break; }
+#define COMPARE_STRING(S) { if ((!q1->S)||(!q2->S)) { LOG_ERROR( #S " fields dot not match",""); } else { if (strcmp(q1->S,q2->S)) { fprintf(stderr,#S " fields do not match\n");  LOG_ERROR(#S " fields do not match",""); }  } }
 
 int compare_questions(struct question *q1, struct question *q2)
 {
@@ -341,7 +354,7 @@ int compare_questions(struct question *q1, struct question *q2)
     COMPARE_LONGLONG(max_value);
     COMPARE_INT(decimal_places);
     COMPARE_INT(num_choices);
-
+    
   } while(0);
   return retVal;
 }
