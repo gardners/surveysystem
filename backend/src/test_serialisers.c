@@ -33,20 +33,20 @@ struct question_serialiser_test qst[]={
    "<div>What is the answer to life, the universe and everything?</div>:"
    "INT:0:42:0:100:0:1",
    {"dummyuid",
-    "What is the answer to life, the universe and evrything?",
-    "<div>What is the answer to life, the universe and evrything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1}},
+    "What is the answer to life, the universe and everything?",
+    "<div>What is the answer to life, the universe and everything?</div>",
+    QTYPE_INT,0,"42",0,100,0,1}},
 
   // Only valid question types should be accepted
   {"Illegal question type fails",SHOULD_FAIL,DIRECTION_DESERIALISE,
    "dummyuid:"
    "What is the answer to life, the universe and everything?:"
    "<div>What is the answer to life, the universe and everything?</div>:"
-   "FISH:0:42:0:100:0:-1",
+   "FISH:0:42:0:100:0:1",
    {"dummyuid",
-    "What is the answer to life, the universe and evrything?",
-    "<div>What is the answer to life, the universe and evrything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1}},
+    "What is the answer to life, the universe and everything?",
+    "<div>What is the answer to life, the universe and everything?</div>",
+    QTYPE_INT,0,"42",0,100,0,1}},
 
   {"Negative numbers are accepted",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
    "dummyuid:"
@@ -54,9 +54,9 @@ struct question_serialiser_test qst[]={
    "<div>What is the answer to life, the universe and everything?</div>:"
    "INT:0:42:0:-100:0:-1",
    {"dummyuid",
-    "What is the answer to life, the universe and evrything?",
-    "<div>What is the answer to life, the universe and evrything?</div>",
-    QTYPE_FIXEDPOINT,0,"42",0,-100,0,-1}},
+    "What is the answer to life, the universe and everything?",
+    "<div>What is the answer to life, the universe and everything?</div>",
+    QTYPE_INT,0,"42",0,-100,0,-1}},
 
   {"Minus sign can appear only at beginning of a number",SHOULD_FAIL,DIRECTION_DESERIALISE,
    "dummyuid:"
@@ -64,9 +64,9 @@ struct question_serialiser_test qst[]={
    "<div>What is the answer to life, the universe and everything?</div>:"
    "INT:0:42:0:10-0:0:-1",
    {"dummyuid",
-    "What is the answer to life, the universe and evrything?",
-    "<div>What is the answer to life, the universe and evrything?</div>",
-    QTYPE_FIXEDPOINT,0,"42",0,100,0,-1}},
+    "What is the answer to life, the universe and everything?",
+    "<div>What is the answer to life, the universe and everything?</div>",
+    QTYPE_INT,0,"42",0,100,0,-1}},
   
   
   {NULL,-1,-1,NULL,{NULL}}
