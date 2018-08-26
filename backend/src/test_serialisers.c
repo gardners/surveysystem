@@ -97,7 +97,66 @@ struct question_serialiser_test qst[]={
     "What is the answer to life, the universe and everything?",
     "<div>What is the answer to life, the universe and everything?</div>",
     QTYPE_INT,0,"42",0,100,0,-1}},
+
+  {"\\t escape is accepted in strings",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
+   "dummyuid:"
+   "\tWhat is the answer to life, the universe and everything?:"
+   "<div>What is the answer to life, the universe and everything?</div>:"
+   "INT:0:42:0:100:0:-1",
+   {"dummyuid",
+    "\tWhat is the answer to life, the universe and everything?",
+    "<div>What is the answer to life, the universe and everything?</div>",
+    QTYPE_INT,0,"42",0,100,0,-1}},
   
+  {"\\r escape is accepted in strings",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
+   "dummyuid:"
+   "\rWhat is the answer to life, the universe and everything?:"
+   "<div>What is the answer to life, the universe and everything?</div>:"
+   "INT:0:42:0:100:0:-1",
+   {"dummyuid",
+    "\rWhat is the answer to life, the universe and everything?",
+    "<div>What is the answer to life, the universe and everything?</div>",
+    QTYPE_INT,0,"42",0,100,0,-1}},
+  
+  {"\\n escape is accepted in strings",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
+   "dummyuid:"
+   "\nWhat is the answer to life, the universe and everything?:"
+   "<div>What is the answer to life, the universe and everything?</div>:"
+   "INT:0:42:0:100:0:-1",
+   {"dummyuid",
+    "\nWhat is the answer to life, the universe and everything?",
+    "<div>What is the answer to life, the universe and everything?</div>",
+    QTYPE_INT,0,"42",0,100,0,-1}},
+  
+  {"\\: escape is accepted in strings",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
+   "dummyuid:"
+   "\\:What is the answer to life, the universe and everything?:"
+   "<div>What is the answer to life, the universe and everything?</div>:"
+   "INT:0:42:0:100:0:-1",
+   {"dummyuid",
+    ":What is the answer to life, the universe and everything?",
+    "<div>What is the answer to life, the universe and everything?</div>",
+    QTYPE_INT,0,"42",0,100,0,-1}},
+  
+  {"\\\\ escape is accepted in strings",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
+   "dummyuid:"
+   "\\\\What is the answer to life, the universe and everything?:"
+   "<div>What is the answer to life, the universe and everything?</div>:"
+   "INT:0:42:0:100:0:-1",
+   {"dummyuid",
+    "\\What is the answer to life, the universe and everything?",
+    "<div>What is the answer to life, the universe and everything?</div>",
+    QTYPE_INT,0,"42",0,100,0,-1}},
+  
+  {"Multiple escape is accepted in strings",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
+   "dummyuid:"
+   "\\\\\r\n\t\\:What is the answer to life, the universe and everything?:"
+   "<div>What is the answer to life, the universe and everything?</div>:"
+   "INT:0:42:0:100:0:-1",
+   {"dummyuid",
+    "\\\r\n\t:What is the answer to life, the universe and everything?",
+    "<div>What is the answer to life, the universe and everything?</div>",
+    QTYPE_INT,0,"42",0,100,0,-1}},  
   
   {NULL,-1,-1,NULL,{NULL}}
 };

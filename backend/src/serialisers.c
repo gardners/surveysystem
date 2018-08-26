@@ -25,7 +25,7 @@ int escape_string(char *in,char *out,int max_len)
       if (out_len>=max_len) { LOG_ERROR("escaped version of string is too long",out); }
       else out[out_len++]=in[i];
       break;
-    case ':':
+    case ':': case '\\':
       if (out_len>=max_len) { LOG_ERROR("escaped version of string is too long",out); }
       else out[out_len++]=':';
       if (out_len>=max_len) { LOG_ERROR("escaped version of string is too long",out); }
@@ -99,7 +99,8 @@ int deserialise_parse_field(char *in,int *in_offset,char *out)
 	if (in[offset]=='\\') {
 	  if (!in[offset+1]) LOG_ERROR("String ends in \\\n",in);
 	  switch (in[offset+1]) {
-	  case ':': out[olen++]=in[offset+1]; break;
+	  case ':': case '\\':
+	    out[olen++]=in[offset+1]; break;
 	  case 'r': out[olen++]='\r'; break;
 	  case 'n': out[olen++]='\n'; break;
 	  case 'b': out[olen++]='\b'; break;
@@ -114,11 +115,6 @@ int deserialise_parse_field(char *in,int *in_offset,char *out)
 	  out[olen]=0;
 	}
       }
-    REPORT_IF_FAILED();
-    if (retVal) {
-      fprintf(stderr,"in_offset=%d, offset=%d, out='%s', in='%s'\n",
-	      *in_offset,offset,out,in);
-    }
 
     *in_offset=offset;
     
