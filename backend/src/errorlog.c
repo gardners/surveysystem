@@ -16,7 +16,7 @@ void dump_errors(FILE *f)
 {
   for(int i=0;i<error_count;i++)
     {
-      fprintf(f,"%s\n",error_messages[i]);	     
+      fprintf(f,"   %s\n",error_messages[i]);	     
     }
   return;
 }
