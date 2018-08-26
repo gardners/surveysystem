@@ -67,6 +67,36 @@ struct question_serialiser_test qst[]={
     "What is the answer to life, the universe and everything?",
     "<div>What is the answer to life, the universe and everything?</div>",
     QTYPE_INT,0,"42",0,100,0,-1}},
+
+  {"Missing fields results in failure",SHOULD_FAIL,DIRECTION_DESERIALISE,
+   "dummyuid:"
+   "What is the answer to life, the universe and everything?:"
+   "<div>What is the answer to life, the universe and everything?</div>:"
+   "INT:0:42:0:10-0:0",
+   {"dummyuid",
+    "What is the answer to life, the universe and everything?",
+    "<div>What is the answer to life, the universe and everything?</div>",
+    QTYPE_INT,0,"42",0,100,0,-1}},
+
+  {"Missing fields results in failure",SHOULD_FAIL,DIRECTION_DESERIALISE,
+   "dummyuid:"
+   "What is the answer to life, the universe and everything?:"
+   "<div>What is the answer to life, the universe and everything?</div>:"
+   "INT:0:42:0:10-0:0",
+   {"dummyuid",
+    "What is the answer to life, the universe and everything?",
+    "<div>What is the answer to life, the universe and everything?</div>",
+    QTYPE_INT,0,"42",0,100,0,-1}},
+
+  {"Extra fields results in failure",SHOULD_FAIL,DIRECTION_DESERIALISE,
+   "dummyuid:"
+   "What is the answer to life, the universe and everything?:"
+   "<div>What is the answer to life, the universe and everything?</div>:"
+   "INT:0:42:0:10-0:0:-1:-1",
+   {"dummyuid",
+    "What is the answer to life, the universe and everything?",
+    "<div>What is the answer to life, the universe and everything?</div>",
+    QTYPE_INT,0,"42",0,100,0,-1}},
   
   
   {NULL,-1,-1,NULL,{NULL}}
