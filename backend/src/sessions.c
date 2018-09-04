@@ -207,7 +207,7 @@ int create_session(char *survey_id,char *session_id_out)
       fprintf(stderr,"Considering session '%s'\n",session_path);
 
       // Try again if session ID already exists
-      if ( access( session_path, F_OK ) != -1 ) { session_id[0]=0; continue; }
+      if ( access( session_path, F_OK ) != -1 ) { session_id[0]=0; continue; } else break;
     }
     if (!session_id[0]) LOG_ERROR("Failed to generate unique session ID after several tries","");
 
