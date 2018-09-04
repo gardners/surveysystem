@@ -334,6 +334,7 @@ void free_session(struct session *s)
   if (!s) return;
 
   freez(s->survey_id);
+  freez(s->survey_description);
   freez(s->session_id);
   
   for(int i=0;i<s->question_count;i++) free_question(s->questions[i]);
@@ -348,10 +349,47 @@ void free_session(struct session *s)
 int load_survey_questions(struct session *ses)
 {
   int retVal=0;
-
+  FILE *f=NULL;
+  
   do {
 
+    if (!ses) LOG_ERROR("session structure is NULL","");
+    if (!ses->survey_id) LOG_ERROR("survey_id in session structure is NULL","");
+    
+    char survey_path_suffix[1024];
+    char survey_path[1024];
+    snprintf(survey_path_suffix,1024,"surveys/%s",ses->survey_id);
+    if (generate_path(survey_path_suffix,survey_path,1024))
+      LOG_ERROR("generate_path() failed to build path for loading session",ses->session_id);
+
+    fprintf(stderr,"Reading questions from '%s'\n",survey_path);
+    
+    f=fopen(survey_path,"r");
+    if (!f) LOG_ERROR("Could not open survey file",survey_path);
+    char line[8192];
+
+    // Check survey file format version
+    line[0]=0;fgets(line,8192,f);
+    if (!line[0]) LOG_ERROR("Failed to read survey file format version in survey specification file",survey_path);
+    int format_version=0;
+    if (sscanf(line,"version %d",&format_version)!=1)
+      LOG_ERROR("Error parsing file format version in survey file",survey_path);
+    if (format_version!=1) LOG_ERROR("Unknown survey file format version in survey file",survey_path);
+
+    // Get survey file description
+    line[0]=0;fgets(line,8192,f);
+    if (!line[0]) LOG_ERROR("Failed to read survey description in survey specification file",survey_path);
+    int len=strlen(line);
+    // Trim CR and LF chars from description
+    while (len&&(line[len-1]=='\n'||line[len-1]=='\r')) line[--len]=0;
+    ses->survey_description=strdup(line);
+    if (!ses->survey_description) LOG_ERROR("strdup(survey_description) failed when loading survey file",survey_path);
+
+    fprintf(stderr,"Survey description is '%s'\n",ses->survey_description);
+    
+    fclose(f); f=NULL;    
   } while(0);
+  if (f) fclose(f);
   return retVal;
 }
 
