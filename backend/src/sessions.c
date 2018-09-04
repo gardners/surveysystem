@@ -546,6 +546,12 @@ int session_add_answer(struct session *ses,struct answer *a)
     if (!ses) LOG_ERROR("Session structure is NULL","");
     if (!a) LOG_ERROR("Asked to add null answer to session","");
 
+    // Don't allow multiple answers to the same question
+    for(int i=0;i<ses->answer_count;i++)
+      if (!strcmp(ses->answers[i]->uid,a->uid))
+	LOG_ERROR("That question has already been answered. Delete old answer before adding a new one",ses->session_id);
+    if (retVal) break;
+	  
     if (ses->answer_count>=MAX_QUESTIONS) LOG_ERROR("Too many answers in session (increase MAX_QUESTIONS?)","");
     ses->answers[ses->answer_count]=a;
     ses->answer_count++;
