@@ -100,12 +100,14 @@ struct answer {
   
 };
 
-#define MAX_QUESTIONS 1024
+#define MAX_QUESTIONS 8192
 struct session {
   char *survey_id;
   char *session_id;
   struct question *questions[MAX_QUESTIONS];
   struct answer *answers[MAX_QUESTIONS];
+  int answer_count;
+  int question_count;
 };
 
 

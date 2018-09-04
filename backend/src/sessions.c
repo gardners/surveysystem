@@ -11,6 +11,7 @@
 #include <ctype.h>
 
 #include "survey.h"
+#include "serialisers.h"
 #include "errorlog.h"
 #include "question_types.h"
 #include "sha1.h"
@@ -300,9 +301,64 @@ int create_session(char *survey_id,char *session_id_out)
   return retVal;
 }
 
+void freez(void *p)
+{
+  if (p) free(p);
+  return;
+}
+
+void free_answer(struct answer *a)
+{
+  if (!a) return;
+
+  freez(a->uid);
+  freez(a->text);
+  
+  free(a);
+  return;
+}
+
+void free_question(struct question *q)
+{
+  if (!q) return;
+  freez(q->uid);
+  freez(q->question_text);
+  freez(q->question_html);
+  freez(q->default_value);
+  freez(q);
+  return;
+}
+
+void free_session(struct session *s)
+{
+  if (!s) return;
+
+  freez(s->survey_id);
+  freez(s->session_id);
+  
+  for(int i=0;i<s->question_count;i++) free_question(s->questions[i]);
+  for(int i=0;i<s->answer_count;i++) free_answer(s->answers[i]);
+  s->answer_count=0;
+  s->question_count=0;
+  
+  free(s);
+  return;
+}
+
+int load_survey_questions(struct session *ses)
+{
+  int retVal=0;
+
+  do {
+
+  } while(0);
+  return retVal;
+}
+
 struct session *load_session(char *session_id)
 {
   int retVal=0;
+  struct session *ses=NULL;
   do {
     if (!session_id) LOG_ERROR("session_id is NULL","");
 
@@ -327,13 +383,53 @@ struct session *load_session(char *session_id)
     // in progress).
     // Subesequent lines:
     // <timestamp in seconds since 1970> <add|del> <serialised answer>
+
+    // Read survey ID line
+    char survey_id[1024];
+    survey_id[0]=0; fgets(survey_id,1024,s);
+    if (!survey_id[0]) { fclose(s); LOG_ERROR("Could not read survey ID from session file",session_path); }
+    // Trim CR / LF characters from the end
+    while (survey_id[0]&&((survey_id[strlen(survey_id)-1]=='\n')
+			  ||(survey_id[strlen(survey_id)-1]=='\r'))) survey_id[strlen(survey_id)-1]=0;
+    fprintf(stderr,"Survey ID in session file is '%s'\n",survey_id);
+
+    ses=calloc(sizeof(struct session),1);
+    if (!ses) { fclose(s); LOG_ERROR("calloc() failed when loading session",session_id); }
+    ses->survey_id=strdup(survey_id);
+    if (!ses->survey_id) LOG_ERROR("strdup(survey_id) failed when loading session",session_id);
     
-    LOG_ERROR("load_session() not implemented","COMPLETE ME");
+    // Load survey
+    if (load_survey_questions(ses))
+      { fclose(s); LOG_ERROR("Failed to load questions from survey",survey_id); }
+    if (!ses->question_count) LOG_ERROR("Failed to load questions from survey, or survey contains no questions",survey_id);
+    
+    // Load answers from session file
+    char line[65536];
+    line[0]=0;
+    do {
+      // Get next line with an answer in it
+      line[0]=0; fgets(line,65536,s);
+      if (!line[0]) break;
+      int len=strlen(line);
+      if (!len) LOG_ERROR("Empty line in session file",session_path);
+      if (line[len-1]!='\n'&&line[len-1]!='\r') LOG_ERROR("Line too long in session file (limit = 64K)",session_path);      
+
+      // Add answer to list of answers
+      if (ses->answer_count>=MAX_QUESTIONS) LOG_ERROR("Too many answers in session file (increase MAX_QUESTIONS?)",session_path);
+      ses->answers[ses->answer_count]=calloc(sizeof(struct answer),1);
+      if (!ses->answers[ses->answer_count]) LOG_ERROR("calloc() failed while reading session file ",session_path);
+      if (deserialise_answer(line,ses->answers[ses->answer_count]))
+	LOG_ERROR("Failed to deserialise answer from session file",session_path);
+      ses->answer_count++;
+
+    } while(0);
+    if (retVal) { fclose(s); if (ses) { free_session(ses); } ses=NULL; break; }
     
     fclose(s);
     
   } while(0);
-  return NULL;
+  if (retVal) ses=NULL;
+  return ses;
 }
 
 int save_session(struct session *s)
