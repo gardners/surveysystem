@@ -232,7 +232,7 @@ int create_session(char *survey_id,char *session_id_out)
 	if (count>0) {
 	  sha1_write(&s,buffer,count);
 	  int wrote=fwrite(buffer,count,1,c);
-	  if (wrote!=count) {
+	  if (wrote!=1) {
 	    fclose(in);
 	    fclose(c);
 	    unlink(temp_path);
