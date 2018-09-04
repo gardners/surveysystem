@@ -20,7 +20,7 @@ int validate_session_id(char *session_id)
 {
   int retVal=0;
   do {
-    if (strlen(session_id)!=30) LOG_ERROR("session_id must be exactly 30 characters long",session_id);
+    if (strlen(session_id)!=36) LOG_ERROR("session_id must be exactly 36 characters long",session_id);
     if (session_id[0]=='-') LOG_ERROR("session_id may not begin with a dash",session_id);
     for(int i=0;session_id[i];i++)
       switch (session_id[i]) {
