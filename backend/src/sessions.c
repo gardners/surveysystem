@@ -184,7 +184,7 @@ int create_session(char *survey_id,char *session_id_out)
     if (!survey_id) LOG_ERROR("survey_id is NULL","");
     if (!session_id_out) LOG_ERROR("session_id_out is NULL","");
 
-    if (!validate_survey_id(survey_id)) LOG_ERROR("Invalid survey ID","");
+    if (validate_survey_id(survey_id)) LOG_ERROR("Invalid survey ID","");
     
     snprintf(session_path_suffix,1024,"surveys/%s",survey_id);
     if (generate_path(session_path_suffix,session_path,1024)) LOG_ERROR("generate_path() failed to build path for new session",survey_id);
@@ -194,7 +194,7 @@ int create_session(char *survey_id,char *session_id_out)
     int tries=0;
     for(tries=0;tries<5;tries++)
     {
-      if (random_session_id(session_id_out)) LOG_ERROR("random_session_id() failed to generate new session_id","");
+      if (random_session_id(session_id)) LOG_ERROR("random_session_id() failed to generate new session_id","");
       for(int i=0;i<4;i++) session_prefix[i]=session_id[i];
       session_prefix[4]=0;
 
