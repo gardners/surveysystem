@@ -109,6 +109,7 @@ struct session {
 };
 
 
+int generate_path(char *path_in,char *path_out,int max_len);
 int compare_questions(struct question *q1, struct question *q2);
 int get_next_questions(char *surveyname,char *session_uuid,struct question *q[],struct answer *a[],
 		       struct question *next_questions_out[],int max_next_questions,int *next_question_count_out);
