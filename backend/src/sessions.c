@@ -21,6 +21,7 @@ int validate_session_id(char *session_id)
 {
   int retVal=0;
   do {
+    if (!session_id) LOG_ERROR("session_id is NULL","");
     if (strlen(session_id)!=36) LOG_ERROR("session_id must be exactly 36 characters long",session_id);
     if (session_id[0]=='-') LOG_ERROR("session_id may not begin with a dash",session_id);
     for(int i=0;session_id[i];i++)
@@ -461,7 +462,9 @@ struct session *load_session(char *session_id)
     ses=calloc(sizeof(struct session),1);
     if (!ses) { fclose(s); LOG_ERROR("calloc() failed when loading session",session_id); }
     ses->survey_id=strdup(survey_id);
+    ses->session_id=strdup(session_id);
     if (!ses->survey_id) LOG_ERROR("strdup(survey_id) failed when loading session",session_id);
+    if (!ses->session_id) LOG_ERROR("strdup(session_id) failed when loading session",session_id);
     
     // Load survey
     if (load_survey_questions(ses))
@@ -501,9 +504,10 @@ struct session *load_session(char *session_id)
 int save_session(struct session *s)
 {
   int retVal=0;
+  FILE *o=NULL;
   do {
     if (!s) LOG_ERROR("session structure is NULL","");
-    if (s->session_id) LOG_ERROR("s->session_id is NULL","");
+    if (!s->session_id) LOG_ERROR("s->session_id is NULL","");
 
     if (validate_session_id(s->session_id)) LOG_ERROR("validate_session_id failed",s->session_id);
 
@@ -517,22 +521,35 @@ int save_session(struct session *s)
     if (generate_path(session_path_suffix,session_path,1024))
       LOG_ERROR("generate_path() failed to build path for loading session",s->session_id);
 
-    FILE *s=fopen(session_path,"w");
-    if (!s) LOG_ERROR("Could not create or open session file for write",session_path);
+    o=fopen(session_path,"w");
+    if (!o) LOG_ERROR("Could not create or open session file for write",session_path);
 
-    LOG_ERROR("save_session() not implemented","COMPLETE ME");
-    
-    fclose(s);
-    
-  } while(0);
+    fprintf(o,"%s\n",s->survey_id);
+    for(int i=0;i<s->answer_count;i++) {
+      char line[65536];
+      if (serialise_answer(s->answers[i],line,65536))
+	LOG_ERROR("Could not serialise answer for session.  Text field too long?",s->session_id);
+      fprintf(o,"%s\n",line);
+    }
+    fclose(o); o=NULL;
+
+  }  while(0);
+  if (o) fclose(o);
   return retVal;
 }
 
-int session_add_answer(struct session *s,struct answer *a)
+int session_add_answer(struct session *ses,struct answer *a)
 {
   int retVal=0;
   do {
-    LOG_ERROR("Not implemented","");
+    // Add answer to list of answers
+    if (!ses) LOG_ERROR("Session structure is NULL","");
+    if (!a) LOG_ERROR("Asked to add null answer to session","");
+
+    if (ses->answer_count>=MAX_QUESTIONS) LOG_ERROR("Too many answers in session (increase MAX_QUESTIONS?)","");
+    ses->answers[ses->answer_count]=a;
+    ses->answer_count++;
+
   } while(0);
   return retVal;
 }
