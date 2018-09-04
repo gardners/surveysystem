@@ -100,5 +100,22 @@ struct answer {
   
 };
 
+#define MAX_QUESTIONS 1024
+struct session {
+  char *survey_id;
+  char *session_id;
+  struct question *questions[MAX_QUESTIONS];
+  struct answer *answers[MAX_QUESTIONS];
+};
+
 
 int compare_questions(struct question *q1, struct question *q2);
+int get_next_questions(char *surveyname,char *session_uuid,struct question *q[],struct answer *a[],
+		       struct question *next_questions_out[],int max_next_questions,int *next_question_count_out);
+int create_session(char *survey_id,char *session_id_out);
+struct session *load_session(char *session_id);
+int save_session(struct session *s);
+int session_add_answer(struct session *s,struct answer *a);
+int session_delete_answer(struct session *s,struct answer *a);
+int session_delete_answer_by_question(struct session *s,struct answer *a);
+int delete_session(char *session_id);
