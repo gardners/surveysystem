@@ -40,7 +40,6 @@ int main(int argc,char **argv)
       if (!s) LOG_ERROR("load_session() failed",session_id);
       if (session_add_answer(s,&a)) LOG_ERROR("session_add_answer() failed","");
       if (save_session(s)) LOG_ERROR("save_session() failed",session_id);
-      
     } else if (!strcmp(argv[1],"nextquestion")) {
       if (argc!=3) { usage(); retVal=-1; break; }
       char *session_id=argv[2];
