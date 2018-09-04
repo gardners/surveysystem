@@ -20,13 +20,16 @@ COREOBJS=	$(SRCDIR)/errorlog.o \
 TESTOBJS=	$(COREOBJS) \
 		$(SRCDIR)/test_serialisers.o
 
+CLIOBJS=	$(COREOBJS) \
+		$(SRCDIR)/main.o
+
 HEADERS=	$(STATICHEADERS) $(GENERATEDHEADERS)
 
 CC=	clang
 COPT=	-Wall -O3 -g -Iinclude
 LOPT=
 
-all:	test_serialisers
+all:	test_serialisers surveycli
 
 %.o:	%.c $(HEADERS)
 	$(CC) $(COPT) -c $< -o $@
@@ -47,7 +50,8 @@ $(SRCDIR)/question_types.c:	$(INCDIR)/survey.h $(HEADERS)
 test_serialisers:	$(TESTOBJS)
 	$(CC) $(COPT) -o $@ $^ $(LOPT)
 
-
+surveycli:	$(CLIOBJS)
+	$(CC) $(COPT) -o $@ $^ $(LOPT)
 
 clean:
 	rm $(SRCDIR)/*.o $(GENERATEDHEADERS) $(GENERATEDSRCS)
