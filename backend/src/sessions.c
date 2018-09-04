@@ -559,3 +559,53 @@ int session_add_answer(struct session *ses,struct answer *a)
   } while(0);
   return retVal;
 }
+
+int session_delete_answers_by_question_uid(struct session *ses,char *uid)
+{
+  int retVal=0;
+  int deletions=0;
+  do {
+    if (!ses) LOG_ERROR("Session structure is NULL","");
+    if (!uid) LOG_ERROR("Asked to remove answers to null question UID from session","");
+    
+    for(int i=0;i<ses->answer_count;i++)
+      while ((i<ses->answer_count)&&(!strcmp(ses->answers[i]->uid,uid)))
+	{
+	  // Delete matching questions
+	  free_answer(ses->answers[i]);
+	  ses->answer_count--;
+	  for(int j=i;j<ses->answer_count;j++)
+	    ses->answers[j]=ses->answers[j+1];
+	  ses->answers[ses->answer_count]=0;
+	}
+    if (retVal) break;	  
+
+    if (!retVal) retVal=deletions;
+  } while(0);
+  return retVal;
+}
+
+int session_delete_answer(struct session *ses,struct answer *a)
+{
+  int retVal=0;
+  int deletions=0;
+  do {
+    if (!ses) LOG_ERROR("Session structure is NULL","");
+    if (!a) LOG_ERROR("Asked to remove null answer from session","");
+    
+    for(int i=0;i<ses->answer_count;i++)
+      while ((i<ses->answer_count)&&(!compare_answers(a,ses->answers[i],MISMATCH_IS_NOT_AN_ERROR)))
+	{
+	  // Delete matching questions
+	  free_answer(ses->answers[i]);
+	  ses->answer_count--;
+	  for(int j=i;j<ses->answer_count;j++)
+	    ses->answers[j]=ses->answers[j+1];
+	  ses->answers[ses->answer_count]=0;
+	}
+    if (retVal) break;	  
+
+    if (!retVal) retVal=deletions;
+  } while(0);
+  return retVal;
+}

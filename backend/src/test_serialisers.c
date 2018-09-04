@@ -200,7 +200,7 @@ int main(int argc,char **argv)
 	else if ((!deserialise_result)&&qst[i].shouldPassP) {
 	  // Deserialised successfully, so make sure the field values
 	  // all match
-	  if (compare_questions(&d,&qst[i].question)) {
+	  if (compare_questions(&d,&qst[i].question,MISMATCH_IS_AN_ERROR)) {
 	    fprintf(stderr,"\r[FAIL \n  FAIL: Original and serialised-then-deserialised question structures differ\n");
 	    dump_question(stderr,"Deserialised result",&d);
 	    dump_question(stderr,"Expected result",&qst[i].question);

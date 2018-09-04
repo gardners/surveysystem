@@ -361,11 +361,11 @@ int deserialise_answer(char *in,struct answer *a)
 
 
 
-#define COMPARE_INT(S) { if (q1->S>q2->S) { LOG_ERROR(#S " fields do not match",""); }  else if (q1->S<q2->S) { LOG_ERROR(#S " fields do not match",""); } else retVal=0; if (retVal) break; }
+#define COMPARE_INT(S) { if (q1->S>q2->S) { LOG_MAYBE_ERROR(mismatchIsError,#S " fields do not match",""); }  else if (q1->S<q2->S) { LOG_MAYBE_ERROR(mismatchIsError,#S " fields do not match",""); } else retVal=0; if (retVal) break; }
 #define COMPARE_LONGLONG(S) COMPARE_INT(S)
-#define COMPARE_STRING(S) { if ((!q1->S)||(!q2->S)) { LOG_ERROR( #S " fields dot not match",""); } else { if (strcmp(q1->S,q2->S)) { fprintf(stderr,#S " fields do not match\n");  LOG_ERROR(#S " fields do not match",""); }  } }
+#define COMPARE_STRING(S) { if ((!q1->S)||(!q2->S)) { LOG_MAYBE_ERROR(mismatchIsError, #S " fields dot not match",""); } else { if (strcmp(q1->S,q2->S)) { fprintf(stderr,#S " fields do not match\n");  LOG_MAYBE_ERROR(mismatchIsError,#S " fields do not match",""); }  } }
 
-int compare_questions(struct question *q1, struct question *q2)
+int compare_questions(struct question *q1, struct question *q2, int mismatchIsError)
 {
   int retVal=0;
   do {
@@ -379,6 +379,24 @@ int compare_questions(struct question *q1, struct question *q2)
     COMPARE_LONGLONG(max_value);
     COMPARE_INT(decimal_places);
     COMPARE_INT(num_choices);
+    
+  } while(0);
+  return retVal;
+}
+
+int compare_answers(struct answer *q1, struct answer *q2, int mismatchIsError)
+{
+  int retVal=0;
+  do {
+    COMPARE_STRING(uid);
+    COMPARE_STRING(text);
+    COMPARE_LONGLONG(value);
+    COMPARE_LONGLONG(lat);
+    COMPARE_LONGLONG(lon);
+    COMPARE_LONGLONG(time_begin);
+    COMPARE_LONGLONG(time_end);
+    COMPARE_INT(time_zone_delta);
+    COMPARE_INT(dst_delta);
     
   } while(0);
   return retVal;
