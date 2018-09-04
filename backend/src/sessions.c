@@ -346,6 +346,14 @@ void free_session(struct session *s)
   return;
 }
 
+void trim_crlf(char *line)
+{
+  if (!line) return;
+  int len=strlen(line);
+  while (len&&(line[len-1]=='\n'||line[len-1]=='\r')) line[--len]=0;
+  return;
+}
+
 int load_survey_questions(struct session *ses)
 {
   int retVal=0;
@@ -379,13 +387,33 @@ int load_survey_questions(struct session *ses)
     // Get survey file description
     line[0]=0;fgets(line,8192,f);
     if (!line[0]) LOG_ERROR("Failed to read survey description in survey specification file",survey_path);
-    int len=strlen(line);
     // Trim CR and LF chars from description
-    while (len&&(line[len-1]=='\n'||line[len-1]=='\r')) line[--len]=0;
+    trim_crlf(line);
     ses->survey_description=strdup(line);
     if (!ses->survey_description) LOG_ERROR("strdup(survey_description) failed when loading survey file",survey_path);
 
     fprintf(stderr,"Survey description is '%s'\n",ses->survey_description);
+
+    // Now read questions
+    do {
+      line[0]=0;fgets(line,8192,f);
+      if (!line[0]) break;
+
+      if (ses->question_count>=MAX_QUESTIONS) LOG_ERROR("Too many questions in survey (increase MAX_QUESTIONS?)",survey_path);
+      
+      struct question *q=calloc(sizeof(struct question),1);
+      if (!q) LOG_ERROR("calloc(struct question) failed while loading survey question list",survey_path);
+
+      // Remove end of line markers
+      trim_crlf(line);
+
+      // Skip blank lines
+      if (!line[0]) continue;
+      
+      if (deserialise_question(line,q)) { free_question(q); q=NULL; LOG_ERROR("Error deserialising question in survey file",line); }
+      ses->questions[ses->question_count++]=q;
+      
+    } while(line[0]);
     
     fclose(f); f=NULL;    
   } while(0);
@@ -427,8 +455,7 @@ struct session *load_session(char *session_id)
     survey_id[0]=0; fgets(survey_id,1024,s);
     if (!survey_id[0]) { fclose(s); LOG_ERROR("Could not read survey ID from session file",session_path); }
     // Trim CR / LF characters from the end
-    while (survey_id[0]&&((survey_id[strlen(survey_id)-1]=='\n')
-			  ||(survey_id[strlen(survey_id)-1]=='\r'))) survey_id[strlen(survey_id)-1]=0;
+    trim_crlf(survey_id);
     fprintf(stderr,"Survey ID in session file is '%s'\n",survey_id);
 
     ses=calloc(sizeof(struct session),1);
@@ -450,7 +477,8 @@ struct session *load_session(char *session_id)
       if (!line[0]) break;
       int len=strlen(line);
       if (!len) LOG_ERROR("Empty line in session file",session_path);
-      if (line[len-1]!='\n'&&line[len-1]!='\r') LOG_ERROR("Line too long in session file (limit = 64K)",session_path);      
+      if (line[len-1]!='\n'&&line[len-1]!='\r') LOG_ERROR("Line too long in session file (limit = 64K)",session_path);
+      trim_crlf(line);
 
       // Add answer to list of answers
       if (ses->answer_count>=MAX_QUESTIONS) LOG_ERROR("Too many answers in session file (increase MAX_QUESTIONS?)",session_path);
