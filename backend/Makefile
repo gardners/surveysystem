@@ -7,12 +7,14 @@ STATICHEADERS=	Makefile \
 		$(INCDIR)/serialisers.h
 
 STATICSRCS=	$(SRCDIR)/serialisers.c \
+		$(SRCDIR)/nextquestion.c \
 		$(SRCDIR)/errorlog.c
 
 GENERATEDHEADERS=$(INCDIR)/question_types.h
 GENERATEDSRCS=	$(SRCDIR)/question_types.c
 
 COREOBJS=	$(SRCDIR)/errorlog.o \
+		$(SRCDIR)/nextquestion.o \
 		$(SRCDIR)/serialisers.o \
 		$(SRCDIR)/question_types.o
 TESTOBJS=	$(COREOBJS) \
