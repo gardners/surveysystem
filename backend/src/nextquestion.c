@@ -54,5 +54,5 @@ int get_next_questions(char *surveyname,char *session_uuid,struct question *q[],
 {
   // Work out which function to call to get the next question(s) to ask.
   // XXX - For now, just call the generic version
-  return get_next_questions(surveyname,session_uuid,q,a,next_questions,max_next_questions,next_question_count);
+  return get_next_questions_generic(surveyname,session_uuid,q,a,next_questions,max_next_questions,next_question_count);
 }
