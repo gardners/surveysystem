@@ -111,16 +111,27 @@ int create_session(char *survey_id,char *session_id_out)
       time_t t=time(0);
       unsigned int time_low=t&0xffffffffU;
       unsigned int time_high=(t>>32L);
-      snprintf(session_id,64,"%08x-%04x-%04x-%04x-%02x%02x%02x%02x%02x%02x",
-	       time_low,
+
+      // Our session IDs look like RFD 4122 UUIDs, and are mostly the same,
+      // except we put randomness at the front of the string, since we use
+      // that to workout which directory each lives in, and we want them
+      // evenly distributed from the outset, instead of directories being
+      // filled up one at a time as time advances
+      snprintf(session_id,64,"%02x%02x%04x-%04x-%04x-%04x-%02x%02x%02x%02x%02x%02x",
+	       // Here is that randomness at the start
+	       hash[6],hash[7],
+	       time_low&0xffff,
 	       (time_high>>16)&0xffff,
 	       (0x0<<12)+((time_high>>12)&0xfff),
+	       // Also, we use the process ID as the clock sequence and related things field
 	       getpid()&0xffff,
 	       hash[0],hash[1],hash[2],hash[3],hash[4],hash[5]);
     }
     
     snprintf(session_path_suffix,1024,"sessions/%s/%s",session_prefix,session_id);
     if (generate_path(session_path_suffix,session_path,1024)) LOG_ERROR("generate_path() failed to build path for new session",survey_id);
+
+
     
   } while(0);
 
