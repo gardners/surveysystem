@@ -103,6 +103,7 @@ struct answer {
 #define MAX_QUESTIONS 8192
 struct session {
   char *survey_id;
+  char *survey_description;
   char *session_id;
   struct question *questions[MAX_QUESTIONS];
   struct answer *answers[MAX_QUESTIONS];
