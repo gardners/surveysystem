@@ -186,9 +186,73 @@ int create_session(char *survey_id,char *session_id_out)
 
     if (validate_survey_id(survey_id)) LOG_ERROR("Invalid survey ID","");
     
-    snprintf(session_path_suffix,1024,"surveys/%s",survey_id);
+    snprintf(session_path_suffix,1024,"surveys/%s/current",survey_id);
     if (generate_path(session_path_suffix,session_path,1024)) LOG_ERROR("generate_path() failed to build path for new session",survey_id);
     if ( access( session_path, F_OK ) == -1 ) LOG_ERROR("Survey does not exist",survey_id);
+    // Get sha1 hash of survey file
+    char survey_sha1[1024];
+    if (sha1_file(session_path,survey_sha1)) LOG_ERROR("Could not hash survey specification file",session_path);
+
+    snprintf(session_path_suffix,1024,"surveys/%s/%s",survey_id,survey_sha1);
+    if (generate_path(session_path_suffix,session_path,1024)) LOG_ERROR("generate_path() failed to build path for new session",survey_id);
+    if ( access( session_path, F_OK ) == -1 ) {
+      // No copy of the survey exists with the hash, so make one.
+      // To avoid a race condition where the current survey form could be modified,
+      // we copy it, and hash it as we go, and rename the copy based on the hash value
+      // of what we read.
+
+      // Open input file
+      snprintf(session_path_suffix,1024,"surveys/%s/current",survey_id);
+      if (generate_path(session_path_suffix,session_path,1024)) LOG_ERROR("generate_path() failed to build path for new session",survey_id);
+      FILE *in=fopen(session_path,"r");
+      if (!in) LOG_ERROR("Could not read from survey specification file",survey_id);
+      
+      // So make a hopefully unique name for the temporary file
+      char temp_path[1024];
+      snprintf(session_path_suffix,1024,"surveys/%s/temp.%lld.%d.%s",survey_id,(long long)time(0),getpid(),survey_sha1);
+      if (generate_path(session_path_suffix,temp_path,1024))
+	{
+	  fclose(in);
+	  LOG_ERROR("generate_path() failed to build path for new session",survey_id);
+	}
+      FILE *c=fopen(temp_path,"w");
+      if (!c) {
+	fclose(in);
+	LOG_ERROR("Could not create temporary file",temp_path);
+      }
+
+      char buffer[8192];
+      int count;
+      sha1nfo s;
+      sha1_init(&s);
+      
+      do {
+	count=fread(buffer,1,8192,in);
+	if (count<0) LOG_ERROR("Error hashing file",session_path);
+	if (count>0) {
+	  sha1_write(&s,buffer,count);
+	  int wrote=fwrite(buffer,count,1,c);
+	  if (wrote!=count) {
+	    fclose(in);
+	    fclose(c);
+	    unlink(temp_path);
+	    LOG_ERROR("Failed to write all bytes during survey specification copy",temp_path);
+	  }
+	}
+	if (retVal) break;
+      } while(count>0);
+            
+      fclose(in);
+      fclose(c);
+
+      // Rename temporary file
+      snprintf(session_path_suffix,1024,"surveys/%s/%s",survey_id,survey_sha1);
+      if (generate_path(session_path_suffix,session_path,1024)) LOG_ERROR("generate_path() failed to build path for new session",survey_id);
+
+      if (rename(temp_path,session_path)) LOG_ERROR("Could not rename survey specification copy to name of hash",session_path);
+      
+    }
+    
     
     // Generate new unique session ID
     int tries=0;
@@ -225,7 +289,9 @@ int create_session(char *survey_id,char *session_id_out)
     FILE *f=fopen(session_path,"w");
     if (!f) LOG_ERROR("Cannot create new session file","");
 
-    fprintf(f,"%s\n",survey_id);
+    // Write survey_id to new empty session.
+    // This must take the form <survey id>/<sha1 hash of current version of survey>
+    fprintf(f,"%s/%s\n",survey_id,survey_sha1);
     
     fclose(f);
     
@@ -255,6 +321,13 @@ struct session *load_session(char *session_id)
     FILE *s=fopen(session_path,"r");
     if (!s) LOG_ERROR("Could not read session file",session_path);
 
+    // Session file consists of:
+    // First line = survey name in form <survey id>/<sha1 hash>
+    // (this allows the survey to change without messing up sessions that are
+    // in progress).
+    // Subesequent lines:
+    // <timestamp in seconds since 1970> <add|del> <serialised answer>
+    
     LOG_ERROR("load_session() not implemented","COMPLETE ME");
     
     fclose(s);
