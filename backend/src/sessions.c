@@ -127,13 +127,107 @@ int create_session(char *survey_id,char *session_id_out)
 	       getpid()&0xffff,
 	       hash[0],hash[1],hash[2],hash[3],hash[4],hash[5]);
     }
-    
+
     snprintf(session_path_suffix,1024,"sessions/%s/%s",session_prefix,session_id);
     if (generate_path(session_path_suffix,session_path,1024)) LOG_ERROR("generate_path() failed to build path for new session",survey_id);
 
-
+    // Check if session already exists
     
   } while(0);
 
+  return retVal;
+}
+
+int validate_session_id(char *session_id)
+{
+  int retVal=0;
+  do {
+    if (strlen(session_id)!=30) LOG_ERROR("session_id must be exactly 30 characters long",session_id);
+    for(int i=0;session_id[i];i++)
+      switch (session_id[i]) {
+      case '0': case '1': case '2': case '3':
+      case '4': case '5': case '6': case '7':
+      case '8': case '9': case 'a': case 'b':
+      case 'c': case 'd': case 'e': case 'f':
+      case '-':
+	// Acceptable characters
+	break;
+      case 'A': case 'B': case 'C': case 'D':
+      case 'E': case 'F':
+	LOG_ERROR("session_id must be lower case",session_id);
+	break;
+      default:
+	LOG_ERROR("Illegal character in session_id. Must be a valid UUID",session_id);
+	break;
+      }
+  } while(0);
+  return retVal;
+}
+
+struct session *load_session(char *session_id)
+{
+  int retVal=0;
+  do {
+    if (!session_id) LOG_ERROR("session_id is NULL","");
+
+    if (validate_session_id(session_id)) LOG_ERROR("validate_session_id failed",session_id);
+
+    char session_path[1024];
+    char session_path_suffix[1024];
+    char session_prefix[5];
+    for(int i=0;i<4;i++) session_prefix[i]=session_id[i];
+    session_prefix[4]=0;
+    
+    snprintf(session_path_suffix,1024,"sessions/%s/%s",session_prefix,session_id);
+    if (generate_path(session_path_suffix,session_path,1024))
+      LOG_ERROR("generate_path() failed to build path for loading session",session_id);
+
+    FILE *s=fopen(session_path,"r");
+    if (!s) LOG_ERROR("Could not read session file",session_path);
+
+    LOG_ERROR("load_session() not implemented","COMPLETE ME");
+    
+    fclose(s);
+    
+  } while(0);
+  return NULL;
+}
+
+int save_session(struct session *s)
+{
+  int retVal=0;
+  do {
+    if (!s) LOG_ERROR("session structure is NULL","");
+    if (s->session_id) LOG_ERROR("s->session_id is NULL","");
+
+    if (validate_session_id(s->session_id)) LOG_ERROR("validate_session_id failed",s->session_id);
+
+    char session_path[1024];
+    char session_path_suffix[1024];
+    char session_prefix[5];
+    for(int i=0;i<4;i++) session_prefix[i]=s->session_id[i];
+    session_prefix[4]=0;
+    
+    snprintf(session_path_suffix,1024,"sessions/%s/%s",session_prefix,s->session_id);
+    if (generate_path(session_path_suffix,session_path,1024))
+      LOG_ERROR("generate_path() failed to build path for loading session",s->session_id);
+
+    FILE *s=fopen(session_path,"w");
+    if (!s) LOG_ERROR("Could not create or open session file for write",session_path);
+
+    LOG_ERROR("save_session() not implemented","COMPLETE ME");
+    
+    fclose(s);
+    
+  } while(0);
+  return retVal;
+}
+
+int session_add_answer(struct session *s,struct answer *a)
+{
+  int retVal=0;
+  do {
+    LOG_ERROR("Not implemented","");
+  } while(0);
   return retVal;
 }
