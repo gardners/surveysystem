@@ -26,10 +26,8 @@ int main(int argc,char **argv)
     if (!strcmp(argv[1],"newsession")) {
       if (argc!=3) { usage(); retVal=-1; break; }
       char session_id[1024];
-      int r=create_session(argv[2],session_id);
-      if (r) LOG_ERROR("new_session() failed","");
-      printf("%s\n",session_id);
-
+      if (create_session(argv[2],session_id)) LOG_ERROR("create_session() failed","");
+      if (!retVal) printf("%s\n",session_id);
     } else if (!strcmp(argv[1],"addanswer")) {
       if (argc!=4) { usage(); retVal=-1; break; }
       char *session_id=argv[2];
@@ -59,6 +57,10 @@ int main(int argc,char **argv)
 
     } else { usage(); retVal=-1; break; }
   } while(0);
-  
+
+  if (retVal) {
+    fprintf(stderr,"Command failed:\n");
+    dump_errors(stderr);
+  }
   return retVal;
 }

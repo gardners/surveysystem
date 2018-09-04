@@ -93,7 +93,7 @@ int create_session(char *survey_id,char *session_id_out)
   
   do {
     char session_id[256];
-    char session_prefix[256];
+    char session_prefix[5];
     char session_path_suffix[1024];
     char session_path[1024];
 
@@ -127,11 +127,16 @@ int create_session(char *survey_id,char *session_id_out)
 	       getpid()&0xffff,
 	       hash[0],hash[1],hash[2],hash[3],hash[4],hash[5]);
     }
+    fprintf(stderr,"session_id='%s'\n",session_id);
 
+    for(int i=0;i<4;i++) session_prefix[i]=session_id[i];
+    session_prefix[4]=0;
+    
     snprintf(session_path_suffix,1024,"sessions/%s/%s",session_prefix,session_id);
     if (generate_path(session_path_suffix,session_path,1024)) LOG_ERROR("generate_path() failed to build path for new session",survey_id);
 
     // Check if session already exists
+    fprintf(stderr,"Considering session '%s'\n",session_path);
     
   } while(0);
 
