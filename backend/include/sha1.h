@@ -36,3 +36,4 @@ void sha1_initHmac(sha1nfo *s, const uint8_t* key, int keyLength);
  */
 uint8_t* sha1_resultHmac(sha1nfo *s);
 
+int sha1_file(const char *filename,char *hash);

@@ -3,6 +3,7 @@
  */
 // gcc -Wall -DSHA1TEST -o sha1test sha1.c && ./sha1test
 
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include "code_instrumentation.h"
@@ -356,6 +357,42 @@ uint8_t* sha1_resultHmac(sha1nfo *s) {
 	LOG_EXIT;
 
 	return retVal;
+}
+
+int sha1_file(const char *filename,char *hash)
+{
+  int retVal=0;
+  do {
+    if (!filename) LOG_ERROR("filename is NULL","");
+    if (!hash) LOG_ERROR("hash is NULL","");
+
+    FILE *f=fopen(filename,"r");
+    if (!f) LOG_ERROR("Could not open file for hashing",filename);
+    char buffer[8192];
+    int count;
+    sha1nfo s;
+    sha1_init(&s);
+    do {
+      count=fread(buffer,1,8192,f);
+      if (count<0) LOG_ERROR("Error hashing file",filename);
+      if (count>0) sha1_write(&s,buffer,count);
+    } while(count>0);
+    
+    fclose(f);
+
+    if (retVal) break;
+    
+    unsigned char *bytes=sha1_result(&s);
+    snprintf(hash,HASH_LENGTH*2+1,
+	     "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+	     bytes[0],bytes[1],bytes[2],bytes[3],bytes[4],
+	     bytes[5],bytes[6],bytes[7],bytes[8],bytes[9],
+	     bytes[10],bytes[11],bytes[12],bytes[13],bytes[14],
+	     bytes[15],bytes[16],bytes[17],bytes[18],bytes[19]);
+
+    
+  } while(0);
+  return retVal;
 }
 
 /* self-test */
