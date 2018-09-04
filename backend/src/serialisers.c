@@ -316,6 +316,7 @@ int serialise_answer(struct answer *a,char *out,int max_len)
     SERIALISE_BEGIN(out,len,max_len);
     
     SERIALISE_STRING(a->uid);
+    SERIALISE_STRING(a->text);
     SERIALISE_LONGLONG(a->value);
     SERIALISE_LONGLONG(a->lat);
     SERIALISE_LONGLONG(a->lon);
@@ -340,6 +341,7 @@ int deserialise_answer(char *in,struct answer *a)
     DESERIALISE_BEGIN(out,len,max_len);
 
     DESERIALISE_STRING(a->uid);
+    DESERIALISE_STRING(a->text);
     DESERIALISE_LONGLONG(a->value);
     DESERIALISE_LONGLONG(a->lat);
     DESERIALISE_LONGLONG(a->lon);
