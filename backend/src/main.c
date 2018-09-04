@@ -32,10 +32,11 @@ int main(int argc,char **argv)
       if (argc!=4) { usage(); retVal=-1; break; }
       char *session_id=argv[2];
       char *serialised_answer=argv[3];
+      struct session *s=load_session(session_id);
+      if (!s) LOG_ERROR("load_session failed",session_id);
       struct answer a;
       bzero(&a,sizeof(struct answer));
       if (deserialise_answer(serialised_answer,&a)) LOG_ERROR("deserialise_answer() failed",serialised_answer);
-      struct session *s=load_session(session_id);
       if (!s) LOG_ERROR("load_session() failed",session_id);
       if (session_add_answer(s,&a)) LOG_ERROR("session_add_answer() failed","");
       if (save_session(s)) LOG_ERROR("save_session() failed",session_id);
