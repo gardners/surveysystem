@@ -332,6 +332,33 @@ int serialise_answer(struct answer *a,char *out,int max_len)
   return retVal;
 }
 
+int deserialise_answer(char *in,struct answer *a)
+{
+  int retVal=0;
+  int len=0;
+  do {
+    DESERIALISE_BEGIN(out,len,max_len);
+
+    DESERIALISE_STRING(a->uid);
+    DESERIALISE_LONGLONG(a->value);
+    DESERIALISE_LONGLONG(a->lat);
+    DESERIALISE_LONGLONG(a->lon);
+    DESERIALISE_LONGLONG(a->time_begin);
+    DESERIALISE_LONGLONG(a->time_end);
+    DESERIALISE_INT(a->time_zone_delta);
+    DESERIALISE_INT(a->dst_delta);
+
+
+    // Check that we are at the end of the input string
+    DESERIALISE_COMPLETE(out,len,max_len);
+    
+  } while(0);
+
+  return retVal;
+}
+
+
+
 #define COMPARE_INT(S) { if (q1->S>q2->S) { LOG_ERROR(#S " fields do not match",""); }  else if (q1->S<q2->S) { LOG_ERROR(#S " fields do not match",""); } else retVal=0; if (retVal) break; }
 #define COMPARE_LONGLONG(S) COMPARE_INT(S)
 #define COMPARE_STRING(S) { if ((!q1->S)||(!q2->S)) { LOG_ERROR( #S " fields dot not match",""); } else { if (strcmp(q1->S,q2->S)) { fprintf(stderr,#S " fields do not match\n");  LOG_ERROR(#S " fields do not match",""); }  } }
