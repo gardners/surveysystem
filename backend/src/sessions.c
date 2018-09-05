@@ -16,7 +16,13 @@
 #include "question_types.h"
 #include "sha1.h"
 
-
+/*
+  Verify that a session ID does not contain any illegal characters.
+  We allow only hex and the dash character.
+  The main objective is to disallow colons and slashes, to 
+  prevent subverting the CSV file format or the formation of file names
+  and paths.
+*/
 int validate_session_id(char *session_id)
 {
   int retVal=0;
@@ -45,6 +51,13 @@ int validate_session_id(char *session_id)
   return retVal;
 }
 
+/*
+  Similarly, here we make sure that a survey ID contains no disallowed characters. 
+  We allow undderscore and space as well as dash and period, to allow some greater
+  freedom when specifying the symbolic name of a survey (form).  We naturally also
+  allow all upper and lower case latin characters, rather than just hexadecimal
+  characters.
+*/
 int validate_survey_id(char *survey_id)
 {
   int retVal=0;
@@ -64,6 +77,9 @@ int validate_survey_id(char *survey_id)
   return retVal;
 }
 
+/*
+  Get len bytes from the cryptographically secure randomness source.
+ */
 int urandombytes(unsigned char *buf, size_t len)
 {
   int retVal = -1;
@@ -138,6 +154,12 @@ int urandombytes(unsigned char *buf, size_t len)
   return retVal;
 }
 
+/*
+  Generate a random (and hopefully unique) session ID.
+  Our session IDs are modelled on RFC 4122 UUIDs, but are not exactly
+  the same, largely out of convenience of implementation. There is nothing
+  stopping us moving to full compliance as time permits.
+ */
 int random_session_id(char *session_id_out)
 {
   int retVal=0;
@@ -154,7 +176,7 @@ int random_session_id(char *session_id_out)
     unsigned int time_low=t&0xffffffffU;
     unsigned int time_high=(t>>32L);
     
-    // Our session IDs look like RFD 4122 UUIDs, and are mostly the same,
+    // Our session IDs look like RFC 4122 UUIDs, and are mostly the same,
     // except we put randomness at the front of the string, since we use
     // that to workout which directory each lives in, and we want them
     // evenly distributed from the outset, instead of directories being
@@ -173,6 +195,23 @@ int random_session_id(char *session_id_out)
   return retVal;
 }
 
+/*
+  Create a new session for a given form, and return the new session ID
+  via session_id_out.  This creates the session record file, as well as
+  making sure that the survey exists, and if the exact version of the survey
+  has not yet been recorded persistently, it makes a copy of it named as the
+  SHA1 hash of the survey definition.  This allows the survey definition in
+  surveys/survey_id/current to be freely modified, and any existing sessions
+  will continue to use the version of the survey that they were created under,
+  unless you modify the session record file to point to the new session.
+
+  (If you have added or deleted questions, that might cause complicated problems,
+  so we don't do that automatically. As time allows, we can create a session
+  upgrade function, that checks if the current version of the form is logically
+  equivalent (same set of question UIDs and question types for all questions that
+  have been answered), and if so, updates the session to use the latest version.
+  This could even be implemented in load_session().)
+ */
 int create_session(char *survey_id,char *session_id_out)
 {
   int retVal=0;
@@ -302,6 +341,10 @@ int create_session(char *survey_id,char *session_id_out)
   return retVal;
 }
 
+/* 
+   The opposite of create_session().  It will complain if the session does not exist,
+   or cannot be deleted.
+*/
 int delete_session(char *session_id)
 {
   int retVal=0;
@@ -331,7 +374,11 @@ int delete_session(char *session_id)
   return retVal;
 }
 
-
+/*
+  Various functions for freeing data structures.
+  freez() is the same as free(), but just checks to make sure that it hasn't been
+  passed a null pointer.  This makes the latter functions a little simpler.
+ */
 void freez(void *p)
 {
   if (p) free(p);
@@ -377,6 +424,9 @@ void free_session(struct session *s)
   return;
 }
 
+/*
+  Remove any trailing line feed or carriage returns from the input string.
+ */
 void trim_crlf(char *line)
 {
   if (!line) return;
@@ -385,6 +435,10 @@ void trim_crlf(char *line)
   return;
 }
 
+/*
+  Load and deserialise the set of questions for the form corresponding to
+  this session.
+ */
 int load_survey_questions(struct session *ses)
 {
   int retVal=0;
@@ -452,6 +506,10 @@ int load_survey_questions(struct session *ses)
   return retVal;
 }
 
+/*
+  Load the specified session, and return the corresponding session structure.
+  This will load not only the answers, but also the full set of questions.
+ */
 struct session *load_session(char *session_id)
 {
   int retVal=0;
@@ -531,6 +589,10 @@ struct session *load_session(char *session_id)
   return ses;
 }
 
+/*
+  Save the provided session, including all provided answers.
+  Questions are not saved, as they are part of the survey, i.e., form specification.
+ */
 int save_session(struct session *s)
 {
   int retVal=0;
@@ -568,6 +630,10 @@ int save_session(struct session *s)
   return retVal;
 }
 
+/*
+  Add the provided answer to the set of answers in the provided session.
+  If another answer exists for the same question, it will trigger an error.
+ */
 int session_add_answer(struct session *ses,struct answer *a)
 {
   int retVal=0;
@@ -590,6 +656,10 @@ int session_add_answer(struct session *ses,struct answer *a)
   return retVal;
 }
 
+/*
+  Delete any and all answers to a given question from the provided session structure.
+  It is not an error if there were no matching answers to delete
+*/
 int session_delete_answers_by_question_uid(struct session *ses,char *uid)
 {
   int retVal=0;
@@ -615,6 +685,11 @@ int session_delete_answers_by_question_uid(struct session *ses,char *uid)
   return retVal;
 }
 
+/*
+  Delete exactly the provided answer from the provided session,
+  and return the number of answers deleted.
+  If there is no exactly matching answer, it will return 0.
+ */
 int session_delete_answer(struct session *ses,struct answer *a)
 {
   int retVal=0;
