@@ -116,9 +116,13 @@ int generate_path(char *path_in,char *path_out,int max_len);
 int get_next_questions(char *surveyname,char *session_uuid,struct question *q[],struct answer *a[],
 		       struct question *next_questions_out[],int max_next_questions,int *next_question_count_out);
 int create_session(char *survey_id,char *session_id_out);
+int delete_session(char *session_id);
 struct session *load_session(char *session_id);
 int save_session(struct session *s);
 int session_add_answer(struct session *s,struct answer *a);
 int session_delete_answer(struct session *s,struct answer *a);
 int session_delete_answers_by_question_uid(struct session *ses,char *uid);
 int delete_session(char *session_id);
+void free_session(struct session *s);
+void free_question(struct question *q);
+void free_answer(struct answer *a);
