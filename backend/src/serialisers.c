@@ -13,6 +13,9 @@
 
 #define REPORT_IF_FAILED() { if (retVal) fprintf(stderr,"%s:%d: %s() failed.\n",__FILE__,__LINE__,__FUNCTION__); }
 
+/*
+  Escape a string so that it can be safely embedded in a CSV file, that uses colons as delimeters 
+*/
 int escape_string(char *in,char *out,int max_len)
 {
   int retVal=0;
@@ -42,6 +45,9 @@ int escape_string(char *in,char *out,int max_len)
   return retVal;
 }
 
+/*
+  Write out an integer in a format that can be embedded in a CSV file 
+*/
 int serialise_int(int in,char *out,int max_len)
 {
   int retVal=0;
@@ -54,6 +60,9 @@ int serialise_int(int in,char *out,int max_len)
   return retVal;
 }
 
+/*
+  Write out a 64-bit integer in a format that can be embedded in a CSV file 
+*/
 int serialise_longlong(long long in,char *out,int max_len)
 {
   int retVal=0;
@@ -66,6 +75,9 @@ int serialise_longlong(long long in,char *out,int max_len)
   return retVal;
 }
 
+/*
+  Check if adding append_len to existing_len would exceed max_len
+*/
 int space_check(int append_len,int existing_len,int max_len)
 {
   int retVal=0;
@@ -75,6 +87,12 @@ int space_check(int append_len,int existing_len,int max_len)
   return retVal;
 }
 
+/*
+  Parse the next colon delimited field from the input
+  string in, at position *in_offset.
+  De-escape colons and selected control characters that we
+  allow.
+*/
 int deserialise_parse_field(char *in,int *in_offset,char *out)
 {
   int retVal=0;
@@ -123,6 +141,9 @@ int deserialise_parse_field(char *in,int *in_offset,char *out)
   return retVal;  
 }
 
+/*
+  Take an integer from a CSV field, and turn it back into a C int
+*/
 int deserialise_int(char *field,int *s)
 {
   int retVal=0;
@@ -139,6 +160,9 @@ int deserialise_int(char *field,int *s)
   return retVal;
 }
 
+/*
+  Take a 64-bit integer from a CSV field, and turn it back into a C long long
+*/
 int deserialise_longlong(char *field,long long *s)
 {
   int retVal=0;
@@ -155,7 +179,13 @@ int deserialise_longlong(char *field,long long *s)
   return retVal;
 }
 
-
+/*
+  Take a string from a CSV field, and store it in a C char *.
+  (This is mostly a pass-through, and exists so that there is a common
+  interface for all deserialisation functions, so that the short-hand macros
+  can be used to make the top-level serialisation and deserialisation code
+  work.
+*/
 int deserialise_string(char *field,char **s)
 {
   int retVal=0;
@@ -168,6 +198,23 @@ int deserialise_string(char *field,char **s)
   return retVal;
 }
 
+/*
+  A set of macros that we use to perform deserialisation.
+  _BEGIN sets up the necessary environment, including providing the
+  string buffer to store each parsesd field.
+  _COMPLETE ends the same, and checks that we used the entire string.
+  _NEXT_FIELD parses out the next field, ready for reconstituting.
+  _THING calls _NEXT_FIELD, and then calls the appropriate deserialiser
+  to parse the field, and store it into the correct field of the data
+  structure.
+  The remaining three are wrappers for _THING that provide the most
+  common deserialisers as arguments, to make the high-level deserialisation
+  code as simple as possible.
+
+  All macros eventually will call LOG_ERROR and break out of the parsing
+  if any error occurs, and will record the specific error, making it much easier
+  to debug when things go wrong.
+*/
 #define DESERIALISE_BEGIN(O,L,ML) { int offset=0; char field[16384]; 
 #define DESERIALISE_COMPLETE(O,L,ML) if (offset<L) { LOG_ERROR("Junk at end of serialised object",""); } }
 #define DESERIALISE_NEXT_FIELD() if (deserialise_parse_field(in,&offset,field)) { LOG_ERROR("failed to parse next field",&in[offset]); }
@@ -178,7 +225,19 @@ int deserialise_string(char *field,char **s)
 #define DESERIALISE_STRING(S) DESERIALISE_THING(S,deserialise_string);
 #define DESERIALISE_LONGLONG(S) DESERIALISE_THING(S,deserialise_longlong)
 
+/*
+  We then have a similar set of macros for the serialisation process.
+  APPEND_STRING and APPEND_COLON append to the serialised string being
+  built.
 
+  We then have _BEGIN and _COMPLETE macros, similar for deserialisation.
+  Also, the _THING and derivative macros perform the opposite of the 
+  DESERIALISE_* equivalents.  The result is that the serialiser and 
+  deserialiser code at the top level looks almosts identical, except for
+  the DE prefix on the macros for deserialising.  This is designed to help
+  keep the serialiser and deserialiser functions for given structures in
+  step, even if the structure contents evolves over time.
+*/
 #define APPEND_STRING(NEW,NL,O,L) { strcpy(&O[L],NEW); L+=NL; }
 
 #define APPEND_COLON(O,L,ML) { if (space_check(1,L,ML)) { LOG_ERROR("serialised string too long",""); } O[L++]=':'; O[L]=0; }
@@ -198,6 +257,10 @@ int deserialise_string(char *field,char **s)
 #define SERIALISE_INT(S) SERIALISE_THING(S,serialise_int);
 #define SERIALISE_LONGLONG(S) SERIALISE_THING(S,serialise_longlong);
 
+/*
+  Question types are an ENUM, and for clarity in the question definitions we
+  store the strings rather than uninteligible ENUM index values.
+ */
 int serialise_question_type(int qt,char *out,int out_max_len)
 {
   int retVal=0;
@@ -229,6 +292,11 @@ int deserialise_question_type(char *field,int *s)
   return retVal;  
 }
 
+/*
+  Top-level function for serialising a question that has been passed in
+  in a struct question.  It uses the various macros defined above to 
+  make a very clear and succinct description of what is required.
+*/
 int serialise_question(struct question *q,char *out,int max_len)
 {
   int retVal=0;
@@ -255,6 +323,10 @@ int serialise_question(struct question *q,char *out,int max_len)
   return retVal;
 }
 
+/*
+  For debugging it can be helpful to dump a question structure to
+  stdout or a file. 
+*/
 int dump_question(FILE *f,char *msg,struct question *q)
 {
   int retVal=0;
@@ -282,6 +354,12 @@ int dump_question(FILE *f,char *msg,struct question *q)
   return retVal;
 }
 
+/*
+  This should match exactly the field order and types as used
+  in serialise_question(), so that it can reconstute a 
+  question structure from a serialised string version of a
+  question.
+ */
 int deserialise_question(char *in,struct question *q)
 {
   int retVal=0;
@@ -308,6 +386,9 @@ int deserialise_question(char *in,struct question *q)
   return retVal;
 }
 
+/*
+  Similar to serialise_question(), but for answer structures.
+ */
 int serialise_answer(struct answer *a,char *out,int max_len)
 {
   int retVal=0;
@@ -333,6 +414,13 @@ int serialise_answer(struct answer *a,char *out,int max_len)
   return retVal;
 }
 
+/*
+  The top-level function for converting a CSV string
+  representation of an answer structure back into a live
+  structure.  As with {de,}serialise_question(),
+  this function and serialise_answer() must be matched
+  in the order and list of fields that they process.
+ */
 int deserialise_answer(char *in,struct answer *a)
 {
   int retVal=0;
@@ -359,12 +447,21 @@ int deserialise_answer(char *in,struct answer *a)
   return retVal;
 }
 
-
-
+/*
+  The following macros make it easier to compare fields between two instances of 
+  a structure.
+ */
 #define COMPARE_INT(S) { if (q1->S>q2->S) { LOG_MAYBE_ERROR(mismatchIsError,#S " fields do not match",""); }  else if (q1->S<q2->S) { LOG_MAYBE_ERROR(mismatchIsError,#S " fields do not match",""); } else retVal=0; if (retVal) break; }
 #define COMPARE_LONGLONG(S) COMPARE_INT(S)
 #define COMPARE_STRING(S) { if ((!q1->S)||(!q2->S)) { LOG_MAYBE_ERROR(mismatchIsError, #S " fields dot not match",""); } else { if (strcmp(q1->S,q2->S)) { fprintf(stderr,#S " fields do not match\n");  LOG_MAYBE_ERROR(mismatchIsError,#S " fields do not match",""); }  } }
 
+/*
+  Using the above convenience macros, quickly compare all fields in a pair of
+  question structures, so that the semantic equivalence of them can be tested.
+  It returns 0 if the structures are equivalent, and -1 otherwise.
+  If mistmatchIsError is non-zero, then the error logging facility will record 
+  each difference.  Otherwise, mismatches are considered not to be an error.
+*/
 int compare_questions(struct question *q1, struct question *q2, int mismatchIsError)
 {
   int retVal=0;
@@ -384,6 +481,12 @@ int compare_questions(struct question *q1, struct question *q2, int mismatchIsEr
   return retVal;
 }
 
+/*
+  Similar to compare_question(), but for comparing answers.
+  (Note that because we are using the same convenience macros, the two
+  structures must be called q1 and q2, although they are answers, not
+  questions).
+ */
 int compare_answers(struct answer *q1, struct answer *q2, int mismatchIsError)
 {
   int retVal=0;
