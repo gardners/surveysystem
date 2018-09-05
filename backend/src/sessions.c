@@ -286,7 +286,7 @@ int create_session(char *survey_id,char *session_id_out)
 
     // Get full filename of session file again
     snprintf(session_path_suffix,1024,"sessions/%s/%s",session_prefix,session_id);
-    if (generate_path(session_path_suffix,session_path,1024)) LOG_ERROR("generate_path() failed to build path for new session",survey_id);
+    if (generate_path(session_path_suffix,session_path,1024)) LOG_ERROR("generate_path() failed to build path for new session of survey",survey_id);
     
     FILE *f=fopen(session_path,"w");
     if (!f) LOG_ERROR("Cannot create new session file","");
@@ -301,6 +301,36 @@ int create_session(char *survey_id,char *session_id_out)
 
   return retVal;
 }
+
+int delete_session(char *session_id)
+{
+  int retVal=0;
+  
+  do {
+    char session_prefix[5];
+    char session_path_suffix[1024];
+    char session_path[1024];
+
+    if (!session_id) LOG_ERROR("session_id is NULL","");
+
+    if (validate_session_id(session_id)) LOG_ERROR("Session ID is malformed",session_id);
+
+    for(int i=0;i<4;i++) session_prefix[i]=session_id[i];
+    session_prefix[4]=0;
+    
+    snprintf(session_path_suffix,1024,"sessions/%s/%s",session_prefix,session_id);
+    if (generate_path(session_path_suffix,session_path,1024)) LOG_ERROR("generate_path() failed to build path for new session",session_id);
+    
+    // Try again if session ID already exists
+    if ( access( session_path, F_OK ) == -1 ) LOG_ERROR("Session file does not exist",session_path);
+
+    if (unlink(session_path)) LOG_ERROR("unlink() failed",session_path);
+    
+  } while(0);
+
+  return retVal;
+}
+
 
 void freez(void *p)
 {

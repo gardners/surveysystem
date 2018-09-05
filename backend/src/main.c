@@ -97,6 +97,15 @@ int main(int argc,char **argv)
     } else if (!strcmp(argv[1],"delsession")) {
       if (argc!=3) { usage(); retVal=-1; break; }
 
+      char *session_id=argv[2];
+      
+      struct session *s=load_session(session_id);
+      if (!s) LOG_ERROR("load_session failed",session_id);
+
+      free_session(s);
+
+      if (delete_session(session_id)) LOG_ERROR("delete_session() failed",session_id);
+      
     } else { usage(); retVal=-1; break; }
   } while(0);
 
