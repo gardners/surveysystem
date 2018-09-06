@@ -130,7 +130,19 @@ int call_python_nextquestion(struct session *s,
     }
 
     // Okay, we have the function object, so build the argument list and call it.
-    PyObject* args = PyTuple_Pack(1,PyFloat_FromDouble(2.0));
+    PyObject* questions = PyList_New(s->question_count);
+    PyObject* answers = PyList_New(s->answer_count);
+
+    for(int i=0;i<s->question_count;i++) {
+      PyObject *item = PyUnicode_FromString(s->questions[i]->uid);
+      if (PyList_SetItem(questions,i,item)) {
+	Py_DECREF(item);
+	LOG_ERROR("Error inserting question name into Python list",s->questions[i]->uid); 
+      }
+    }
+    
+    PyObject* args = PyTuple_Pack(2,questions,answers);
+    
     PyObject* result = PyObject_CallObject(myFunction, args);
     Py_DECREF(args);
 
