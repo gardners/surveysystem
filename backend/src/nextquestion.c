@@ -82,6 +82,27 @@ int end_python(void)
   return retVal;
 }
 
+int mark_next_question(struct session *s,struct question *next_questions[],
+		       int *next_question_count,const char *uid)
+{
+  int retVal=0;
+  do {
+    int qn;
+    if (!s) LOG_ERROR("session structure is NULL","");
+    if (!next_questions) LOG_ERROR("next_questions is null","");
+    if (!next_question_count) LOG_ERROR("next_question_count is null","");
+    if (!uid) LOG_ERROR("question UID is null","");
+    if ((*next_question_count)>=MAX_QUESTIONS) LOG_ERROR("Too many questions in list.",uid);
+    
+    for(qn=0;qn<s->question_count;qn++)
+      if (!strcmp(s->questions[qn]->uid,uid)) break;
+    if (qn==s->question_count) LOG_ERROR("Asked to mark non-existent question UID",uid);
+    next_questions[*next_question_count]=s->questions[qn];
+    (*next_question_count)++;
+  } while(0);
+  return retVal;
+}
+
 int call_python_nextquestion(struct session *s,
 			     struct question *next_questions[],int max_next_questions,int *next_question_count)
 {
@@ -192,7 +213,21 @@ int call_python_nextquestion(struct session *s,
     }
     fprintf(stderr,"Got return value:\n");
     PyObject_Print(result,stderr,0);
-    
+    if (PyUnicode_Check(result)) {
+      // Get value and put it as single response
+      const char *question = PyUnicode_AsUTF8(result);
+      if (mark_next_question(s,next_questions,next_question_count,question)) {
+	is_error=1;
+	LOG_ERROR("Error adding question to list of next questions.  Is it a valid question UID?",question);
+      }
+    } else if (PyList_Check(result)) {
+      fprintf(stderr,"return value is a list \n");
+      // XXX Go through list adding values
+    } else {
+      LOG_ERROR("Return value from Python is neither string nor list.  Empty return should be an empty list.",function_name);
+      Py_DECREF(result);    
+    }
+
     Py_DECREF(result);    
   } while(0);
   if (is_error) retVal=-99;
