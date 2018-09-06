@@ -574,7 +574,7 @@ struct session *load_session(char *session_id)
 	LOG_ERROR("Failed to deserialise answer from session file",session_path);
       ses->answer_count++;
 
-    } while(0);
+    } while(line[0]);
     if (retVal) { fclose(s); if (ses) { free_session(ses); } ses=NULL; break; }
     
     fclose(s);
