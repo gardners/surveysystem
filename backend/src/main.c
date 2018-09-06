@@ -66,7 +66,7 @@ int main(int argc,char **argv)
       struct session *s=load_session(session_id);
       struct question *q[1024];
       int next_question_count=0;
-      if (get_next_questions(s->survey_id,session_id,s->questions,s->answers,q,1024,&next_question_count))
+      if (get_next_questions(s,q,1024,&next_question_count))
 	LOG_ERROR("get_next_questions() failed",session_id);
 
       printf("%d\n",next_question_count);
