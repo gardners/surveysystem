@@ -36,7 +36,7 @@ CLIOBJS=	$(COREOBJS) \
 HEADERS=	$(STATICHEADERS) $(GENERATEDHEADERS)
 
 CC=	clang
-COPT=	-Wall -O3 -g -Iinclude
+COPT=	-Wall -O3 -g -Iinclude `/usr/bin/python-config --includes`
 LOPT=
 
 all:	test_serialisers surveycli
@@ -61,7 +61,7 @@ test_serialisers:	$(TESTOBJS)
 	$(CC) $(COPT) -o $@ $^ $(LOPT)
 
 surveycli:	$(CLIOBJS)
-	$(CC) $(COPT) -o $@ $^ $(LOPT)
+	$(CC) $(COPT) -o $@ $^ $(LOPT) `/usr/bin/python-config --libs --ldflags`
 
 clean:
 	rm $(SRCDIR)/*.o $(GENERATEDHEADERS) $(GENERATEDSRCS)
