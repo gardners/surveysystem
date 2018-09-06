@@ -216,16 +216,43 @@ int call_python_nextquestion(struct session *s,
     if (PyUnicode_Check(result)) {
       // Get value and put it as single response
       const char *question = PyUnicode_AsUTF8(result);
+      if (!question) {
+	is_error=1;
+	Py_DECREF(result);
+	LOG_ERROR("String in reply from Python function is null",function_name);
+      }
       if (mark_next_question(s,next_questions,next_question_count,question)) {
 	is_error=1;
+	Py_DECREF(result);
 	LOG_ERROR("Error adding question to list of next questions.  Is it a valid question UID?",question);
       }
     } else if (PyList_Check(result)) {
       fprintf(stderr,"return value is a list \n");
       // XXX Go through list adding values
+      int list_len=PyList_Size(result);
+      for(int i=0;i<list_len;i++) {
+	PyObject *item=PyList_GetItem(result,i);
+	if (PyUnicode_Check(item)) {
+	  // Get value and put it as single response
+	  const char *question = PyUnicode_AsUTF8(item);
+	  if (!question) {
+	    is_error=1;
+	    Py_DECREF(result);
+	    LOG_ERROR("String in reply from Python function is null",function_name);
+	  }
+	  if (mark_next_question(s,next_questions,next_question_count,question)) {
+	    is_error=1;
+	    Py_DECREF(result);
+	    LOG_ERROR("Error adding question to list of next questions.  Is it a valid question UID?",question);
+	  }
+	} else {
+	  Py_DECREF(result);    
+	  LOG_ERROR("List item is not a string in response from Python",function_name);
+	}
+      }
     } else {
-      LOG_ERROR("Return value from Python is neither string nor list.  Empty return should be an empty list.",function_name);
       Py_DECREF(result);    
+      LOG_ERROR("Return value from Python is neither string nor list.  Empty return should be an empty list.",function_name);
     }
 
     Py_DECREF(result);    
