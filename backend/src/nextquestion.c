@@ -86,6 +86,7 @@ int call_python_nextquestion(struct session *s,
 			     struct question *next_questions[],int max_next_questions,int *next_question_count)
 {
   int retVal=0;
+  int is_error=0;
   do {
 
     // Setup python
@@ -121,23 +122,28 @@ int call_python_nextquestion(struct session *s,
       myFunction = PyObject_GetAttrString(nq_python_module,function_name);
     }
 
-    fprintf(stderr,"module: "); PyObject_Print(nq_python_module,stderr,0);
-    fprintf(stderr,"\nfunc: "); PyObject_Print(myFunction,stderr,0);
-    fprintf(stderr,"\n");
-
     if (!myFunction) LOG_ERROR("No matching python function for survey",s->survey_id);
-    if (myFunction) fprintf(stderr,"Found python function '%s'\n",function_name);
 
-    if (!PyCallable_Check(myFunction)) LOG_ERROR("Python function is not callable",function_name);
-    
+    if (!PyCallable_Check(myFunction)) {
+      is_error=1;
+      LOG_ERROR("Python function is not callable",function_name);
+    }
+
     // Okay, we have the function object, so build the argument list and call it.
     PyObject* args = PyTuple_Pack(1,PyFloat_FromDouble(2.0));
     PyObject* result = PyObject_CallObject(myFunction, args);
-
     Py_DECREF(args);
-    Py_DECREF(result);
+
+    if (!result) {
+      is_error=1;
+      LOG_ERROR("Python function did not return anything (does it have the correct arguments defined? If not, this can happen)",function_name);
+    }
+    fprintf(stderr,"Got return value:\n");
+    PyObject_Print(result,stderr,0);
     
+    Py_DECREF(result);    
   } while(0);
+  if (is_error) retVal=-99;
   return retVal;
 }
 
@@ -185,6 +191,8 @@ int get_next_questions(struct session *s,
   // Call the function to get the next question(s) to ask.
   // First see if we have a python function to do the job.
   // If not, then return the list of all not-yet-answered questions
-  if (!call_python_nextquestion(s,next_questions,max_next_questions,next_question_count)) return 0;
+  int r=call_python_nextquestion(s,next_questions,max_next_questions,next_question_count);
+  if (r==-99) return -1;
+  if (!r) return 0;
   return get_next_questions_generic(s,next_questions,max_next_questions,next_question_count);
 }
