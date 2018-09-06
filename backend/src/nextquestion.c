@@ -7,7 +7,52 @@
 #include "errorlog.h"
 #include "question_types.h"
 
+#include <Python.h>
+
 #define REPORT_IF_FAILED() { if (retVal) fprintf(stderr,"%s:%d: %s() failed.\n",__FILE__,__LINE__,__FUNCTION__); }
+
+#define MAX_WLEN 65536
+wchar_t as_wchar_out[MAX_WLEN];
+wchar_t *as_wchar(const char *s)
+{
+  int retVal=0;
+  do {
+    if (strlen(s)>=(MAX_WLEN-1)) LOG_ERROR("String too long",s);
+    size_t result=mbstowcs(as_wchar_out,s,MAX_WLEN-1);
+    if (result<0) LOG_ERROR("mbstowcs() failed",s);
+  } while (0);
+  if (retVal) return NULL;
+  else return as_wchar_out;
+}
+
+int is_python_started=0;
+int setup_python(void)
+{
+  int retVal=0;
+  do {
+    if (is_python_started) break;
+
+    wchar_t *name=as_wchar("nextquestion");
+    if (!name) LOG_ERROR("Could not convert string to wchar_t *","nextquestion");
+
+    Py_SetProgramName(name);
+    Py_Initialize();
+    
+    is_python_started=1;
+  } while(0);
+  return retVal;
+}
+
+int end_python(void)
+{
+  int retVal=0;
+  do {
+    if (!is_python_started) break;
+
+    Py_Finalize();
+  } while(0);
+  return retVal;
+}
 
 /*
   Generic next question selector, which selects the first question lacking an answer.

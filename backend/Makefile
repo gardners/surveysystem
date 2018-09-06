@@ -1,6 +1,8 @@
 SRCDIR=	src
 INCDIR= include
 
+PYTHONVERSION=	3.6
+
 STATICHEADERS=	Makefile \
 		$(INCDIR)/errorlog.h \
 		$(INCDIR)/survey.h \
@@ -36,7 +38,7 @@ CLIOBJS=	$(COREOBJS) \
 HEADERS=	$(STATICHEADERS) $(GENERATEDHEADERS)
 
 CC=	clang
-COPT=	-Wall -O3 -g -Iinclude `/usr/bin/python-config --includes`
+COPT=	-Wall -O3 -g -Iinclude `/usr/bin/python$(PYTHONVERSION)-config --includes`
 LOPT=
 
 all:	test_serialisers surveycli
@@ -58,10 +60,10 @@ $(SRCDIR)/question_types.c:	$(INCDIR)/survey.h $(HEADERS)
 	echo "  \"end of list\"};" >> $@
 
 test_serialisers:	$(TESTOBJS)
-	$(CC) $(COPT) -o $@ $^ $(LOPT)
+	$(CC) $(COPT) -o $@ $^ $(LOPT) `/usr/bin/python$(PYTHONVERSION)-config --libs --ldflags`
 
 surveycli:	$(CLIOBJS)
-	$(CC) $(COPT) -o $@ $^ $(LOPT) `/usr/bin/python-config --libs --ldflags`
+	$(CC) $(COPT) -o $@ $^ $(LOPT) `/usr/bin/python$(PYTHONVERSION)-config --libs --ldflags`
 
 clean:
 	rm $(SRCDIR)/*.o $(GENERATEDHEADERS) $(GENERATEDSRCS)
