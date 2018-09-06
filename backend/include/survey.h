@@ -102,7 +102,7 @@ struct answer {
 
 #define MAX_QUESTIONS 8192
 struct session {
-  char *survey_id;
+  char *survey_id;   // <survey name>/<hash>
   char *survey_description;
   char *session_id;
   struct question *questions[MAX_QUESTIONS];
@@ -113,7 +113,7 @@ struct session {
 
 
 int generate_path(char *path_in,char *path_out,int max_len);
-int get_next_questions(char *surveyname,char *session_uuid,struct question *q[],struct answer *a[],
+int get_next_questions(struct session *s,
 		       struct question *next_questions_out[],int max_next_questions,int *next_question_count_out);
 int create_session(char *survey_id,char *session_id_out);
 int delete_session(char *session_id);

@@ -455,8 +455,6 @@ int load_survey_questions(struct session *ses)
     if (generate_path(survey_path_suffix,survey_path,1024))
       LOG_ERROR("generate_path() failed to build path for loading session",ses->session_id);
 
-    fprintf(stderr,"Reading questions from '%s'\n",survey_path);
-    
     f=fopen(survey_path,"r");
     if (!f) LOG_ERROR("Could not open survey file",survey_path);
     char line[8192];
@@ -476,8 +474,6 @@ int load_survey_questions(struct session *ses)
     trim_crlf(line);
     ses->survey_description=strdup(line);
     if (!ses->survey_description) LOG_ERROR("strdup(survey_description) failed when loading survey file",survey_path);
-
-    fprintf(stderr,"Survey description is '%s'\n",ses->survey_description);
 
     // Now read questions
     do {
@@ -545,7 +541,6 @@ struct session *load_session(char *session_id)
     if (!survey_id[0]) { fclose(s); LOG_ERROR("Could not read survey ID from session file",session_path); }
     // Trim CR / LF characters from the end
     trim_crlf(survey_id);
-    fprintf(stderr,"Survey ID in session file is '%s'\n",survey_id);
 
     ses=calloc(sizeof(struct session),1);
     if (!ses) { fclose(s); LOG_ERROR("calloc() failed when loading session",session_id); }
