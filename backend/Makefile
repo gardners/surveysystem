@@ -1,7 +1,7 @@
 SRCDIR=	src
 INCDIR= include
 
-PYTHONVERSION=	3.6
+PYTHONVERSION=	3.7
 
 STATICHEADERS=	Makefile \
 		$(INCDIR)/errorlog.h \
