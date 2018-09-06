@@ -61,8 +61,6 @@ int setup_python(void)
       LOG_ERROR("Failed to load python module","nextquestion");
     }
 
-    Py_INCREF(nq_python_module);
-    
     is_python_started=1;
   } while(0);
   return retVal;
@@ -97,8 +95,6 @@ int call_python_nextquestion(struct session *s,
     }
     if (!nq_python_module) LOG_ERROR("Python module not loaded. Does it have an error?","nextquestion");
 
-    fprintf(stderr,"%s:%d:module: ",__FILE__,__LINE__); PyObject_Print(nq_python_module,stderr,0); fprintf(stderr,"\n");
-        
     // Build names of candidate functions.
     // nextquestion_<survey_id>_<hash of survey>
     // or failing that, nextquestion_<survey_id>
@@ -106,19 +102,13 @@ int call_python_nextquestion(struct session *s,
     // In all cases, we pass in an list of questions, and an list of answers,
     // and expect a list of strings of question UIDs to ask as the return value.
 
-    CHECKPOINT;
-      
     char function_name[1024];
 
     // Try all three possible function names
     snprintf(function_name,1024,"nextquestion_%s",s->survey_id);
     for(int i=0;function_name[i];i++) if (function_name[i]=='/') function_name[i]='_';
 
-    fprintf(stderr,"%s:%d:module: ",__FILE__,__LINE__); PyObject_Print(nq_python_module,stderr,0); fprintf(stderr,"\n");
-
     PyObject* myFunction = PyObject_GetAttrString(nq_python_module,function_name);
-
-    fprintf(stderr,"%s:%d:module: ",__FILE__,__LINE__); PyObject_Print(nq_python_module,stderr,0); fprintf(stderr,"\n");
 
     if (!myFunction) {
       // Try again without _hash on the end
@@ -135,8 +125,6 @@ int call_python_nextquestion(struct session *s,
     fprintf(stderr,"\nfunc: "); PyObject_Print(myFunction,stderr,0);
     fprintf(stderr,"\n");
 
-    CHECKPOINT;
-    
     if (!myFunction) LOG_ERROR("No matching python function for survey",s->survey_id);
     if (myFunction) fprintf(stderr,"Found python function '%s'\n",function_name);
 
