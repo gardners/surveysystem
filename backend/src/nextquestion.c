@@ -97,6 +97,9 @@ int mark_next_question(struct session *s,struct question *next_questions[],
     for(qn=0;qn<s->question_count;qn++)
       if (!strcmp(s->questions[qn]->uid,uid)) break;
     if (qn==s->question_count) LOG_ERROR("Asked to mark non-existent question UID",uid);
+    for(int j=0;j<(*next_question_count);j++)
+      if (next_questions[j]==s->questions[qn])
+	LOG_ERROR("Duplicate question UID in list of next questions",uid);
     next_questions[*next_question_count]=s->questions[qn];
     (*next_question_count)++;
   } while(0);
@@ -211,8 +214,7 @@ int call_python_nextquestion(struct session *s,
       is_error=1;
       LOG_ERROR("Python function did not return anything (does it have the correct arguments defined? If not, this can happen)",function_name);
     }
-    fprintf(stderr,"Got return value:\n");
-    PyObject_Print(result,stderr,0);
+    // PyObject_Print(result,stderr,0);
     if (PyUnicode_Check(result)) {
       // Get value and put it as single response
       const char *question = PyUnicode_AsUTF8(result);
@@ -227,7 +229,6 @@ int call_python_nextquestion(struct session *s,
 	LOG_ERROR("Error adding question to list of next questions.  Is it a valid question UID?",question);
       }
     } else if (PyList_Check(result)) {
-      fprintf(stderr,"return value is a list \n");
       // XXX Go through list adding values
       int list_len=PyList_Size(result);
       for(int i=0;i<list_len;i++) {
