@@ -1,7 +1,13 @@
 SRCDIR=	src
 INCDIR= include
 
+# NOTE: This program REQUIRES Python >=3.7, as 3.6 has a bug with some of the C
+# API stuff
 PYTHONVERSION=	3.7
+PYCONFIG=/usr/bin/python$(PYTHONVERSION)-config
+ifeq ("$(wildcard $(PYCONFIG))","")
+PYCONFIG=/opt/local/Library/Frameworks/Python.framework/Versions/$(PYTHONVERSION)/bin/python$(PYTHONVERSION)-config
+endif
 
 STATICHEADERS=	Makefile \
 		$(INCDIR)/errorlog.h \
@@ -38,7 +44,7 @@ CLIOBJS=	$(COREOBJS) \
 HEADERS=	$(STATICHEADERS) $(GENERATEDHEADERS)
 
 CC=	clang
-COPT=	-Wall -O3 -g -Iinclude `/usr/bin/python$(PYTHONVERSION)-config --includes`
+COPT=	-Wall -O3 -g -Iinclude `$(PYCONFIG) --includes`
 LOPT=
 
 all:	test_serialisers surveycli
@@ -60,10 +66,10 @@ $(SRCDIR)/question_types.c:	$(INCDIR)/survey.h $(HEADERS)
 	echo "  \"end of list\"};" >> $@
 
 test_serialisers:	$(TESTOBJS)
-	$(CC) $(COPT) -o $@ $^ $(LOPT) `/usr/bin/python$(PYTHONVERSION)-config --libs --ldflags`
+	$(CC) $(COPT) -o $@ $^ $(LOPT) `$(PYCONFIG) --libs --ldflags`
 
 surveycli:	$(CLIOBJS)
-	$(CC) $(COPT) -o $@ $^ $(LOPT) `/usr/bin/python$(PYTHONVERSION)-config --libs --ldflags`
+	$(CC) $(COPT) -o $@ $^ $(LOPT) `$(PYCONFIG) --libs --ldflags`
 
 clean:
 	rm $(SRCDIR)/*.o $(GENERATEDHEADERS) $(GENERATEDSRCS)
