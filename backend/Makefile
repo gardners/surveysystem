@@ -8,6 +8,9 @@ PYCONFIG=/usr/bin/python$(PYTHONVERSION)-config
 ifeq ("$(wildcard $(PYCONFIG))","")
 PYCONFIG=/opt/local/Library/Frameworks/Python.framework/Versions/$(PYTHONVERSION)/bin/python$(PYTHONVERSION)-config
 endif
+ifeq ("$(wildcard $(PYCONFIG))","")
+PYCONFIG=/Library/Frameworks/Python.framework/Versions/$(PYTHONVERSION)/bin/python$(PYTHONVERSION)-config
+endif
 
 STATICHEADERS=	Makefile \
 		$(INCDIR)/errorlog.h \
