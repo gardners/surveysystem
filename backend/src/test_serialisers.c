@@ -157,6 +157,17 @@ struct question_serialiser_test qst[]={
     "\\\r\n\t:What is the answer to life, the universe and everything?",
     "<div>What is the answer to life, the universe and everything?</div>",
     QTYPE_INT,0,"42",0,100,0,-1,""}},  
+
+  {"numchoices should match number of colon separated items in choices field",SHOULD_FAIL,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
+   "dummyuid:"
+   "\\\\\r\n\t\\:What is the answer to life, the universe and everything?:"
+   "<div>What is the answer to life, the universe and everything?</div>:"
+   "INT:0:42:0:100:0:1:",
+   {"dummyuid",
+    "\\\r\n\t:What is the answer to life, the universe and everything?",
+    "<div>What is the answer to life, the universe and everything?</div>",
+    QTYPE_MULTICHOICE,0,"42",0,100,0,1,"this\\:that"}},  
+
   
   {NULL,-1,-1,NULL,{NULL}}
 };
