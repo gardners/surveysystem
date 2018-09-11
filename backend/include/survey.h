@@ -70,6 +70,8 @@ struct question {
   // of Y/N characters, or 0-9/N for "how strongly do you agree/disagree"
   // type questions
   int num_choices;
+  // Colon separated list of choices for multiple choice/multiple select questions
+  char *choices;
 };
 
 struct answer {
