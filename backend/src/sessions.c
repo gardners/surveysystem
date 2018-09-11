@@ -403,6 +403,7 @@ void free_question(struct question *q)
   freez(q->question_text);
   freez(q->question_html);
   freez(q->default_value);
+  freez(q->choices);
   freez(q);
   return;
 }

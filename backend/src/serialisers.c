@@ -314,7 +314,8 @@ int serialise_question(struct question *q,char *out,int max_len)
     SERIALISE_LONGLONG(q->max_value);
     SERIALISE_INT(q->decimal_places);
     SERIALISE_INT(q->num_choices);
-
+    SERIALISE_STRING(q->choices);
+    
     // Trim terminal separator character
     SERIALISE_COMPLETE(out,len,max_len);
     
@@ -377,7 +378,8 @@ int deserialise_question(char *in,struct question *q)
     DESERIALISE_LONGLONG(q->max_value);
     DESERIALISE_INT(q->decimal_places);
     DESERIALISE_INT(q->num_choices);
-
+    DESERIALISE_STRING(q->choices);
+    
     // Check that we are at the end of the input string
     DESERIALISE_COMPLETE(out,len,max_len);
     
