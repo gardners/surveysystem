@@ -1,0 +1,12 @@
+{ "title": "Tell us, how do you sleep ?", "pages": [
+  { "name":"page1", "questions": [
+    { "type": "radiogroup", "choices": [ "Yes", "No" ], "isRequired": true, "name": "frameworkUsing","title": "Do you sleep ?" },
+    { "type": "checkbox", "choices": ["during night","during day"], "hasOther": true, "isRequired": true, "name": "framework", "title": "When do you sleep ?", "visibleIf": "{frameworkUsing} = 'Yes'" }
+  ]},
+  { "name": "page2", "questions": [
+    { "type": "radiogroup", "choices": ["Yes","No"],"isRequired": true, "name": "mvvmUsing", "title": "Do you sleep in a standing position ?" },
+    { "type": "checkbox", "choices": [ "a bed", "a rock", "a garbage bin" ], "hasOther": true, "isRequired": true, "name": "mvvm", "title": "On which object do you sleep ?", "visibleIf": "{mvvmUsing} = 'No'" } ] },
+  { "name": "page3","questions": [
+    { "type": "comment", "name": "about", "title": "Please tell us about your problems" } ] }
+]
+}
