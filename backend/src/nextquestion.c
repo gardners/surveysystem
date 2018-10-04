@@ -112,6 +112,10 @@ int call_python_nextquestion(struct session *s,
   int retVal=0;
   int is_error=0;
   do {
+    if (!s) LOG_ERROR("session structure is NULL","");
+    if (!next_questions) LOG_ERROR("next_questions is null","");
+    if (!next_question_count) LOG_ERROR("next_question_count is null","");
+    if ((*next_question_count)>=MAX_QUESTIONS) LOG_ERROR("Too many questions in list.","");
 
     // Setup python
     if (setup_python()) {
@@ -307,8 +311,19 @@ int get_next_questions(struct session *s,
   // Call the function to get the next question(s) to ask.
   // First see if we have a python function to do the job.
   // If not, then return the list of all not-yet-answered questions
-  int r=call_python_nextquestion(s,next_questions,max_next_questions,next_question_count);
-  if (r==-99) return -1;
-  if (!r) return 0;
-  return get_next_questions_generic(s,next_questions,max_next_questions,next_question_count);
+  int retVal=0;
+  do {
+    if (!s) LOG_ERROR("session structure is NULL","");
+    if (!next_questions) LOG_ERROR("next_questions is null","");
+    if (!next_question_count) LOG_ERROR("next_question_count is null","");
+    if ((*next_question_count)>=MAX_QUESTIONS) LOG_ERROR("Too many questions in list.","");
+
+
+    int r=call_python_nextquestion(s,next_questions,max_next_questions,next_question_count);
+    if (r==-99) { retVal=-1; break; }
+    if (!r) { retVal=0; break; }
+    retVal=get_next_questions_generic(s,next_questions,max_next_questions,next_question_count);
+  } while (0);
+
+  return retVal;
 }
