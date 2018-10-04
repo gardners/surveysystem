@@ -1,6 +1,8 @@
-#!/bin/bash
+#!/bin/bash -x
 
 # set up some testing of the command line interface
+
+make || exit
 
 # create a symbolic link of the survey question definitions so that we can test them while keeping them outside the public repo
 if [ ! -f ./surveys/foo/current ]; then
@@ -16,7 +18,7 @@ if [ ! -f ./python/nextquestion.py ]; then
 fi
 
 # seems to be a bug that the surveycli doesn't actually return a SESSIONID, so get it from the surveys/foo file
-SESSIONID=`ls -1 ./surveys/foo/ | head -n 1`
-#SURVEY_HOME=. ./surveycli newsession foo
+#SESSIONID=`ls -1 ./surveys/foo/ | head -n 1`
+SESSIONID=`SURVEY_HOME=. ./surveycli newsession foo`
 
 SURVEY_HOME=. ./surveycli nextquestion ${SESSIONID}
