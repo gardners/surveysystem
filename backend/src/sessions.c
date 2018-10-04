@@ -303,13 +303,13 @@ int create_session(char *survey_id,char *session_id_out)
       for(int i=0;i<4;i++) session_prefix[i]=session_id[i];
       session_prefix[4]=0;
 
-      fprintf(stderr,"session_id='%s'\n",session_id);
+      //fprintf(stderr,"session_id='%s'\n",session_id);
     
       snprintf(session_path_suffix,1024,"sessions/%s/%s",session_prefix,session_id);
       if (generate_path(session_path_suffix,session_path,1024)) LOG_ERROR("generate_path() failed to build path for new session",survey_id);
       
       // Check if session already exists
-      fprintf(stderr,"Considering session '%s'\n",session_path);
+      // fprintf(stderr,"Considering session '%s'\n",session_path);
 
       // Try again if session ID already exists
       if ( access( session_path, F_OK ) != -1 ) { session_id[0]=0; continue; } else break;
@@ -335,6 +335,9 @@ int create_session(char *survey_id,char *session_id_out)
     fprintf(f,"%s/%s\n",survey_id,survey_sha1);
     
     fclose(f);
+
+    // Export new session ID
+    strncpy(session_id_out,session_id,36+1);
     
   } while(0);
 
