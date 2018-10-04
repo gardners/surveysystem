@@ -1,5 +1,6 @@
 import React from 'react';
 import * as Survey from "survey-react";
+import axios from 'axios';
 
 
 
@@ -7,6 +8,10 @@ import * as Survey from "survey-react";
 // Represents the Flexible Survey
 class FlexibleSurvey extends React.Component {
 
+    //The ID of the survey to load from the server
+    surveyID = "test123456";
+    //contains the survey in the json format, as received
+    jsonSurvey = null;
     //contains an array listing all question objects, by this way : [questionId => {question}, etc...]
     questions = [];
     //contains an array listing all added pages(and the question it contains) objects to the survey, by this way : [pageId => {page}, etc...]
@@ -266,21 +271,31 @@ class FlexibleSurvey extends React.Component {
         return question;
     }
 
-    //function called when the user press next button
+    //function called when the user press Next button
     sendDataToServer(){
         const id = this.testArray.pop();
         this.setNextQuestionOfSurvey(id);
     }
 
 
-    //at the first time the page loads, the jsonfile is deserialized into question objects
-    // the last page property is instanciated
-    componentDidMount(){
-        this.initLastPage();
-        this.initEventOnNextClick(this.sendDataToServer);
-        this.deserialize(this.props.json);
-        this.setNextQuestionOfSurvey(0);
+    // init function that retrieves the survey from the back end
+    // then deserialize them (JSON to Object)
+    // then instantiate the last page (see doc at the beginning)
+    // then adds an event handler on the Next button
+    // it is done asynchronously !!!!
+    init(surveyID){
+        console.log("Getting the Survey with ID="+ surveyID+"...");
+        axios.get('http://localhost:4000/survey/' + surveyID)
+            .then(response => this.deserialize(response.data))
+            .then(response => this.initLastPage())
+            .then(response => this.initEventOnNextClick(this.sendDataToServer))
+            .then(response => this.setNextQuestionOfSurvey(0));
+    }
 
+    //this function is fired when the page is loaded
+    componentDidMount(){
+        this.get
+        this.init(this.surveyID);
     }
 
 
