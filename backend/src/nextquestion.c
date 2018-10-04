@@ -274,28 +274,29 @@ int get_next_questions_generic(struct session *s,
   do {
     int i,j;
 
-  if (!s->survey_id) LOG_ERROR("surveyname is NULL","");
-  if (!s->session_id) LOG_ERROR("session_uuid is NULL","");
-  if (!next_questions) LOG_ERROR("next_questions is NULL","");
-  if (max_next_questions<1) LOG_ERROR("max_next_questions < 1","");
-  if (!next_question_count) LOG_ERROR("next_question_count is NULL","");
-
-  // Check each question to see if it has been answered already
-  for(i=0;i<s->question_count;i++)
-    {
-      for(j=0;j<s->answer_count;j++)
-	if (!strcmp(s->answers[j]->uid,s->questions[i]->uid)) break;
-      if (j<s->answer_count) break;
-      else {
-	if ((*next_question_count)<max_next_questions) {
-	  next_questions[*next_question_count]=s->questions[i];
-	  (*next_question_count)++;
+    if (!s) LOG_ERROR("struct session is NULL","");
+    if (!s->survey_id) LOG_ERROR("surveyname is NULL","");
+    if (!s->session_id) LOG_ERROR("session_uuid is NULL","");
+    if (!next_questions) LOG_ERROR("next_questions is NULL","");
+    if (max_next_questions<1) LOG_ERROR("max_next_questions < 1","");
+    if (!next_question_count) LOG_ERROR("next_question_count is NULL","");
+    
+    // Check each question to see if it has been answered already
+    for(i=0;i<s->question_count;i++)
+      {
+	for(j=0;j<s->answer_count;j++)
+	  if (!strcmp(s->answers[j]->uid,s->questions[i]->uid)) break;
+	if (j<s->answer_count) break;
+	else {
+	  if ((*next_question_count)<max_next_questions) {
+	    next_questions[*next_question_count]=s->questions[i];
+	    (*next_question_count)++;
+	  }
 	}
       }
-    }
-  
+    
   } while(0);
-
+  
   return retVal;
   
 }
