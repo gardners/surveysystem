@@ -2,6 +2,8 @@
 
 # set up some testing of the command line interface
 
+make || exit
+
 # create a symbolic link of the survey question definitions so that we can test them while keeping them outside the public repo
 if [ ! -f ./surveys/foo/current ]; then
 	ln -s /Users/wall0159/code/SleepCompanionREimplementation/engine/SleepCompanion/current ./surveys/foo/
