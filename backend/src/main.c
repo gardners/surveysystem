@@ -30,7 +30,7 @@ int main(int argc,char **argv)
       char session_id[1024];
       if (create_session(argv[2],session_id)) LOG_ERROR("create_session() failed","");
       if (!retVal) printf("%s\n",session_id);
-
+      else fprintf(stderr,"Failed to create new session.\n");
     } else if (!strcmp(argv[1],"addanswer")) {
       if (argc!=4) { usage(); retVal=-1; break; }
       char *session_id=argv[2];
