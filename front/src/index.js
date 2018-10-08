@@ -4,20 +4,25 @@ import registerServiceWorker from './registerServiceWorker';
 import 'bootstrap/dist/css/bootstrap.css';
 
 import Navbar from "./Navbar";
-import surveyJSON from "./ressources/dataTest"
 import FlexibleSurvey from "./FlexibleSurvey";
 
+import { BrowserRouter as Router, Route } from 'react-router-dom';
 
 
-//rendering the Navbar
+
+//rendering the routes
 ReactDOM.render(
     <Navbar />,
     document.getElementById("header"));
 
-//rendering the flexible survey
 ReactDOM.render(
-    <FlexibleSurvey json={surveyJSON} />,
-    document.getElementById("surveyContainer"));
+    <Router>
+        <div>
+            <Route path="/survey/:id" component={FlexibleSurvey} />
+        </div>
+    </Router>,
+    document.getElementById('app')
+)
 
 
 

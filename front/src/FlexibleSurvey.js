@@ -1,6 +1,8 @@
 import React from 'react';
 import * as Survey from "survey-react";
 import axios from 'axios';
+import { Configuration } from './conf/config';
+import LoadingSpinner from './LoadingSpinner';
 
 
 
@@ -9,7 +11,8 @@ import axios from 'axios';
 class FlexibleSurvey extends React.Component {
 
     //The ID of the survey to load from the server
-    surveyID = "test123456";
+    //the ID is retrieved from the url, that looks like : /survey/:id
+    surveyID = this.surveyID = this.props.match.params.id;
     //contains the survey in the json format, as received
     jsonSurvey = null;
     //contains an array listing all question objects, by this way : [questionId => {question}, etc...]
@@ -44,14 +47,16 @@ class FlexibleSurvey extends React.Component {
 
 
 
-    // Constructor, defines all the states of the Class.
+    // Constructor, needed in every case in react
     // Also instantiate a new Survey (the not flexible one) and its style
+    // loading is used to know if an ajax request is being made
     constructor(props) {
         super(props);
         this.state = {
-            survey : new Survey.Model()
+            survey : new Survey.Model(),
+            loading : true
         };
-        Survey.StylesManager.applyTheme("bootstrap");
+        Survey.StylesManager.applyTheme(Configuration.surveyTheme);
     }
 
 
@@ -283,18 +288,37 @@ class FlexibleSurvey extends React.Component {
     // then instantiate the last page (see doc at the beginning)
     // then adds an event handler on the Next button
     // it is done asynchronously !!!!
+    // axios is the library for requests
     init(surveyID){
         console.log("Getting the Survey with ID="+ surveyID+"...");
-        axios.get('http://localhost:4000/survey/' + surveyID)
-            .then(response => this.deserialize(response.data))
-            .then(response => this.initLastPage())
-            .then(response => this.initEventOnNextClick(this.sendDataToServer))
-            .then(response => this.setNextQuestionOfSurvey(0));
+        this.setState({ loading: true }, () => {
+            axios.get(Configuration.serverUrl
+                + ':'
+                + Configuration.serverPort
+                + '/survey/'
+                + surveyID)
+                .then(response => this.deserialize(response.data))
+                .then(response => this.initLastPage())
+                .then(response => this.initEventOnNextClick(this.sendDataToServer))
+                .then(response => this.setNextQuestionOfSurvey(0))
+                .then(response => this.setState({
+                    loading: false
+                }));
+        });
+        // axios.get(Configuration.serverUrl
+        //                         + ':'
+        //                         + Configuration.serverPort
+        //                         + '/survey/'
+        //                         + surveyID)
+        //     .then(response => this.deserialize(response.data))
+        //     .then(response => this.initLastPage())
+        //     .then(response => this.initEventOnNextClick(this.sendDataToServer))
+        //     .then(response => this.setNextQuestionOfSurvey(0));
     }
 
     //this function is fired when the page is loaded
     componentDidMount(){
-        this.get
+        //TODO now : faire la recup d'url
         this.init(this.surveyID);
     }
 
@@ -304,7 +328,7 @@ class FlexibleSurvey extends React.Component {
         return(
             <div className="jumbotron jumbotron-fluid">
                 <div className="container">
-                    <Survey.Survey model={this.state.survey}/>
+                    {this.state.loading ? <LoadingSpinner /> : <Survey.Survey model={this.state.survey}/>}
                 </div>
             </div>
         );
