@@ -64,7 +64,9 @@ class FlexibleSurvey extends React.Component {
 
         //eventlistener when the user press next
         tmpSurvey.sendResultOnPageNext = true;
-        tmpSurvey.onPartialSend.add(this.onNextButtonPressed.bind(this));
+        tmpSurvey.onPartialSend.add(function (result, options){
+            this.onNextButtonPressed(result, options)
+        }.bind(this));
 
         //eventlistener when user presses prev
         tmpSurvey.onCurrentPageChanged.add(function(sender, options){
@@ -272,8 +274,51 @@ class FlexibleSurvey extends React.Component {
         return question;
     }
 
+    //get the last question that was answered in a json format
+    // BE CAREFUL : IT ONLY WORKS FOR SIMPLE ANSWERS(no matrix, nested answers, etc)
+    getLastAnswer(data){
+        console.log("Getting the latest answer...")
+        let lastKey
+        for(let key in data){
+            if(data.hasOwnProperty(key)){
+                lastKey = key;
+            }
+        }
+        const result = {
+            id : this.stepID,
+            key : lastKey,
+            value : data[lastKey]
+        }
+        console.log("Done ! key = "+ result.key + " value = "+ result.value)
+        return result
+    }
+
+    //IMPORTANT : this function will probably be not complete enough when te project will evolve
+    //serialize the json to a csv format for the back end
+    //the output format is uid,question_text,0,0,0,0,0,0,decimal_places,0,0
+    serializeToCSV(jsonObject){
+        console.log("Serializing the answer to CSV...")
+        let csvResult = ""
+        csvResult = csvResult + jsonObject.id
+            + ',' + '"' + jsonObject.key.toString() + '":"' + jsonObject.value.toString() + '"'
+            + ',0,0,0,0,0,0'
+            + ',0,' // TODO : decimal value here ?
+            + ',0,0'
+        console.log("Serialization done ! output = " + csvResult)
+        return csvResult
+    }
+
     //function called when the user press Next button
-    onNextButtonPressed(){
+    onNextButtonPressed(result, options){
+        console.log("NEXT button pressed")
+        //retrieve the last answer
+        const lastAnswer = this.getLastAnswer(result.data)
+        //TODO : format it to csv
+
+        //TODO : post it to the server
+        //TODO : wait
+        //TODO : get the next question from the server
+        //TODO : add this new question
         const id = this.testArray.pop();
         this.setNextQuestionOfSurvey(id);
     }
@@ -293,7 +338,6 @@ class FlexibleSurvey extends React.Component {
             .catch(function (error) {
                 console.log(error);
             });
-
     }
 
 
@@ -331,7 +375,6 @@ class FlexibleSurvey extends React.Component {
 
     // if an ajax request is loading, a spinner is shown. If a question is available, the survey is shown
     render(){
-        console.log("StepID = "+ this.stepID)
         return(
             <div className="jumbotron jumbotron-fluid">
                 <div className="container">
