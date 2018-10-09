@@ -12,9 +12,9 @@ class FlexibleSurvey extends React.Component {
 
     //The ID of the survey to load from the server
     //the ID is retrieved from the url, that looks like : /survey/:id
-    surveyID = this.surveyID = this.props.match.params.id;
-    //contains the survey in the json format, as received
-    jsonSurvey = null;
+    surveyID = this.props.match.params.id;
+    //The ID of the session, as identified by the back end
+    sessionID = null;
     //contains an array listing all question objects, by this way : [questionId => {question}, etc...]
     questions = [];
     //contains an array listing all added pages(and the question it contains) objects to the survey, by this way : [pageId => {page}, etc...]
@@ -27,19 +27,6 @@ class FlexibleSurvey extends React.Component {
     //so, the current question will never be the last one (and so, the button next will be showed instead of end survey)
     // since its a trick, it would be better to change that to a cleaner way
     lastPage = null;
-    //contains the survey and all properties listed above
-    //a new step is created each time the next button is pressed
-    // It purpose is to track the evolution of the survey
-    step = {
-        stepID : 0,
-        questions : [],
-        pages : [],
-        survey : null
-    };
-    //contains all the steps of the workflow.
-    // It purpose is to track the evolution of the survey
-    // If the user is at the question N, the history will keep the steps between 0 and N. N+1 or further steps are deleted
-    history = [];
 
 
     //delete thant, only for tests
@@ -70,18 +57,29 @@ class FlexibleSurvey extends React.Component {
         });
     }
 
-    //adds the onPartialSend Event on the survey, with the function in argument that will manage the workflow when the user presses next
-    initEventOnNextClick(onPartialSendFunction){
+
+    //adds the needed EventListeners at the init of the survey. It set the functions to call when a button is pressed, a page is changed, etc.
+    addEventListeners(){
         let tmpSurvey = this.state.survey;
+
+        //eventlistener when the user press next
         tmpSurvey.sendResultOnPageNext = true;
-        tmpSurvey.onPartialSend.add(onPartialSendFunction.bind(this));
+        tmpSurvey.onPartialSend.add(this.onNextButtonPressed.bind(this));
+
+        //eventlistener when user presses prev
+        tmpSurvey.onCurrentPageChanged.add(function(sender, options){
+            if(!options.oldCurrentPage) return; //showing first page
+            if(options.oldCurrentPage.visibleIndex > options.newCurrentPage.visibleIndex){
+                this.goBackToPreviousStep();
+            }
+        }.bind(this));
         this.setState({
             survey : tmpSurvey
         });
     }
 
 
-    //get a question saved in the component's state by its id
+    //get a question saved in the component's properties by its id
     getQuestionById(id){
         const tmpQuestions = this.questions;
         if (!(id in tmpQuestions)){
@@ -89,6 +87,15 @@ class FlexibleSurvey extends React.Component {
             return null;
         }
         return tmpQuestions[id];
+    }
+
+    getPageById(id){
+        let tmpPages = this.pages
+        if (!(id in tmpPages)){
+            console.error("There is no page defined by the id "+id);
+            return null;
+        }
+        return tmpPages[id];
     }
 
     //allows to add a new question at the end of the survey.
@@ -124,35 +131,24 @@ class FlexibleSurvey extends React.Component {
         return true;
     }
 
-    setNewStep(){
-        console.log("Creating new step...");
-        let tmpStep = this.step;
-        tmpStep.stepID = this.stepID;
-        tmpStep.pages = this.pages;
-        tmpStep.questions = this.questions;
-        tmpStep.survey = this.state.survey;
-        this.step = tmpStep;
-        console.log("New step created...");
+    goBackToPreviousStep(){
+        console.log('Going back to previous step...');
+        this.deleteMostRecentPageOfSurvey()
+        this.pages = this.pages.slice(0, -1);
+        this.stepID = this.stepID -1;
+        console.log('Done going back to the previous step...');
+
     }
 
-    setNextStepInHistory(){
-        console.log("Adding the current step to the history...");
-        let tmpHistory = this.history;
-        tmpHistory[this.stepID] = this.step;
-        this.history = tmpHistory;
-        console.log("Current step added to the history...");
-    }
-
-    goBackInHistory(stepID){
-        console.log("Going back from step "+ this.stepID +" to step "+ stepID+"...");
-        this.step = this.history[stepID];
+    deleteMostRecentPageOfSurvey(){
+        let pageToDelete = this.getPageById(this.stepID-1)
+        let tmpSurvey = this.state.survey
+        this.removeLastPage(tmpSurvey,this.stepID)
+        tmpSurvey.removePage(pageToDelete)
+        this.addLastPage(tmpSurvey)
         this.setState({
-            survey : this.step.survey
-        });
-        this.pages = this.step.pages;
-        this.questions = this.step.questions;
-        this.stepID = this.step.stepID;
-        console.log("Done ! Current step : "+ stepID);
+            survey: tmpSurvey
+        })
     }
 
 
@@ -277,10 +273,29 @@ class FlexibleSurvey extends React.Component {
     }
 
     //function called when the user press Next button
-    sendDataToServer(){
+    onNextButtonPressed(){
         const id = this.testArray.pop();
         this.setNextQuestionOfSurvey(id);
     }
+
+
+
+    sendAnswerToServer(data){
+        console.log("Sending the answer to the server...");
+        axios.post(Configuration.serverUrl
+            + ':' + Configuration.serverPort
+            + '/survey/' + this.surveyID
+            + '/session/' + this.sessionID, data)
+
+            .then(function (response) {
+                console.log(response);
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+
+    }
+
 
 
     // init function that retrieves the survey from the back end
@@ -289,6 +304,7 @@ class FlexibleSurvey extends React.Component {
     // then adds an event handler on the Next button
     // it is done asynchronously !!!!
     // axios is the library for requests
+    // a loading screen is showed while the the ajax request is not finished
     init(surveyID){
         console.log("Getting the Survey with ID="+ surveyID+"...");
         this.setState({ loading: true }, () => {
@@ -299,32 +315,23 @@ class FlexibleSurvey extends React.Component {
                 + surveyID)
                 .then(response => this.deserialize(response.data))
                 .then(response => this.initLastPage())
-                .then(response => this.initEventOnNextClick(this.sendDataToServer))
+                .then(response => this.addEventListeners())
                 .then(response => this.setNextQuestionOfSurvey(0))
                 .then(response => this.setState({
                     loading: false
                 }));
         });
-        // axios.get(Configuration.serverUrl
-        //                         + ':'
-        //                         + Configuration.serverPort
-        //                         + '/survey/'
-        //                         + surveyID)
-        //     .then(response => this.deserialize(response.data))
-        //     .then(response => this.initLastPage())
-        //     .then(response => this.initEventOnNextClick(this.sendDataToServer))
-        //     .then(response => this.setNextQuestionOfSurvey(0));
     }
 
     //this function is fired when the page is loaded
     componentDidMount(){
-        //TODO now : faire la recup d'url
         this.init(this.surveyID);
     }
 
 
-    // rendering method, do not touch it to modify the component's state. Use componentDidMount instead
+    // if an ajax request is loading, a spinner is shown. If a question is available, the survey is shown
     render(){
+        console.log("StepID = "+ this.stepID)
         return(
             <div className="jumbotron jumbotron-fluid">
                 <div className="container">
