@@ -22,6 +22,9 @@ class FlexibleSurvey extends React.Component {
     //allows to know the number of pages currently in the survey. It is also used to set the pageId of a page
     // the stepId is incremented by 1 each time a new question is added to the survey
     stepID = 0;
+    //stores the ID of the current question being answered by the user
+    //easy access to the question
+    currentQuestionBeingAnswered = null;
     //a "trick" used to always display the next button (instead of the end survey one) in the survey
     // an empty page is always inserted each time a new question is added
     //so, the current question will never be the last one (and so, the button next will be showed instead of end survey)
@@ -129,6 +132,7 @@ class FlexibleSurvey extends React.Component {
         this.setState({
             survey : tmpSurvey
         });
+        this.currentQuestionBeingAnswered  = questionId
         console.log("question (id="+questionId+") added at the end of survey...");
         return true;
     }
@@ -209,7 +213,7 @@ class FlexibleSurvey extends React.Component {
     }
 
 
-    //saves a new question into the Component state
+    //saves a new question into the Component properties
     // at this stage, the question is bound with an id, and only "exists" : it is not part of the survey yet
     saveNewQuestion(id, question){
         console.log("saving question with id="+id+"...");
@@ -276,6 +280,7 @@ class FlexibleSurvey extends React.Component {
 
     //get the last question that was answered in a json format
     // BE CAREFUL : IT ONLY WORKS FOR SIMPLE ANSWERS(no matrix, nested answers, etc)
+    // TODO : test that data is not empty (the user provided an answer)
     getLastAnswer(data){
         console.log("Getting the latest answer...")
         let lastKey
@@ -285,7 +290,7 @@ class FlexibleSurvey extends React.Component {
             }
         }
         const result = {
-            id : this.stepID,
+            id : this.currentQuestionBeingAnswered,
             key : lastKey,
             value : data[lastKey]
         }
@@ -293,17 +298,24 @@ class FlexibleSurvey extends React.Component {
         return result
     }
 
+    //TODO : add number serialization
+    //TODO : escape the ":"
     //IMPORTANT : this function will probably be not complete enough when te project will evolve
     //serialize the json to a csv format for the back end
-    //the output format is uid,question_text,0,0,0,0,0,0,decimal_places,0,0
+    // the answer has these fields :
+    // DESERIALISE_STRING(a->uid);
+    // DESERIALISE_STRING(a->text);
+    // DESERIALISE_LONGLONG(a->value);
+    // DESERIALISE_LONGLONG(a->lat);
+    // DESERIALISE_LONGLONG(a->lon);
+    // DESERIALISE_LONGLONG(a->time_begin);
+    // DESERIALISE_LONGLONG(a->time_end);
+    // DESERIALISE_INT(a->time_zone_delta);
+    // DESERIALISE_INT(a->dst_delta);
     serializeToCSV(jsonObject){
         console.log("Serializing the answer to CSV...")
         let csvResult = ""
-        csvResult = csvResult + jsonObject.id
-            + ',' + '"' + jsonObject.key.toString() + '":"' + jsonObject.value.toString() + '"'
-            + ',0,0,0,0,0,0'
-            + ',0,' // TODO : decimal value here ?
-            + ',0,0'
+        csvResult = csvResult.concat(jsonObject.id, ':',jsonObject.value, ':0', ':0:0:0:0:0:0')
         console.log("Serialization done ! output = " + csvResult)
         return csvResult
     }
@@ -314,7 +326,7 @@ class FlexibleSurvey extends React.Component {
         //retrieve the last answer
         const lastAnswer = this.getLastAnswer(result.data)
         //TODO : format it to csv
-
+        const csvBody = this.serializeToCSV(lastAnswer)
         //TODO : post it to the server
         //TODO : wait
         //TODO : get the next question from the server
