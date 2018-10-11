@@ -52,7 +52,7 @@ FCGIOBJS=	$(COREOBJS) \
 HEADERS=	$(STATICHEADERS) $(GENERATEDHEADERS)
 
 CC=	clang
-COPT=	-Wall -O3 -g -Iinclude `$(PYCONFIG) --includes`
+COPT=	-Wall -O3 -g -Iinclude `$(PYCONFIG) --includes` -Ikcgi
 LOPT=
 
 all:	test_serialisers surveycli surveyfcgi
@@ -85,7 +85,7 @@ $(KCGIARS):
 	( cd kcgi ; ./configure && make )
 
 surveyfcgi:	$(FCGIOBJS) $(KCGIARS)
-	$(CC) $(COPT) -o $@ $^ $(LOPT) `$(PYCONFIG) --libs --ldflags` $(KCGIARS)
+	$(CC) $(COPT) -o $@ $^ $(LOPT) `$(PYCONFIG) --libs --ldflags` $(KCGIARS) -lz
 
 clean:
 	rm $(SRCDIR)/*.o $(GENERATEDHEADERS) $(GENERATEDSRCS)
