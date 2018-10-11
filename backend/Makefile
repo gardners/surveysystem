@@ -12,6 +12,8 @@ ifeq ("$(wildcard $(PYCONFIG))","")
 PYCONFIG=/Library/Frameworks/Python.framework/Versions/$(PYTHONVERSION)/bin/python$(PYTHONVERSION)-config
 endif
 
+KCGIARS=	kcgi/libkcgihtml.a kcgi/libkcgi.a
+
 STATICHEADERS=	Makefile \
 		$(INCDIR)/errorlog.h \
 		$(INCDIR)/survey.h \
@@ -44,13 +46,16 @@ TESTOBJS=	$(COREOBJS) \
 CLIOBJS=	$(COREOBJS) \
 		$(SRCDIR)/main.o
 
+FCGIOBJS=	$(COREOBJS) \
+		$(SRCDIR)/fcgimain.o
+
 HEADERS=	$(STATICHEADERS) $(GENERATEDHEADERS)
 
 CC=	clang
-COPT=	-Wall -O3 -g -Iinclude `$(PYCONFIG) --includes`
+COPT=	-Wall -O3 -g -Iinclude `$(PYCONFIG) --includes` -Ikcgi
 LOPT=
 
-all:	test_serialisers surveycli
+all:	test_serialisers surveycli surveyfcgi
 
 %.o:	%.c $(HEADERS)
 	$(CC) $(COPT) -c $< -o $@
@@ -73,6 +78,14 @@ test_serialisers:	$(TESTOBJS)
 
 surveycli:	$(CLIOBJS)
 	$(CC) $(COPT) -o $@ $^ $(LOPT) `$(PYCONFIG) --libs --ldflags`
+
+$(KCGIARS):	
+	git submodule init
+	git submodule update
+	( cd kcgi ; ./configure && make )
+
+surveyfcgi:	$(FCGIOBJS) $(KCGIARS)
+	$(CC) $(COPT) -o $@ $^ $(LOPT) `$(PYCONFIG) --libs --ldflags` $(KCGIARS) -lz
 
 clean:
 	rm $(SRCDIR)/*.o $(GENERATEDHEADERS) $(GENERATEDSRCS)
