@@ -2,6 +2,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
+#include <getopt.h>
+#include <stdarg.h>
+#include <stdint.h>
+#include <stdlib.h>
+
+#include "kcgi.h"
 
 #include "errorlog.h"
 #include "survey.h"
@@ -26,6 +32,72 @@ int main(int argc,char **argv)
       retVal=-1;
       break;
     }
+
+    struct kreq      req;
+    struct kfcgi    *fcgi=NULL;
+    enum kcgi_err    er;
+    
+    for (;;) {
+      er = khttp_fcgi_parse(fcgi, &req);
+      if (KCGI_EXIT == er) {
+	fprintf(stderr, "khttp_fcgi_parse: terminate\n");
+	break;
+      } else if (KCGI_OK != er) {
+	fprintf(stderr, "khttp_fcgi_parse: error: %d\n", er);
+	break;
+      }
+      
+      er = khttp_head(&req, kresps[KRESP_STATUS], 
+		      "%s", khttps[KHTTP_200]);
+      if (KCGI_HUP == er) {
+	fprintf(stderr, "khttp_head: interrupt\n");
+	khttp_free(&req);
+	continue;
+      } else if (KCGI_OK != er) {
+	fprintf(stderr, "khttp_head: error: %d\n", er);
+	khttp_free(&req);
+	break;
+      }
+      
+      er = khttp_head(&req, kresps[KRESP_CONTENT_TYPE], 
+		      "%s", kmimetypes[req.mime]);
+      if (KCGI_HUP == er) {
+	fprintf(stderr, "khttp_head: interrupt\n");
+	khttp_free(&req);
+	continue;
+      } else if (KCGI_OK != er) {
+	fprintf(stderr, "khttp_head: error: %d\n", er);
+	khttp_free(&req);
+	break;
+      }
+      
+      er = khttp_body(&req);
+      if (KCGI_HUP == er) {
+	fprintf(stderr, "khttp_body: interrupt\n");
+	khttp_free(&req);
+	continue;
+      } else if (KCGI_OK != er) {
+	fprintf(stderr, "khttp_body: error: %d\n", er);
+	khttp_free(&req);
+	break;
+      }
+      
+      er = khttp_puts(&req, "Hello, world!\n");
+      if (KCGI_HUP == er) {
+	fprintf(stderr, "khttp_puts: interrupt\n");
+	khttp_free(&req);
+	continue;
+      } else if (KCGI_OK != er) {
+	fprintf(stderr, "khttp_puts: error: %d\n", er);
+	khttp_free(&req);
+	break;
+      }
+      
+      khttp_free(&req);
+    }
+
+    khttp_fcgi_free(fcgi);
+    
       
   } while(0);
 
