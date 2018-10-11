@@ -37,6 +37,11 @@ int main(int argc,char **argv)
     struct kfcgi    *fcgi=NULL;
     enum kcgi_err    er;
     
+    if (KCGI_OK != khttp_fcgi_init(&fcgi, NULL, 0, NULL, 0, 0))
+      {	LOG_ERROR("khttp_fcgi_init() failed.",""); }
+
+    if (!fcgi) { LOG_ERROR("fcgi==NULL after call to khttp_fcgi_init()",""); }
+    
     for (;;) {
       er = khttp_fcgi_parse(fcgi, &req);
       if (KCGI_EXIT == er) {
