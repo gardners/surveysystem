@@ -1,0 +1,6 @@
+[submodule "backend/nginx"]
+	path = backend/nginx
+	url = git@github.com:nginx/nginx.git
+[submodule "backend/kcgi"]
+	path = backend/kcgi
+	url = git@github.com:kristapsdz/kcgi.git
