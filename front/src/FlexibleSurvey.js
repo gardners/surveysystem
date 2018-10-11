@@ -14,7 +14,8 @@ class FlexibleSurvey extends React.Component {
     //the ID is retrieved from the url, that looks like : /survey/:id
     surveyID = this.props.match.params.id;
     //The ID of the session, as identified by the back end
-    sessionID = null;
+    //TODO : get the session ID
+    sessionID = 123456;
     //contains an array listing all question objects, by this way : [questionId => {question}, etc...]
     questions = [];
     //contains an array listing all added pages(and the question it contains) objects to the survey, by this way : [pageId => {page}, etc...]
@@ -158,13 +159,42 @@ class FlexibleSurvey extends React.Component {
     }
 
 
+    //allows to get the root element of the json received by the server
+    //when receiving the survey from the server, they must be encapsulated in a root element, like data (by default with a nodejs server) or questions (or whatever you want
+
+    getRootFromJson(json){
+        console.log('getting the root element from the json...')
+        console.log("INFO : the received json file is :")
+        console.log(json)
+        let root
+        let cpt = 0
+        for (let key in json){
+            root = key
+            cpt++
+        }
+        if(cpt > 1){
+            console.error("ERROR : the json sent must be encapsulated in a UNIQUE root element(that contains all the data)")
+            return null
+        }
+        if(!root){
+            console.error("ERROR : the json received from the server is empty !")
+            return null
+        }
+        return root
+    }
 
     // transforms the json list of questions into objects, used later to manipulate the survey.
     // at this point, the questions are not added in the survey, they just "exist"
     // warn : each question MUST have a unique id attribute
     deserialize(json){
         console.log("starting the deserialization...");
-        const questions = json.questions;
+
+        const root = this.getRootFromJson(json)
+        if (!root){
+            console.error("ERROR : the json data received by the server is not adequate")
+            return null
+        }
+        const questions = json[root];
         let cpt =0;
 
         for ( let key in questions){
@@ -280,9 +310,13 @@ class FlexibleSurvey extends React.Component {
 
     //get the last question that was answered in a json format
     // BE CAREFUL : IT ONLY WORKS FOR SIMPLE ANSWERS(no matrix, nested answers, etc)
-    // TODO : test that data is not empty (the user provided an answer)
+    //TODO : improve it later
     getLastAnswer(data){
         console.log("Getting the latest answer...")
+        if (Object.keys(data).length === 0 && data.constructor === Object){
+            console.error("ERROR : The data of the last answer is empty !");
+            return null;
+        }
         let lastKey
         for(let key in data){
             if(data.hasOwnProperty(key)){
@@ -325,32 +359,35 @@ class FlexibleSurvey extends React.Component {
         console.log("NEXT button pressed")
         //retrieve the last answer
         const lastAnswer = this.getLastAnswer(result.data)
-        //TODO : format it to csv
-        const csvBody = this.serializeToCSV(lastAnswer)
-        //TODO : post it to the server
+        if(!lastAnswer){
+            console.error("ERROR : no answer found ! ")
+            return null
+            //TODO later : when an answer is empty, make an appropriate function to handle it. NOTE : if you make a question mandatory, there is no need to test that the lastAnswer is empty, it will never be
+        }
+        //format it to csv
+        //const csvBody = this.serializeToCSV(lastAnswer)
+        //TODO : send (with post) it to the server
+
         //TODO : wait
         //TODO : get the next question from the server
         //TODO : add this new question
+        this.setState({ loading: true }, () => {
+            axios({ //sending by post
+                method: 'post',
+                url: Configuration.serverUrl + ':' + Configuration.serverPort + '/addAnswer/session/' + this.sessionID,
+                data: lastAnswer
+            })
+            .then(response => console.log(response)) //waiting the confirmation that the server received it
+            //.then(response => axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/nextQuestion/session/' + this.sessionID)) //ask next question
+            .then(response => this.setState({ //stopping the loading screen
+                loading: false
+            }));
+        });
         const id = this.testArray.pop();
         this.setNextQuestionOfSurvey(id);
     }
 
 
-
-    sendAnswerToServer(data){
-        console.log("Sending the answer to the server...");
-        axios.post(Configuration.serverUrl
-            + ':' + Configuration.serverPort
-            + '/survey/' + this.surveyID
-            + '/session/' + this.sessionID, data)
-
-            .then(function (response) {
-                console.log(response);
-            })
-            .catch(function (error) {
-                console.log(error);
-            });
-    }
 
 
 
@@ -361,14 +398,10 @@ class FlexibleSurvey extends React.Component {
     // it is done asynchronously !!!!
     // axios is the library for requests
     // a loading screen is showed while the the ajax request is not finished
-    init(surveyID){
-        console.log("Getting the Survey with ID="+ surveyID+"...");
+    init(){
+        console.log("Getting the Survey with ID="+ this.surveyID+"...");
         this.setState({ loading: true }, () => {
-            axios.get(Configuration.serverUrl
-                + ':'
-                + Configuration.serverPort
-                + '/survey/'
-                + surveyID)
+            axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/survey/' + this.surveyID + '/newSession')
                 .then(response => this.deserialize(response.data))
                 .then(response => this.initLastPage())
                 .then(response => this.addEventListeners())
@@ -381,7 +414,7 @@ class FlexibleSurvey extends React.Component {
 
     //this function is fired when the page is loaded
     componentDidMount(){
-        this.init(this.surveyID);
+        this.init();
     }
 
 
