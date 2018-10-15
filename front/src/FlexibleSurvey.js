@@ -147,6 +147,10 @@ class FlexibleSurvey extends React.Component {
 
     }
 
+    //function used when the user presses the previous button
+    // it deletes the lastPage
+    // then deletes the most recent question that was sent by the server
+    // then adds again the lastPage
     deleteMostRecentPageOfSurvey(){
         let pageToDelete = this.getPageById(this.stepID-1)
         let tmpSurvey = this.state.survey
@@ -181,6 +185,15 @@ class FlexibleSurvey extends React.Component {
             return null
         }
         return root
+    }
+
+    //function to parse the json containing the next questionID, and add the question to the survey
+    processQuestionIdReceived(data){
+        console.log("Next question id received from the server...")
+        let nextQuestionId = data.nextQuestionId
+        console.log("the next question id is " + nextQuestionId)
+        this.setNextQuestionOfSurvey(nextQuestionId)
+
     }
 
     // transforms the json list of questions into objects, used later to manipulate the survey.
@@ -308,7 +321,7 @@ class FlexibleSurvey extends React.Component {
         return question;
     }
 
-    //get the last question that was answered in a json format
+    //get the last question that was answered by the user in a json format
     // BE CAREFUL : IT ONLY WORKS FOR SIMPLE ANSWERS(no matrix, nested answers, etc)
     //TODO : improve it later
     getLastAnswer(data){
@@ -354,6 +367,7 @@ class FlexibleSurvey extends React.Component {
         return csvResult
     }
 
+    
     //function called when the user press Next button
     onNextButtonPressed(result, options){
         console.log("NEXT button pressed")
@@ -378,13 +392,12 @@ class FlexibleSurvey extends React.Component {
                 data: lastAnswer
             })
             .then(response => console.log(response)) //waiting the confirmation that the server received it
-            //.then(response => axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/nextQuestion/session/' + this.sessionID)) //ask next question
+            .then(response => axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/nextQuestion/session/' + this.sessionID)) //ask next question
+            //.then(response => this.processQuestionIdReceived(response.data))
             .then(response => this.setState({ //stopping the loading screen
                 loading: false
             }));
         });
-        const id = this.testArray.pop();
-        this.setNextQuestionOfSurvey(id);
     }
 
 
