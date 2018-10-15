@@ -14,6 +14,22 @@ app.use(function(req, res, next) {
   next();
 });
 
+//-----------------------------------------
+
+
+let questionsID = [0,1,2,3,4,5,6,7,8,9,10,11,12,13];
+
+function shuffle (array) {
+  for (var i = array.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var temp = array[i];
+      array[i] = array[j];
+      array[j] = temp;
+  }
+  return array;
+}
+
+//------------------------------------------------------
 app.get('/survey/:surveyid/newSession', function(req,res){
 	console.log("GET /survey/id")
 	res.json(survey)
@@ -28,7 +44,10 @@ app.post('/addAnswer/session/:sessionid', function (req, res) {
 });
 
 app.get('/nextQuestion/session/:id', function(req,res){
-	res.json({'nextQuestion' : 6})
+	questionsID = shuffle(questionsID)
+	nextQuestion = questionsID.pop()  
+  	console.log("next question : "+ nextQuestion)
+	res.json({'nextQuestionId' : nextQuestion})
 })
 
 app.listen(port);
