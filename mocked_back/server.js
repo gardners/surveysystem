@@ -29,6 +29,17 @@ function shuffle (array) {
   return array;
 }
 
+function selectNextQuestion(){
+
+	let random = Math.floor(Math.random() * 3) + 1;
+
+	if (random == 1){
+		return "stop"
+	} 
+	questionsID = shuffle(questionsID)
+	return questionsID.pop() 
+}
+
 //------------------------------------------------------
 app.get('/survey/:surveyid/newSession', function(req,res){
 	console.log("GET /survey/id")
@@ -43,9 +54,8 @@ app.post('/addAnswer/session/:sessionid', function (req, res) {
 
 });
 
-app.get('/nextQuestion/session/:id', function(req,res){
-	questionsID = shuffle(questionsID)
-	nextQuestion = questionsID.pop()  
+app.get('/nextQuestion/session/:id', function(req,res){ 
+	nextQuestion = selectNextQuestion()
   	console.log("next question : "+ nextQuestion)
 	res.json({'nextQuestionId' : nextQuestion})
 })
