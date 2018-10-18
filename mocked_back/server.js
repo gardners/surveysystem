@@ -45,15 +45,15 @@ app.post('/addAnswer/session/:sessionid', function (req, res) {
 });
 
 app.get('/nextQuestion/session/:id', function(req,res){
-	//if (cpt < 3){
+	if (cpt < 5){
 		questionsID = shuffle(questionsID)
 		nextQuestion = questionsID.pop()  
   		console.log("next question : "+ nextQuestion)
 		res.json({'nextQuestionId' : nextQuestion})
-	//} else {
-	//	console.log("next question : "+ "stop")
-	//	res.json({'nextQuestionId' : "stop"})
-	//}
+	} else {
+		console.log("next question : "+ "stop")
+		res.json({'nextQuestionId' : "stop"})
+		}
 	
 	cpt = cpt+1
 	

@@ -23,20 +23,15 @@ class FlexibleSurvey extends React.Component {
     //allows to know the number of pages currently in the survey. It is also used to set the pageId of a page
     // the stepId is incremented by 1 each time a new question is added to the survey
     stepID = 0;
-    //stores the ID of the current question being answered by the user
-    //easy access to the question
-    currentQuestionBeingAnswered = null;
-    //a "trick" used to always display the next button (instead of the end survey one) in the survey
-    // an empty page is always inserted each time a new question is added
-    //so, the current question will never be the last one (and so, the button next will be showed instead of end survey)
-    // since its a trick, it would be better to change that to a cleaner way
-    lastPage = null;
-
-    _buttonNextPressed = false
-
-    _buttonNextPressedCpt = 0
+    //when there are no more questions to ask, set to true
+    _surveyCompleted = false
 
 
+
+
+    //useful stuff
+    // SurveyModel.prototype.completeLastPage
+    // SurveyModel.prototype.doComplete
 
     // Constructor, needed in every case in react
     // Also instantiate a new Survey (the not flexible one) and its style
@@ -51,26 +46,22 @@ class FlexibleSurvey extends React.Component {
     }
 
 
-    //instantiate the lastPage property, see above to more explanations
-    initLastPage(){
-        let tmpSurvey = this.state.survey;
-        this.lastPage = new Survey.PageModel("lastPage");
-        this.lastPage.addNewQuestion("text", "");
-        this.setState({
-            survey : tmpSurvey
-        });
-    }
 
 
     //adds the needed EventListeners at the init of the survey. It set the functions to call when a button is pressed, a page is changed, etc.
     addEventListeners(){
-        let tmpSurvey = this.state.survey;
 
+        //TODO : put that in another place
+        let tmpSurvey = this.state.survey
+        tmpSurvey.completeText = "Next"
+
+
+        //TODO : delete if not needed
+        //tmpSurvey.sendResultOnPageNext = true;
         //eventlistener when the user press next
-        tmpSurvey.sendResultOnPageNext = true;
-        tmpSurvey.onPartialSend.add(function (result, options){
-            this.onNextButtonPressed(result, options)
-        }.bind(this));
+        //tmpSurvey.onPartialSend.add(function (result, options){
+         //   this.onNextButtonPressed(result, options)
+        //}.bind(this));
 
         //eventlistener when user presses prev
         tmpSurvey.onCurrentPageChanged.add(function(sender, options){
@@ -79,6 +70,18 @@ class FlexibleSurvey extends React.Component {
                 this.goBackToPreviousStep();
             }
         }.bind(this));
+
+        //eventlistener when user presses next
+        tmpSurvey.onCompleting.add(function(sender, options){
+            if (this._surveyCompleted){
+                options.allowComplete = true
+            } else {
+                options.allowComplete = false
+                this.onNextButtonPressed(sender, options)
+            }
+
+        }.bind(this));
+
         this.setState({
             survey : tmpSurvey
         });
@@ -112,8 +115,6 @@ class FlexibleSurvey extends React.Component {
     // add a new page with the question at the end of the survey
     // add the lastPage at the end of the survey (see lastPage property)
     setNextQuestionOfSurvey(questionId){
-        this._buttonNextPressed = true
-        console.log("FUNCTION CALLED : setNextQuestionOfSurvey")
         console.log("adding the next question (id="+questionId+") at the end of survey...");
         const questionToAdd = this.getQuestionById(questionId);
         if (!questionToAdd){
@@ -122,7 +123,6 @@ class FlexibleSurvey extends React.Component {
         }
         let tmpSurvey = this.state.survey;
         let tmpStepID = this.stepID;
-        tmpSurvey = this.removeLastPage(tmpSurvey, tmpStepID);
         let newPage = tmpSurvey.addNewPage(tmpStepID);
         newPage.addQuestion(questionToAdd);
         let res = this.saveNewPage(tmpStepID, newPage);
@@ -131,19 +131,17 @@ class FlexibleSurvey extends React.Component {
             return null;
         }
         this.stepID = tmpStepID + 1;
-        tmpSurvey = this.addLastPage(tmpSurvey);
         this.setState({
             survey : tmpSurvey
         });
         this.currentQuestionBeingAnswered  = questionId
         console.log("question (id="+questionId+") added at the end of survey...");
-        this._buttonNextPressed = false
         return true
     }
 
     goBackToPreviousStep(){
-        console.log("FUNCTION CALLED : goBackToPreviousStep")
         console.log('Going back to previous step...');
+        this._surveyCompleted = false
         this.deleteMostRecentPageOfSurvey()
         this.pages = this.pages.slice(0, -1);
         this.stepID = this.stepID -1;
@@ -159,9 +157,7 @@ class FlexibleSurvey extends React.Component {
         console.log("FUNCTION CALLED : deleteMostRecentPageOfSurvey")
         let pageToDelete = this.getPageById(this.stepID-1)
         let tmpSurvey = this.state.survey
-        this.removeLastPage(tmpSurvey,this.stepID)
         tmpSurvey.removePage(pageToDelete)
-        this.addLastPage(tmpSurvey)
         this.setState({
             survey: tmpSurvey
         })
@@ -192,15 +188,39 @@ class FlexibleSurvey extends React.Component {
         return root
     }
 
-    //function to parse the json containing the next questionID, and add the question to the survey
+    finishSurvey(){
+        let tmpSurvey = this.state.survey
+        tmpSurvey.completeText = "Complete"
+        this._surveyCompleted = true
+        this.setState({
+            survey : tmpSurvey
+        })
+
+
+    }
+
+    isThereAnotherQuestion(questionId){
+        if  (questionId === "stop"){
+            return false
+        }
+        return true
+    }
+
+    //the function tests that there is a next question to display, and then adds it to the end of survey
     processQuestionIdReceived(data){
-        console.log("FUNCTION CALLED : processQuestionIdReceived")
         console.log("Next question id received from the server...")
         let nextQuestionId = data.nextQuestionId
         console.log("the next question id is " + nextQuestionId)
-        this.setNextQuestionOfSurvey(nextQuestionId)
+        if (this.isThereAnotherQuestion(nextQuestionId)) {
+            this.setNextQuestionOfSurvey(nextQuestionId)
+            this.state.survey.nextPage()
+        } else{
+            this.finishSurvey();
+        }
 
     }
+
+
 
     // transforms the json list of questions into objects, used later to manipulate the survey.
     // at this point, the questions are not added in the survey, they just "exist"
@@ -293,26 +313,8 @@ class FlexibleSurvey extends React.Component {
         return true;
     }
 
-    //adds a phantom page at the end of the survey, see lastPage property doc for more details
-    addLastPage(survey){
-        console.log("FUNCTION CALLED : addLastPage")
-        survey.addPage(this.lastPage);
-        return survey;
-    }
 
     //removes the last page at the end of the survey, see lastPage property doc for more details
-    removeLastPage(survey, pagesCount){
-        console.log("FUNCTION CALLED : removeLastPage")
-        console.log("removing last page...");
-        if (pagesCount !== 0){
-            survey.removePage(this.lastPage);
-            console.log("last page removed !");
-        } else {
-            console.log("there is no last page to remove, stepID=0 !");
-        }
-        console.log("removal of last page finished...");
-        return survey;
-    }
 
     //converts a json formatted question into a Question class of surveyjs
     createQuestionObjectFromJson(questionJson) {
@@ -333,7 +335,6 @@ class FlexibleSurvey extends React.Component {
     // BE CAREFUL : IT ONLY WORKS FOR SIMPLE ANSWERS(no matrix, nested answers, etc)
     //TODO : improve it later
     getLastAnswer(data){
-        console.log("FUNCTION CALLED : getLastAnswer")
         console.log("Getting the latest answer...")
         if (Object.keys(data).length === 0 && data.constructor === Object){
             console.error("ERROR : The data of the last answer is empty !");
@@ -379,38 +380,40 @@ class FlexibleSurvey extends React.Component {
     
     //function called when the user press Next button
     onNextButtonPressed(result, options){
-        console.log("FUNCTION CALLED : onNextButtonPressed")
-        if (this._buttonNextPressedCpt == 1){
-            console.log("HUGE WORKAROUND TO DELETE ASAP")
-        } else{
-
-            console.log("NEXT button pressed")
-            //retrieve the last answer
-            const lastAnswer = this.getLastAnswer(result.data)
-            if(!lastAnswer){
-                console.error("ERROR : no answer found ! ")
-                return null
-                //TODO later : when an answer is empty, make an appropriate function to handle it. NOTE : if you make a question mandatory, there is no need to test that the lastAnswer is empty, it will never be
-            }
-            //format it to csv
-            //const csvBody = this.serializeToCSV(lastAnswer)
-            this.setState({ loading: true }, () => {
-                axios({ //sending by post
-                    method: 'post',
-                    url: Configuration.serverUrl + ':' + Configuration.serverPort + '/addAnswer/session/' + this.sessionID,
-                    data: lastAnswer
-                })
-                    .then(response => console.log(response)) //waiting the confirmation that the server received it
-                    .then(response => axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/nextQuestion/session/' + this.sessionID)) //ask next question
-                    .then(response => this.processQuestionIdReceived(response.data))
-                    .then(response => this.setState({ //stopping the loading screen
-                        loading: false
-                    }));
-            });
+        console.log("NEXT button pressed")
+        //retrieve the last answer
+        const lastAnswer = this.getLastAnswer(result.data)
+        if(!lastAnswer){
+            console.error("ERROR : no answer found ! ")
+            return null
+            //TODO later : when an answer is empty, make an appropriate function to handle it. NOTE : if you make a question mandatory, there is no need to test that the lastAnswer is empty, it will never be
         }
-        this._buttonNextPressedCpt++
-
+        //format it to csv
+        //const csvBody = this.serializeToCSV(lastAnswer)
+        this.setState({ loading: true }, () => {
+            axios({ //sending by post
+                method: 'post',
+                url: Configuration.serverUrl + ':' + Configuration.serverPort + '/addAnswer/session/' + this.sessionID,
+                data: lastAnswer
+            })
+                .then(response => console.log(response)) //waiting the confirmation that the server received it
+                .then(response => axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/nextQuestion/session/' + this.sessionID)) //ask next question
+                .then(response => this.processQuestionIdReceived(response.data))
+                .then(response => this.setState({ //stopping the loading screen
+                    loading: false
+                }));
+        });
     }
+
+
+    //asking the first question of the survey when it is initializing
+    askFirstQuestion(){
+        console.info("function called : askFirstQuestion")
+        console.log("Asking the first question...");
+        axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/nextQuestion/session/' + this.sessionID)
+            .then(response => this.processQuestionIdReceived(response.data))
+    }
+
 
 
 
@@ -428,9 +431,8 @@ class FlexibleSurvey extends React.Component {
         this.setState({ loading: true }, () => {
             axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/survey/' + this.surveyID + '/newSession')
                 .then(response => this.deserialize(response.data))
-                .then(response => this.initLastPage())
                 .then(response => this.addEventListeners())
-                .then(response => this.setNextQuestionOfSurvey(0))
+                .then(response => this.askFirstQuestion())
                 .then(response => this.setState({
                     loading: false
                 }));
@@ -446,12 +448,13 @@ class FlexibleSurvey extends React.Component {
 
 
     // if an ajax request is loading, a spinner is shown. If a question is available, the survey is shown
+    //{this.state.loading ? <LoadingSpinner /> : <Survey.Survey model={this.state.survey}/>}
     render(){
         console.log(this.state.survey.pages)
         return(
             <div className="jumbotron jumbotron-fluid">
                 <div className="container">
-                     <Survey.Survey model={this.state.survey}/>
+                    {this.state.loading ? <LoadingSpinner /> : <Survey.Survey model={this.state.survey}/>}
                 </div>
             </div>
         );
