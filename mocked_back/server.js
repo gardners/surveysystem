@@ -29,6 +29,7 @@ function shuffle (array) {
   return array;
 }
 
+let cpt= 0
 //------------------------------------------------------
 app.get('/survey/:surveyid/newSession', function(req,res){
 	console.log("GET /survey/id")
@@ -44,10 +45,18 @@ app.post('/addAnswer/session/:sessionid', function (req, res) {
 });
 
 app.get('/nextQuestion/session/:id', function(req,res){
-	questionsID = shuffle(questionsID)
-	nextQuestion = questionsID.pop()  
-  	console.log("next question : "+ nextQuestion)
-	res.json({'nextQuestionId' : nextQuestion})
+	//if (cpt < 3){
+		questionsID = shuffle(questionsID)
+		nextQuestion = questionsID.pop()  
+  		console.log("next question : "+ nextQuestion)
+		res.json({'nextQuestionId' : nextQuestion})
+	//} else {
+	//	console.log("next question : "+ "stop")
+	//	res.json({'nextQuestionId' : "stop"})
+	//}
+	
+	cpt = cpt+1
+	
 })
 
 app.listen(port);
