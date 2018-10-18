@@ -1,4 +1,8 @@
-to run the front app, type :
+to run the front app, type in the terminal:
 npm start
+to test the app, go to :
+http://localhost:3000/survey/12
 
-work in progress...
+note : the mocked back end should be running, to know how read the howtorun in the mocked_back floder
+
+
