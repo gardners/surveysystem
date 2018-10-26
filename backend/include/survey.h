@@ -128,3 +128,5 @@ int delete_session(char *session_id);
 void free_session(struct session *s);
 void free_question(struct question *q);
 void free_answer(struct answer *a);
+
+int validate_session_id(char *session_id);

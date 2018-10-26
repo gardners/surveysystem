@@ -13,6 +13,54 @@
 #include "survey.h"
 #include "serialisers.h"
 
+enum key {
+  KEY_SURVEYID,
+  KEY_SESSIONID,
+  KEY_QUESTIONID,
+  KEY_ANSWER,
+  KEY__MAX
+};
+
+int kvalid_surveyid(struct kpair *kp) {
+  // Only use our validation here, not one of the pre-defined ones
+  kp->type = KPAIR__MAX;
+
+  // Is okay
+  return 0;
+}
+
+int kvalid_sessionid(struct kpair *kp) {
+  // Only use our validation here, not one of the pre-defined ones
+  kp->type = KPAIR__MAX;
+
+  return validate_session_id(kp->val);
+}
+
+int kvalid_questionid(struct kpair *kp) {
+  // Only use our validation here, not one of the pre-defined ones
+  kp->type = KPAIR__MAX;
+
+  // Is okay
+  return kvalid_string(kp);
+}
+
+int kvalid_answer(struct kpair *kp) {
+  // Only use our validation here, not one of the pre-defined ones
+  kp->type = KPAIR__MAX;
+
+  struct answer a;
+  return deserialise_answer(kp->val,&a);
+}
+
+static const struct kvalid keys[KEY__MAX] = {
+  { kvalid_surveyid, "surveyid"},
+  { kvalid_sessionid, "sessionid"},
+  { kvalid_questionid, "questionid"},
+  { kvalid_answer, "answer"}
+};
+
+
+
 enum	page {
 	PAGE_NEWSESSION,
 	PAGE_ADDANSWER,
@@ -39,7 +87,7 @@ static const disp disps[PAGE__MAX] = {
   fcgi_nextquestion,
   fcgi_delanswer,
   fcgi_delsession
-}
+};
 
 static const char *const pages[PAGE__MAX] = {
   "newsession",
@@ -160,7 +208,32 @@ int main(int argc,char **argv)
   return retVal;
 }
 
-static void fcgi_newsession(struct kreq *)
+static void fcgi_newsession(struct kreq *r)
+{
+  
+}
+
+static void fcgi_addanswer(struct kreq *r)
+{
+  
+}
+
+static void fcgi_updateanswer(struct kreq *r)
+{
+  
+}
+
+static void fcgi_delanswer(struct kreq *r)
+{
+  
+}
+
+static void fcgi_delsession(struct kreq *r)
+{
+  
+}
+
+static void fcgi_nextquestion(struct kreq *r)
 {
   
 }
