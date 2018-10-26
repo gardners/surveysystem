@@ -142,6 +142,9 @@ int main(int argc,char **argv)
 
     // For each request
     for (;;) {
+      // Clear our internal error log
+      clear_errors();
+
       // Parse request
       er = khttp_fcgi_parse(fcgi, &req);
       if (KCGI_EXIT == er) {
@@ -227,23 +230,11 @@ void quick_error(struct kreq *req,int e,char *msg)
   return;
 }  
 
-static void fcgi_newsession(struct kreq *req)
+void begin_200(struct kreq *req)
 {
   enum kcgi_err    er;
 
   do {
-
-    struct kpair *p;
-    if ((p = req->fieldmap[KEY_SURVEYID])) {
-      khttp_puts(req,"Has surveyid: ");
-      khttp_puts(req, p->val);
-    }
-    else {
-      // No survey ID, so return 400
-      quick_error(req,KHTTP_400,"surveyid missing");
-      break;
-    }
-    
     // Emit 200 response
     er = khttp_head(req, kresps[KRESP_STATUS], 
 		    "%s", khttps[KHTTP_200]);
@@ -265,7 +256,7 @@ static void fcgi_newsession(struct kreq *req)
       fprintf(stderr, "khttp_head: error: %d\n", er);
       break;
     }
-    
+
     // Begin sending body
     er = khttp_body(req);
     if (KCGI_HUP == er) {
@@ -276,6 +267,86 @@ static void fcgi_newsession(struct kreq *req)
       break;
     }
     
+
+  } while(0);
+}
+
+void begin_500(struct kreq *req)
+{
+  enum kcgi_err    er;
+
+  do {
+    // Emit 500 response
+    er = khttp_head(req, kresps[KRESP_STATUS], 
+		    "%s", khttps[KHTTP_500]);
+    if (KCGI_HUP == er) {
+      fprintf(stderr, "khttp_head: interrupt\n");
+      continue;
+    } else if (KCGI_OK != er) {
+      fprintf(stderr, "khttp_head: error: %d\n", er);
+      break;
+    }
+    
+    // Emit mime-type
+    er = khttp_head(req, kresps[KRESP_CONTENT_TYPE], 
+		    "%s", kmimetypes[req->mime]);
+    if (KCGI_HUP == er) {
+      fprintf(stderr, "khttp_head: interrupt\n");
+      continue;
+    } else if (KCGI_OK != er) {
+      fprintf(stderr, "khttp_head: error: %d\n", er);
+      break;
+    }
+
+    // Begin sending body
+    er = khttp_body(req);
+    if (KCGI_HUP == er) {
+      fprintf(stderr, "khttp_body: interrupt\n");
+      continue;
+    } else if (KCGI_OK != er) {
+      fprintf(stderr, "khttp_body: error: %d\n", er);
+      break;
+    }
+        
+  } while(0);
+}
+
+void dump_errors_kcgi(struct kreq *req)
+{
+  for(int i=0;i<error_count;i++) {
+    char msg[1024];
+    snprintf(msg,1024,"%s<br>\n",error_messages[i]);
+    khttp_puts(req,msg);
+  }
+  return;
+}
+
+
+static void fcgi_newsession(struct kreq *req)
+{
+  enum kcgi_err    er;
+  int retVal=0;
+  
+  do {
+
+    struct kpair *survey = req->fieldmap[KEY_SURVEYID];
+    if (!survey) {
+      // No survey ID, so return 400
+      quick_error(req,KHTTP_400,"surveyid missing");
+      break;
+    }
+
+    char session_id[1024];
+    if (create_session(survey->val,session_id)) {
+      begin_500(req);
+      er = khttp_puts(req, "<h1>500 Internal Error. Session could not be created.</h1>\n");
+      er = khttp_puts(req, "Error log:<br>\n");
+      dump_errors_kcgi(req);
+      break;
+    }    
+    
+    begin_200(req);
+
     // Write some stuff in reply
     er = khttp_puts(req, "Hello, world!<br>\n");
 

@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define MAX_ERRORS 20
+#include "errorlog.h"
+
 char error_messages[MAX_ERRORS][1024];
 int error_count=0;
 
@@ -16,6 +17,7 @@ void dump_errors(FILE *f)
 {
   for(int i=0;i<error_count;i++)
     {
+
       fprintf(f,"   %s\n",error_messages[i]);	     
     }
   return;
