@@ -1,3 +1,3 @@
 sudo cp lighttpd.conf /etc/lighttpd/lighttpd.conf
 sudo rm /var/log/lighttpd/error.log 
-/usr/sbin/lighttpd -tt -f /etc/lighttpd/lighttpd.conf  && cp surveyfcgi /var/www/fastcgi && service lighttpd stop && service lighttpd start
+/usr/sbin/lighttpd -tt -f /etc/lighttpd/lighttpd.conf && service lighttpd stop && cp surveyfcgi /var/www/fastcgi && service lighttpd start
