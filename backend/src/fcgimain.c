@@ -185,11 +185,65 @@ int main(int argc,char **argv)
   return retVal;
 }
 
+void quick_error(struct kreq *req,int e,char *msg)
+{
+  enum kcgi_err    er;
+  do {
+    er = khttp_head(req, kresps[KRESP_STATUS], 
+		    "%s", khttps[e]);
+    if (KCGI_HUP == er) {
+      fprintf(stderr, "khttp_head: interrupt\n");
+      continue;
+    } else if (KCGI_OK != er) {
+      fprintf(stderr, "khttp_head: error: %d\n", er);
+      break;
+    }
+    
+    // Emit mime-type
+    er = khttp_head(req, kresps[KRESP_CONTENT_TYPE], 
+		    "%s", kmimetypes[req->mime]);
+    if (KCGI_HUP == er) {
+      fprintf(stderr, "khttp_head: interrupt\n");
+      continue;
+    } else if (KCGI_OK != er) {
+      fprintf(stderr, "khttp_head: error: %d\n", er);
+      break;
+    }
+    
+    // Begin sending body
+    er = khttp_body(req);
+    if (KCGI_HUP == er) {
+      fprintf(stderr, "khttp_body: interrupt\n");
+      continue;
+    } else if (KCGI_OK != er) {
+      fprintf(stderr, "khttp_body: error: %d\n", er);
+      break;
+    }
+    
+    // Write some stuff in reply
+    er = khttp_puts(req, "No surveyid provided\n");	
+  } while(0);
+
+  return;
+}  
+
 static void fcgi_newsession(struct kreq *req)
 {
   enum kcgi_err    er;
 
   do {
+
+    struct kpair *p;
+    if ((p = req->fieldmap[KEY_SURVEYID])) {
+      khttp_puts(req,"Has surveyid: ");
+      khttp_puts(req, p->val);
+    }
+    else {
+      // No survey ID, so return 400
+      quick_error(req,KHTTP_400,"surveyid missing");
+      break;
+    }
+    
     // Emit 200 response
     er = khttp_head(req, kresps[KRESP_STATUS], 
 		    "%s", khttps[KHTTP_200]);
@@ -225,13 +279,6 @@ static void fcgi_newsession(struct kreq *req)
     // Write some stuff in reply
     er = khttp_puts(req, "Hello, world!<br>\n");
 
-    struct kpair *p;
-    if ((p = req->fieldmap[KEY_SURVEYID])) {
-      khttp_puts(req,"Has surveyid: ");
-      khttp_puts(req, p->val);
-    }
-    else khttp_puts(req,"No surveyid provided");
-    
     
   } while(0);
 
