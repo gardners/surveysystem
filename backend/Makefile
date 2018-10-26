@@ -87,5 +87,10 @@ $(KCGIARS):
 surveyfcgi:	$(FCGIOBJS) $(KCGIARS)
 	$(CC) $(COPT) -o $@ $^ $(LOPT) `$(PYCONFIG) --libs --ldflags` $(KCGIARS) -lz
 
+lighttpd2/bin/lighttpd:
+	git submodule init
+	git submodule update
+	( cd lighttpd2 ; autoreconf -i && autoconf && ./configure && make )
+
 clean:
 	rm $(SRCDIR)/*.o $(GENERATEDHEADERS) $(GENERATEDSRCS)
