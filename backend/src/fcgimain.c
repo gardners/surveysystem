@@ -348,7 +348,7 @@ static void fcgi_newsession(struct kreq *req)
     begin_200(req);
 
     // Write some stuff in reply
-    er = khttp_puts(req, "Hello, world!<br>\n");
+    er = khttp_puts(req, session_id);
 
     
   } while(0);
