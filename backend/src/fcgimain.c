@@ -26,20 +26,24 @@ int kvalid_surveyid(struct kpair *kp) {
   kp->type = KPAIR__MAX;
 
   // Is okay
-  return 0;
+  kp->parsed.s = kp->val;
+  return 1;
 }
 
 int kvalid_sessionid(struct kpair *kp) {
   // Only use our validation here, not one of the pre-defined ones
   kp->type = KPAIR__MAX;
 
-  return validate_session_id(kp->val);
+  kp->parsed.s = kp->val;
+  if (validate_session_id(kp->val)) return 1;
+  else return 0;
 }
 
 int kvalid_questionid(struct kpair *kp) {
   // Only use our validation here, not one of the pre-defined ones
   kp->type = KPAIR__MAX;
 
+  kp->parsed.s = kp->val;
   // Is okay
   return kvalid_string(kp);
 }
@@ -48,8 +52,14 @@ int kvalid_answer(struct kpair *kp) {
   // Only use our validation here, not one of the pre-defined ones
   kp->type = KPAIR__MAX;
 
+  kp->parsed.s = kp->val;
+  
   struct answer a;
-  return deserialise_answer(kp->val,&a);
+
+  // XXX Remember deserialised answer and keep it in memory to save parsing twice?
+  
+  if (deserialise_answer(kp->val,&a)) return 1;
+  else return 0;
 }
 
 static const struct kvalid keys[KEY__MAX] = {
@@ -213,14 +223,16 @@ static void fcgi_newsession(struct kreq *req)
     }
     
     // Write some stuff in reply
-    er = khttp_puts(req, "Hello, world!\n");
-    if (KCGI_HUP == er) {
-      fprintf(stderr, "khttp_puts: interrupt\n");
-      continue;
-    } else if (KCGI_OK != er) {
-      fprintf(stderr, "khttp_puts: error: %d\n", er);
-      break;
+    er = khttp_puts(req, "Hello, world!<br>\n");
+
+    struct kpair *p;
+    if ((p = req->fieldmap[KEY_SURVEYID])) {
+      khttp_puts(req,"Has surveyid: ");
+      khttp_puts(req, p->val);
     }
+    else khttp_puts(req,"No surveyid provided");
+    
+    
   } while(0);
 
   return;
