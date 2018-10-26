@@ -123,7 +123,7 @@ int main(int argc,char **argv)
     enum kcgi_err    er;
     
     if (KCGI_OK != khttp_fcgi_init(&fcgi,
-				   NULL, 0, // Keys for parsing
+				   keys, KEY__MAX, // CGI variable parse definitions
 				   pages, PAGE__MAX,  // Pages for parsing
 				   PAGE_NEWSESSION))
       {	LOG_ERROR("khttp_fcgi_init() failed.",""); }
@@ -142,56 +142,23 @@ int main(int argc,char **argv)
 	break;
       }
 
-      // Emit 200 response
-      er = khttp_head(&req, kresps[KRESP_STATUS], 
-		      "%s", khttps[KHTTP_200]);
-      if (KCGI_HUP == er) {
-	fprintf(stderr, "khttp_head: interrupt\n");
-	khttp_free(&req);
-	continue;
-      } else if (KCGI_OK != er) {
-	fprintf(stderr, "khttp_head: error: %d\n", er);
-	khttp_free(&req);
-	break;
+      // Fail if we can't find the page, or the mime type is wrong
+      if (PAGE__MAX == req.page || 
+	  KMIME_TEXT_HTML != req.mime) {
+	er = khttp_head(&req, kresps[KRESP_STATUS], 
+			"%s", khttps[KHTTP_404]);
+	if (KCGI_HUP == er) {
+	  fprintf(stderr, "khttp_head: interrupt\n");
+	  continue;
+	} else if (KCGI_OK != er) {
+	  fprintf(stderr, "khttp_head: error: %d\n", er);
+	  break;
+	}
       }
-
-      // Emit mime-type
-      er = khttp_head(&req, kresps[KRESP_CONTENT_TYPE], 
-		      "%s", kmimetypes[req.mime]);
-      if (KCGI_HUP == er) {
-	fprintf(stderr, "khttp_head: interrupt\n");
-	khttp_free(&req);
-	continue;
-      } else if (KCGI_OK != er) {
-	fprintf(stderr, "khttp_head: error: %d\n", er);
-	khttp_free(&req);
-	break;
-      }
-
-      // Begin sending body
-      er = khttp_body(&req);
-      if (KCGI_HUP == er) {
-	fprintf(stderr, "khttp_body: interrupt\n");
-	khttp_free(&req);
-	continue;
-      } else if (KCGI_OK != er) {
-	fprintf(stderr, "khttp_body: error: %d\n", er);
-	khttp_free(&req);
-	break;
-      }
-
-      // Write some stuff in reply
-      er = khttp_puts(&req, "Hello, world!\n");
-      if (KCGI_HUP == er) {
-	fprintf(stderr, "khttp_puts: interrupt\n");
-	khttp_free(&req);
-	continue;
-      } else if (KCGI_OK != er) {
-	fprintf(stderr, "khttp_puts: error: %d\n", er);
-	khttp_free(&req);
-	break;
-      }
-
+      else
+	// Call page dispatcher
+	(*disps[req.page])(&req);
+      
       // Close off request
       khttp_free(&req);
     }
@@ -208,9 +175,55 @@ int main(int argc,char **argv)
   return retVal;
 }
 
-static void fcgi_newsession(struct kreq *r)
+static void fcgi_newsession(struct kreq *req)
 {
-  
+  enum kcgi_err    er;
+
+  do {
+    // Emit 200 response
+    er = khttp_head(req, kresps[KRESP_STATUS], 
+		    "%s", khttps[KHTTP_200]);
+    if (KCGI_HUP == er) {
+      fprintf(stderr, "khttp_head: interrupt\n");
+      continue;
+    } else if (KCGI_OK != er) {
+      fprintf(stderr, "khttp_head: error: %d\n", er);
+      break;
+    }
+    
+    // Emit mime-type
+    er = khttp_head(req, kresps[KRESP_CONTENT_TYPE], 
+		    "%s", kmimetypes[req->mime]);
+    if (KCGI_HUP == er) {
+      fprintf(stderr, "khttp_head: interrupt\n");
+      continue;
+    } else if (KCGI_OK != er) {
+      fprintf(stderr, "khttp_head: error: %d\n", er);
+      break;
+    }
+    
+    // Begin sending body
+    er = khttp_body(req);
+    if (KCGI_HUP == er) {
+      fprintf(stderr, "khttp_body: interrupt\n");
+      continue;
+    } else if (KCGI_OK != er) {
+      fprintf(stderr, "khttp_body: error: %d\n", er);
+      break;
+    }
+    
+    // Write some stuff in reply
+    er = khttp_puts(req, "Hello, world!\n");
+    if (KCGI_HUP == er) {
+      fprintf(stderr, "khttp_puts: interrupt\n");
+      continue;
+    } else if (KCGI_OK != er) {
+      fprintf(stderr, "khttp_puts: error: %d\n", er);
+      break;
+    }
+  } while(0);
+
+  return;
 }
 
 static void fcgi_addanswer(struct kreq *r)
