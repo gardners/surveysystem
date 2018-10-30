@@ -20,3 +20,18 @@ logs/YYYY/MM/DD/YYYY-MM-DD-HH.log - Log files of all activity
 Stale sessions can simply be deleted via the file system, and surveys added or updated or deleted similarly easily.
 
 All data lives in $SURVEY_HOME. The SURVEY_HOME environment variable must be defined.
+
+This system requires python 3.7 and clang. To install on ubuntu:
+
+```
+sudo apt-get install python3.7-dev python3.7 clang
+```
+
+Then make sure to build and install kcgi:
+
+```
+git submodule init
+git submodule update
+cd kcgi
+make install
+```
