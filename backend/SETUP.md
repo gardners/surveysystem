@@ -76,3 +76,6 @@ service lighttpd stop ; service lighttpd start
 
 For convenience for testing, you can use the testrun script, which will recompile,
 reinstall the fastcgi binary, and restart things.
+
+But note that if you run testrun, it will replace /etc/lighttpd/lighttpd.conf with the
+one in this directory -- so you should modify that file.
