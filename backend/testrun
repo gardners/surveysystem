@@ -1,3 +1,3 @@
 sudo cp lighttpd.conf /etc/lighttpd/lighttpd.conf
 sudo rm /var/log/lighttpd/error.log 
-make && ( cd ../front ; npm run build ) && /usr/sbin/lighttpd -tt -f /etc/lighttpd/lighttpd.conf && service lighttpd stop && cp surveyfcgi /var/www/fastcgi && service lighttpd start
+make && ( cd ../front ; mkdir -p build ; npm run build ) && /usr/sbin/lighttpd -tt -f /etc/lighttpd/lighttpd.conf && service lighttpd stop && cp surveyfcgi /var/www/fastcgi && service lighttpd start
