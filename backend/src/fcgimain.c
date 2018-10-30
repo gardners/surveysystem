@@ -14,14 +14,6 @@
 #include "survey.h"
 #include "serialisers.h"
 
-enum key {
-  KEY_SURVEYID,
-  KEY_SESSIONID,
-  KEY_QUESTIONID,
-  KEY_ANSWER,
-  KEY__MAX
-};
-
 int kvalid_surveyid(struct kpair *kp) {
   // Only use our validation here, not one of the pre-defined ones
   kp->type = KPAIR__MAX;
@@ -36,8 +28,8 @@ int kvalid_sessionid(struct kpair *kp) {
   kp->type = KPAIR__MAX;
 
   kp->parsed.s = kp->val;
-  if (validate_session_id(kp->val)) return 1;
-  else return 0;
+  if (validate_session_id(kp->val)) return 0;
+  else return 1;
 }
 
 int kvalid_questionid(struct kpair *kp) {
@@ -59,9 +51,17 @@ int kvalid_answer(struct kpair *kp) {
 
   // XXX Remember deserialised answer and keep it in memory to save parsing twice?
   
-  if (deserialise_answer(kp->val,&a)) return 1;
-  else return 0;
+  if (deserialise_answer(kp->val,&a)) return 0;
+  else return 1;
 }
+
+enum key {
+  KEY_SURVEYID,
+  KEY_SESSIONID,
+  KEY_QUESTIONID,
+  KEY_ANSWER,
+  KEY__MAX
+};
 
 static const struct kvalid keys[KEY__MAX] = {
   { kvalid_surveyid, "surveyid"},
@@ -225,7 +225,7 @@ void quick_error(struct kreq *req,int e,char *msg)
     }
     
     // Write some stuff in reply
-    er = khttp_puts(req, "No surveyid provided\n");	
+    er = khttp_puts(req, msg);	
   } while(0);
 
   return;
@@ -414,5 +414,52 @@ static void fcgi_delsession(struct kreq *r)
 
 static void fcgi_nextquestion(struct kreq *r)
 {
+  //  enum kcgi_err    er;
+  int retVal=0;
+  
+  do {
+
+    struct kpair *session = r->fieldmap[KEY_SESSIONID];
+    if (!session) {
+      // No session ID, so return 400
+      quick_error(r,KHTTP_400,"sessionid missing");
+      break;
+    }
+    if (!session->val) {
+      quick_error(r,KHTTP_400,"sessionid is blank");
+      break;
+    }
+    char *session_id=session->val;
+
+    struct session *s=load_session(session_id);
+    if (!s) {
+      quick_error(r,KHTTP_400,"Could not load specified session. Does it exist?");
+      break;
+    }
+    struct question *q[1024];
+    int next_question_count=0;
+    if (get_next_questions(s,q,1024,&next_question_count))
+      LOG_ERROR("get_next_questions() failed",session_id);
+    
+    struct kjsonreq req;
+    kjson_open(&req, r); 
+    kcgi_writer_disable(r); 
+    khttp_head(r, kresps[KRESP_STATUS], 
+	       "%s", khttps[KHTTP_200]); 
+    khttp_head(r, kresps[KRESP_CONTENT_TYPE], 
+	       "%s", kmimetypes[r->mime]); 
+    khttp_body(r); 
+    kjson_putintp(&req, "count", next_question_count); 
+    kjson_arrayp_open(&req, "questions");
+    for(int i=0;i<next_question_count;i++) {
+      kjson_putstring(&req,q[i]->uid);
+    }
+    kjson_array_close(&req); 
+    kjson_close(&req);
+        
+  } while(0);
+
+  return;
+  
   
 }
