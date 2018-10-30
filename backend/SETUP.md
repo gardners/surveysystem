@@ -60,6 +60,7 @@ ownership on it as well.
 
 ```
 sudo mkdir /var/www/fastcgi
+sudo chown <your username> /var/www/fastcgi
 cp surveyfcgi /var/www/fastcgi
 ```
 
