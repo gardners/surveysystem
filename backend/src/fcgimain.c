@@ -466,10 +466,16 @@ static void fcgi_nextquestion(struct kreq *r)
 	case QTYPE_MULTICHOICE:
 	  kjson_putstringp(&req,"radiogroup","type");
 	  kjson_arrayp_open(&req,"choices");
+	  int len=strlen(q[i]->choices);
 	  for(int j=0;q[i]->choices[j];) {
 	    char choice[65536];
 	    int cl=0;
-	    while(q[i]->choices[j+cl]&&(q[i]->choices[j+cl]!=','))
+	    choice[0]=0;
+	    while(
+		  ((j+cl)<len)
+		  &&q[i]->choices[j+cl]
+		  &&(q[i]->choices[j+cl]!=',')
+		  )
 	      {
 		if (cl<65535) {
 		  choice[cl]=q[i]->choices[j+cl];
@@ -479,6 +485,7 @@ static void fcgi_nextquestion(struct kreq *r)
 	      }
 	    kjson_putstring(&req,choice);
 	    j+=cl;
+	    if (q[i]->choices[j+cl]==',') j++;
 	  }
 	  kjson_array_close(&req);
 	  break;
