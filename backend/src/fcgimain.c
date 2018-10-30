@@ -464,7 +464,11 @@ static void fcgi_nextquestion(struct kreq *r)
 	case QTYPE_FIXEDPOINT: kjson_putstringp(&req,"text","type"); break;
 	case QTYPE_TEXT: kjson_putstringp(&req,"text","type"); break;
 	case QTYPE_MULTICHOICE:
-	  kjson_putstringp(&req,"radiogroup","type");
+	case QTYPE_MULTISELECT:
+	  if (q[i]->type==QTYPE_MULTICHOICE)
+	    kjson_putstringp(&req,"radiogroup","type");
+	  else
+	    kjson_putstringp(&req,"checkbox","type");
 	  kjson_arrayp_open(&req,"choices");
 	  int len=strlen(q[i]->choices);
 	  for(int j=0;q[i]->choices[j];) {
