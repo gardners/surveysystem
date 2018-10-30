@@ -448,13 +448,52 @@ static void fcgi_nextquestion(struct kreq *r)
 	       "%s", khttps[KHTTP_200]); 
     khttp_head(r, kresps[KRESP_CONTENT_TYPE], 
 	       "%s", kmimetypes[r->mime]); 
-    khttp_body(r); 
-    kjson_putintp(&req, "count", next_question_count); 
-    kjson_arrayp_open(&req, "questions");
+    khttp_body(r);
+    kjson_obj_open(&req);
+    kjson_putint(&req, next_question_count); 
+    kjson_arrayp_open(&req,"questions");
     for(int i=0;i<next_question_count;i++) {
-      kjson_putstring(&req,q[i]->uid);
+      // Output each question
+      kjson_obj_open(&req);
+      kjson_putstringp(&req,q[i]->uid,"id");
+      kjson_putstringp(&req,q[i]->uid,"name");
+      kjson_putstringp(&req,q[i]->question_html,"title");
+      kjson_putstringp(&req,q[i]->question_text,"title_text");
+      switch (q[i]->type)
+	{
+	case QTYPE_FIXEDPOINT: kjson_putstringp(&req,"text","type"); break;
+	case QTYPE_TEXT: kjson_putstringp(&req,"text","type"); break;
+	case QTYPE_MULTICHOICE:
+	  kjson_putstringp(&req,"radiogroup","type");
+	  kjson_arrayp_open(&req,"choices");
+	  for(int j=0;q[i]->choices[j];) {
+	    char choice[65536];
+	    int cl=0;
+	    while(q[i]->choices[j+cl]&&(q[i]->choices[j+cl]!=','))
+	      {
+		if (cl<65535) {
+		  choice[cl]=q[i]->choices[j+cl];
+		  choice[cl+1]=0;
+		}
+		cl++;
+	      }
+	    kjson_putstring(&req,choice);
+	    j+=cl;
+	  }
+	  kjson_array_close(&req);
+	  break;
+	case QTYPE_DATETIME:
+	  kjson_putstringp(&req,"text","type");
+	  kjson_putstringp(&req,"date","inputType");
+	  break;
+	default:
+	  kjson_putstringp(&req,"text","type"); break;	  
+	}
+      
+      kjson_obj_close(&req);
     }
     kjson_array_close(&req); 
+    kjson_obj_close(&req); 
     kjson_close(&req);
         
   } while(0);
