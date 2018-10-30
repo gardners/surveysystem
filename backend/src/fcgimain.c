@@ -356,7 +356,7 @@ static void fcgi_newsession(struct kreq *req)
   return;
 }
 
-static void fcgi_addanswer(struct kreq *r)
+static void fcgi_addanswer(struct kreq *req)
 {
   enum kcgi_err    er;
   int retVal=0;
@@ -364,14 +364,19 @@ static void fcgi_addanswer(struct kreq *r)
   do {
 
     struct kpair *session = req->fieldmap[KEY_SESSIONID];
-    if (!survey) {
+    if (!session) {
       // No session ID, so return 400
       quick_error(req,KHTTP_400,"sessionid missing");
       break;
     }
+    if (!session->val) {
+      quick_error(req,KHTTP_400,"sessionid is blank");
+      break;
+    }
+    char *session_id=session->val;
 
     struct kpair *answer = req->fieldmap[KEY_ANSWER];
-    if (!survey) {
+    if (!answer) {
       // No answer, so return 400
       quick_error(req,KHTTP_400,"answer missing");
       break;
