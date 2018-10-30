@@ -12,7 +12,7 @@ ifeq ("$(wildcard $(PYCONFIG))","")
 PYCONFIG=/Library/Frameworks/Python.framework/Versions/$(PYTHONVERSION)/bin/python$(PYTHONVERSION)-config
 endif
 
-KCGIARS=	kcgi/libkcgihtml.a kcgi/libkcgi.a
+KCGIARS=	kcgi/libkcgihtml.a kcgi/libkcgi.a kcgi/libkcgijson.a
 
 STATICHEADERS=	Makefile \
 		$(INCDIR)/errorlog.h \
