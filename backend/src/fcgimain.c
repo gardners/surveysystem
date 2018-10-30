@@ -358,6 +358,34 @@ static void fcgi_newsession(struct kreq *req)
 
 static void fcgi_addanswer(struct kreq *r)
 {
+  enum kcgi_err    er;
+  int retVal=0;
+  
+  do {
+
+    struct kpair *session = req->fieldmap[KEY_SESSIONID];
+    if (!survey) {
+      // No session ID, so return 400
+      quick_error(req,KHTTP_400,"sessionid missing");
+      break;
+    }
+
+    struct kpair *answer = req->fieldmap[KEY_ANSWER];
+    if (!survey) {
+      // No answer, so return 400
+      quick_error(req,KHTTP_400,"answer missing");
+      break;
+    }
+    
+    begin_200(req);
+
+    // Write some stuff in reply
+    er = khttp_puts(req, session_id);
+
+    
+  } while(0);
+
+  return;
   
 }
 
