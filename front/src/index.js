@@ -5,6 +5,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 
 import Navbar from "./Navbar";
 import FlexibleSurvey from "./FlexibleSurvey";
+import FlexibleSurveyMocked from "./FlexibleSurveyMocked";
 
 import { BrowserRouter as Router, Route } from 'react-router-dom';
 
@@ -18,7 +19,7 @@ ReactDOM.render(
 ReactDOM.render(
     <Router>
         <div>
-            <Route path="/survey/:id" component={FlexibleSurvey} />
+            <Route path="/survey/:id" component={FlexibleSurveyMocked} />
         </div>
     </Router>,
     document.getElementById('app')
@@ -26,4 +27,5 @@ ReactDOM.render(
 
 
 
-registerServiceWorker();
+
+//registerServiceWorker();

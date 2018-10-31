@@ -1,9 +1,10 @@
 import React from 'react';
 import * as Survey from "survey-react";
 import axios from 'axios';
-import { Configuration } from './conf/config';
+import { Configuration } from './conf/configMocked';
 import LoadingSpinner from './LoadingSpinner';
 import geolocationQuestion from './customQuestions/geolocationQuestion'
+
 
 
 
@@ -29,7 +30,6 @@ class FlexibleSurvey extends React.Component {
 
 
 
-
     //useful stuff
     // SurveyModel.prototype.completeLastPage
     // SurveyModel.prototype.doComplete
@@ -37,7 +37,6 @@ class FlexibleSurvey extends React.Component {
     // Constructor, needed in every case in react
     // Also instantiate a new Survey (the not flexible one) and its style
     // loading is used to know if an ajax request is being made
-    // put here all the config, such as new question types
     constructor(props) {
         super(props);
         this.state = {
@@ -46,6 +45,7 @@ class FlexibleSurvey extends React.Component {
         };
         Survey.StylesManager.applyTheme(Configuration.surveyTheme);
         Survey.CustomWidgetCollection.Instance.addCustomWidget(geolocationQuestion, "customtype");
+
     }
 
 
@@ -432,45 +432,29 @@ class FlexibleSurvey extends React.Component {
 
 
 
-    // init function that retrieves the survey from the back end
-    // then deserialize them (JSON to Object)
-    // then instantiate the last page (see doc at the beginning)
-    // then adds an event handler on the Next button
-    // it is done asynchronously !!!!
-    // axios is the library for requests
-    // a loading screen is showed while the the ajax request is not finished
+
     init(){
         console.log("Getting the Survey with ID="+ this.surveyID+"...");
         this.setState({ loading: true }, () => {
-            axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/survey/newsession?surveyid=' + this.surveyID)
-                .then(response => this.getSessionIdFromServer(response.data))
-                // .then(response => this.deserialize(response.data))
-                // .then(response => this.addEventListeners())
-                // .then(response => this.askFirstQuestion())
+            axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/survey/' + this.surveyID + '/newSession')
+                .then(response => this.deserialize(response.data))
+                .then(response => this.addEventListeners())
+                .then(response => this.askFirstQuestion())
                 .then(response => this.setState({
                     loading: false
                 }));
         });
     }
 
-
-    // init(){
-    //     console.log("Getting the Survey with ID="+ this.surveyID+"...");
-    //     this.setState({ loading: true }, () => {
-    //         axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/survey/' + this.surveyID + '/newSession')
-    //             .then(response => this.deserialize(response.data))
-    //             .then(response => this.addEventListeners())
-    //             .then(response => this.askFirstQuestion())
-    //             .then(response => this.setState({
-    //                 loading: false
-    //             }));
-    //     });
-    // }
-
     //this function is fired when the page is loaded
     componentDidMount(){
+
+
         this.init();
     }
+
+
+
 
 
 
