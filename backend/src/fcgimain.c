@@ -375,6 +375,11 @@ static void fcgi_addanswer(struct kreq *req)
       break;
     }
     char *session_id=session->val;
+    struct session *s=load_session(session_id);
+    if (!s) {
+      quick_error(r,KHTTP_400,"Could not load specified session. Does it exist?");
+      break;
+    }
 
     struct kpair *answer = req->fieldmap[KEY_ANSWER];
     if (!answer) {
@@ -382,14 +387,27 @@ static void fcgi_addanswer(struct kreq *req)
       quick_error(req,KHTTP_400,"answer missing");
       break;
     }
+    if (!answer->val) {
+      quick_error(req,KHTTP_400,"answer is blank");
+      break;
+    }
 
-    // 
+    // Deserialise answer
+    struct answer a;
+    if (deserialise_answer(answer->val,&a)) {
+      quick_error(req,KHTTP_400,"Could not deserialise answer");
+      break;
+    }
+
+    if (session_add_answer(s,&a)) {
+      quick_error(req,KTTP_400,"session_add_answer() failed");
+      break;
+    }
+    if (save_session(s)) LOG_ERROR("save_session() failed",session_id);
+
     
-    begin_200(req);
-
-    // Write some stuff in reply
-    er = khttp_puts(req, session_id);
-
+    // All ok, so tell the caller the next question to be answered
+    return fcgi_nextquestion(req);
     
   } while(0);
 
