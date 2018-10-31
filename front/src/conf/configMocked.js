@@ -1,5 +1,5 @@
 export const Configuration = {
     surveyTheme: 'bootstrap',
     serverUrl: 'http://localhost',
-    serverPort :'80'
+    serverPort :'4000'
 };

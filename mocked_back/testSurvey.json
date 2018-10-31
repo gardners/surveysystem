@@ -2,6 +2,13 @@
 
   "questions": [
     {
+      "id" : 14,
+      "name": "name",
+      "type": "geolocation",
+      "title": "Please give us your geolocation :",
+      "placeHolder": "Type your geolocation..."
+    }, 
+    {
       "id" : 0,
       "name": "name",
       "type": "text",
