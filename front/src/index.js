@@ -19,7 +19,7 @@ ReactDOM.render(
 ReactDOM.render(
     <Router>
         <div>
-            <Route path="/survey/:id" component={FlexibleSurveyMocked} />
+            <Route path="/survey/:id" component={FlexibleSurvey} />
         </div>
     </Router>,
     document.getElementById('app')
