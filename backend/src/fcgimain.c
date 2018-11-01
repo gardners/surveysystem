@@ -377,7 +377,7 @@ static void fcgi_addanswer(struct kreq *req)
     char *session_id=session->val;
     struct session *s=load_session(session_id);
     if (!s) {
-      quick_error(r,KHTTP_400,"Could not load specified session. Does it exist?");
+      quick_error(req,KHTTP_400,"Could not load specified session. Does it exist?");
       break;
     }
 
@@ -400,7 +400,7 @@ static void fcgi_addanswer(struct kreq *req)
     }
 
     if (session_add_answer(s,&a)) {
-      quick_error(req,KTTP_400,"session_add_answer() failed");
+      quick_error(req,KHTTP_400,"session_add_answer() failed");
       break;
     }
     if (save_session(s)) LOG_ERROR("save_session() failed",session_id);
@@ -473,20 +473,20 @@ static void fcgi_nextquestion(struct kreq *r)
     for(int i=0;i<next_question_count;i++) {
       // Output each question
       kjson_obj_open(&req);
-      kjson_putstringp(&req,q[i]->uid,"id");
-      kjson_putstringp(&req,q[i]->uid,"name");
-      kjson_putstringp(&req,q[i]->question_html,"title");
-      kjson_putstringp(&req,q[i]->question_text,"title_text");
+      kjson_putstringp(&req,"id",q[i]->uid);
+      kjson_putstringp(&req,"name",q[i]->uid);
+      kjson_putstringp(&req,"title",q[i]->question_html);
+      kjson_putstringp(&req,"title_text",q[i]->question_text);
       switch (q[i]->type)
 	{
-	case QTYPE_FIXEDPOINT: kjson_putstringp(&req,"text","type"); break;
-	case QTYPE_TEXT: kjson_putstringp(&req,"text","type"); break;
+	case QTYPE_FIXEDPOINT: kjson_putstringp(&req,"type","text"); break;
+	case QTYPE_TEXT: kjson_putstringp(&req,"type","text"); break;
 	case QTYPE_MULTICHOICE:
 	case QTYPE_MULTISELECT:
 	  if (q[i]->type==QTYPE_MULTICHOICE)
-	    kjson_putstringp(&req,"radiogroup","type");
+	    kjson_putstringp(&req,"type","radiogroup");
 	  else
-	    kjson_putstringp(&req,"checkbox","type");
+	    kjson_putstringp(&req,"type","checkbox");
 	  kjson_arrayp_open(&req,"choices");
 	  int len=strlen(q[i]->choices);
 	  for(int j=0;q[i]->choices[j];) {
@@ -512,11 +512,11 @@ static void fcgi_nextquestion(struct kreq *r)
 	  kjson_array_close(&req);
 	  break;
 	case QTYPE_DATETIME:
-	  kjson_putstringp(&req,"text","type");
-	  kjson_putstringp(&req,"date","inputType");
+	  kjson_putstringp(&req,"type","text");
+	  kjson_putstringp(&req,"inputType","date");
 	  break;
 	default:
-	  kjson_putstringp(&req,"text","type"); break;	  
+	  kjson_putstringp(&req,"type","text"); break;	  
 	}
       
       kjson_obj_close(&req);
