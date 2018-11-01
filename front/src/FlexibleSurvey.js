@@ -223,6 +223,33 @@ class FlexibleSurvey extends React.Component {
     }
 
 
+    //the function tests that there is a next question to display, and then adds it to the end of survey
+    processQuestionReceived(data){
+        console.log("The first question was received")
+        console.log("Data received by the server :")
+        console.log(data)
+        let questionIdToAdd = this.deserialize(data)
+        console.log("These questions will be added at the end of the survey :")
+        console.log(questionIdToAdd)
+
+        for (let id in questionIdToAdd){
+            console.log("the next question id is " + id)
+            this.setNextQuestionOfSurvey(id)
+            this.state.survey.nextPage()
+        }
+
+        // let nextQuestionId = data.nextQuestionId
+        // console.log("the next question id is " + nextQuestionId)
+        // if (this.isThereAnotherQuestion(nextQuestionId)) {
+        //     this.setNextQuestionOfSurvey(nextQuestionId)
+        //     this.state.survey.nextPage()
+        // } else{
+        //     this.finishSurvey();
+        // }
+
+    }
+
+
 
     // transforms the json list of questions into objects, used later to manipulate the survey.
     // at this point, the questions are not added in the survey, they just "exist"
@@ -230,6 +257,7 @@ class FlexibleSurvey extends React.Component {
     deserialize(json){
         console.log("starting the deserialization...");
 
+        let questionsIdDeserialized = []
         const root = this.getRootFromJson(json)
         if (!root){
             console.error("ERROR : the json data received by the server is not adequate")
@@ -242,12 +270,14 @@ class FlexibleSurvey extends React.Component {
             console.log("deserializing question number " + cpt);
             let tmpJsonQuestion = questions[key];
             let questionId = this.getJsonAttribute("id", tmpJsonQuestion);
+            questionsIdDeserialized.push(questionId)
             let jsonQuestion = this.removeJsonAttribute("id",tmpJsonQuestion);
             let newQuestion = this.createQuestionObjectFromJson(jsonQuestion);
             this.saveNewQuestion(questionId, newQuestion);
             cpt++;
         }
-        console.log("deserialization complete");
+        console.log("deserialization complete")
+        return(questionsIdDeserialized)
     }
 
 
@@ -410,10 +440,11 @@ class FlexibleSurvey extends React.Component {
 
     //asking the first question of the survey when it is initializing
     askFirstQuestion(){
-        console.info("function called : askFirstQuestion")
         console.log("Asking the first question...");
-        axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/nextQuestion/session/' + this.sessionID)
-            .then(response => this.processQuestionIdReceived(response.data))
+        console.log('URL used : ' + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/nextquestion?sessionid=' + this.sessionID)
+
+        axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/nextquestion?sessionid=' + this.sessionID)
+            .then(response => this.processQuestionReceived(response.data))
     }
 
     getSessionIdFromServer(response){
@@ -440,13 +471,13 @@ class FlexibleSurvey extends React.Component {
     // axios is the library for requests
     // a loading screen is showed while the the ajax request is not finished
     init(){
-        console.log("Getting the Survey with ID="+ this.surveyID+"...");
+        console.log("version 4")
+        console.log("Getting the Survey with ID="+ this.surveyID+"..."); 
         this.setState({ loading: true }, () => {
-            axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/survey/newsession?surveyid=' + this.surveyID)
+            axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/newsession?surveyid=' + this.surveyID)
                 .then(response => this.getSessionIdFromServer(response.data))
-                // .then(response => this.deserialize(response.data))
-                // .then(response => this.addEventListeners())
-                // .then(response => this.askFirstQuestion())
+                .then(response => this.addEventListeners())
+                .then(response => this.askFirstQuestion())
                 .then(response => this.setState({
                     loading: false
                 }));
@@ -477,7 +508,6 @@ class FlexibleSurvey extends React.Component {
     // if an ajax request is loading, a spinner is shown. If a question is available, the survey is shown
     //{this.state.loading ? <LoadingSpinner /> : <Survey.Survey model={this.state.survey}/>}
     render(){
-        console.log(this.state.survey.pages)
         return(
             <div className="jumbotron jumbotron-fluid">
                 <div className="container">
