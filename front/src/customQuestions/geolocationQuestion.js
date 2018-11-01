@@ -1,3 +1,4 @@
+
 import * as Survey from "survey-react";
 
 let widget = {
@@ -5,6 +6,7 @@ let widget = {
     name: "geolocation",
     //the widget title. It is how it will appear on the toolbox of the SurveyJS Editor/Builder
     title: "geolocation",
+
     //the name of the icon on the toolbox. We will leave it empty to use the standard one
     iconName: "",
     //If the widgets depends on third-party library(s) then here you may check if this library(s) is loaded
@@ -15,6 +17,7 @@ let widget = {
     //SurveyJS library calls this function for every question to check, if it should use this widget instead of default rendering/behavior
     isFit: function (question) {
         //we return true if the type of question is textwithbutton
+
         return question.getType() === 'geolocation';
         //the following code will activate the widget for a text question with inputType equals to date
         //return question.getType() === 'text' && question.inputType === "date";
@@ -33,11 +36,13 @@ let widget = {
         //For more information go to https://surveyjs.io/Examples/Builder/?id=addproperties#content-docs
         Survey.JsonObject.metaData.addProperties("geolocation", [
             { name: "buttonText", default: "Get my geolocation" }
+
         ]);
     },
     //If you want to use the default question rendering then set this property to true. We do not need any default rendering, we will use our our htmlTemplate
     isDefaultRender: false,
     //You should use it if your set the isDefaultRender to false
+
     htmlTemplate: "<div><input/><button></button></div>",
 
     //The main function, rendering and two-way binding
@@ -73,6 +78,7 @@ let widget = {
 
         button.onclick = function () {
             navigator.geolocation.getCurrentPosition(success, error, options);
+
         }
 
         //set the changed value into question value
@@ -84,6 +90,7 @@ let widget = {
             text.value = question.value ? question.value : "";
         }
         let onReadOnlyChangedCallback = function () {
+
             if (question.isReadOnly) {
                 text.setAttribute('disabled', 'disabled');
                 button.setAttribute('disabled', 'disabled');
