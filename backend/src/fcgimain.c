@@ -479,7 +479,8 @@ static void fcgi_nextquestion(struct kreq *r)
       kjson_putstringp(&req,"title_text",q[i]->question_text);
       switch (q[i]->type)
 	{
-	case QTYPE_FIXEDPOINT: kjson_putstringp(&req,"type","text"); break;
+	case QTYPE_FIXEDPOINT:
+	  kjson_putstringp(&req,"type","fixedpoint"); break;
 	case QTYPE_TEXT: kjson_putstringp(&req,"type","text"); break;
 	case QTYPE_MULTICHOICE:
 	case QTYPE_MULTISELECT:
