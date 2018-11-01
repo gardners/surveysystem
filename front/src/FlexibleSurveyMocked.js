@@ -134,7 +134,7 @@ class FlexibleSurvey extends React.Component {
         this.setState({
             survey : tmpSurvey
         });
-        this.currentQuestionBeingAnswered  = questionId
+        this.currentQuestionsBeingAnswered  = questionId
         console.log("question (id="+questionId+") added at the end of survey...");
         return true
     }
@@ -347,7 +347,7 @@ class FlexibleSurvey extends React.Component {
             }
         }
         const result = {
-            id : this.currentQuestionBeingAnswered,
+            id : this.currentQuestionsBeingAnswered,
             key : lastKey,
             value : data[lastKey]
         }
