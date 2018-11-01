@@ -117,17 +117,21 @@ class FlexibleSurvey extends React.Component {
     // remove the lastPage from the survey (see lastPage property)
     // add a new page with the question at the end of the survey
     // add the lastPage at the end of the survey (see lastPage property)
-    setNextQuestionOfSurvey(questionId){
-        console.log("adding the next question (id="+questionId+") at the end of survey...");
-        const questionToAdd = this.getQuestionById(questionId);
-        if (!questionToAdd){
-            console.error("failed to get the question with id "+questionId+" !");
-            return null;
-        }
-        let tmpSurvey = this.state.survey;
-        let tmpStepID = this.stepID;
+    setNextQuestionOfSurvey(questionIds){
+        let tmpSurvey = this.state.survey
+        let tmpStepID = this.stepID
         let newPage = tmpSurvey.addNewPage(tmpStepID);
-        newPage.addQuestion(questionToAdd);
+        for (let id in questionIds){
+            let questionId = questionIds[id]
+            console.log("adding the next question (id="+questionId+") at the end of survey...");
+            const questionToAdd = this.getQuestionById(questionId);
+            if (!questionToAdd){
+                console.error("failed to get the question with id "+questionId+" !");
+                return null;
+            }
+            newPage.addQuestion(questionToAdd);
+            console.log("question (id="+questionId+") added at the end of survey...");
+        }
         let res = this.saveNewPage(tmpStepID, newPage);
         if (!res){
             console.error("Setting of the next question failed : an already existing id (id="+tmpStepID+") was used as argument ");
@@ -137,8 +141,7 @@ class FlexibleSurvey extends React.Component {
         this.setState({
             survey : tmpSurvey
         });
-        this.currentQuestionBeingAnswered  = questionId
-        console.log("question (id="+questionId+") added at the end of survey...");
+        this.currentQuestionBeingAnswered  = questionIds
         return true
     }
 
@@ -231,11 +234,9 @@ class FlexibleSurvey extends React.Component {
         console.log("These questions will be added at the end of the survey :")
         console.log(questionIdToAdd)
 
-        for (let questionId in questionIdToAdd){
-            console.log("the next question id is " + questionIdToAdd[questionId])
-            this.setNextQuestionOfSurvey(questionIdToAdd[questionId])
-            //this.state.survey.nextPage()
-        }
+        this.setNextQuestionOfSurvey(questionIdToAdd)
+        //this.state.survey.nextPage()
+
 
         // let nextQuestionId = data.nextQuestionId
         // console.log("the next question id is " + nextQuestionId)
@@ -474,7 +475,7 @@ class FlexibleSurvey extends React.Component {
     // axios is the library for requests
     // a loading screen is showed while the the ajax request is not finished
     init(){
-        console.log("version 12")
+        console.log("version 2")
         console.log("Getting the Survey with ID="+ this.surveyID+"...");
         console.log("requesting " + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/newsession?surveyid=' + this.surveyID)
         this.setState({ loading: true }, () => {
