@@ -30,10 +30,6 @@ class FlexibleSurvey extends React.Component {
 
 
 
-    //useful stuff
-    // SurveyModel.prototype.completeLastPage
-    // SurveyModel.prototype.doComplete
-
     // Constructor, needed in every case in react
     // Also instantiate a new Survey (the not flexible one) and its style
     // loading is used to know if an ajax request is being made
@@ -45,6 +41,8 @@ class FlexibleSurvey extends React.Component {
         };
         Survey.StylesManager.applyTheme(Configuration.surveyTheme);
         Survey.CustomWidgetCollection.Instance.addCustomWidget(geolocationQuestion, "customtype");
+
+
 
     }
 
@@ -136,7 +134,7 @@ class FlexibleSurvey extends React.Component {
         this.setState({
             survey : tmpSurvey
         });
-        this.currentQuestionBeingAnswered  = questionId
+        this.currentQuestionsBeingAnswered  = questionId
         console.log("question (id="+questionId+") added at the end of survey...");
         return true
     }
@@ -349,7 +347,7 @@ class FlexibleSurvey extends React.Component {
             }
         }
         const result = {
-            id : this.currentQuestionBeingAnswered,
+            id : this.currentQuestionsBeingAnswered,
             key : lastKey,
             value : data[lastKey]
         }
@@ -433,6 +431,7 @@ class FlexibleSurvey extends React.Component {
 
 
 
+
     init(){
         console.log("Getting the Survey with ID="+ this.surveyID+"...");
         this.setState({ loading: true }, () => {
@@ -448,13 +447,22 @@ class FlexibleSurvey extends React.Component {
 
     //this function is fired when the page is loaded
     componentDidMount(){
-
-
         this.init();
     }
 
 
-
+    // init(){
+    //     console.log("Getting the Survey with ID="+ this.surveyID+"...");
+    //     this.setState({ loading: true }, () => {
+    //         axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/survey/' + this.surveyID + '/newSession')
+    //             .then(response => this.deserialize(response.data))
+    //             .then(response => this.addEventListeners())
+    //             .then(response => this.askFirstQuestion())
+    //             .then(response => this.setState({
+    //                 loading: false
+    //             }));
+    //     });
+    // }
 
 
 
