@@ -11,12 +11,14 @@ export const Configuration = {
         {
             'basetype' : 'questionbase',
             'name' : 'id',
-            'type' : 'string'
+            'type' : 'string',
+            'description' : 'identifies a question between the back and front'
         },
         {
             'basetype' : 'questionbase',
             'name' : 'title_text',
-            'type' : 'string'
+            'type' : 'string',
+            'description' : ''
         }
     ]
 

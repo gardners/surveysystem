@@ -369,30 +369,33 @@ class FlexibleSurvey extends React.Component {
         return question;
     }
 
-    //get the last question that was answered by the user in a json format
-    // BE CAREFUL : IT ONLY WORKS FOR SIMPLE ANSWERS(no matrix, nested answers, etc)
-    //TODO : improve it later
-    getAnswersOfCurrentPage(){
-            console.log(this.state.survey.currentPage)
+    isAnswerEmpty(answer){
+        if (!answer){
+            return true
+        }
+        return false
+    }
 
-        // console.log("Getting the latest answer...")
-        // if (Object.keys(data).length === 0 && data.constructor === Object){
-        //     console.error("ERROR : The data of the last answer is empty !");
-        //     return null;
-        // }
-        // let lastKey
-        // for(let key in data){
-        //     if(data.hasOwnProperty(key)){
-        //         lastKey = key;
-        //     }
-        // }
-        // const result = {
-        //     id : this.currentQuestionsBeingAnswered,
-        //     key : lastKey,
-        //     value : data[lastKey]
-        // }
-        // console.log("Done ! key = "+ result.key + " value = "+ result.value)
-        // return result
+    getAnswersOfCurrentPage(){
+        let answers = []
+        let cpt =0
+        console.log('Getting answers from the current page...')
+        const currentPage = this.state.survey.currentPage
+        const questionsList = currentPage.questions
+        for (let id in questionsList){
+            let question = questionsList[id]
+            if (!this.isAnswerEmpty(question.value)){
+                answers[cpt] = {
+                    id : question.id,
+                    answer : question.value
+                }
+                cpt++
+            } else {
+                console.error('Please answer the question')
+                return null
+            }
+        }
+        return answers
     }
 
     //TODO : add number serialization
@@ -422,8 +425,9 @@ class FlexibleSurvey extends React.Component {
     onNextButtonPressed(result, options){
         console.log("NEXT button pressed")
         //retrieve the last answer
-        const lastAnswer = this.getAnswersOfCurrentPage()
-        if(!lastAnswer){
+        const lastAnswers = this.getAnswersOfCurrentPage()
+        console.log(lastAnswers)
+        if(!lastAnswers){
             console.error("ERROR : no answer found ! ")
             return null
             //TODO later : when an answer is empty, make an appropriate function to handle it. NOTE : if you make a question mandatory, there is no need to test that the lastAnswer is empty, it will never be
@@ -434,7 +438,7 @@ class FlexibleSurvey extends React.Component {
             axios({ //sending by post
                 method: 'post',
                 url: Configuration.serverUrl + ':' + Configuration.serverPort + '/addAnswer/session/' + this.sessionID,
-                data: lastAnswer
+                data: lastAnswers
             })
                 .then(response => console.log(response)) //waiting the confirmation that the server received it
                 .then(response => axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/nextQuestion/session/' + this.sessionID)) //ask next question
@@ -479,7 +483,7 @@ class FlexibleSurvey extends React.Component {
     // axios is the library for requests
     // a loading screen is showed while the the ajax request is not finished
     init(){
-        console.log("version 2")
+        console.log("version 7")
         console.log("Getting the Survey with ID="+ this.surveyID+"...");
         console.log("requesting " + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/newsession?surveyid=' + this.surveyID)
         this.setState({ loading: true }, () => {
