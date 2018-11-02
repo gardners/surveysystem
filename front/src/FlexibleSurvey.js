@@ -31,31 +31,28 @@ class FlexibleSurvey extends React.Component {
 
 
 
-
-    //useful stuff
-    // SurveyModel.prototype.completeLastPage
-    // SurveyModel.prototype.doComplete
-
     // Constructor, needed in every case in react
-    // Also instantiate a new Survey (the not flexible one) and its style
     // loading is used to know if an ajax request is being made
-    // put here all the config, such as new question types
     constructor(props) {
         super(props);
         this.state = {
             survey : new Survey.Model(),
             loading : true
         };
-        Survey.StylesManager.applyTheme(Configuration.surveyTheme);
-        Survey.CustomWidgetCollection.Instance.addCustomWidget(geolocationQuestion, "customtype");
     }
 
 
 
 
+    configureSurvey(){
+        Survey.StylesManager.applyTheme(Configuration.surveyTheme)
+        Survey.CustomWidgetCollection.Instance.addCustomWidget(geolocationQuestion, "customtype")
+        this.addEventListeners()
+        this.addCustomProperties()
+    }
+
     //adds the needed EventListeners at the init of the survey. It set the functions to call when a button is pressed, a page is changed, etc.
     addEventListeners(){
-
         //TODO : put that in another place
         let tmpSurvey = this.state.survey
         tmpSurvey.completeText = "Next"
@@ -91,6 +88,14 @@ class FlexibleSurvey extends React.Component {
         });
     }
 
+    addCustomProperties(){
+
+        for (let id in Configuration.customProperties){
+            let customProperty = Configuration.customProperties[id]
+            Survey.JsonObject.metaData.addProperty(customProperty.basetype, { name: customProperty.name, type: customProperty.type });
+        }
+
+    }
 
     //get a question saved in the component's properties by its id
     getQuestionById(id){
@@ -272,11 +277,7 @@ class FlexibleSurvey extends React.Component {
             let tmpJsonQuestion = questions[key];
             let questionId = this.getJsonAttribute("id", tmpJsonQuestion)
             questionIds.push(questionId)
-            let jsonQuestion = this.removeJsonAttribute("id",tmpJsonQuestion);
-            //huge workaround
-            //TODO : create a function to make it automatic
-            jsonQuestion = this.removeJsonAttribute("title_text",tmpJsonQuestion);
-            let newQuestion = this.createQuestionObjectFromJson(jsonQuestion);
+            let newQuestion = this.createQuestionObjectFromJson(tmpJsonQuestion);
             this.saveNewQuestion(questionId, newQuestion);
             cpt++;
         }
@@ -371,8 +372,8 @@ class FlexibleSurvey extends React.Component {
     //get the last question that was answered by the user in a json format
     // BE CAREFUL : IT ONLY WORKS FOR SIMPLE ANSWERS(no matrix, nested answers, etc)
     //TODO : improve it later
-    getLastAnswer(questionBeingAnswered){
-            console.log(questionBeingAnswered.value)
+    getAnswersOfCurrentPage(){
+            console.log(this.state.survey.currentPage)
 
         // console.log("Getting the latest answer...")
         // if (Object.keys(data).length === 0 && data.constructor === Object){
@@ -421,7 +422,7 @@ class FlexibleSurvey extends React.Component {
     onNextButtonPressed(result, options){
         console.log("NEXT button pressed")
         //retrieve the last answer
-        const lastAnswer = this.getLastAnswer(this.currentQuestionsBeingAnswered)
+        const lastAnswer = this.getAnswersOfCurrentPage()
         if(!lastAnswer){
             console.error("ERROR : no answer found ! ")
             return null
@@ -478,13 +479,13 @@ class FlexibleSurvey extends React.Component {
     // axios is the library for requests
     // a loading screen is showed while the the ajax request is not finished
     init(){
-        console.log("version 4")
+        console.log("version 2")
         console.log("Getting the Survey with ID="+ this.surveyID+"...");
         console.log("requesting " + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/newsession?surveyid=' + this.surveyID)
         this.setState({ loading: true }, () => {
             axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/newsession?surveyid=' + this.surveyID)
                 .then(response => this.getSessionIdFromServer(response.data))
-                .then(response => this.addEventListeners())
+                .then(response => this.configureSurvey())
                 .then(response => this.askFirstQuestion())
                 .then(response => this.setState({
                     loading: false
@@ -492,19 +493,6 @@ class FlexibleSurvey extends React.Component {
         });
     }
 
-
-    // init(){
-    //     console.log("Getting the Survey with ID="+ this.surveyID+"...");
-    //     this.setState({ loading: true }, () => {
-    //         axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/survey/' + this.surveyID + '/newSession')
-    //             .then(response => this.deserialize(response.data))
-    //             .then(response => this.addEventListeners())
-    //             .then(response => this.askFirstQuestion())
-    //             .then(response => this.setState({
-    //                 loading: false
-    //             }));
-    //     });
-    // }
 
     //this function is fired when the page is loaded
     componentDidMount(){
