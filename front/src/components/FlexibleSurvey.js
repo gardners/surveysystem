@@ -6,8 +6,6 @@ import LoadingSpinner from './LoadingSpinner';
 import geolocationQuestion from '../customQuestions/geolocationQuestion'
 
 
-
-// The most important class of the Application
 // Represents the Flexible Survey
 class FlexibleSurvey extends React.Component {
 
@@ -20,19 +18,23 @@ class FlexibleSurvey extends React.Component {
     //contains an array listing all question objects, by this way : [questionId => {question}, etc...]
     questions = []
     //contains an array listing all added pages(and the question it contains) objects to the survey, by this way : [pageId => {page}, etc...]
+    //a page must at least have 1 question, and as many as wanted
+    //a new page is created each time the back send the next question(s) to answer
     pages = []
     //allows to know the number of pages currently in the survey. It is also used to set the pageId of a page
-    // the stepId is incremented by 1 each time a new question is added to the survey
+    //the stepId is incremented by 1 each time a new set of questions is added to the survey
     stepID = 0
-    // contains the questions that are asked currently to the user
+    // contains the question ID that are asked currently to the user
+    //used for logs
     currentQuestionsBeingAnswered = []
     //when there are no more questions to ask, set to true
     _surveyCompleted = false
 
 
 
-    // Constructor, needed in every case in react
-    // loading is used to know if an ajax request is being made
+    // Constructor, needed in every case in React
+    // survey is the react component from surveyjs. It is the backbone of this front app
+    // loading is used to know if an ajax request is being made. If so, a loading spinner is shown while loading == true
     constructor(props) {
         super(props);
         this.state = {
@@ -44,36 +46,30 @@ class FlexibleSurvey extends React.Component {
 
 
 
+    //put here the configuration of the survey, such as the theme, event listeners, etc.
     configureSurvey(){
         Survey.StylesManager.applyTheme(Configuration.surveyTheme)
         Survey.CustomWidgetCollection.Instance.addCustomWidget(geolocationQuestion, "customtype")
-        this.addEventListeners()
+        this.configureNextAndPreviousButtons()
         this.addCustomProperties()
     }
 
-    //adds the needed EventListeners at the init of the survey. It set the functions to call when a button is pressed, a page is changed, etc.
-    addEventListeners(){
-        //TODO : put that in another place
+    //adds the listeners to next and previous buttons
+    //it also configures the diplayed text on the completeText button
+    configureNextAndPreviousButtons(){
         let tmpSurvey = this.state.survey
         tmpSurvey.completeText = "Next"
 
-
-        //TODO : delete if not needed
-        //tmpSurvey.sendResultOnPageNext = true;
-        //eventlistener when the user press next
-        //tmpSurvey.onPartialSend.add(function (result, options){
-         //   this.onNextButtonPressed(result, options)
-        //}.bind(this));
-
         //eventlistener when user presses prev
         tmpSurvey.onCurrentPageChanged.add(function(sender, options){
-            if(!options.oldCurrentPage || !options.newCurrentPage || this._buttonNextPressed) return; //showing first page
+            if(!options.oldCurrentPage || !options.newCurrentPage) return; //showing first page
             if(options.oldCurrentPage.visibleIndex > options.newCurrentPage.visibleIndex){
                 this.goBackToPreviousStep();
             }
         }.bind(this));
 
         //eventlistener when user presses next
+        //it is not really the next button, but complete button, with a display text set at 'Next', since the current displayed page is always the last one.
         tmpSurvey.onCompleting.add(function(sender, options){
             if (this._surveyCompleted){
                 options.allowComplete = true
@@ -88,6 +84,8 @@ class FlexibleSurvey extends React.Component {
         });
     }
 
+    //you may want, while creating a new survey, add some custom properties in the question, such as their ID.
+    // to declare these new properties, go to the config file. this function will automatically import them when the survey is built
     addCustomProperties(){
 
         for (let id in Configuration.customProperties){
@@ -107,6 +105,7 @@ class FlexibleSurvey extends React.Component {
         return tmpQuestions[id];
     }
 
+    //get a page saved in the component's properties by its id
     getPageById(id){
         let tmpPages = this.pages
         if (!(id in tmpPages)){
@@ -116,13 +115,7 @@ class FlexibleSurvey extends React.Component {
         return tmpPages[id];
     }
 
-    //allows to add a new question at the end of the survey.
-    //The question must already exist
-    // workflow :
-    // retrieve the question by it's ID
-    // remove the lastPage from the survey (see lastPage property)
-    // add a new page with the question at the end of the survey
-    // add the lastPage at the end of the survey (see lastPage property)
+    //accepts a list of question IDs, and add the corresponding questions in a new page, at the end of the survey
     setNextQuestionOfSurvey(questionIds){
         let tmpSurvey = this.state.survey
         let tmpStepID = this.stepID
@@ -151,6 +144,7 @@ class FlexibleSurvey extends React.Component {
         return true
     }
 
+    //TODO: not used yet in the new version, document it when it's done
     goBackToPreviousStep(){
         console.log('Going back to previous step...');
         this._surveyCompleted = false
@@ -161,12 +155,8 @@ class FlexibleSurvey extends React.Component {
 
     }
 
-    //function used when the user presses the previous button
-    // it deletes the lastPage
-    // then deletes the most recent question that was sent by the server
-    // then adds again the lastPage
+    //TODO: not used yet in the new version, document it when it's done
     deleteMostRecentPageOfSurvey(){
-        console.log("FUNCTION CALLED : deleteMostRecentPageOfSurvey")
         let pageToDelete = this.getPageById(this.stepID-1)
         let tmpSurvey = this.state.survey
         tmpSurvey.removePage(pageToDelete)
@@ -177,8 +167,7 @@ class FlexibleSurvey extends React.Component {
 
 
     //allows to get the root element of the json received by the server
-    //when receiving the survey from the server, they must be encapsulated in a root element, like data (by default with a nodejs server) or questions (or whatever you want
-
+    //when receiving the survey from the server, they must be encapsulated in a root element, like data (by default with a nodejs server) or questions (or whatever you want)
     getRootFromJson(json){
         console.log('getting the root element from the json...')
         let root
@@ -198,6 +187,7 @@ class FlexibleSurvey extends React.Component {
         return root
     }
 
+    //TODO: not used yet in the new version, document it when it's done
     finishSurvey(){
         let tmpSurvey = this.state.survey
         tmpSurvey.completeText = "Complete"
@@ -209,6 +199,7 @@ class FlexibleSurvey extends React.Component {
 
     }
 
+    //TODO: not used yet in the new version, document it when it's done
     isThereAnotherQuestion(questionId){
         if  (questionId === "stop"){
             return false
@@ -216,22 +207,8 @@ class FlexibleSurvey extends React.Component {
         return true
     }
 
-    //the function tests that there is a next question to display, and then adds it to the end of survey
-    processQuestionIdReceived(data){
-        console.log("Next question id received from the server...")
-        let nextQuestionId = data.nextQuestionId
-        console.log("the next question id is " + nextQuestionId)
-        if (this.isThereAnotherQuestion(nextQuestionId)) {
-            this.setNextQuestionOfSurvey(nextQuestionId)
-            this.state.survey.nextPage()
-        } else{
-            this.finishSurvey();
-        }
 
-    }
-
-
-    //the function tests that there is a next question to display, and then adds it to the end of survey
+    //TODO : partly done for the moment, wait until its finished before commenting
     processQuestionReceived(data){
         console.log("A question was received from the server")
         console.log("Data received by the server :")
@@ -258,7 +235,7 @@ class FlexibleSurvey extends React.Component {
 
 
     // transforms the json list of questions into objects, used later to manipulate the survey.
-    // at this point, the questions are not added in the survey, they just "exist"
+    // at this point, the questions are not added in the survey, they just "exist" as objects
     // warn : each question MUST have a unique id attribute
     deserialize(json){
         console.log("starting the deserialization...");
@@ -302,24 +279,6 @@ class FlexibleSurvey extends React.Component {
 
     }
 
-
-    // allows to remove attributes in question objects, like the id (a question shouldn't have an id attribute in surveyjs)
-    // can be also used to remove any attribute of any object
-    // returns a new object
-    // warn : the attribute should be a direct attribute of the object (doesn't work with attributes of children)
-    removeJsonAttribute(attribute, jsonObject){
-        console.log("removing attribute "+ attribute + "...");
-        let res = jsonObject;
-        if (!res.hasOwnProperty(attribute)){
-            console.error("the attribute " + attribute + " doesn't exist ! You MUST give an id attribute to each question in the JSON");
-        } else {
-            delete res[attribute];
-            console.log("attribute " + attribute + " removed");
-        }
-        return res;
-    }
-
-
     //saves a new question into the Component properties
     // at this stage, the question is bound with an id, and only "exists" : it is not part of the survey yet
     saveNewQuestion(id, question){
@@ -351,9 +310,6 @@ class FlexibleSurvey extends React.Component {
         return true;
     }
 
-
-    //removes the last page at the end of the survey, see lastPage property doc for more details
-
     //converts a json formatted question into a Question class of surveyjs
     createQuestionObjectFromJson(questionJson) {
         if(!questionJson.type){
@@ -369,6 +325,7 @@ class FlexibleSurvey extends React.Component {
         return question;
     }
 
+    //checks that the user answered the question before submitting it (i.e its not an empty question)
     isAnswerEmpty(answer){
         if (!answer){
             return true
@@ -376,6 +333,8 @@ class FlexibleSurvey extends React.Component {
         return false
     }
 
+    //returns the questions Ids and their answers
+    // returned format : [{id : "ID of the question', answer : "user's answer"}, ... ]
     getAnswersOfCurrentPage(){
         let answers = []
         let cpt =0
@@ -399,8 +358,7 @@ class FlexibleSurvey extends React.Component {
     }
 
 
-    //IMPORTANT : this function will probably be not complete enough when te project will evolve
-    //serialize the json to a csv format for the back end
+    //TODO : not finished yet properly, wait until commenting
     // the answer has these fields :
     // DESERIALISE_STRING(a->uid);
     // DESERIALISE_STRING(a->text);
@@ -422,11 +380,10 @@ class FlexibleSurvey extends React.Component {
             console.log("Serialization of answer " + cptForLogs + "/" + lastAnswers.length + " done ! output = " + lastAnswerCSV)
             lastAnswersCSV[id] = lastAnswerCSV
         }
-
         return lastAnswersCSV
     }
 
-
+    // an answer is sent only if the user answered it
     sendAnswersToServer(lastAnswersCSV){
         console.log("sending answers to server...")
         console.log('requested URL : ' + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/addanswer?sessionid=' + this.sessionID)
@@ -448,6 +405,7 @@ class FlexibleSurvey extends React.Component {
 
     }
 
+    //TODO : function not finished yet, comment it later
     //function called when the user press Next button
     onNextButtonPressed(result, options){
         console.log("NEXT button pressed")
@@ -490,6 +448,7 @@ class FlexibleSurvey extends React.Component {
             .then(response => this.processQuestionReceived(response.data))
     }
 
+
     getSessionIdFromServer(response){
         console.log("getting the session ID from the server...")
         console.log("session ID received : " + response)
@@ -502,19 +461,9 @@ class FlexibleSurvey extends React.Component {
     }
 
 
-
-
-
-
-    // init function that retrieves the survey from the back end
-    // then deserialize them (JSON to Object)
-    // then instantiate the last page (see doc at the beginning)
-    // then adds an event handler on the Next button
-    // it is done asynchronously !!!!
-    // axios is the library for requests
-    // a loading screen is showed while the the ajax request is not finished
+    // function launched once at the beginning, that sets up the survey and ask to create a new session with a given survey id
     init(){
-        console.log("version 10")
+        console.log("version 1")
         console.log("Getting the Survey with ID="+ this.surveyID+"...");
         console.log("requesting " + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/newsession?surveyid=' + this.surveyID)
         this.setState({ loading: true }, () => {
@@ -537,7 +486,6 @@ class FlexibleSurvey extends React.Component {
 
 
     // if an ajax request is loading, a spinner is shown. If a question is available, the survey is shown
-    //{this.state.loading ? <LoadingSpinner /> : <Survey.Survey model={this.state.survey}/>}
     render(){
         return(
             <div className="jumbotron jumbotron-fluid">

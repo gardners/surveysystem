@@ -5,7 +5,6 @@ import 'bootstrap/dist/css/bootstrap.css';
 
 import Navbar from "./components/Navbar";
 import FlexibleSurvey from "./components/FlexibleSurvey";
-import FlexibleSurveyMocked from "./components/FlexibleSurveyMocked";
 import Page404 from "./components/Page404"
 import Welcome from "./components/Welcome"
 
