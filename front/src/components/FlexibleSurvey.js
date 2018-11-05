@@ -398,8 +398,7 @@ class FlexibleSurvey extends React.Component {
         return answers
     }
 
-    //TODO : add number serialization
-    //TODO : escape the ":"
+
     //IMPORTANT : this function will probably be not complete enough when te project will evolve
     //serialize the json to a csv format for the back end
     // the answer has these fields :
@@ -412,15 +411,43 @@ class FlexibleSurvey extends React.Component {
     // DESERIALISE_LONGLONG(a->time_end);
     // DESERIALISE_INT(a->time_zone_delta);
     // DESERIALISE_INT(a->dst_delta);
-    serializeToCSV(jsonObject){
-        console.log("Serializing the answer to CSV...")
-        let csvResult = ""
-        csvResult = csvResult.concat(jsonObject.id, ':',jsonObject.value, ':0', ':0:0:0:0:0:0')
-        console.log("Serialization done ! output = " + csvResult)
-        return csvResult
+    serializeToCSV(lastAnswers){
+        console.log("Serializing" + lastAnswers.length + " answers to CSV...")
+        let lastAnswersCSV = []
+        for(let id in lastAnswers){
+            let cptForLogs = parseInt(id) + 1
+            let lastAnswer = lastAnswers[id]
+            let lastAnswerCSV = ""
+            lastAnswerCSV = lastAnswerCSV.concat(lastAnswer.id, ':',lastAnswer.answer, ':0', ':0:0:0:0:0:0')
+            console.log("Serialization of answer " + cptForLogs + "/" + lastAnswers.length + " done ! output = " + lastAnswerCSV)
+            lastAnswersCSV[id] = lastAnswerCSV
+        }
+
+        return lastAnswersCSV
     }
 
-    
+
+    sendAnswersToServer(lastAnswersCSV){
+        console.log("sending answers to server...")
+        console.log('requested URL : ' + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/addanswer?sessionid=' + this.sessionID)
+
+        for (let id in lastAnswersCSV){
+            let answerToSend = lastAnswersCSV[id]
+            this.setState({ loading: true }, () => {
+                axios({ //sending by post
+                    method: 'post',
+                    url: Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/addanswer?sessionid=' + this.sessionID,
+                    data: answerToSend
+                })
+                    .then(response => console.log(response)) //waiting the confirmation that the server received it
+                    .then(response => this.setState({ //stopping the loading screen
+                        loading: false
+                    }));
+            });
+        }
+
+    }
+
     //function called when the user press Next button
     onNextButtonPressed(result, options){
         console.log("NEXT button pressed")
@@ -431,20 +458,26 @@ class FlexibleSurvey extends React.Component {
             return null
         }
         //format it to csv
-        //const csvBody = this.serializeToCSV(lastAnswer)
-        this.setState({ loading: true }, () => {
-            axios({ //sending by post
-                method: 'post',
-                url: Configuration.serverUrl + ':' + Configuration.serverPort + '/addAnswer/session/' + this.sessionID,
-                data: lastAnswers
-            })
-                .then(response => console.log(response)) //waiting the confirmation that the server received it
-                .then(response => axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/nextQuestion/session/' + this.sessionID)) //ask next question
-                .then(response => this.processQuestionIdReceived(response.data))
-                .then(response => this.setState({ //stopping the loading screen
-                    loading: false
-                }));
-        });
+        const lastAnswersCSV = this.serializeToCSV(lastAnswers)
+        console.log("This data will be sent to the server :")
+        console.log(lastAnswersCSV)
+        //sending each answer, one by one
+        this.sendAnswersToServer(lastAnswersCSV)
+        //asking the next question
+
+        // this.setState({ loading: true }, () => {
+        //     axios({ //sending by post
+        //         method: 'post',
+        //         url: Configuration.serverUrl + ':' + Configuration.serverPort + '/addAnswer/session/' + this.sessionID,
+        //         data: lastAnswers
+        //     })
+        //         .then(response => console.log(response)) //waiting the confirmation that the server received it
+        //         .then(response => axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/nextQuestion/session/' + this.sessionID)) //ask next question
+        //         .then(response => this.processQuestionIdReceived(response.data))
+        //         .then(response => this.setState({ //stopping the loading screen
+        //             loading: false
+        //         }));
+        // });
     }
 
 
@@ -481,7 +514,7 @@ class FlexibleSurvey extends React.Component {
     // axios is the library for requests
     // a loading screen is showed while the the ajax request is not finished
     init(){
-        console.log("version 3")
+        console.log("version 10")
         console.log("Getting the Survey with ID="+ this.surveyID+"...");
         console.log("requesting " + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/newsession?surveyid=' + this.surveyID)
         this.setState({ loading: true }, () => {
@@ -506,7 +539,6 @@ class FlexibleSurvey extends React.Component {
     // if an ajax request is loading, a spinner is shown. If a question is available, the survey is shown
     //{this.state.loading ? <LoadingSpinner /> : <Survey.Survey model={this.state.survey}/>}
     render(){
-        console.log(this.currentQuestionsBeingAnswered)
         return(
             <div className="jumbotron jumbotron-fluid">
                 <div className="container">
