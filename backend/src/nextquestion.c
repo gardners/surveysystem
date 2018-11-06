@@ -295,6 +295,10 @@ int get_next_questions_generic(struct session *s,
 	  if ((*next_question_count)<max_next_questions) {
 	    next_questions[*next_question_count]=s->questions[i];
 	    (*next_question_count)++;
+
+	    // XXX - For now, just return exactly the first unanswered question
+	    break;
+	    
 	  }
 	}
       }

@@ -55,7 +55,10 @@ CC=	clang
 COPT=	-Wall -O3 -g -Iinclude `$(PYCONFIG) --includes` -Ikcgi
 LOPT=
 
-all:	test_serialisers surveycli surveyfcgi
+all:	test_serialisers surveycli surveyfcgi test_runner
+
+test_runner:	Makefile src/test_runner.o
+	$(CC) $(COPT) -o test_runner src/test_runner.o
 
 %.o:	%.c $(HEADERS)
 	$(CC) $(COPT) -c $< -o $@
