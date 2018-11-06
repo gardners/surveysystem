@@ -139,8 +139,38 @@ int run_test(char *test_file)
     
     log=fopen(testlog,"w");
 
-    if (!log) goto error;
+    if (!log) {
+      fprintf(stderr,"\rFATAL: Could not create test log file '%s' for test '%s'                                    \n",
+	      testlog,test_file);
+      goto error;
+    }
 
+    char surveyname[1024]="";
+    int expected_result=200;
+    char url[65536];
+    
+    // Now iterate through test script
+    line[0]=0; fgets(line,1024,in);    
+    while(line[0]) {
+      int len=strlen(line);
+      // Trim CR/LF from the end of the line
+      while(len&&(line[len-1]<' ')) line[--len]=0;
+      
+      if (sscanf(line,"definesurvey %[^\r\n]",surveyname)==1) {
+	// Read survey definition and create survey file
+      }
+      else if (sscanf(line,"request %d [^\r\n]",&expected_result,url)==2) {
+	// Exeucte wget call. If it is a newsession command, then remember the session ID
+      }
+      else if (!strcmp(line,"verifysession")) {
+      }
+      else {
+	fprintf(stderr,"\rERROR: Test script '%s' has unknown directive '%s'                                                                        \n",test_file,line);
+	goto error;
+      }
+      line[0]=0; fgets(line,1024,in);    
+    }
+    
     pass:
 
     fprintf(stderr,"\r\033[39m[\033[32mPASS\033[39m]  %s\n",description); fflush(stderr);
