@@ -562,7 +562,41 @@ static void fcgi_delanswer(struct kreq *req)
 
 static void fcgi_delsession(struct kreq *r)
 {
+  //  enum kcgi_err    er;
+  int retVal=0;
   
+  do {
+
+    struct kpair *session = r->fieldmap[KEY_SESSIONID];
+    if (!session) {
+      // No session ID, so return 400
+      quick_error(r,KHTTP_400,"sessionid missing");
+      break;
+    }
+    if (!session->val) {
+      quick_error(r,KHTTP_400,"sessionid is blank");
+      break;
+    }
+    char *session_id=session->val;
+
+    struct session *s=load_session(session_id);
+    if (!s) {
+      quick_error(r,KHTTP_400,"Could not load specified session. Does it exist?");
+      break;
+    }
+    free(s);
+    if (delete_session(session_id)) {
+      LOG_ERROR("delete_session() failed",session_id);
+      quick_error(r,KHTTP_400,"Could not delete session. Does it exist?");
+      break;
+    }
+
+    
+  } while(0);
+
+  quick_error(r,KHTTP_200,"Session deleted.");
+  
+  return;  
 }
 
 static void fcgi_nextquestion(struct kreq *r)
@@ -663,7 +697,5 @@ static void fcgi_nextquestion(struct kreq *r)
         
   } while(0);
 
-  return;
-  
-  
+  return;  
 }
