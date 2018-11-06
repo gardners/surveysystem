@@ -188,6 +188,18 @@ int configure_and_start_lighttpd(char *test_dir)
   return 0;
 }
 
+int stop_lighttpd(void)
+{
+  fprintf(stderr,"Stop lighttpd service...");
+  char cmd[2048];
+  snprintf(cmd,2048,"sudo -p 'Stop lighttpd ready for running tests?' service lighttpd restart");
+  if (system(cmd)) {
+    perror("system() call to stop lighttpd failed");
+    exit(-3);
+  }
+  return 0;
+}  
+
 int main(int argc,char **argv)
 {
   snprintf(test_dir,1024,"/tmp/survey_test_runner_%d_%d",(int)time(0),getpid());
@@ -228,5 +240,7 @@ int main(int argc,char **argv)
   if (recursive_delete(test_dir)) {
     fprintf(stderr,"Error encountered while deleting temporary directories.\n");
   }
+
+  stop_lighttpd();
   
 }
