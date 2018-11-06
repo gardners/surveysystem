@@ -383,18 +383,22 @@ class FlexibleSurvey extends React.Component {
         return lastAnswersCSV
     }
 
+    //TODO : change to POST
     // an answer is sent only if the user answered it
     sendAnswersToServer(lastAnswersCSV){
         console.log("sending answers to server...")
-        console.log('requested URL : ' + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/addanswer?sessionid=' + this.sessionID)
 
         for (let id in lastAnswersCSV){
             let answerToSend = lastAnswersCSV[id]
+            console.log('requested URL : GET ' + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/addanswer?sessionid=' + this.sessionID + '&answer=' + answerToSend)
             this.setState({ loading: true }, () => {
-                axios({ //sending by post
-                    method: 'post',
-                    url: Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/addanswer?sessionid=' + this.sessionID,
-                    data: answerToSend
+                axios({ //sending by get
+                    method: 'get',
+                    url: Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/addanswer',
+                    params : {
+                        sessionid : this.sessionID,
+                        answer : answerToSend
+                    }
                 })
                     .then(response => console.log(response)) //waiting the confirmation that the server received it
                     .then(response => this.setState({ //stopping the loading screen
@@ -443,8 +447,13 @@ class FlexibleSurvey extends React.Component {
     askFirstQuestion(){
         console.log("Asking the first question...");
         console.log('URL used : ' + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/nextquestion?sessionid=' + this.sessionID)
-
-        axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/nextquestion?sessionid=' + this.sessionID)
+        axios({ //sending by get
+            method: 'get',
+            url: Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/nextquestion',
+            params : {
+                sessionid : this.sessionID,
+            }
+        })
             .then(response => this.processQuestionReceived(response.data))
     }
 
@@ -463,11 +472,17 @@ class FlexibleSurvey extends React.Component {
 
     // function launched once at the beginning, that sets up the survey and ask to create a new session with a given survey id
     init(){
-        console.log("version 1")
+        console.log("version 4")
         console.log("Getting the Survey with ID="+ this.surveyID+"...");
         console.log("requesting " + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/newsession?surveyid=' + this.surveyID)
         this.setState({ loading: true }, () => {
-            axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/newsession?surveyid=' + this.surveyID)
+            axios({ //sending by get
+                method: 'get',
+                url: Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/newsession',
+                params : {
+                    surveyid : this.surveyID,
+                }
+            })
                 .then(response => this.getSessionIdFromServer(response.data))
                 .then(response => this.configureSurvey())
                 .then(response => this.askFirstQuestion())
