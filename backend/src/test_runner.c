@@ -178,6 +178,7 @@ int configure_and_start_lighttpd(char *test_dir)
     perror("system() call to install lighttpd.conf failed");
     exit(-3);
   }
+  fprintf(stderr,"Restarting lighttpd service...");
   snprintf(cmd,2048,"sudo -p 'Restart lighttpd ready for running tests?' service lighttpd restart");
   if (system(cmd)) {
     perror("system() call to restart lighttpd failed");
