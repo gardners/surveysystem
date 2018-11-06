@@ -105,6 +105,88 @@ int run_test(char *test_file)
   return 0;
 }
 
+char *config_template=
+  "server.modules = (\n"
+  "	\"mod_access\",\n"
+  "	\"mod_alias\",\n"
+  "	\"mod_fastcgi\",\n"
+  "	\"mod_compress\",\n"
+  " 	\"mod_redirect\",\n"
+  ")\n"
+  "\n"
+  "server.document-root        = \"%s/front/build\"\n"
+  "server.upload-dirs          = ( \"/var/cache/lighttpd/uploads\" )\n"
+  "server.errorlog             = \"/var/log/lighttpd/error.log\"\n"
+  "server.pid-file             = \"/var/run/lighttpd.pid\"\n"
+  "server.username             = \"www-data\"\n"
+  "server.groupname            = \"www-data\"\n"
+  "server.port                 = 80\n"
+  "\n"
+  "\n"
+  "index-file.names            = ( \"index.php\", \"index.html\", \"index.lighttpd.html\" )\n"
+  "url.access-deny             = ( \"~\", \".inc\" )\n"
+  "static-file.exclude-extensions = ( \".php\", \".pl\", \".fcgi\" )\n"
+  "server.error-handler-404   = \"/index.html\"\n"
+  "\n"
+  "\n"
+  "compress.cache-dir          = \"/var/cache/lighttpd/compress/\"\n"
+  "compress.filetype           = ( \"application/javascript\", \"text/css\", \"text/html\", \"text/plain\" )\n"
+  "\n"
+  "fastcgi.debug = 1\n"
+  "\n"
+  "fastcgi.server = (\n"
+  "  \"/surveyapi\" =>\n"
+  "  (( \"host\" => \"127.0.0.1\",\n"
+  "     \"port\" => 9000,\n"
+  "     \"bin-path\" => \"/var/www/fastcgi/surveyfcgi\",\n"
+  "     \"bin-environment\" => (\n"
+  "	\"SURVEY_HOME\" => \"%s\"\n"
+  "	),\n"
+  "     \"check-local\" => \"disable\",\n"
+  "     \"docroot\" => \"%s/front/build\" # remote server may use \n"
+  "                      # its own docroot\n"
+  "  ))\n"
+  ")\n"
+  "\n"
+  "# default listening port for IPv6 falls back to the IPv4 port\n"
+  "## Use ipv6 if available\n"
+  "#include_shell \"/usr/share/lighttpd/use-ipv6.pl \" + server.port\n"
+  "include_shell \"/usr/share/lighttpd/create-mime.assign.pl\"\n"
+  "include_shell \"/usr/share/lighttpd/include-conf-enabled.pl\"\n"
+  ;
+
+int configure_and_start_lighttpd(char *test_dir)
+{ 
+  // Create config file
+  char conf_data[16384];
+  char cwd[1024];
+  int cwdlen=1024;
+  snprintf(conf_data,16384,config_template,getcwd(cwd,cwdlen),test_dir,getcwd(cwd,cwdlen));
+  char tmp_conf_file[1024];
+  snprintf(tmp_conf_file,1024,"%s/lighttpd.conf",test_dir);
+  FILE *f=fopen(tmp_conf_file,"w");
+  if (!f) {
+    perror("Failed to open temporary lighttpd.conf file");
+    exit(-3);
+  }
+  fprintf(f,"%s",conf_data);
+  fclose(f);
+  char cmd[2048];
+  snprintf(cmd,2048,"sudo -p 'Overwrite /etc/lighttpd/lighttpd.conf?' cp %s/lighttpd.conf /etc/lighttpd/lighttpd.conf",test_dir);
+  fprintf(stderr,"WARNING: If you proceed, this test suite will overwrite /etc/lighttpd/lighttpd.conf.\n");
+  if (system(cmd)) {
+    perror("system() call to install lighttpd.conf failed");
+    exit(-3);
+  }
+  snprintf(cmd,2048,"sudo -p 'Restart lighttpd ready for running tests?' service lighttpd restart");
+  if (system(cmd)) {
+    perror("system() call to restart lighttpd failed");
+    exit(-3);
+  }
+
+  return 0;
+}
+
 int main(int argc,char **argv)
 {
   snprintf(test_dir,1024,"/tmp/survey_test_runner_%d_%d",(int)time(0),getpid());
@@ -132,7 +214,10 @@ int main(int argc,char **argv)
     perror("chmod() failed for test/sessions directory");
     exit(-3);
   }
-	
+
+  // Make config file pointing to the temp_dir, and start the server
+  configure_and_start_lighttpd(test_dir);
+  
   for(int i=1;i<argc;i++) {
     run_test(argv[i]);
   }
