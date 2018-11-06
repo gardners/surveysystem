@@ -4,6 +4,9 @@ if [ -e lighttpd.conf.local ]; then
 else
    conf=lighttpd.conf
 fi
+if [ ! -e ../front/node_modules ]; then
+   ( cd ../front ; npm install )
+fi
 echo "config file is $conf"
 sudo cp ${conf} /etc/lighttpd/lighttpd.conf
 sudo rm /var/log/lighttpd/error.log 
