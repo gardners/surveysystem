@@ -302,9 +302,20 @@ int main(int argc,char **argv)
   configure_and_start_lighttpd(test_dir);
 
   fprintf(stderr,"\n");
-  
+
+  int passes=0;
+  int fails=0;
+  int errors=0;
+  int fatals=0;
+  int tests=0;
   for(int i=1;i<argc;i++) {
-    run_test(argv[i]);
+    switch (run_test(argv[i])) {
+    case 0: passes++; break;
+    case 1: fails++; break;
+    case 2: errors++; break;
+    case 3: fatals++; break;
+    }
+    tests++;
   }
 
   // Clean up after ourselves
@@ -314,5 +325,8 @@ int main(int argc,char **argv)
   }
 
   stop_lighttpd();
-  
+  fprintf(stderr,"\n");
+  fprintf(stderr,"Summary: %d/%d tests passed (%d failed, %d errors, %d fatalities during tests)\n",
+	  passes,tests,fails,errors,fatals);
+  return 0;
 }
