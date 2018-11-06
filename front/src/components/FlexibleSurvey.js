@@ -144,9 +144,33 @@ class FlexibleSurvey extends React.Component {
         return true
     }
 
+    //TODO : comment it later
+    deleteAnswersFromServer(){
+        console.log('deleting answers from server...')
+        let currentQuestions = this.getCurrentQuestions()
+        this.setState({ loading: true }, () => {
+            for (let id in currentQuestions) {
+                let questionToDelete = currentQuestions[id]
+                axios({ //sending by get
+                    method: 'get',
+                    url: Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/delanswer',
+                    params : {
+                        sessionid : this.sessionID,
+                        questionid : questionToDelete.id
+                    }
+                })
+                    .then(response => console.log(response)) //waiting the confirmation that the server received it
+            }
+        });
+        this.setState({ //stopping the loading screen
+            loading: false
+        })
+    }
+
     //TODO: not used yet in the new version, document it when it's done
     goBackToPreviousStep(){
         console.log('Going back to previous step...');
+        this.deleteAnswersFromServer()
         this._surveyCompleted = false
         this.deleteMostRecentPageOfSurvey()
         this.pages = this.pages.slice(0, -1);
@@ -157,7 +181,7 @@ class FlexibleSurvey extends React.Component {
 
     //TODO: not used yet in the new version, document it when it's done
     deleteMostRecentPageOfSurvey(){
-        let pageToDelete = this.getPageById(this.stepID-1)
+        let pageToDelete = this.getCurrentPage()
         let tmpSurvey = this.state.survey
         tmpSurvey.removePage(pageToDelete)
         this.setState({
@@ -195,8 +219,6 @@ class FlexibleSurvey extends React.Component {
         this.setState({
             survey : tmpSurvey
         })
-
-
     }
 
     //TODO: not used yet in the new version, document it when it's done
@@ -216,9 +238,8 @@ class FlexibleSurvey extends React.Component {
         let questionIdToAdd = this.deserialize(data)
         console.log("These questions will be added at the end of the survey :")
         console.log(questionIdToAdd)
-
         this.setNextQuestionOfSurvey(questionIdToAdd)
-        //this.state.survey.nextPage()
+        this.state.survey.nextPage()
 
 
         // let nextQuestionId = data.nextQuestionId
@@ -236,7 +257,7 @@ class FlexibleSurvey extends React.Component {
 
     // transforms the json list of questions into objects, used later to manipulate the survey.
     // at this point, the questions are not added in the survey, they just "exist" as objects
-    // warn : each question MUST have a unique id attribute
+    // warn : each question MUST have a unique id property
     deserialize(json){
         console.log("starting the deserialization...");
 
@@ -284,10 +305,6 @@ class FlexibleSurvey extends React.Component {
     saveNewQuestion(id, question){
         console.log("saving question with id="+id+"...");
         let tmpQuestions = this.questions;
-        if (id in tmpQuestions){
-            console.error("You want to add a question with the same id(id="+id+") as an already existing question !");
-            return null;
-        }
         tmpQuestions[id] = question;
         this.questions = tmpQuestions;
         console.log("question with id="+id+" saved");
@@ -333,14 +350,23 @@ class FlexibleSurvey extends React.Component {
         return false
     }
 
+    //TODO : comment that
+    getCurrentPage(){
+        return this.state.survey.currentPage
+    }
+
+    // TODO : comment that
+    getCurrentQuestions(){
+        return this.state.survey.currentPage.questions
+    }
+
     //returns the questions Ids and their answers
     // returned format : [{id : "ID of the question', answer : "user's answer"}, ... ]
     getAnswersOfCurrentPage(){
         let answers = []
         let cpt =0
         console.log('Getting answers from the current page...')
-        const currentPage = this.state.survey.currentPage
-        const questionsList = currentPage.questions
+        const questionsList = this.getCurrentQuestions()
         for (let id in questionsList){
             let question = questionsList[id]
             if (!this.isAnswerEmpty(question.value)){
@@ -390,11 +416,11 @@ class FlexibleSurvey extends React.Component {
 
         for (let id in lastAnswersCSV){
             let answerToSend = lastAnswersCSV[id]
-            console.log('requested URL : GET ' + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/addanswer?sessionid=' + this.sessionID + '&answer=' + answerToSend)
+            console.log('requested URL : GET ' + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/updateanswer?sessionid=' + this.sessionID + '&answer=' + answerToSend)
             this.setState({ loading: true }, () => {
                 axios({ //sending by get
                     method: 'get',
-                    url: Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/addanswer',
+                    url: Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/updateanswer',
                     params : {
                         sessionid : this.sessionID,
                         answer : answerToSend
@@ -426,25 +452,12 @@ class FlexibleSurvey extends React.Component {
         //sending each answer, one by one
         this.sendAnswersToServer(lastAnswersCSV)
         //asking the next question
-
-        // this.setState({ loading: true }, () => {
-        //     axios({ //sending by post
-        //         method: 'post',
-        //         url: Configuration.serverUrl + ':' + Configuration.serverPort + '/addAnswer/session/' + this.sessionID,
-        //         data: lastAnswers
-        //     })
-        //         .then(response => console.log(response)) //waiting the confirmation that the server received it
-        //         .then(response => axios.get(Configuration.serverUrl + ':' + Configuration.serverPort + '/nextQuestion/session/' + this.sessionID)) //ask next question
-        //         .then(response => this.processQuestionIdReceived(response.data))
-        //         .then(response => this.setState({ //stopping the loading screen
-        //             loading: false
-        //         }));
-        // });
+        this.askNextQuestion()
     }
 
 
     //asking the first question of the survey when it is initializing
-    askFirstQuestion(){
+    askNextQuestion(){
         console.log("Asking the first question...");
         console.log('URL used : ' + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/nextquestion?sessionid=' + this.sessionID)
         axios({ //sending by get
@@ -485,7 +498,7 @@ class FlexibleSurvey extends React.Component {
             })
                 .then(response => this.getSessionIdFromServer(response.data))
                 .then(response => this.configureSurvey())
-                .then(response => this.askFirstQuestion())
+                .then(response => this.askNextQuestion())
                 .then(response => this.setState({
                     loading: false
                 }));
@@ -502,6 +515,7 @@ class FlexibleSurvey extends React.Component {
 
     // if an ajax request is loading, a spinner is shown. If a question is available, the survey is shown
     render(){
+        console.log(this.pages)
         return(
             <div className="jumbotron jumbotron-fluid">
                 <div className="container">
