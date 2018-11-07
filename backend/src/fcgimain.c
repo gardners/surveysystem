@@ -761,6 +761,10 @@ static void fcgi_accesstest(struct kreq *req)
 
     TEST_READ("");
     TEST_READ("surveys");
+    TEST_WRITE("surveys/testfile");
+    TEST_MKDIR("surveys/testdir");
+    TEST_READ("surveys/testdir");
+    TEST_WRITE("surveys/testdir/testfile");
     TEST_READ("sessions");
     TEST_WRITE("sessions/testfile");
     TEST_MKDIR("sessions/testdir");
