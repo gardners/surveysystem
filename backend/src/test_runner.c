@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <string.h>
 #include <time.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 char test_dir[1024];
@@ -100,6 +101,35 @@ int recursive_delete(const char *dir)
   return ret;
 }
 
+long long gettime_us()
+{
+  long long retVal = -1;
+
+  do 
+  {
+    struct timeval nowtv;
+
+    // If gettimeofday() fails or returns an invalid value, all else is lost!
+    if (gettimeofday(&nowtv, NULL) == -1)
+    {
+      fprintf(stderr,"\nFATAL: gettimeofday returned -1");
+      exit(-3);
+    }
+
+    if (nowtv.tv_sec < 0 || nowtv.tv_usec < 0 || nowtv.tv_usec >= 1000000)
+    {
+      fprintf(stderr,"\nFATAL: gettimeofday returned invalid value");
+      exit(-3);
+    }
+
+    retVal = nowtv.tv_sec * 1000000LL + nowtv.tv_usec;
+  }
+  while (0);
+
+  return retVal;
+}
+
+
 int run_test(char *dir, char *test_file)
 {
   int retVal=0;
@@ -145,9 +175,15 @@ int run_test(char *dir, char *test_file)
       goto error;
     }
 
+    time_t now=time(0);
+    char *ctime_str=ctime(&now);
+    fprintf(log,"Started running test at %s",ctime_str);
+    long long start_time = gettime_us();
+    
     char surveyname[1024]="";
     int expected_result=200;
     char url[65536];
+    double tdelta;
     
     // Now iterate through test script
     line[0]=0; fgets(line,1024,in);    
@@ -155,6 +191,10 @@ int run_test(char *dir, char *test_file)
       int len=strlen(line);
       // Trim CR/LF from the end of the line
       while(len&&(line[len-1]<' ')) line[--len]=0;
+
+      tdelta=gettime_us()-start_time; tdelta/=1000;
+      fprintf(log,"T+%4.3fms : Read directive '%s'\n",
+	      tdelta,line);
       
       if (sscanf(line,"definesurvey %[^\r\n]",surveyname)==1) {
 	// Read survey definition and create survey file
@@ -183,8 +223,79 @@ int run_test(char *dir, char *test_file)
 	
 	fclose(s);
       }
-      else if (sscanf(line,"request %d [^\r\n]",&expected_result,url)==2) {
+      else if (sscanf(line,"request %d %[^\r\n]",&expected_result,url)==2) {
 	// Exeucte wget call. If it is a newsession command, then remember the session ID
+	// We also log the returned data from the request, so that we can look at that
+	// as well, if required.
+	char cmd[65536];
+	snprintf(cmd,65536,"%s/request.out",dir); unlink(cmd);
+	snprintf(cmd,65536,"%s/request.code",dir); unlink(cmd);
+	snprintf(cmd,65536,"curl -s -w \"HTTPRESULT=%%{http_code}\" wget -o %s/request.out http://localhost/surveyapi/%s > %s/request.code",
+		 dir,url,dir);
+	tdelta=gettime_us()-start_time; tdelta/=1000;
+	fprintf(log,"T+%4.3fms : HTTP API request command: '%s'\n",tdelta,cmd);
+	int shell_result=system(cmd);
+	int httpcode=-1;
+	tdelta=gettime_us()-start_time; tdelta/=1000;
+	fprintf(log,"T+%4.3fms : HTTP API request command completed.\n",tdelta);
+	snprintf(cmd,65536,"%s/request.code",dir);
+	FILE *rc=fopen(cmd,"r");
+	if (!rc) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : FATAL : Could not open '%s/request.code' to retrieve HTTP response code.\n",tdelta,dir);
+	  goto fatal;
+	} else {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : HTTP request.code response:\n",tdelta);
+	  line[0]=0; fgets(line,1024,rc);
+	  while (line[0]) {
+	    int len=strlen(line);
+	    // Trim CR/LF from the end of the line
+	    while(len&&(line[len-1]<' ')) line[--len]=0;
+
+	    sscanf(line,"HTTPRESULT=%d",&httpcode);
+	    
+	    fprintf(log,">>> %s\n",line);
+	    line[0]=0; fgets(line,1024,rc);	    
+	  }
+	  fclose(rc);
+	}
+	tdelta=gettime_us()-start_time; tdelta/=1000;
+	fprintf(log,"T+%4.3fms : HTTP response code %d\n",tdelta,httpcode);
+	if (httpcode==-1) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : FATAL : Could not find HTTP response code in request.code file.\n",tdelta);
+	  goto fatal;
+	}
+	if (httpcode!=expected_result) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : ERROR : Expected HTTP response code %d, but got %d.\n",
+		  tdelta,expected_result,httpcode);
+	  goto fail;
+	}
+
+	snprintf(cmd,65536,"%s/request.out",dir);
+	rc=fopen(cmd,"r");
+	if (!rc) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : FATAL : Could not open '%s/request.out' to retrieve HTTP response code.\n",tdelta,dir);
+	  goto fatal;
+	} else {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : HTTP request response body:\n",tdelta);
+	  line[0]=0; fgets(line,1024,rc);
+	  while (line[0]) {
+	    int len=strlen(line);
+	    // Trim CR/LF from the end of the line
+	    while(len&&(line[len-1]<' ')) line[--len]=0;
+
+	    fprintf(log,"::: %s\n",line);
+	    line[0]=0; fgets(line,1024,rc);	    
+	  }
+	  fclose(rc);
+	}
+	
+	
       }
       else if (!strcmp(line,"verifysession")) {
       }
@@ -349,8 +460,8 @@ int main(int argc,char **argv)
   }
   // Now make sessions directory writeable by all users
   if (chmod(tmp,S_IRUSR|S_IWUSR|S_IXUSR|
-	    S_IROTH|S_IWOTH|S_IXGRP|
-	    S_IRUSR|S_IWUSR|S_IXOTH)) {
+	    S_IRGRP|S_IWGRP|S_IXGRP|
+	    S_IROTH|S_IWOTH|S_IXOTH)) {
     perror("chmod() failed for test/sessions directory");
     exit(-3);
   }
@@ -380,7 +491,7 @@ int main(int argc,char **argv)
 
   // Clean up after ourselves
   fprintf(stderr,"Cleaning up...\n");
-#if 0
+#if 1
   if (recursive_delete(test_dir)) {
     fprintf(stderr,"Error encountered while deleting temporary directories.\n");
   }
