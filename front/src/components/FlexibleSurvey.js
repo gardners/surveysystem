@@ -396,7 +396,7 @@ class FlexibleSurvey extends React.Component {
             questionType = 'geolocation'
         }
         else if (question.inputType === 'number'){
-            questionType = 'number'
+            questionType = 'value'
         }
         else{
             questionType = 'text'
@@ -407,6 +407,7 @@ class FlexibleSurvey extends React.Component {
 
 
     //TODO : not finished yet properly, wait until commenting
+    //TODO : special case for lat lon not implemented
     // the answer has these fields :
     // DESERIALISE_STRING(a->uid);
     // DESERIALISE_STRING(a->text);
@@ -424,15 +425,36 @@ class FlexibleSurvey extends React.Component {
             let cptForLogs = parseInt(id) + 1
             let lastAnswer = lastAnswers[id]
             let lastAnswerCSV = ""
+            let answerFieldsCSV = {
+                uid : lastAnswer.id,
+                text : '0',
+                value : '0',
+                lat : '0',
+                lon : '0',
+                time_begin : '0',
+                time_end : '0',
+                time_zone_delta : '0',
+                dst_delta : '0'
+            }
             let questionType = this.defineAnswerType(lastAnswer)
-            lastAnswerCSV = lastAnswerCSV.concat(lastAnswer.id, ':',lastAnswer.answer, ':0', ':0:0:0:0:0:0')
+            answerFieldsCSV[questionType] = lastAnswer.answer //at this moment, the answerFieldsCSV contains the questionID, and the answer of the question in the good field
+            for (let fieldID in answerFieldsCSV){
+                if(fieldID == "uid"){
+                    lastAnswerCSV = lastAnswerCSV.concat(answerFieldsCSV[fieldID])
+                }
+                else {
+                    lastAnswerCSV = lastAnswerCSV.concat(':',answerFieldsCSV[fieldID])
+                }
+
+            }
+            //lastAnswerCSV = lastAnswerCSV.concat(lastAnswer.id, ':',lastAnswer.answer, ':0', ':0:0:0:0:0:0')
             console.log("Serialization of answer " + cptForLogs + "/" + lastAnswers.length + " done ! output = " + lastAnswerCSV)
             lastAnswersCSV[id] = lastAnswerCSV
         }
         return lastAnswersCSV
     }
 
-    //TODO : change to POST
+    // TODO : change to POST
     // an answer is sent only if the user answered it
     sendAnswersToServer(lastAnswersCSV){
         console.log("sending answers to server...")
@@ -508,8 +530,8 @@ class FlexibleSurvey extends React.Component {
 
     // function launched once at the beginning, that sets up the survey and ask to create a new session with a given survey id
     init(){
-        console.log("version 7")
-        console.log("Getting the Survey with ID="+ this.surveyID+"...");
+        console.log("version 1")
+        console.log("Getting the Survey with ID="+ this.surveyID+"...")
         console.log("requesting " + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/newsession?surveyid=' + this.surveyID)
         this.setState({ loading: true }, () => {
             axios({ //sending by get
