@@ -706,22 +706,22 @@ static void fcgi_nextquestion(struct kreq *r)
 
 #define TEST_READ(X)  snprintf(failmsg,16384,"Could not generate path ${SURVEY_HOME}/%s",X); \
   if (generate_path("",test_path,8192)) { \
-      quick_error(r,KHTTP_200,failmsg); \
+      quick_error(req,KHTTP_500,failmsg); \
       break; \
     } \
   snprintf(failmsg,16384,"Could not open for reading path ${SURVEY_HOME}/%s",X); \
   f=fopen(test_path,"r");						\
     if (!f) { \
-      quick_error(r,KHTTP_200,failmsg); \
+      quick_error(req,KHTTP_500,failmsg); \
       break; \
     } \
     fclose(f); \
 
 
-static void fcgi_accesstest(struct kreq *r)
+static void fcgi_accesstest(struct kreq *req)
 {
   // Try to access paths, and report status.
-  
+
   do {  
     char test_path[8192];
     char failmsg[16384];
@@ -731,7 +731,7 @@ static void fcgi_accesstest(struct kreq *r)
     TEST_READ("surveys");
     TEST_READ("sessions");
     
-    quick_error(r,KHTTP_200,"All okay.");
+    quick_error(req,KHTTP_200,"All okay.");
     
   } while (0);
 
