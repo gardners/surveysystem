@@ -230,7 +230,7 @@ int run_test(char *dir, char *test_file)
 	char cmd[65536];
 	snprintf(cmd,65536,"%s/request.out",dir); unlink(cmd);
 	snprintf(cmd,65536,"%s/request.code",dir); unlink(cmd);
-	snprintf(cmd,65536,"curl -s -w \"HTTPRESULT=%%{http_code}\n\" wget -o %s/request.out http://localhost/surveyapi/%s > %s/request.code",
+	snprintf(cmd,65536,"curl -s -w \"HTTPRESULT=%%{http_code}\n\" -o %s/request.out http://localhost/surveyapi/%s > %s/request.code",
 		 dir,url,dir);
 	tdelta=gettime_us()-start_time; tdelta/=1000;
 	fprintf(log,"T+%4.3fms : HTTP API request command: '%s'\n",tdelta,cmd);
@@ -238,8 +238,30 @@ int run_test(char *dir, char *test_file)
 	int httpcode=-1;
 	tdelta=gettime_us()-start_time; tdelta/=1000;
 	fprintf(log,"T+%4.3fms : HTTP API request command completed.\n",tdelta);
+	FILE *rc=NULL;
+
+	snprintf(cmd,65536,"%s/request.out",dir);
+	rc=fopen(cmd,"r");
+	if (!rc) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : NOTE : Could not open '%s/request.out'. No response from web page?\n",tdelta,dir);
+	} else {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : HTTP request response body:\n",tdelta);
+	  line[0]=0; fgets(line,1024,rc);
+	  while (line[0]) {
+	    int len=strlen(line);
+	    // Trim CR/LF from the end of the line
+	    while(len&&(line[len-1]<' ')) line[--len]=0;
+
+	    fprintf(log,"::: %s\n",line);
+	    line[0]=0; fgets(line,1024,rc);	    
+	  }
+	  fclose(rc);
+	}
+       
 	snprintf(cmd,65536,"%s/request.code",dir);
-	FILE *rc=fopen(cmd,"r");
+	rc=fopen(cmd,"r");
 	if (!rc) {
 	  tdelta=gettime_us()-start_time; tdelta/=1000;
 	  fprintf(log,"T+%4.3fms : FATAL : Could not open '%s/request.code' to retrieve HTTP response code.\n",tdelta,dir);
@@ -272,30 +294,7 @@ int run_test(char *dir, char *test_file)
 	  fprintf(log,"T+%4.3fms : ERROR : Expected HTTP response code %d, but got %d.\n",
 		  tdelta,expected_result,httpcode);
 	  goto fail;
-	}
-
-	snprintf(cmd,65536,"%s/request.out",dir);
-	rc=fopen(cmd,"r");
-	if (!rc) {
-	  tdelta=gettime_us()-start_time; tdelta/=1000;
-	  fprintf(log,"T+%4.3fms : FATAL : Could not open '%s/request.out' to retrieve HTTP response code.\n",tdelta,dir);
-	  goto fatal;
-	} else {
-	  tdelta=gettime_us()-start_time; tdelta/=1000;
-	  fprintf(log,"T+%4.3fms : HTTP request response body:\n",tdelta);
-	  line[0]=0; fgets(line,1024,rc);
-	  while (line[0]) {
-	    int len=strlen(line);
-	    // Trim CR/LF from the end of the line
-	    while(len&&(line[len-1]<' ')) line[--len]=0;
-
-	    fprintf(log,"::: %s\n",line);
-	    line[0]=0; fgets(line,1024,rc);	    
-	  }
-	  fclose(rc);
-	}
-	
-	
+	}	
       }
       else if (!strcmp(line,"verifysession")) {
       }
@@ -416,12 +415,28 @@ int configure_and_start_lighttpd(char *test_dir)
     perror("system() call to install lighttpd.conf failed");
     exit(-3);
   }
-  fprintf(stderr,"Restarting lighttpd service...");
+
+  fprintf(stderr,"Stopping lighttpd service...\n");
   snprintf(cmd,2048,"sudo -p 'Restart lighttpd ready for running tests? Type your password to continue: ' service lighttpd restart");
   if (system(cmd)) {
     perror("system() call to restart lighttpd failed");
     exit(-3);
+  }  
+
+  fprintf(stderr,"Updating surveyfcgi binary...\n");
+  snprintf(cmd,2048,"sudo -p 'Overwrite /var/www/fastcgi/surveyfcgi? Type your password to continue: ' cp surveyfcgi /var/www/fastcgi/surveyfcgi",test_dir);
+  fprintf(stderr,"WARNING: If you proceed, this test suite will overwrite /var/www/fastcgi/surveycgi.\n");
+  if (system(cmd)) {
+    perror("system() call to install lighttpd.conf failed");
+    exit(-3);
   }
+  
+  fprintf(stderr,"Restarting lighttpd service...\n");
+  snprintf(cmd,2048,"sudo -p 'Restart lighttpd ready for running tests? Type your password to continue: ' service lighttpd restart");
+  if (system(cmd)) {
+    perror("system() call to start lighttpd failed");
+    exit(-3);
+  }  
 
   return 0;
 }
