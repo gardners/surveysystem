@@ -102,7 +102,104 @@ int recursive_delete(const char *dir)
 
 int run_test(char *test_file)
 {
-  return 0;
+  int retVal=0;
+  FILE *in=NULL;
+  FILE *log=NULL;
+  char line[1024];
+  
+  do {
+  
+    // Get name of test file without path
+    char *test_name=test_file;
+    for(int i=0;test_file[i];i++) if (test_file[i]=='/') test_name=&test_file[i];
+    
+    in=fopen(test_file,"r");
+    if (!in) {
+      fprintf(stderr,"\nCould not open test file '%s' for reading",test_file);
+      perror("fopen");
+      retVal=-1; break;
+    }
+
+    // Read first line of test for description
+    line[0]=0; fgets(line,1024,in);
+    if (!line[0]) {
+      fprintf(stderr,"\nFirst line of test definition must be description <description text>\n");
+      retVal=-1; break;
+    }
+    char description[1024];
+    if (sscanf(line,"description %[^\r\n]",description)!=1) {
+      fprintf(stderr,"\nCould not parse description line of test.\n");
+      retVal=-1; break;
+    }
+
+    fprintf(stderr,"\033[39m[    ]  \033[37m%s\033[39m",description); fflush(stderr);
+    
+    char testlog[1024];
+    snprintf(testlog,1024,"testlog/%s.log",test_name);
+    
+    log=fopen(testlog,"w");
+
+    if (!log) {
+      fprintf(stderr,"\rFATAL: Could not create test log file '%s' for test '%s'                                    \n",
+	      testlog,test_file);
+      goto error;
+    }
+
+    char surveyname[1024]="";
+    int expected_result=200;
+    char url[65536];
+    
+    // Now iterate through test script
+    line[0]=0; fgets(line,1024,in);    
+    while(line[0]) {
+      int len=strlen(line);
+      // Trim CR/LF from the end of the line
+      while(len&&(line[len-1]<' ')) line[--len]=0;
+      
+      if (sscanf(line,"definesurvey %[^\r\n]",surveyname)==1) {
+	// Read survey definition and create survey file
+      }
+      else if (sscanf(line,"request %d [^\r\n]",&expected_result,url)==2) {
+	// Exeucte wget call. If it is a newsession command, then remember the session ID
+      }
+      else if (!strcmp(line,"verifysession")) {
+      }
+      else {
+	fprintf(stderr,"\rERROR: Test script '%s' has unknown directive '%s'                                                                        \n",test_file,line);
+	goto error;
+      }
+      line[0]=0; fgets(line,1024,in);    
+    }
+    
+    pass:
+
+    fprintf(stderr,"\r\033[39m[\033[32mPASS\033[39m]  %s\n",description); fflush(stderr);
+    break;
+      
+  fail:
+
+    fprintf(stderr,"\r\033[39m[\033[31mFAIL\033[39m]  %s\n",description); fflush(stderr);
+    retVal=1;
+    break;
+
+  error:
+
+    fprintf(stderr,"\r\033[39m[\033[32;1;5mEROR\033[39;0m]  %s\n",description); fflush(stderr);
+    retVal=2;
+    break;
+    
+  fatal:
+
+    fprintf(stderr,"\r\033[39m[\033[32;1;5mDEID\033[39;0m]  %s\n",description); fflush(stderr);
+    retVal=3;
+    break;
+
+  } while(0);
+
+  if (in) fclose(in);
+  if (log) fclose(log);
+    
+  return retVal;
 }
 
 char *config_template=
@@ -178,6 +275,7 @@ int configure_and_start_lighttpd(char *test_dir)
     perror("system() call to install lighttpd.conf failed");
     exit(-3);
   }
+  fprintf(stderr,"Restarting lighttpd service...");
   snprintf(cmd,2048,"sudo -p 'Restart lighttpd ready for running tests?' service lighttpd restart");
   if (system(cmd)) {
     perror("system() call to restart lighttpd failed");
@@ -186,6 +284,18 @@ int configure_and_start_lighttpd(char *test_dir)
 
   return 0;
 }
+
+int stop_lighttpd(void)
+{
+  fprintf(stderr,"Stop lighttpd service...");
+  char cmd[2048];
+  snprintf(cmd,2048,"sudo -p 'Stop lighttpd ready for running tests?' service lighttpd restart");
+  if (system(cmd)) {
+    perror("system() call to stop lighttpd failed");
+    exit(-3);
+  }
+  return 0;
+}  
 
 int main(int argc,char **argv)
 {
@@ -215,11 +325,27 @@ int main(int argc,char **argv)
     exit(-3);
   }
 
+  // Make sure we have a test log directory
+  mkdir("testlogs",0755);
+
   // Make config file pointing to the temp_dir, and start the server
   configure_and_start_lighttpd(test_dir);
-  
+
+  fprintf(stderr,"\n");
+
+  int passes=0;
+  int fails=0;
+  int errors=0;
+  int fatals=0;
+  int tests=0;
   for(int i=1;i<argc;i++) {
-    run_test(argv[i]);
+    switch (run_test(argv[i])) {
+    case 0: passes++; break;
+    case 1: fails++; break;
+    case 2: errors++; break;
+    case 3: fatals++; break;
+    }
+    tests++;
   }
 
   // Clean up after ourselves
@@ -227,5 +353,10 @@ int main(int argc,char **argv)
   if (recursive_delete(test_dir)) {
     fprintf(stderr,"Error encountered while deleting temporary directories.\n");
   }
-  
+
+  stop_lighttpd();
+  fprintf(stderr,"\n");
+  fprintf(stderr,"Summary: %d/%d tests passed (%d failed, %d errors, %d fatalities during tests)\n",
+	  passes,tests,fails,errors,fatals);
+  return 0;
 }
