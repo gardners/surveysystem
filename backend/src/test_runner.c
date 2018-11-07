@@ -100,7 +100,7 @@ int recursive_delete(const char *dir)
   return ret;
 }
 
-int run_test(char *test_file)
+int run_test(char *dir, char *test_file)
 {
   int retVal=0;
   FILE *in=NULL;
@@ -158,11 +158,41 @@ int run_test(char *test_file)
       
       if (sscanf(line,"definesurvey %[^\r\n]",surveyname)==1) {
 	// Read survey definition and create survey file
+	char survey_file[2048];
+	snprintf(survey_file,2048,"%s/%s",dir,surveyname);
+	mkdir(survey_file,0755);
+	snprintf(survey_file,2048,"%s/%s/current",dir,surveyname);	
+	FILE *s=fopen(survey_file,"w");
+	if (!s) {
+	  fprintf(stderr,"\rERROR: Could not create survey file '%s'                                                               \n",
+		  survey_file);
+	  goto error;
+	}
+	line[0]=0; fgets(line,1024,in);    
+	while(line[0]) {
+	  int len=strlen(line);
+	  // Trim CR/LF from the end of the line
+	  while(len&&(line[len-1]<' ')) line[--len]=0;
+
+	  if (!strcmp(line,"endofsurvey")) break;
+
+	  fprintf(s,"%s\n",line);
+
+	  line[0]=0; fgets(line,1024,in);    
+	}
+	
+	fclose(s);
       }
       else if (sscanf(line,"request %d [^\r\n]",&expected_result,url)==2) {
 	// Exeucte wget call. If it is a newsession command, then remember the session ID
       }
       else if (!strcmp(line,"verifysession")) {
+      }
+      else if (line[0]==0) {
+	// Ignore blank lines
+      }
+      else if (line[0]=='#') {
+	// Ignore comments
       }
       else {
 	fprintf(stderr,"\rERROR: Test script '%s' has unknown directive '%s'                                                                        \n",test_file,line);
@@ -184,7 +214,7 @@ int run_test(char *test_file)
 
   error:
 
-    fprintf(stderr,"\r\033[39m[\033[32;1;5mEROR\033[39;0m]  %s\n",description); fflush(stderr);
+    fprintf(stderr,"\r\033[39m[\033[31;1;5mEROR\033[39;0m]  %s\n",description); fflush(stderr);
     retVal=2;
     break;
     
@@ -269,14 +299,14 @@ int configure_and_start_lighttpd(char *test_dir)
   fprintf(f,"%s",conf_data);
   fclose(f);
   char cmd[2048];
-  snprintf(cmd,2048,"sudo -p 'Overwrite /etc/lighttpd/lighttpd.conf?' cp %s/lighttpd.conf /etc/lighttpd/lighttpd.conf",test_dir);
+  snprintf(cmd,2048,"sudo -p 'Overwrite /etc/lighttpd/lighttpd.conf? Type your password to continue: ' cp %s/lighttpd.conf /etc/lighttpd/lighttpd.conf",test_dir);
   fprintf(stderr,"WARNING: If you proceed, this test suite will overwrite /etc/lighttpd/lighttpd.conf.\n");
   if (system(cmd)) {
     perror("system() call to install lighttpd.conf failed");
     exit(-3);
   }
   fprintf(stderr,"Restarting lighttpd service...");
-  snprintf(cmd,2048,"sudo -p 'Restart lighttpd ready for running tests?' service lighttpd restart");
+  snprintf(cmd,2048,"sudo -p 'Restart lighttpd ready for running tests? Type your password to continue: ' service lighttpd restart");
   if (system(cmd)) {
     perror("system() call to restart lighttpd failed");
     exit(-3);
@@ -339,7 +369,7 @@ int main(int argc,char **argv)
   int fatals=0;
   int tests=0;
   for(int i=1;i<argc;i++) {
-    switch (run_test(argv[i])) {
+    switch (run_test(test_dir,argv[i])) {
     case 0: passes++; break;
     case 1: fails++; break;
     case 2: errors++; break;
