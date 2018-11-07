@@ -458,12 +458,11 @@ class FlexibleSurvey extends React.Component {
     // an answer is sent only if the user answered it
     sendAnswersToServer(lastAnswersCSV){
         console.log("sending answers to server...")
-
-        for (let id in lastAnswersCSV){
-            let answerToSend = lastAnswersCSV[id]
-            console.log('requested URL : GET ' + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/updateanswer?sessionid=' + this.sessionID + '&answer=' + answerToSend)
-            this.setState({ loading: true }, () => {
-                axios({ //sending by get
+        this.setState({ loading: true }, () => {
+            for (let id in lastAnswersCSV){
+                let answerToSend = lastAnswersCSV[id]
+                console.log('requested URL : GET ' + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/updateanswer?sessionid=' + this.sessionID + '&answer=' + answerToSend)
+                axios({
                     method: 'get',
                     url: Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/updateanswer',
                     params : {
@@ -472,11 +471,11 @@ class FlexibleSurvey extends React.Component {
                     }
                 })
                     .then(response => console.log(response)) //waiting the confirmation that the server received it
-                    .then(response => this.setState({ //stopping the loading screen
-                        loading: false
-                    }));
-            });
-        }
+            }
+        });
+        this.setState({ //stopping the loading screen
+            loading: false
+        })
 
     }
 
@@ -530,7 +529,7 @@ class FlexibleSurvey extends React.Component {
 
     // function launched once at the beginning, that sets up the survey and ask to create a new session with a given survey id
     init(){
-        console.log("version 1")
+        console.log("version 2")
         console.log("Getting the Survey with ID="+ this.surveyID+"...")
         console.log("requesting " + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/newsession?surveyid=' + this.surveyID)
         this.setState({ loading: true }, () => {
