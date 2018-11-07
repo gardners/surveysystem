@@ -193,7 +193,7 @@ int run_test(char *dir, char *test_file)
       while(len&&(line[len-1]<' ')) line[--len]=0;
 
       tdelta=gettime_us()-start_time; tdelta/=1000;
-      fprintf(log,"T+%4.3fms : Read directive '%s'\n",
+      fprintf(log,"T+%4.3fms : Executing directive '%s'\n",
 	      tdelta,line);
       
       if (sscanf(line,"definesurvey %[^\r\n]",surveyname)==1) {
@@ -230,7 +230,7 @@ int run_test(char *dir, char *test_file)
 	char cmd[65536];
 	snprintf(cmd,65536,"%s/request.out",dir); unlink(cmd);
 	snprintf(cmd,65536,"%s/request.code",dir); unlink(cmd);
-	snprintf(cmd,65536,"curl -s -w \"HTTPRESULT=%%{http_code}\" wget -o %s/request.out http://localhost/surveyapi/%s > %s/request.code",
+	snprintf(cmd,65536,"curl -s -w \"HTTPRESULT=%%{http_code}\n\" wget -o %s/request.out http://localhost/surveyapi/%s > %s/request.code",
 		 dir,url,dir);
 	tdelta=gettime_us()-start_time; tdelta/=1000;
 	fprintf(log,"T+%4.3fms : HTTP API request command: '%s'\n",tdelta,cmd);
@@ -491,7 +491,7 @@ int main(int argc,char **argv)
 
   // Clean up after ourselves
   fprintf(stderr,"Cleaning up...\n");
-#if 1
+#if 0
   if (recursive_delete(test_dir)) {
     fprintf(stderr,"Error encountered while deleting temporary directories.\n");
   }
