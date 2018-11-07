@@ -159,9 +159,9 @@ int run_test(char *dir, char *test_file)
       if (sscanf(line,"definesurvey %[^\r\n]",surveyname)==1) {
 	// Read survey definition and create survey file
 	char survey_file[2048];
-	snprintf(survey_file,2048,"%s/%s",dir,surveyname);
+	snprintf(survey_file,2048,"%s/surveys/%s",dir,surveyname);
 	mkdir(survey_file,0755);
-	snprintf(survey_file,2048,"%s/%s/current",dir,surveyname);	
+	snprintf(survey_file,2048,"%s/surveys/%s/current",dir,surveyname);	
 	FILE *s=fopen(survey_file,"w");
 	if (!s) {
 	  fprintf(stderr,"\rERROR: Could not create survey file '%s'                                                               \n",
@@ -380,9 +380,11 @@ int main(int argc,char **argv)
 
   // Clean up after ourselves
   fprintf(stderr,"Cleaning up...\n");
+#if 0
   if (recursive_delete(test_dir)) {
     fprintf(stderr,"Error encountered while deleting temporary directories.\n");
   }
+#endif
 
   stop_lighttpd();
   fprintf(stderr,"\n");
