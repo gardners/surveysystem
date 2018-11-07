@@ -230,7 +230,7 @@ int run_test(char *dir, char *test_file)
 	char cmd[65536];
 	snprintf(cmd,65536,"%s/request.out",dir); unlink(cmd);
 	snprintf(cmd,65536,"%s/request.code",dir); unlink(cmd);
-	snprintf(cmd,65536,"curl -s -w \"HTTPRESULT=%%{http_code}\n\" -o %s/request.out http://localhost/surveyapi/%s > %s/request.code",
+	snprintf(cmd,65536,"curl -s -w \"HTTPRESULT=%%{http_code}\" -o %s/request.out http://localhost/surveyapi/%s > %s/request.code",
 		 dir,url,dir);
 	tdelta=gettime_us()-start_time; tdelta/=1000;
 	fprintf(log,"T+%4.3fms : HTTP API request command: '%s'\n",tdelta,cmd);
@@ -436,7 +436,10 @@ int configure_and_start_lighttpd(char *test_dir)
   if (system(cmd)) {
     perror("system() call to start lighttpd failed");
     exit(-3);
-  }  
+  }
+  fprintf(stderr,"Waiting for lighttpd to finish restarting...\n");
+  while(system("curl -s -o /dev/null -f http://localhost/surveyapi/accesstest")) continue;
+  fprintf(stderr,"lighttpd is now responding to requests.\n");
 
   return 0;
 }
