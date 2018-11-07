@@ -438,7 +438,7 @@ int configure_and_start_lighttpd(char *test_dir)
     exit(-3);
   }
   fprintf(stderr,"Waiting for lighttpd to finish restarting...\n");
-  while(system("curl -s -o /dev/null -f http://localhost/surveyapi/accesstest")) continue;
+  while(system("curl -s -o /dev/null -f http://localhost/surveyapi/fastcgitest")) continue;
   fprintf(stderr,"lighttpd is now responding to requests.\n");
 
   return 0;
