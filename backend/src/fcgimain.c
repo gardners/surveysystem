@@ -79,6 +79,7 @@ enum	page {
 	PAGE_NEXTQUESTION,
 	PAGE_DELANSWER,
 	PAGE_DELSESSION,
+	PAGE_ACCESTEST,
 	PAGE__MAX
 };
 
@@ -90,6 +91,7 @@ static void fcgi_updateanswer(struct kreq *);
 static void fcgi_nextquestion(struct kreq *);
 static void fcgi_delanswer(struct kreq *);
 static void fcgi_delsession(struct kreq *);
+static void fcgi_accesstest(struct kreq *);
 
 static const disp disps[PAGE__MAX] = {
   fcgi_newsession,
@@ -97,7 +99,8 @@ static const disp disps[PAGE__MAX] = {
   fcgi_updateanswer,
   fcgi_nextquestion,
   fcgi_delanswer,
-  fcgi_delsession
+  fcgi_delsession,
+  fcgi_accesstest
 };
 
 static const char *const pages[PAGE__MAX] = {
@@ -106,7 +109,8 @@ static const char *const pages[PAGE__MAX] = {
   "updateanswer",
   "nextquestion",
   "delanswer",
-  "delsession"
+  "delsession",
+  "accesstest"
 };
   
 void dump_errors_kcgi(struct kreq *req)
@@ -696,6 +700,40 @@ static void fcgi_nextquestion(struct kreq *r)
     kjson_close(&req);
         
   } while(0);
+
+  return;  
+}
+
+#define TEST_READ(X)  snprintf(failmsg,16384,"Could not generate path ${SURVEY_HOME}/%s",X); \
+  if (generate_path("",test_path,8192)) { \
+      quick_error(r,KHTTP_200,failmsg); \
+      break; \
+    } \
+  snprintf(failmsg,16384,"Could not open for reading path ${SURVEY_HOME}/%s",X); \
+  f=fopen(test_path,"r");						\
+    if (!f) { \
+      quick_error(r,KHTTP_200,failmsg); \
+      break; \
+    } \
+    fclose(f); \
+
+
+static void fcgi_accesstest(struct kreq *r)
+{
+  // Try to access paths, and report status.
+  
+  do {  
+    char test_path[8192];
+    char failmsg[16384];
+    FILE *f=NULL;
+
+    TEST_READ("");
+    TEST_READ("surveys");
+    TEST_READ("sessions");
+    
+    quick_error(r,KHTTP_200,"All okay.");
+    
+  } while (0);
 
   return;  
 }
