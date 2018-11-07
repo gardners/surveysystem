@@ -372,7 +372,8 @@ class FlexibleSurvey extends React.Component {
             if (!this.isAnswerEmpty(question.value)){
                 answers[cpt] = {
                     id : question.id,
-                    answer : question.value
+                    answer : question.value,
+                    question : question
                 }
                 cpt++
             } else {
@@ -381,6 +382,27 @@ class FlexibleSurvey extends React.Component {
             }
         }
         return answers
+    }
+
+    //TODO : this function must be completed and improved
+    defineAnswerType(answer){
+        if(!answer){
+            console.error('The answer type cannot be determined since the answer is null or undefined !')
+            return null
+        }
+        let questionType = null
+        let question = answer.question
+        if (question.getType() === 'geolocation'){
+            questionType = 'geolocation'
+        }
+        else if (question.inputType === 'number'){
+            questionType = 'number'
+        }
+        else{
+            questionType = 'text'
+        }
+        console.log('The answer type of question #' + answer.id + ' is : ' + questionType)
+        return questionType
     }
 
 
@@ -402,6 +424,7 @@ class FlexibleSurvey extends React.Component {
             let cptForLogs = parseInt(id) + 1
             let lastAnswer = lastAnswers[id]
             let lastAnswerCSV = ""
+            let questionType = this.defineAnswerType(lastAnswer)
             lastAnswerCSV = lastAnswerCSV.concat(lastAnswer.id, ':',lastAnswer.answer, ':0', ':0:0:0:0:0:0')
             console.log("Serialization of answer " + cptForLogs + "/" + lastAnswers.length + " done ! output = " + lastAnswerCSV)
             lastAnswersCSV[id] = lastAnswerCSV
@@ -456,7 +479,7 @@ class FlexibleSurvey extends React.Component {
     }
 
 
-    //asking the first question of the survey when it is initializing
+    //sends a request to the server to get the next set of questions to display
     askNextQuestion(){
         console.log("Asking the first question...");
         console.log('URL used : ' + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/nextquestion?sessionid=' + this.sessionID)
@@ -485,7 +508,7 @@ class FlexibleSurvey extends React.Component {
 
     // function launched once at the beginning, that sets up the survey and ask to create a new session with a given survey id
     init(){
-        console.log("version 4")
+        console.log("version 7")
         console.log("Getting the Survey with ID="+ this.surveyID+"...");
         console.log("requesting " + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/newsession?surveyid=' + this.surveyID)
         this.setState({ loading: true }, () => {
