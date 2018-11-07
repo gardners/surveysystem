@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "kcgi.h"
 #include "kcgijson.h"
@@ -735,6 +737,18 @@ static void fcgi_nextquestion(struct kreq *r)
     } \
     fclose(f); \
 
+#define TEST_MKDIR(X)  snprintf(failmsg,16384,"Could not generate path ${SURVEY_HOME}/%s",X); \
+  if (generate_path(X,test_path,8192)) { \
+      quick_error(req,KHTTP_500,failmsg); \
+      break; \
+    } \
+  if (mkdir(test_path,0777)) {						\
+      snprintf(failmsg,16384,"Could not mkdir path %s, errno=%d (%s)",test_path,errno,strerror(errno)); \
+      quick_error(req,KHTTP_500,failmsg); \
+      break; \
+    }
+
+
 
 static void fcgi_accesstest(struct kreq *req)
 {
@@ -749,6 +763,9 @@ static void fcgi_accesstest(struct kreq *req)
     TEST_READ("surveys");
     TEST_READ("sessions");
     TEST_WRITE("sessions/testfile");
+    TEST_MKDIR("sessions/testdir");
+    TEST_READ("sessions/testdir");
+    TEST_WRITE("sessions/testdir/testfile");
     
     quick_error(req,KHTTP_200,"All okay.");
     
