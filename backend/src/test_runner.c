@@ -199,8 +199,16 @@ int run_test(char *dir, char *test_file)
       if (sscanf(line,"definesurvey %[^\r\n]",surveyname)==1) {
 	// Read survey definition and create survey file
 	char survey_file[2048];
+
 	snprintf(survey_file,2048,"%s/surveys/%s",dir,surveyname);
-	mkdir(survey_file,0755);
+	mkdir(survey_file,0777);
+	if (chmod(survey_file,S_IRUSR|S_IWUSR|S_IXUSR|
+		  S_IRGRP|S_IWGRP|S_IXGRP|
+		  S_IROTH|S_IWOTH|S_IXOTH)) {
+	  fprintf(stderr,"\nERROR: chmod() failed for new survey directory %s",survey_file);
+	  goto error;
+	}
+	
 	snprintf(survey_file,2048,"%s/surveys/%s/current",dir,surveyname);	
 	FILE *s=fopen(survey_file,"w");
 	if (!s) {
@@ -467,10 +475,22 @@ int main(int argc,char **argv)
   // Make surveys and sessions directories
   char tmp[2048];
   snprintf(tmp,2048,"%s/surveys",test_dir);
-  if (mkdir(tmp,0755)) {
+  if (mkdir(tmp,0777)) {
     perror("mkdir() failed for test/surveys directory");
     exit(-3);
   }
+  // Also make sure the survey directory is writable when running tests
+  // (this is so accesstest will succeed.  For production, this can be
+  // avoided by making sure to use the commandline tool to create a single
+  // session in a survey after the survey has been modified, to make sure
+  // all the necessary hash files get created.)
+  if (chmod(tmp,S_IRUSR|S_IWUSR|S_IXUSR|
+	    S_IRGRP|S_IWGRP|S_IXGRP|
+	    S_IROTH|S_IWOTH|S_IXOTH)) {
+    fprintf(stderr,"\nERROR: chmod() failed for new survey directory %s",tmp);
+    exit(-3);
+  }
+  
   snprintf(tmp,2048,"%s/sessions",test_dir);
   if (mkdir(tmp,0777)) {
     perror("mkdir() failed for test/sessions directory");
