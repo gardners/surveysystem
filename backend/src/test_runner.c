@@ -374,7 +374,7 @@ int run_test(char *dir, char *test_file)
 
 	    sscanf(line,"HTTPRESULT=%d",&httpcode);
 	    
-	    fprintf(log,">>> %s\n",line);
+	    fprintf(log,"=== %s\n",line);
 	    line[0]=0; fgets(line,1024,rc);	    
 	  }
 	  fclose(rc);
@@ -423,6 +423,50 @@ int run_test(char *dir, char *test_file)
 	  fprintf(log,"T+%4.3fms : FAIL : Could not open session file: %s\n",tdelta,strerror(errno));
 	  goto fail;
 	}
+	// Now go through reading lines from here and from the session file
+	char session_line[8192];
+	char comparison_line[8192];
+
+	fprintf(log,"<<<<<< START OF EXPECTED SESSION DATA\n");
+	fprintf(log,">>>>>> START OF SESSION FILE\n");
+
+	
+	session_line[0]=0; fgets(session_line,8192,s);
+	comparison_line[0]=0; fgets(comparison_line,8192,in);
+	while(1) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  if (comparison_line[0]&&strcmp(comparison_line,"endofsession")) {
+	    int len=strlen(comparison_line);
+	    while (len&&(comparison_line[len-1]=='\r'||comparison_line[len-1]=='\n')) comparison_line[--len]=0;
+	    fprintf(log,"<<< %s\n",comparison_line);
+	  } else fprintf(log,"<<<<<< END OF EXPECTED SESSION DATA\n");
+
+	  if (session_line[0]) {
+	    int len=strlen(session_line);
+	    while (len&&(session_line[len-1]=='\r'||session_line[len-1]=='\n')) session_line[--len]=0;
+	    fprintf(log,">>> %s\n",session_line);
+	  } else fprintf(log,">>>>>> END OF SESSION FILE\n");
+	  
+	  if (session_line[0]&&(!strcmp("endofsession",comparison_line))) {
+	    // End of comparison list before end of session file
+	    tdelta=gettime_us()-start_time; tdelta/=1000;
+	    fprintf(log,"T+%4.3fms : FAIL : Session log file contains more lines than expected.\n",tdelta);
+	    goto fail;	    
+	  }
+
+	  if ((!session_line[0])&&(strcmp("endofsession",comparison_line))) {
+	    // End of session file before end of comparison list
+	    tdelta=gettime_us()-start_time; tdelta/=1000;
+	    fprintf(log,"T+%4.3fms : FAIL : Session log file contains less lines than expected.\n",tdelta);
+	    goto fail;	    
+	  }
+
+	  if (!strcmp("endofsession",comparison_line)) break;
+	  
+	  session_line[0]=0; fgets(session_line,8192,s);
+	  comparison_line[0]=0; fgets(comparison_line,8192,in);
+	}
+	
 	fclose(s);
       }
       else if (line[0]==0) {
@@ -432,7 +476,7 @@ int run_test(char *dir, char *test_file)
 	// Ignore comments
       }
       else {
-	fprintf(log,"T+%4.3fms : FATAL : Test script '%s' has unknown directive '%s'\n",test_file,line);
+	fprintf(log,"T+%4.3fms : FATAL : Test script '%s' has unknown directive '%s'\n",tdelta,test_file,line);
 	goto fatal;
       }
       line[0]=0; fgets(line,1024,in);    
