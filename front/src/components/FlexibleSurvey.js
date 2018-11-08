@@ -29,7 +29,7 @@ class FlexibleSurvey extends React.Component {
     //used for logs
     currentQuestionsBeingAnswered = []
     //when there are no more questions to ask, set to true
-    _surveyCompleted = false
+    surveyCompleted = false
 
 
 
@@ -72,7 +72,7 @@ class FlexibleSurvey extends React.Component {
         //eventlistener when user presses next
         //it is not really the next button, but complete button, with a display text set at 'Next', since the current displayed page is always the last one.
         tmpSurvey.onCompleting.add(function(sender, options){
-            if (this._surveyCompleted){
+            if (this.surveyCompleted){
                 options.allowComplete = true
             } else {
                 options.allowComplete = false
@@ -172,7 +172,7 @@ class FlexibleSurvey extends React.Component {
     goBackToPreviousStep(){
         console.log('Going back to previous step...');
         this.deleteAnswersFromServer()
-        this._surveyCompleted = false
+        this.surveyCompleted = false
         this.deleteMostRecentPageOfSurvey()
         this.pages = this.pages.slice(0, -1);
         this.stepID = this.stepID -1;
@@ -216,7 +216,7 @@ class FlexibleSurvey extends React.Component {
     finishSurvey(){
         let tmpSurvey = this.state.survey
         tmpSurvey.completeText = "Complete"
-        this._surveyCompleted = true
+        this.surveyCompleted = true
         this.setState({
             survey : tmpSurvey
         })
@@ -232,11 +232,11 @@ class FlexibleSurvey extends React.Component {
 
 
     //TODO : partly done for the moment, wait until its finished before commenting
-    processQuestionReceived(data){
+    processQuestionReceived(questionInJson){
         console.log("A question was received from the server")
         console.log("Data received by the server :")
-        console.log(data)
-        let questionIdToAdd = this.deserialize(data)
+        console.log(questionInJson)
+        let questionIdToAdd = this.deserialize(questionInJson)
         console.log("These questions will be added at the end of the survey :")
         console.log(questionIdToAdd)
         this.setNextQuestionOfSurvey(questionIdToAdd)
@@ -448,43 +448,32 @@ class FlexibleSurvey extends React.Component {
                 }
 
             }
-            //lastAnswerCSV = lastAnswerCSV.concat(lastAnswer.id, ':',lastAnswer.answer, ':0', ':0:0:0:0:0:0')
             console.log("Serialization of answer " + cptForLogs + "/" + lastAnswers.length + " done ! output = " + lastAnswerCSV)
             lastAnswersCSV[id] = lastAnswerCSV
         }
         return lastAnswersCSV
     }
 
-    // TODO : change to POST
-    // an answer is sent only if the user answered it
-    sendAnswersToServer(lastAnswersCSV){
-        console.log("sending answers to server...")
-        this.setState({ loading: true }, () => {
-            for (let id in lastAnswersCSV){
-                let answerToSend = lastAnswersCSV[id]
-                console.log('requested URL : GET ' + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/updateanswer?sessionid=' + this.sessionID + '&answer=' + answerToSend)
-                axios({
-                    method: 'get',
-                    url: Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/updateanswer',
-                    params : {
-                        sessionid : this.sessionID,
-                        answer : answerToSend
-                    }
-                })
-                    .then(response => console.log(response)) //waiting the confirmation that the server received it
-            }
-        });
-        this.setState({ //stopping the loading screen
-            loading: false
-        })
 
+    // an answer is sent only if the user answered it
+    async sendAnswersToServer(lastAnswersCSV){
+        console.log("sending answers to server...")
+
+        for (let id in lastAnswersCSV){
+            let answerToSend = lastAnswersCSV[id]
+            let resolved = await api.updateAnswer(this.sessionID, answerToSend)
+            if(resolved.error) {
+                console.error("An error happened while sending the next question ! log :")
+                console.log(resolved.error.response.data)
+            }
+        }
+        return true
     }
 
     //TODO : function not finished yet, comment it later
     //function called when the user press Next button
     onNextButtonPressed(result, options){
         console.log("NEXT button pressed")
-        //retrieve the last answer
         const lastAnswers = this.getAnswersOfCurrentPage()
         console.log(lastAnswers)
         if(!lastAnswers){
@@ -494,25 +483,32 @@ class FlexibleSurvey extends React.Component {
         const lastAnswersCSV = this.serializeToCSV(lastAnswers)
         console.log("This data will be sent to the server :")
         console.log(lastAnswersCSV)
-        //sending each answer, one by one
-        this.sendAnswersToServer(lastAnswersCSV)
-        //asking the next question
-        this.askNextQuestion()
+        //loading while the questions are sent and the next question is not displayed
+        this.setState({ loading: true }, async () => {
+            await this.sendAnswersToServer(lastAnswersCSV)
+            let nextQuestion = await this.askNextQuestion()
+            this.processQuestionReceived(nextQuestion)
+            this.setState({ //stopping the loading screen
+                loading: false
+            })
+        })
     }
 
 
     //sends a request to the server to get the next set of questions to display
-    askNextQuestion(){
-        console.log("Asking the first question...");
-        console.log('URL used : ' + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/nextquestion?sessionid=' + this.sessionID)
-        axios({ //sending by get
-            method: 'get',
-            url: Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/nextquestion',
-            params : {
-                sessionid : this.sessionID,
-            }
-        })
-            .then(response => this.processQuestionReceived(response.data))
+    async askNextQuestion(){
+        console.log("asking the next question to display...")
+        let resolved = await api.nextQuestion(this.sessionID)
+
+        if(resolved.error) {
+            console.error("An error happened while asking the next question ! log :")
+            console.log(resolved.error.response.data)
+            return null
+        }
+        else{
+            //data contains the next question sent by the server
+            return resolved.response.data
+        }
     }
 
 
@@ -529,28 +525,27 @@ class FlexibleSurvey extends React.Component {
 
     // TODO : comment
     async createNewSession(){
-        let response = await api.createNewSession(this.surveyID)
-        if(response.error) {
+        let resolved = await api.createNewSession(this.surveyID)
+        if(resolved.error) {
             console.error("An error happened while asking to create a new session ! log :")
-            console.log(response.error.response.data)
+            console.log(resolved.error.response.data)
             return null
         }
         else{
             //data contains the session ID sent by the server
-            //the first data comes fron resolved object (see resolve .js, the second data is the data from the http request itself)
-            return response.data.data
+            return resolved.response.data
         }
     }
 
     // function launched once at the beginning, that sets up the survey and ask to create a new session with a given survey id
      init(){
-        console.log("version 7")
+        console.log("version 6")
         this.setState({ loading: true }, async () => {
             let receivedSessionId = await this.createNewSession()
             this.extractSessionId(receivedSessionId)
             this.configureSurvey()
-            //TODO : make this thing ASYNC as well
-            this.askNextQuestion()
+            let nextQuestion = await this.askNextQuestion()
+            this.processQuestionReceived(nextQuestion)
             this.setState({
                 loading: false
             })
@@ -567,7 +562,6 @@ class FlexibleSurvey extends React.Component {
 
     // if an ajax request is loading, a spinner is shown. If a question is available, the survey is shown
     render(){
-        console.log(this.pages)
         return(
             <div className="jumbotron jumbotron-fluid">
                 <div className="container">
