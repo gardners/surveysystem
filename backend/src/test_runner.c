@@ -260,6 +260,19 @@ int run_test(char *dir, char *test_file)
 	tdelta=gettime_us()-start_time; tdelta/=1000;
 	fprintf(log,"T+%4.3fms : Session ID is '%s'\n",tdelta,last_sessionid);
       }
+      else if (sscanf(line,"match_string %[^\r\n]",glob)==1) {
+	// Check that the response contains the supplied pattern
+	int matches=0;
+	for(int i=0;i<response_line_count;i++) {
+	  if (strstr(response_lines[i],glob))
+	    matches++;
+	  }
+	if (!matches) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : FAIL : No match for literal string.\n",tdelta);
+	  goto fail;
+	}
+      }
       else if (sscanf(line,"match %[^\r\n]",glob)==1) {
 	// Check that the response contains the supplied pattern
 	regex_t regex;
@@ -313,10 +326,32 @@ int run_test(char *dir, char *test_file)
 	// We also log the returned data from the request, so that we can look at that
 	// as well, if required.
 	char cmd[65536];
+	char url_sub[65536];
+
+	int o=0;
+	for(int i=0;url[i];i++) {
+	  if (url[i]!='$') url_sub[o++]=url[i];
+	  else {
+	    // $$ substitutes for $
+	    if (url[i+1]=='$') {
+	      url_sub[o++]='$';
+	    }
+	    else if (!strncmp("$SESSION",&url[i],8)) {
+	      snprintf(&url_sub[o],65535-o,"%s",last_sessionid);
+	      o=strlen(url_sub);
+	      i+=7;
+	    } else {
+	      fprintf(log,"T+%4.3fms : FATAL : Unknown $ substitution in URL",tdelta);
+	      goto fatal;	      
+	    }
+	  }
+	}
+	url_sub[o]=0;
+	
 	snprintf(cmd,65536,"%s/request.out",dir); unlink(cmd);
 	snprintf(cmd,65536,"%s/request.code",dir); unlink(cmd);
 	snprintf(cmd,65536,"curl -s -w \"HTTPRESULT=%%{http_code}\" -o %s/request.out http://localhost/surveyapi/%s > %s/request.code",
-		 dir,url,dir);
+		 dir,url_sub,dir);
 	tdelta=gettime_us()-start_time; tdelta/=1000;
 	fprintf(log,"T+%4.3fms : HTTP API request command: '%s'\n",tdelta,cmd);
 	int shell_result=system(cmd);
