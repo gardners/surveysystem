@@ -3,12 +3,12 @@
 
 export async function resolve(promise) {
     const resolved = {
-        data: null,
+        response: null,
         error: null
     };
 
     try {
-        resolved.data = await promise;
+        resolved.response = await promise;
     } catch(e) {
         resolved.error = e;
     }

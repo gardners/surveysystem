@@ -35,6 +35,23 @@ export const Configuration = {
                 {
                     surveyid : null
                 }
+        },
+        nextQuestion : {
+            method : 'get',
+            path : '/surveyapi/nextquestion',
+            params :
+                {
+                    sessionid : null
+                }
+        },
+        updateAnswer : {
+            method : 'get',
+            path : '/surveyapi/updateanswer',
+            params :
+                {
+                    sessionid : null,
+                    answer : null
+                }
         }
     }
 
