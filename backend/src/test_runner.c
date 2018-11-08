@@ -402,15 +402,22 @@ int run_test(char *dir, char *test_file)
 
 	// Build path to session file
 	char session_file[8192];
-	snprintf(session_file,8192,"%s/sessions/%c%c%c%c/%s",
+	snprintf(session_file,1024,"%s/sessions/%c%c%c%c/%s",
 		 test_dir,
 		 last_sessionid[0],last_sessionid[1],last_sessionid[2],last_sessionid[3],
 		 last_sessionid);
+	char cmd[8192];
+	snprintf(cmd,8192,"%s/session.log",dir);
+	unlink(cmd);
+	snprintf(cmd,8192,"sudo cp %s %s/session.log",session_file,dir);
+	system(cmd);
+	
 	tdelta=gettime_us()-start_time; tdelta/=1000;
 	fprintf(log,"T+%4.3fms : Examining contents of session file '%s'.\n",tdelta,session_file);	
 
 	// Check that the file exists
-	FILE *s=fopen(session_file,"r");
+	snprintf(cmd,8192,"%s/session.log",dir);
+	FILE *s=fopen(cmd,"r");
 	if (!s) {
 	  tdelta=gettime_us()-start_time; tdelta/=1000;
 	  fprintf(log,"T+%4.3fms : FAIL : Could not open session file: %s\n",tdelta,strerror(errno));
