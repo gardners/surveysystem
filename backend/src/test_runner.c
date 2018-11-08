@@ -8,6 +8,9 @@
   <questions in normal question format>
   endofsurvey
   request <expected response code> <url path and query>
+  extract_sessionid
+  match <regex to search for in body of last response>
+  nomatch <regex to search for in body of last response>
   verifysession
   <expected set of answers in the session file. Can be empty>
   endofsession
@@ -30,6 +33,9 @@
 #include <time.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <regex.h>
+
+#include "survey.h"
 
 char test_dir[1024];
 
@@ -138,7 +144,8 @@ int run_test(char *dir, char *test_file)
   char line[8192];
 
   int response_line_count=0;
-  char response_lines[100][8192];  
+  char response_lines[100][8192];
+  char last_sessionid[100]="";
   
   do {
   
@@ -235,8 +242,71 @@ int run_test(char *dir, char *test_file)
 	
 	fclose(s);
       }
-      else if (sscanf(line,"compare_response %[^\r\n]",glob)==1) {
+      else if (!strcmp(line,"extract_sessionid")) {
+	if (response_line_count!=1) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : FAIL : Could not parse session ID: Last response contained %d lines, instead of exactly 1.\n",
+		  tdelta,response_line_count);
+	  goto fail;
+	}
+	if (validate_session_id(response_lines[0]))
+	  {
+	    tdelta=gettime_us()-start_time; tdelta/=1000;
+	    fprintf(log,"T+%4.3fms : FAIL : Could not parse session ID: validate_session_id() reported failure.\n",tdelta);
+	    goto fail;
+	  }
+	// Remember session ID for other directives
+	strcpy(last_sessionid,response_lines[0]);
+	tdelta=gettime_us()-start_time; tdelta/=1000;
+	fprintf(log,"T+%4.3fms : Session ID is '%s'\n",tdelta,last_sessionid);
+      }
+      else if (sscanf(line,"match %[^\r\n]",glob)==1) {
 	// Check that the response contains the supplied pattern
+	regex_t regex;
+	int matches=0;
+	int error_code=regcomp(&regex,glob,REG_EXTENDED|REG_NOSUB);
+	if (error_code) {
+	  char err[8192]="";
+	  regerror(error_code,&regex,err,8192);
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : FATAL : Could not compile regular expression: %s\n",
+		  tdelta,err);
+	  goto fatal;
+	}
+	for(int i=0;i<response_line_count;i++) {
+	  if (REG_NOMATCH!=regexec(&regex,response_lines[i],0,NULL,0)) {
+	    matches++;
+	  }
+	}
+	if (!matches) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : FAIL : No match for regular expression.\n",tdelta);
+	  goto fail;
+	}
+      }
+      else if (sscanf(line,"nomatch %[^\r\n]",glob)==1) {
+	// Check that the response contains the supplied pattern
+	regex_t regex;
+	int matches=0;
+	int error_code=regcomp(&regex,glob,REG_EXTENDED|REG_NOSUB);
+	if (error_code) {
+	  char err[8192]="";
+	  regerror(error_code,&regex,err,8192);
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : FATAL : Could not compile regular expression: %s\n",
+		  tdelta,err);
+	  goto fatal;
+	}
+	for(int i=0;i<response_line_count;i++) {
+	  if (REG_NOMATCH!=regexec(&regex,response_lines[i],0,NULL,0)) {
+	    matches++;
+	  }
+	}
+	if (matches) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : FAIL : Regular expression matches %d times.\n",tdelta,matches);
+	  goto fail;
+	}
       }
       else if (sscanf(line,"request %d %[^\r\n]",&expected_result,url)==2) {
 	// Exeucte wget call. If it is a newsession command, then remember the session ID
@@ -338,7 +408,7 @@ int run_test(char *dir, char *test_file)
       line[0]=0; fgets(line,1024,in);    
     }
     
-    pass:
+    //    pass:
 
     fprintf(stderr,"\r\033[39m[\033[32mPASS\033[39m]  %s\n",description); fflush(stderr);
     break;
@@ -451,7 +521,7 @@ int configure_and_start_lighttpd(char *test_dir)
   }  
 
   fprintf(stderr,"Updating surveyfcgi binary...\n");
-  snprintf(cmd,2048,"sudo -p 'Overwrite /var/www/fastcgi/surveyfcgi? Type your password to continue: ' cp surveyfcgi /var/www/fastcgi/surveyfcgi",test_dir);
+  snprintf(cmd,2048,"sudo -p 'Overwrite /var/www/fastcgi/surveyfcgi? Type your password to continue: ' cp surveyfcgi /var/www/fastcgi/surveyfcgi");
   fprintf(stderr,"WARNING: If you proceed, this test suite will overwrite /var/www/fastcgi/surveycgi.\n");
   if (system(cmd)) {
     perror("system() call to install lighttpd.conf failed");
