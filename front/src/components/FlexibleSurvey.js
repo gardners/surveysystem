@@ -88,7 +88,6 @@ class FlexibleSurvey extends React.Component {
     //you may want, while creating a new survey, add some custom properties in the question, such as their ID.
     // to declare these new properties, go to the config file. this function will automatically import them when the survey is built
     addCustomProperties(){
-
         for (let id in Configuration.customProperties){
             let customProperty = Configuration.customProperties[id]
             Survey.JsonObject.metaData.addProperty(customProperty.basetype, { name: customProperty.name, type: customProperty.type });
@@ -116,6 +115,19 @@ class FlexibleSurvey extends React.Component {
         return tmpPages[id];
     }
 
+    isQuestionAlreadyInSurvey(questionId){
+        for (let pageID in this.pages){
+            let page = this.pages[pageID]
+            for (let questionID in page.questions){
+                let questionInSurvey = page.questions[questionID]
+                if (questionId === questionInSurvey.id){
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
     //accepts a list of question IDs, and add the corresponding questions in a new page, at the end of the survey
     setNextQuestionOfSurvey(questionIds){
         let tmpSurvey = this.state.survey
@@ -129,8 +141,13 @@ class FlexibleSurvey extends React.Component {
                 console.error("failed to get the question with id "+questionId+" !");
                 return null;
             }
-            newPage.addQuestion(questionToAdd);
-            console.log("question (id="+questionId+") added at the end of survey...");
+            if(!this.isQuestionAlreadyInSurvey(questionId)){
+                newPage.addQuestion(questionToAdd);
+                console.log("question (id="+questionId+") added at the end of survey...");
+            }
+            else{
+                console.error("question (id="+questionId+") already exists in the survey, it is not added again");
+            }
         }
         let res = this.saveNewPage(tmpStepID, newPage);
         if (!res){
@@ -457,6 +474,7 @@ class FlexibleSurvey extends React.Component {
 
     // an answer is sent only if the user answered it
     async sendAnswersToServer(lastAnswersCSV){
+        console.log('==============================================')
         console.log("sending answers to server...")
 
         for (let id in lastAnswersCSV){
@@ -497,6 +515,7 @@ class FlexibleSurvey extends React.Component {
 
     //sends a request to the server to get the next set of questions to display
     async askNextQuestion(){
+        console.log('==============================================')
         console.log("asking the next question to display...")
         let resolved = await api.nextQuestion(this.sessionID)
 
@@ -525,6 +544,8 @@ class FlexibleSurvey extends React.Component {
 
     // TODO : comment
     async createNewSession(){
+        console.log('==============================================')
+        console.log('creating a new session...')
         let resolved = await api.createNewSession(this.surveyID)
         if(resolved.error) {
             console.error("An error happened while asking to create a new session ! log :")
@@ -539,7 +560,7 @@ class FlexibleSurvey extends React.Component {
 
     // function launched once at the beginning, that sets up the survey and ask to create a new session with a given survey id
      init(){
-        console.log("version 6")
+        console.log("version 1")
         this.setState({ loading: true }, async () => {
             let receivedSessionId = await this.createNewSession()
             this.extractSessionId(receivedSessionId)
