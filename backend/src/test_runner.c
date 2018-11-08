@@ -195,6 +195,16 @@ int run_test(char *dir, char *test_file)
     char url[65536];
     char glob[65536];
     double tdelta;
+
+    // Variables for FOR NEXT loops
+    char var[8192];
+    int first,last;
+    int for_count=0;
+    char for_var[10][16];
+    int for_prevval[10];
+    int for_last[10];
+    int for_step[10];
+    off_t for_seek_pos[10];
     
     // Now iterate through test script
     line[0]=0; fgets(line,8192,in);
@@ -272,6 +282,46 @@ int run_test(char *dir, char *test_file)
 	  fprintf(log,"T+%4.3fms : FAIL : No match for literal string.\n",tdelta);
 	  goto fail;
 	}
+      }
+      else if (sscanf(line,"for %s = %d to %d",var,&first,&last)==3) {
+	if (for_count>10) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : FATAL : Too many FOR statements\n",
+		  tdelta);
+	  goto fatal;
+	}
+	if (strlen(var)>15) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : FATAL : Variable name too long in FOR statement\n",
+		  tdelta);
+	  goto fatal;
+	}
+	strcpy(for_var[for_count],var);
+	for_prevval[for_count]=first;
+	for_last[for_count]=last;
+	for_step[for_count]=1;
+	for_seek_pos[for_count++]=ftello(in);
+      }
+      else if (!strcmp(line,"next")) {
+	if (!for_count) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : FATAL : NEXT without FOR\n",
+		  tdelta);
+	  goto fatal;
+	}
+	if (for_prevval[for_count-1]==for_last[for_count-1]) {
+	  // No need to loop back
+	  for_count--;
+	} else {
+	  for_prevval[for_count-1]+=for_step[for_count-1];
+	  if (fseeko(in,for_seek_pos[for_count-1],SEEK_SET)) {
+	    tdelta=gettime_us()-start_time; tdelta/=1000;
+	    fprintf(log,"T+%4.3fms : ERROR : Could not seek to top of FOR %s loop at offset %d\n",
+		    tdelta,for_var[for_count-1],for_seek_pos[for_count-1]);
+	    goto error;
+	  }
+	}
+      
       }
       else if (sscanf(line,"match %[^\r\n]",glob)==1) {
 	// Check that the response contains the supplied pattern
