@@ -135,7 +135,10 @@ int run_test(char *dir, char *test_file)
   int retVal=0;
   FILE *in=NULL;
   FILE *log=NULL;
-  char line[1024];
+  char line[8192];
+
+  int response_line_count=0;
+  char response_lines[100][8192];  
   
   do {
   
@@ -151,12 +154,12 @@ int run_test(char *dir, char *test_file)
     }
 
     // Read first line of test for description
-    line[0]=0; fgets(line,1024,in);
+    line[0]=0; fgets(line,8192,in);
     if (!line[0]) {
       fprintf(stderr,"\nFirst line of test definition must be description <description text>\n");
       retVal=-1; break;
     }
-    char description[1024];
+    char description[8192];
     if (sscanf(line,"description %[^\r\n]",description)!=1) {
       fprintf(stderr,"\nCould not parse description line of test.\n");
       retVal=-1; break;
@@ -180,13 +183,14 @@ int run_test(char *dir, char *test_file)
     fprintf(log,"Started running test at %s",ctime_str);
     long long start_time = gettime_us();
     
-    char surveyname[1024]="";
+    char surveyname[8192]="";
     int expected_result=200;
     char url[65536];
+    char glob[65536];
     double tdelta;
     
     // Now iterate through test script
-    line[0]=0; fgets(line,1024,in);    
+    line[0]=0; fgets(line,8192,in);
     while(line[0]) {
       int len=strlen(line);
       // Trim CR/LF from the end of the line
@@ -198,9 +202,9 @@ int run_test(char *dir, char *test_file)
       
       if (sscanf(line,"definesurvey %[^\r\n]",surveyname)==1) {
 	// Read survey definition and create survey file
-	char survey_file[2048];
+	char survey_file[8192];
 
-	snprintf(survey_file,2048,"%s/surveys/%s",dir,surveyname);
+	snprintf(survey_file,8192,"%s/surveys/%s",dir,surveyname);
 	mkdir(survey_file,0777);
 	if (chmod(survey_file,S_IRUSR|S_IWUSR|S_IXUSR|
 		  S_IRGRP|S_IWGRP|S_IXGRP|
@@ -209,14 +213,14 @@ int run_test(char *dir, char *test_file)
 	  goto error;
 	}
 	
-	snprintf(survey_file,2048,"%s/surveys/%s/current",dir,surveyname);	
+	snprintf(survey_file,8192,"%s/surveys/%s/current",dir,surveyname);	
 	FILE *s=fopen(survey_file,"w");
 	if (!s) {
 	  fprintf(stderr,"\rERROR: Could not create survey file '%s'                                                               \n",
 		  survey_file);
 	  goto error;
 	}
-	line[0]=0; fgets(line,1024,in);    
+	line[0]=0; fgets(line,8192,in);    
 	while(line[0]) {
 	  int len=strlen(line);
 	  // Trim CR/LF from the end of the line
@@ -226,10 +230,13 @@ int run_test(char *dir, char *test_file)
 
 	  fprintf(s,"%s\n",line);
 
-	  line[0]=0; fgets(line,1024,in);    
+	  line[0]=0; fgets(line,8192,in);    
 	}
 	
 	fclose(s);
+      }
+      else if (sscanf(line,"compare_response %[^\r\n]",glob)==1) {
+	// Check that the response contains the supplied pattern
       }
       else if (sscanf(line,"request %d %[^\r\n]",&expected_result,url)==2) {
 	// Exeucte wget call. If it is a newsession command, then remember the session ID
@@ -243,6 +250,11 @@ int run_test(char *dir, char *test_file)
 	tdelta=gettime_us()-start_time; tdelta/=1000;
 	fprintf(log,"T+%4.3fms : HTTP API request command: '%s'\n",tdelta,cmd);
 	int shell_result=system(cmd);
+	if (shell_result) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : HTTP API request command returned with non-zero status %d.\n",tdelta,shell_result);
+	}
+
 	int httpcode=-1;
 	tdelta=gettime_us()-start_time; tdelta/=1000;
 	fprintf(log,"T+%4.3fms : HTTP API request command completed.\n",tdelta);
@@ -256,14 +268,21 @@ int run_test(char *dir, char *test_file)
 	} else {
 	  tdelta=gettime_us()-start_time; tdelta/=1000;
 	  fprintf(log,"T+%4.3fms : HTTP request response body:\n",tdelta);
-	  line[0]=0; fgets(line,1024,rc);
+	  line[0]=0; fgets(line,8192,rc);
 	  while (line[0]) {
 	    int len=strlen(line);
 	    // Trim CR/LF from the end of the line
 	    while(len&&(line[len-1]<' ')) line[--len]=0;
 
 	    fprintf(log,"::: %s\n",line);
-	    line[0]=0; fgets(line,1024,rc);	    
+	    
+	    // Keep the lines returned from the request in case we want to probe them
+	    if (response_line_count<100) {
+	      line[8191]=0;
+	      strcpy(response_lines[response_line_count++],line);
+	    }
+	    
+	    line[0]=0; fgets(line,8192,rc);	    
 	  }
 	  fclose(rc);
 	}
