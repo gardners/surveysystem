@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Configuration } from '../conf/config';
 import LoadingSpinner from './LoadingSpinner';
 import geolocationQuestion from '../customQuestions/geolocationQuestion'
+import api from '../api/api'
 
 
 // Represents the Flexible Survey
@@ -515,38 +516,45 @@ class FlexibleSurvey extends React.Component {
     }
 
 
-    getSessionIdFromServer(response){
-        console.log("getting the session ID from the server...")
-        console.log("session ID received : " + response)
-        if (!response){
-            console.error("the server sent nothing instead of the session id ! ")
+    extractSessionId(receivedSessionId){
+        console.log("extracting session ID : ")
+        console.log(receivedSessionId)
+        if (!receivedSessionId){
+            console.error("an error occured while extracting the  session ID ! ")
             return null
         }
-        this.sessionID = response
+        this.sessionID = receivedSessionId
         return true
     }
 
+    // TODO : comment
+    async createNewSession(){
+        let response = await api.createNewSession(this.surveyID)
+        if(response.error) {
+            console.error("An error happened while asking to create a new session ! log :")
+            console.log(response.error.response.data)
+            return null
+        }
+        else{
+            //data contains the session ID sent by the server
+            //the first data comes fron resolved object (see resolve .js, the second data is the data from the http request itself)
+            return response.data.data
+        }
+    }
 
     // function launched once at the beginning, that sets up the survey and ask to create a new session with a given survey id
-    init(){
-        console.log("version 2")
-        console.log("Getting the Survey with ID="+ this.surveyID+"...")
-        console.log("requesting " + Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/newsession?surveyid=' + this.surveyID)
-        this.setState({ loading: true }, () => {
-            axios({ //sending by get
-                method: 'get',
-                url: Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/newsession',
-                params : {
-                    surveyid : this.surveyID,
-                }
+     init(){
+        console.log("version 7")
+        this.setState({ loading: true }, async () => {
+            let receivedSessionId = await this.createNewSession()
+            this.extractSessionId(receivedSessionId)
+            this.configureSurvey()
+            //TODO : make this thing ASYNC as well
+            this.askNextQuestion()
+            this.setState({
+                loading: false
             })
-                .then(response => this.getSessionIdFromServer(response.data))
-                .then(response => this.configureSurvey())
-                .then(response => this.askNextQuestion())
-                .then(response => this.setState({
-                    loading: false
-                }));
-        });
+        })
     }
 
 
