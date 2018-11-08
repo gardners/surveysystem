@@ -24,6 +24,7 @@ STATICHEADERS=	Makefile \
 STATICSRCS=	$(SRCDIR)/serialisers.c \
 		$(SRCDIR)/sha1.c \
 		$(SRCDIR)/paths.c \
+		$(SRCDIR)/log.c \
 		$(SRCDIR)/sessions.c \
 		$(SRCDIR)/nextquestion.c \
 		$(SRCDIR)/code_instrumentation.c \
@@ -35,11 +36,12 @@ GENERATEDSRCS=	$(SRCDIR)/question_types.c
 COREOBJS=	$(SRCDIR)/errorlog.o \
 		$(SRCDIR)/sha1.o \
 		$(SRCDIR)/paths.o \
+		$(SRCDIR)/log.o \
 		$(SRCDIR)/sessions.o \
 		$(SRCDIR)/nextquestion.o \
 		$(SRCDIR)/serialisers.o \
 		$(SRCDIR)/code_instrumentation.o \
-		$(SRCDIR)/question_types.o
+		$(SRCDIR)/question_types.o 
 TESTOBJS=	$(COREOBJS) \
 		$(SRCDIR)/test_serialisers.o
 
