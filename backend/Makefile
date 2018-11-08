@@ -53,12 +53,12 @@ HEADERS=	$(STATICHEADERS) $(GENERATEDHEADERS)
 
 CC=	clang
 COPT=	-Wall -O3 -g -Iinclude `$(PYCONFIG) --includes` -Ikcgi
-LOPT=
+LOPT=	`$(PYCONFIG) --libs --ldflags`
 
 all:	test_serialisers surveycli surveyfcgi test_runner
 
-test_runner:	Makefile src/test_runner.o
-	$(CC) $(COPT) -o test_runner src/test_runner.o
+test_runner:	Makefile $(SRCDIR)/test_runner.o $(COREOBJS)
+	$(CC) $(COPT) -o test_runner $(SRCDIR)/test_runner.o $(COREOBJS) $(LOPT)  
 
 %.o:	%.c $(HEADERS)
 	$(CC) $(COPT) -c $< -o $@
@@ -77,10 +77,10 @@ $(SRCDIR)/question_types.c:	$(INCDIR)/survey.h $(HEADERS)
 	echo "  \"end of list\"};" >> $@
 
 test_serialisers:	$(TESTOBJS)
-	$(CC) $(COPT) -o $@ $^ $(LOPT) `$(PYCONFIG) --libs --ldflags`
+	$(CC) $(COPT) -o $@ $^ $(LOPT)
 
 surveycli:	$(CLIOBJS)
-	$(CC) $(COPT) -o $@ $^ $(LOPT) `$(PYCONFIG) --libs --ldflags`
+	$(CC) $(COPT) -o $@ $^ $(LOPT)
 
 $(KCGIARS):	
 	git submodule init
@@ -88,7 +88,7 @@ $(KCGIARS):
 	( cd kcgi ; ./configure && make )
 
 surveyfcgi:	$(FCGIOBJS) $(KCGIARS)
-	$(CC) $(COPT) -o $@ $^ $(LOPT) `$(PYCONFIG) --libs --ldflags` $(KCGIARS) -lz
+	$(CC) $(COPT) -o $@ $^ $(LOPT) $(KCGIARS) -lz
 
 clean:
 	rm $(SRCDIR)/*.o $(GENERATEDHEADERS) $(GENERATEDSRCS)

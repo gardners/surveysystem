@@ -6,6 +6,9 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "kcgi.h"
 #include "kcgijson.h"
@@ -79,6 +82,8 @@ enum	page {
 	PAGE_NEXTQUESTION,
 	PAGE_DELANSWER,
 	PAGE_DELSESSION,
+	PAGE_ACCESTEST,
+	PAGE_FCGITEST,
 	PAGE__MAX
 };
 
@@ -90,6 +95,8 @@ static void fcgi_updateanswer(struct kreq *);
 static void fcgi_nextquestion(struct kreq *);
 static void fcgi_delanswer(struct kreq *);
 static void fcgi_delsession(struct kreq *);
+static void fcgi_accesstest(struct kreq *);
+static void fcgi_fastcgitest(struct kreq *);
 
 static const disp disps[PAGE__MAX] = {
   fcgi_newsession,
@@ -97,7 +104,9 @@ static const disp disps[PAGE__MAX] = {
   fcgi_updateanswer,
   fcgi_nextquestion,
   fcgi_delanswer,
-  fcgi_delsession
+  fcgi_delsession,
+  fcgi_accesstest,
+  fcgi_fastcgitest
 };
 
 static const char *const pages[PAGE__MAX] = {
@@ -106,7 +115,9 @@ static const char *const pages[PAGE__MAX] = {
   "updateanswer",
   "nextquestion",
   "delanswer",
-  "delsession"
+  "delsession",
+  "accesstest",
+  "fastcgitest"
 };
   
 void dump_errors_kcgi(struct kreq *req)
@@ -698,4 +709,76 @@ static void fcgi_nextquestion(struct kreq *r)
   } while(0);
 
   return;  
+}
+
+#define TEST_READ(X)  snprintf(failmsg,16384,"Could not generate path ${SURVEY_HOME}/%s",X); \
+  if (generate_path(X,test_path,8192)) { \
+      quick_error(req,KHTTP_500,failmsg); \
+      break; \
+    } \
+  snprintf(failmsg,16384,"Could not open for reading path ${SURVEY_HOME}/%s",X); \
+  f=fopen(test_path,"r");						\
+    if (!f) { \
+      quick_error(req,KHTTP_500,failmsg); \
+      break; \
+    } \
+    fclose(f); \
+
+#define TEST_WRITE(X)  snprintf(failmsg,16384,"Could not generate path ${SURVEY_HOME}/%s",X); \
+  if (generate_path(X,test_path,8192)) { \
+      quick_error(req,KHTTP_500,failmsg); \
+      break; \
+    } \
+  f=fopen(test_path,"w");			\
+    if (!f) { \
+      snprintf(failmsg,16384,"Could not open for writing path %s, errno=%d (%s)",test_path,errno,strerror(errno)); \
+      quick_error(req,KHTTP_500,failmsg); \
+      break; \
+    } \
+    fclose(f); \
+
+#define TEST_MKDIR(X)  snprintf(failmsg,16384,"Could not generate path ${SURVEY_HOME}/%s",X); \
+  if (generate_path(X,test_path,8192)) { \
+      quick_error(req,KHTTP_500,failmsg); \
+      break; \
+    } \
+  if (mkdir(test_path,0777)) {						\
+      snprintf(failmsg,16384,"Could not mkdir path %s, errno=%d (%s)",test_path,errno,strerror(errno)); \
+      quick_error(req,KHTTP_500,failmsg); \
+      break; \
+    }
+
+
+
+static void fcgi_accesstest(struct kreq *req)
+{
+  // Try to access paths, and report status.
+
+  do {  
+    char test_path[8192];
+    char failmsg[16384];
+    FILE *f=NULL;
+
+    TEST_READ("");
+    TEST_READ("surveys");
+    TEST_WRITE("surveys/testfile");
+    TEST_MKDIR("surveys/testdir");
+    TEST_READ("surveys/testdir");
+    TEST_WRITE("surveys/testdir/testfile");
+    TEST_READ("sessions");
+    TEST_WRITE("sessions/testfile");
+    TEST_MKDIR("sessions/testdir");
+    TEST_READ("sessions/testdir");
+    TEST_WRITE("sessions/testdir/testfile");
+    
+    quick_error(req,KHTTP_200,"All okay.");
+    
+  } while (0);
+
+  return;  
+}
+
+static void fcgi_fastcgitest(struct kreq *req)
+{
+  quick_error(req,KHTTP_200,"All okay.");
 }
