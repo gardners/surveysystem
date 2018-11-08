@@ -316,8 +316,8 @@ int run_test(char *dir, char *test_file)
 	  for_prevval[for_count-1]+=for_step[for_count-1];
 	  if (fseeko(in,for_seek_pos[for_count-1],SEEK_SET)) {
 	    tdelta=gettime_us()-start_time; tdelta/=1000;
-	    fprintf(log,"T+%4.3fms : ERROR : Could not seek to top of FOR %s loop at offset %d\n",
-		    tdelta,for_var[for_count-1],for_seek_pos[for_count-1]);
+	    fprintf(log,"T+%4.3fms : ERROR : Could not seek to top of FOR %s loop at offset %lld\n",
+		    tdelta,for_var[for_count-1],(long long)for_seek_pos[for_count-1]);
 	    goto error;
 	  }
 	}
@@ -397,9 +397,19 @@ int run_test(char *dir, char *test_file)
 	  }
 	}
 	url_sub[o]=0;
-	
+
+	// Delete any old version of files laying around
 	snprintf(cmd,65536,"%s/request.out",dir); unlink(cmd);
+	if (!access(cmd,F_OK)) {
+	  fprintf(log,"T+%4.3fms : FATAL : Could not unlink file '%s'",tdelta,cmd);
+	  goto fatal;	      
+	}
 	snprintf(cmd,65536,"%s/request.code",dir); unlink(cmd);
+	if (!access(cmd,F_OK)) {
+	  fprintf(log,"T+%4.3fms : FATAL : Could not unlink file '%s'",tdelta,cmd);
+	  goto fatal;	      
+	}
+	
 	snprintf(cmd,65536,"curl -s -w \"HTTPRESULT=%%{http_code}\" -o %s/request.out http://localhost/surveyapi/%s > %s/request.code",
 		 dir,url_sub,dir);
 	tdelta=gettime_us()-start_time; tdelta/=1000;
