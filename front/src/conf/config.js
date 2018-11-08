@@ -2,6 +2,10 @@ export const Configuration = {
     //back end config
     serverUrl: 'http://localhost',
     serverPort :'80',
+    serverBaseUrl : function(){
+        let baseURL =this.serverUrl.concat(':',this.serverPort)
+        return(baseURL)
+    },
 
     //survey theme
     surveyTheme: 'bootstrap',
@@ -20,7 +24,20 @@ export const Configuration = {
             'type' : 'string',
             'description' : ''
         }
-    ]
+    ],
+
+
+    apiCalls : {
+        createNewSession : {
+            method : 'get',
+            path : '/surveyapi/newsession',
+            params :
+                {
+                    surveyid : null
+                }
+        }
+    }
+
 
 
 
