@@ -204,8 +204,8 @@ int run_test(char *dir, char *test_file)
       while(len&&(line[len-1]<' ')) line[--len]=0;
 
       tdelta=gettime_us()-start_time; tdelta/=1000;
-      fprintf(log,"T+%4.3fms : Executing directive '%s'\n",
-	      tdelta,line);
+      if (line[0]&&line[0]!='#')
+	fprintf(log,"T+%4.3fms : Executing directive '%s'\n",tdelta,line);
       
       if (sscanf(line,"definesurvey %[^\r\n]",surveyname)==1) {
 	// Read survey definition and create survey file
@@ -393,7 +393,30 @@ int run_test(char *dir, char *test_file)
 	  goto fail;
 	}	
       }
-      else if (!strcmp(line,"verifysession")) {
+      else if (!strcmp(line,"verify_session")) {
+	if (validate_session_id(last_sessionid)) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : FATAL : No session ID has been captured. Use extract_sessionid following request directive.\n",tdelta);
+	  goto fatal;
+	}
+
+	// Build path to session file
+	char session_file[8192];
+	snprintf(session_file,8192,"%s/sessions/%c%c%c%c/%s",
+		 test_dir,
+		 last_sessionid[0],last_sessionid[1],last_sessionid[2],last_sessionid[3],
+		 last_sessionid);
+	tdelta=gettime_us()-start_time; tdelta/=1000;
+	fprintf(log,"T+%4.3fms : Examining contents of session file '%s'.\n",tdelta,session_file);	
+
+	// Check that the file exists
+	FILE *s=fopen(session_file,"r");
+	if (!s) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : FAIL : Could not open session file: %s\n",tdelta,strerror(errno));
+	  goto fail;
+	}
+	fclose(s);
       }
       else if (line[0]==0) {
 	// Ignore blank lines
@@ -402,8 +425,8 @@ int run_test(char *dir, char *test_file)
 	// Ignore comments
       }
       else {
-	fprintf(stderr,"\rERROR: Test script '%s' has unknown directive '%s'                                                                        \n",test_file,line);
-	goto error;
+	fprintf(log,"T+%4.3fms : FATAL : Test script '%s' has unknown directive '%s'\n",test_file,line);
+	goto fatal;
       }
       line[0]=0; fgets(line,1024,in);    
     }
@@ -427,7 +450,7 @@ int run_test(char *dir, char *test_file)
     
   fatal:
 
-    fprintf(stderr,"\r\033[39m[\033[32;1;5mDEID\033[39;0m]  %s\n",description); fflush(stderr);
+    fprintf(stderr,"\r\033[39m[\033[31;1;5mDIED\033[39;0m]  %s\n",description); fflush(stderr);
     retVal=3;
     break;
 
