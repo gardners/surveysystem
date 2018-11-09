@@ -482,7 +482,12 @@ int run_test(char *dir, char *test_file)
 	  if (url[i]!='$') url_sub[o++]=url[i];
 	  else {
 	    // $$ substitutes for $
-	    if (url[i+1]=='$') {
+	    if (url[i+1]=='\"') {
+	      // Escape quotes
+	      url_sub[o++]='\\';
+	      url_sub[o++]='\"';
+	    }
+	    else if (url[i+1]=='$') {
 	      url_sub[o++]='$';
 	    }
 	    else if (!strncmp("$SESSION",&url[i],8)) {
@@ -509,7 +514,7 @@ int run_test(char *dir, char *test_file)
 	  goto fatal;	      
 	}
 	
-	snprintf(cmd,65536,"curl -s -w \"HTTPRESULT=%%{http_code}\" -o %s/request.out http://localhost/surveyapi/%s > %s/request.code",
+	snprintf(cmd,65536,"curl -s -w \"HTTPRESULT=%%{http_code}\" -o %s/request.out \"http://localhost/surveyapi/%s\" > %s/request.code",
 		 dir,url_sub,dir);
 	tdelta=gettime_us()-start_time; tdelta/=1000;
 	fprintf(log,"T+%4.3fms : HTTP API request command: '%s'\n",tdelta,cmd);
