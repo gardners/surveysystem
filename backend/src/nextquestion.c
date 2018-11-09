@@ -290,7 +290,8 @@ int get_next_questions_generic(struct session *s,
       {
 	for(j=0;j<s->answer_count;j++)
 	  if (!strcmp(s->answers[j]->uid,s->questions[i]->uid)) break;
-	if (j<s->answer_count) break;
+	// LOG_INFOV("Answer to question %d is answer %d/%d",i,j,s->answer_count);
+	if (j<s->answer_count) continue;
 	else {
 	  if ((*next_question_count)<max_next_questions) {
 	    next_questions[*next_question_count]=s->questions[i];
