@@ -158,9 +158,9 @@ int main(int argc,char **argv)
 				   keys, KEY__MAX, // CGI variable parse definitions
 				   pages, PAGE__MAX,  // Pages for parsing
 				   PAGE_NEWSESSION))
-      {	LOG_ERROR("khttp_fcgi_init() failed.",""); }
+      {	LOG_ERROR("khttp_fcgi_init() failed."); }
 
-    if (!fcgi) { LOG_ERROR("fcgi==NULL after call to khttp_fcgi_init()",""); }
+    if (!fcgi) { LOG_ERROR("fcgi==NULL after call to khttp_fcgi_init()"); }
 
     // For each request
     for (;;) {
@@ -415,7 +415,7 @@ static void fcgi_addanswer(struct kreq *req)
       quick_error(req,KHTTP_400,"session_add_answer() failed");
       break;
     }
-    if (save_session(s)) LOG_ERROR("save_session() failed",session_id);
+    if (save_session(s)) LOG_ERRORV("save_session('%s') failed",session_id);
 
     
     // All ok, so tell the caller the next question to be answered
@@ -477,7 +477,7 @@ static void fcgi_updateanswer(struct kreq *req)
       break;
     }
     if (save_session(s)) {
-      LOG_ERROR("save_session() failed",session_id);
+      LOG_ERRORV("save_session('%s') failed",session_id);
       quick_error(req,KHTTP_400,"save_session() failed");
     }
     
@@ -559,7 +559,7 @@ static void fcgi_delanswer(struct kreq *req)
       break;
     }
     if (save_session(s)) {
-      LOG_ERROR("save_session() failed",session_id);
+      LOG_ERRORV("save_session('%s') failed",session_id);
       quick_error(req,KHTTP_400,"save_session() failed");
     }
     
@@ -597,7 +597,7 @@ static void fcgi_delsession(struct kreq *r)
     }
     free(s);
     if (delete_session(session_id)) {
-      LOG_ERROR("delete_session() failed",session_id);
+      LOG_ERRORV("delete_session('%s') failed",session_id);
       quick_error(r,KHTTP_400,"Could not delete session. Does it exist?");
       break;
     }
@@ -637,7 +637,7 @@ static void fcgi_nextquestion(struct kreq *r)
     struct question *q[1024];
     int next_question_count=0;
     if (get_next_questions(s,q,1024,&next_question_count))
-      LOG_ERROR("get_next_questions() failed",session_id);
+      LOG_ERRORV("get_next_questions('%s') failed",session_id);
     
     struct kjsonreq req;
     kjson_open(&req, r); 

@@ -38,7 +38,7 @@ int log_message(char *file,char *function,int line,char *format,...)
 	       tm->tm_year,tm->tm_mon,tm->tm_mday,tm->tm_hour);	   
     
     if (generate_path(log_name,log_file,1024)) {
-      LOG_ERROR("generate_path() failed to build path for log file",log_name);
+      LOG_ERRORV("generate_path('%s') failed to build path for log file",log_name);
     }
 
     va_list argp;
@@ -47,7 +47,7 @@ int log_message(char *file,char *function,int line,char *format,...)
     va_end(argp);
 
     FILE *lf=fopen(log_file,"a");
-    if (!lf) LOG_ERROR("Could not open log file '%s' for append: %s",log_file,strerror(errno));
+    if (!lf) LOG_ERRORV("Could not open log file '%s' for append: %s",log_file,strerror(errno));
     fprintf(lf,"%04d/%02d/%02d.%02d:%02d.%d:%s:%d:%s():%s\n",
 	    tm->tm_year,tm->tm_mon,tm->tm_mday,tm->tm_hour,tm->tm_min,tm->tm_sec,
 	    file,line,function,
