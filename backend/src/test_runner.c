@@ -36,6 +36,7 @@
 #include <regex.h>
 
 #include "survey.h"
+#include "errorlog.h"
 
 char test_dir[1024];
 
@@ -350,6 +351,49 @@ int run_test(char *dir, char *test_file)
 	}
 	
 	fclose(s);
+      }
+      else if (!strcmp(line,"python")) {
+	char python_file[8192];
+	snprintf(python_file,8192,"%s/python",dir);
+	mkdir(python_file,0755);
+	if (chmod(python_file,S_IRUSR|S_IWUSR|S_IXUSR|
+		  S_IRGRP|S_IXGRP|
+		  S_IROTH|S_IXOTH)) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : ERROR : Could not create python directory '%s'",tdelta,python_file);
+	  goto error;
+	}
+	
+	snprintf(python_file,8192,"%s/python/nextquestion.py",dir);	
+	FILE *s=fopen(python_file,"w");
+	if (!s) {
+	  fprintf(log,"T+%4.3fms : ERROR : Could not create python file '%s'",tdelta,python_file);
+	  goto error;
+	}
+	line[0]=0; fgets(line,8192,in);    
+	while(line[0]) {
+	  int len=strlen(line);
+	  // Trim CR/LF from the end of the line
+	  while(len&&(line[len-1]<' ')) line[--len]=0;
+
+	  if (!strcmp(line,"endofpython")) break;
+
+	  fprintf(s,"%s\n",line);
+
+	  line[0]=0; fgets(line,8192,in);    
+	}
+	
+	fclose(s);
+
+	if (chmod(python_file,S_IRUSR|S_IWUSR|S_IXUSR|
+		  S_IRGRP|S_IXGRP|
+		  S_IROTH|S_IXOTH)) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : ERROR : Could not set permissions on python file '%s'",tdelta,python_file);
+	  goto error;
+	}
+
+	
       }
       else if (!strcmp(line,"extract_sessionid")) {
 	if (response_line_count!=1) {
@@ -841,7 +885,7 @@ int stop_lighttpd(void)
 
 int main(int argc,char **argv)
 {
-  snprintf(test_dir,1024,"/tmp/survey_test_runner_%d_%d",(int)time(0),getpid());
+  snprintf(test_dir,1024,"/tmp/surveytestrunner.%d.%d",(int)time(0),getpid());
   fprintf(stderr,"Using %s as test directory\n",test_dir);
   if (mkdir(test_dir,0755)) {
     perror("mkdir() failed for test directory");
