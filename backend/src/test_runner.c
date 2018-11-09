@@ -363,9 +363,17 @@ int run_test(char *dir, char *test_file)
 	  fprintf(log,"T+%4.3fms : ERROR : Could not create python directory '%s'",tdelta,python_file);
 	  goto error;
 	}
+
+	snprintf(python_file,8192,"%s/python/__init__.py",dir);	
+	FILE *s=fopen(python_file,"w");
+	if (!s) {
+	  fprintf(log,"T+%4.3fms : ERROR : Could not create python file '%s'",tdelta,python_file);
+	  goto error;
+	}
+	fclose(s);
 	
 	snprintf(python_file,8192,"%s/python/nextquestion.py",dir);	
-	FILE *s=fopen(python_file,"w");
+	s=fopen(python_file,"w");
 	if (!s) {
 	  fprintf(log,"T+%4.3fms : ERROR : Could not create python file '%s'",tdelta,python_file);
 	  goto error;
