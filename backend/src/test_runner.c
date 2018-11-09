@@ -360,7 +360,7 @@ int run_test(char *dir, char *test_file)
 		  S_IRGRP|S_IXGRP|
 		  S_IROTH|S_IXOTH)) {
 	  tdelta=gettime_us()-start_time; tdelta/=1000;
-	  fprintf(log,"T+%4.3fms : ERROR : Could not create python directory '%s'",tdelta,python_file);
+	  fprintf(log,"T+%4.3fms : ERROR : Could not set permissions on python directory '%s'",tdelta,python_file);
 	  goto error;
 	}
 
@@ -371,6 +371,13 @@ int run_test(char *dir, char *test_file)
 	  goto error;
 	}
 	fclose(s);
+	if (chmod(python_file,S_IRUSR|S_IWUSR|S_IXUSR|
+		  S_IRGRP|S_IXGRP|
+		  S_IROTH|S_IXOTH)) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : ERROR : Could not set permissions on python file '%s'",tdelta,python_file);
+	  goto error;
+	}
 	
 	snprintf(python_file,8192,"%s/python/nextquestion.py",dir);	
 	s=fopen(python_file,"w");
