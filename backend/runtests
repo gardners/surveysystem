@@ -1,0 +1,1 @@
+make && sudo rm /var/www/fastcgi/surveyfcgi && sudo cp surveyfcgi /var/www/fastcgi/ && make test_runner && ./test_runner tests/*.test
