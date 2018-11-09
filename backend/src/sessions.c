@@ -648,6 +648,15 @@ int session_add_answer(struct session *ses,struct answer *a)
     if (!ses) LOG_ERROR("Session structure is NULL");
     if (!a) LOG_ERROR("Asked to add null answer to session");
 
+    // Don't allow answers to questions that don't exist
+    int question_number=0;
+    for(question_number=0;question_number<ses->question_count;
+	question_number++)
+      if (!strcmp(ses->questions[question_number]->uid,
+		  a->uid)) break;
+    if (question_number==ses->question_count)
+      LOG_ERRORV("There is no such question '%s'",a->uid);
+    
     // Don't allow multiple answers to the same question
     for(int i=0;i<ses->answer_count;i++)
       if (!strcmp(ses->answers[i]->uid,a->uid))
