@@ -537,6 +537,7 @@ int run_test(char *dir, char *test_file)
 	} else {
 	  tdelta=gettime_us()-start_time; tdelta/=1000;
 	  fprintf(log,"T+%4.3fms : HTTP request response body:\n",tdelta);
+	  response_line_count=0;
 	  line[0]=0; fgets(line,8192,rc);
 	  while (line[0]) {
 	    int len=strlen(line);
