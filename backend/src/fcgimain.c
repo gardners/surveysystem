@@ -675,7 +675,7 @@ static void fcgi_nextquestion(struct kreq *r)
     khttp_body(r);
     kjson_obj_open(&req);
     kjson_putint(&req, next_question_count); 
-    kjson_arrayp_open(&req,"questions");
+    kjson_arrayp_open(&req,"next_questions");
     for(int i=0;i<next_question_count;i++) {
       // Output each question
       kjson_obj_open(&req);
