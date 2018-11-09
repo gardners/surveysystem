@@ -36,13 +36,13 @@ void log_python_error(void)
       PyErr_Fetch(&ptype,&pvalue,&ptraceback);
       PyObject* objectsRepresentation = PyObject_Repr(ptype);
       const char* s = PyUnicode_AsUTF8(objectsRepresentation);
-      LOG_ERRORV_CONT("Python exception type: %s",s);
+      LOG_WARNV("Python exception type: %s",s);
       objectsRepresentation = PyObject_Repr(pvalue);
       const char *s2 = PyUnicode_AsUTF8(objectsRepresentation);
-      LOG_ERRORV_CONT("Python error value: %s",s2);
+      LOG_WARNV("Python error value: %s",s2);
       objectsRepresentation = PyObject_Repr(ptraceback);
       const char *s3 = PyUnicode_AsUTF8(objectsRepresentation);
-      LOG_ERRORV_CONT("Python back-trace: %s",s3); 
+      LOG_WARNV("Python back-trace: %s",s3); 
     }
     
   } while(0);
@@ -74,7 +74,7 @@ int setup_python(void)
     PyObject *syspath_o=PySys_GetObject("path");
     PyObject* rep = PyObject_Repr(syspath_o);
     const char *syspath = PyUnicode_AsUTF8(rep);
-    LOG_ERRORV_CONT("Python sys.path='%s'",syspath);
+    LOG_WARNV("Python sys.path='%s'",syspath);
 
     char append_cmd[1024];
     snprintf(append_cmd,1024,"%s/python/", getenv("SURVEY_HOME"));
@@ -88,11 +88,11 @@ int setup_python(void)
 	  LOG_ERRORV("Failed to setup python search path using \"%s\"",append_cmd);
 	}
     } else {
-      LOG_ERRORV_CONT("Python sys.path already contains '%s'",append_cmd);
+      LOG_WARNV("Python sys.path already contains '%s'",append_cmd);
     }
     
     //    else
-    //      LOG_ERRORV_CONT("Set up python search path using \"%s\"",append_cmd);
+    //      LOG_WARNV("Set up python search path using \"%s\"",append_cmd);
 
 #if 0
     wchar_t path_as_wchar[4096];
@@ -102,14 +102,37 @@ int setup_python(void)
     syspath_o=PySys_GetObject("path");
     rep = PyObject_Repr(syspath_o);
     syspath = PyUnicode_AsUTF8(syspath_o);
-    LOG_ERRORV_CONT("AFTER Python sys.path='%s'",syspath);
+    LOG_WARNV("AFTER Python sys.path='%s'",syspath);
 #endif
     
     nq_python_module = PyImport_ImportModule("nextquestion");
 
     if (PyErr_Occurred()) {
       log_python_error();
-      LOG_ERROR("PyImport_ImportModule('nextquestion') failed.");
+      PyErr_Clear();
+      LOG_WARNV("PyImport_ImportModule('nextquestion') failed.",0);
+    }
+
+    if (!nq_python_module) {      
+      // So now try to get the module a different way
+      snprintf(append_cmd,1024,"import nextquestion");
+      int res=PyRun_SimpleString(append_cmd);
+      if (res||PyErr_Occurred()) {
+	log_python_error();
+	PyErr_Clear();
+	LOG_WARNV("'import nextquestion' failed.",0);
+      } else LOG_WARNV("import command '%s' appparently succeeded (result = %d).",append_cmd,res);
+
+      
+      PyObject *module_name_o= PyUnicode_FromString(append_cmd);
+      nq_python_module=PyImport_GetModule(module_name_o);
+      if (!nq_python_module) {
+	log_python_error();
+	LOG_WARNV("Using PyImport_GetModule() didn't work either",0);
+      }
+
+      // And if that fails, try loading the file directly
+      
     }
     
     if (!nq_python_module) {
