@@ -23,7 +23,7 @@ endofsession
 request 200 addanswer?sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0
 
 # Check that we are offered the next question to answer
-match_string {"questions": [{"id": "question2", "name": "question2", "title": "What is the answer to question 1?", "title_text": "What is the answer to question 2?", "type": "text"}]}
+match_string {"next_questions": [{"id": "question2", "name": "question2", "title": "What is the answer to question 1?", "title_text": "What is the answer to question 2?", "type": "text"}]}
 
 # Make sure answer ends up in file
 verify_session
@@ -34,7 +34,7 @@ endofsession
 request 200 addanswer?sessionid=$SESSION&answer=question2:Another+answer:0:0:0:0:0:0:0
 
 # Check that we are offered the next question to answer
-match_string {"questions": [{"id": "question3", "name": "question3", "title": "How boring was question 1?", "title_text": "How boring was question 2?", "type": "text"}]}
+match_string {"next_questions": [{"id": "question3", "name": "question3", "title": "How boring was question 1?", "title_text": "How boring was question 2?", "type": "text"}]}
 
 # Make sure answer ends up in file
 verify_session
@@ -46,7 +46,7 @@ endofsession
 request 200 addanswer?sessionid=$SESSION&answer=question3:Last+answer:0:0:0:0:0:0:0
 
 # Check that we are offered the next question to answer
-match_string {"questions": []}
+match_string {"next_questions": []}
 
 # Make sure answer ends up in file
 verify_session
