@@ -131,11 +131,34 @@ int setup_python(void)
 	LOG_WARNV("Using PyImport_GetModule() didn't work either",0);
       }
 
-      // And if that fails, try loading the file directly
+      // And if that fails, try loading the file directly as a string.
+      char python_file[8192];
+      snprintf(python_file,8192,"%s/python/nextquestion.py",getenv("SURVEY_HOME"));
+      FILE *f=fopen(python_file,"r");
+      if (f) {
+	char python_code[1048576]="";
+	int bytes=fread(python_code,1,1048576,f);
+	if (bytes>0) {
+	  int result=PyRun_SimpleString(python_code);
+	  LOG_WARNV("PyRun_SimpleString returned %d when processing %d bytes of python",result,bytes);
+	}
+	
+	fclose(f);
+      } else LOG_ERRORV("Could not open python file '%s' for reading",python_file);
+
+      module_name_o= PyUnicode_FromString("__main__");
+      nq_python_module=PyImport_GetModule(module_name_o);
+      if (!nq_python_module) {
+	log_python_error();
+	LOG_WARNV("Using PyImport_GetModule() didn't work either",0);
+      } else LOG_WARNV("Using module __main__ with manually loaded python functions instead of import nextquestion.",0);
+
+
       
     }
     
     if (!nq_python_module) {
+
       PyErr_Print();
       
       LOG_ERROR("Failed to load python module 'nextquestion'");
