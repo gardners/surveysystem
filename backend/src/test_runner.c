@@ -357,8 +357,8 @@ int run_test(char *dir, char *test_file)
 	snprintf(python_file,8192,"%s/python",dir);
 	mkdir(python_file,0755);
 	if (chmod(python_file,S_IRUSR|S_IWUSR|S_IXUSR|
-		  S_IRGRP|S_IWGRP|S_IXGRP|
-		  S_IROTH|S_IWOTH|S_IXOTH)) {
+		  S_IRGRP|S_IXGRP|
+		  S_IROTH|S_IXOTH)) {
 	  tdelta=gettime_us()-start_time; tdelta/=1000;
 	  fprintf(log,"T+%4.3fms : ERROR : Could not create python directory '%s'",tdelta,python_file);
 	  goto error;
@@ -385,6 +385,15 @@ int run_test(char *dir, char *test_file)
 	
 	fclose(s);
 
+	if (chmod(python_file,S_IRUSR|S_IWUSR|S_IXUSR|
+		  S_IRGRP|S_IXGRP|
+		  S_IROTH|S_IXOTH)) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : ERROR : Could not set permissions on python file '%s'",tdelta,python_file);
+	  goto error;
+	}
+
+	
       }
       else if (!strcmp(line,"extract_sessionid")) {
 	if (response_line_count!=1) {
@@ -876,7 +885,7 @@ int stop_lighttpd(void)
 
 int main(int argc,char **argv)
 {
-  snprintf(test_dir,1024,"/tmp/survey_test_runner_%d_%d",(int)time(0),getpid());
+  snprintf(test_dir,1024,"/tmp/surveytestrunner.%d.%d",(int)time(0),getpid());
   fprintf(stderr,"Using %s as test directory\n",test_dir);
   if (mkdir(test_dir,0755)) {
     perror("mkdir() failed for test directory");
