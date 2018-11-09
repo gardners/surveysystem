@@ -52,6 +52,15 @@ export const Configuration = {
                     sessionid : null,
                     answer : null
                 }
+        },
+        deleteAnswer : {
+            method : 'get',
+            path : '/surveyapi/delanswer',
+            params :
+                {
+                    sessionid : null,
+                    questionid : null
+                }
         }
     }
 

@@ -67,6 +67,27 @@ const api = {
             })
         )
         return resolved
+    },
+
+    deleteAnswer : async function(sessionID, questionID){
+        let apiConfig = Configuration.apiCalls.deleteAnswer
+        let url = Configuration.serverBaseUrl().concat(apiConfig.path)
+        apiConfig.params.sessionid = sessionID
+        apiConfig.params.questionid = questionID
+        console.log("requesting with " + apiConfig.method + ' request : '+ url + ', with these parameters :')
+        for (const [param, value] of Object.entries(apiConfig.params)) {
+            console.log(`${param}=${value}`)
+        }
+
+
+        let resolved = await resolve(
+            axios({
+                method: apiConfig.method,
+                url: url,
+                params : apiConfig.params
+            })
+        )
+        return resolved
     }
 }
 

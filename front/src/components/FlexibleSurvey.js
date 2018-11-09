@@ -65,6 +65,7 @@ class FlexibleSurvey extends React.Component {
         tmpSurvey.onCurrentPageChanged.add(function(sender, options){
             if(!options.oldCurrentPage || !options.newCurrentPage) return; //showing first page
             if(options.oldCurrentPage.visibleIndex > options.newCurrentPage.visibleIndex){
+                console.log('button PREV pressed')
                 this.goBackToPreviousStep();
             }
         }.bind(this));
@@ -163,38 +164,34 @@ class FlexibleSurvey extends React.Component {
     }
 
     //TODO : comment it later
-    deleteAnswersFromServer(){
+    async deleteAnswersFromServer(){
+        console.log('==============================================')
         console.log('deleting answers from server...')
         let currentQuestions = this.getCurrentQuestions()
-        this.setState({ loading: true }, () => {
-            for (let id in currentQuestions) {
-                let questionToDelete = currentQuestions[id]
-                axios({ //sending by get
-                    method: 'get',
-                    url: Configuration.serverUrl + ':' + Configuration.serverPort + '/surveyapi/delanswer',
-                    params : {
-                        sessionid : this.sessionID,
-                        questionid : questionToDelete.id
-                    }
-                })
-                    .then(response => console.log(response)) //waiting the confirmation that the server received it
+        for (let id in currentQuestions) {
+            let questionToDelete = currentQuestions[id]
+            let resolved = await api.deleteAnswer(this.sessionID, questionToDelete.id)
+            if(resolved.error) {
+                console.error("An error happened while asking to create a new session ! log :")
+                console.log(resolved.error.response.data)
             }
-        });
-        this.setState({ //stopping the loading screen
-            loading: false
-        })
+        }
     }
 
     //TODO: not used yet in the new version, document it when it's done
     goBackToPreviousStep(){
         console.log('Going back to previous step...');
-        this.deleteAnswersFromServer()
-        this.surveyCompleted = false
-        this.deleteMostRecentPageOfSurvey()
-        this.pages = this.pages.slice(0, -1);
-        this.stepID = this.stepID -1;
-        console.log('Done going back to the previous step...');
-
+        this.setState({ loading: true }, async () => {
+            await this.deleteAnswersFromServer()
+            this.surveyCompleted = false
+            this.pages = this.pages.slice(0, -1);
+            this.stepID = this.stepID -1;
+            this.deleteMostRecentPageOfSurvey()
+            console.log('Done going back to the previous step...');
+            this.setState({
+                loading: false
+            })
+        });
     }
 
     //TODO: not used yet in the new version, document it when it's done
@@ -560,7 +557,7 @@ class FlexibleSurvey extends React.Component {
 
     // function launched once at the beginning, that sets up the survey and ask to create a new session with a given survey id
      init(){
-        console.log("version 1")
+        console.log("version 3")
         this.setState({ loading: true }, async () => {
             let receivedSessionId = await this.createNewSession()
             this.extractSessionId(receivedSessionId)
