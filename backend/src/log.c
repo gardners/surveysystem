@@ -12,7 +12,7 @@
 
 int log_recursed=0;
 
-int log_message(char *file,char *function,int line,char *format,...)
+int log_message(const char *file,const char *function,const int line,char *format,...)
 {
 
   int retVal=0;
