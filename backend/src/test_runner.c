@@ -39,6 +39,17 @@
 
 char test_dir[1024];
 
+int fix_ownership(char *dir)
+{
+  int retVal=0;
+  do {
+    char cmd[8192];
+    snprintf(cmd,8192,"sudo chown -R %d:%d %s\n",getuid(),getgid(),dir);
+    system(cmd);
+  } while(0);
+  return retVal;
+}
+
 // From https://stackoverflow.com/questions/2256945/removing-a-non-empty-directory-programmatically-in-c-or-c
 int recursive_delete(const char *dir)
 {
@@ -68,8 +79,9 @@ int recursive_delete(const char *dir)
     case FTS_NS:
     case FTS_DNR:
     case FTS_ERR:
-      fprintf(stderr, "%s: fts_read error: %s\n",
-	      curr->fts_accpath, strerror(curr->fts_errno));
+      if (curr->fts_errno!=ENOENT)
+	fprintf(stderr,"recursive_delete('%s') encountered a problem: fts_read error: %s\n",
+		curr->fts_accpath, strerror(curr->fts_errno));
       break;
       
     case FTS_DC:
@@ -135,6 +147,77 @@ long long gettime_us()
   return retVal;
 }
 
+int dump_logs(char *dir,FILE *log)
+{
+
+  int retVal=0;
+  
+  do {
+    fprintf(log,"========================================================================\n");
+    fprintf(log,"Backend server logs follow.\n");
+    fprintf(log,"========================================================================\n");
+    
+    int ret = 0;
+    FTS *ftsp = NULL;
+    FTSENT *curr;
+    
+    // Cast needed (in C) because fts_open() takes a "char * const *", instead
+    // of a "const char * const *", which is only allowed in C++. fts_open()
+    // does not modify the argument.
+    char *files[] = { (char *) dir, NULL };
+    
+    // FTS_NOCHDIR  - Avoid changing cwd, which could cause unexpected behavior
+    //                in multithreaded programs
+    // FTS_PHYSICAL - Don't follow symlinks. Prevents deletion of files outside
+    //                of the specified directory
+    // FTS_XDEV     - Don't cross filesystem boundaries
+    ftsp = fts_open(files, FTS_NOCHDIR | FTS_PHYSICAL | FTS_XDEV, NULL);
+    if (!ftsp) {
+      fprintf(log, "%s: fts_open failed: %s\n", dir, strerror(errno));
+      ret = -1;
+      goto finish;
+    }
+    
+    while ((curr = fts_read(ftsp))) {
+      switch (curr->fts_info) {
+      case FTS_NS:
+      case FTS_DNR:
+      case FTS_ERR:
+	fprintf(log, "%s: fts_read error: %s\n",
+		curr->fts_accpath, strerror(curr->fts_errno));
+	break;
+	
+      case FTS_F:
+      case FTS_SL:
+	{
+	  FILE *in=fopen(curr->fts_accpath,"r");
+	  if (!in) fprintf(log,"ERROR: Could not read log file '%s'\n",curr->fts_accpath);
+	  else {
+	    fprintf(log,"--------- %s ----------\n",curr->fts_accpath);
+	    char line[8192];
+	    line[0]=0; fgets(line,8192,in);
+	    while(line[0]) {
+	      fprintf(log,"%s",line);
+	      line[0]=0; fgets(line,8192,in);	      
+	    }
+	    fclose(in);
+	  }
+	}
+	break;
+	
+      }
+    }
+    
+  finish:
+    if (ftsp) {
+      fts_close(ftsp);
+    }
+
+  } while(0);
+  
+  return retVal;
+  
+}
 
 int run_test(char *dir, char *test_file)
 {
@@ -148,7 +231,23 @@ int run_test(char *dir, char *test_file)
   char last_sessionid[100]="";
   
   do {
-  
+
+    // Erase log files from previous tests, and make directory again fresh
+    char log_path[8192];
+    snprintf(log_path,8192,"%s/logs",test_dir);
+    recursive_delete(log_path);
+    if (mkdir(log_path,0777)) {
+      perror("mkdir() failed for test/logs directory");
+      exit(-3);
+    }
+    // Now make sessions directory writeable by all users
+    if (chmod(log_path,S_IRUSR|S_IWUSR|S_IXUSR|
+	      S_IRGRP|S_IWGRP|S_IXGRP|
+	      S_IROTH|S_IWOTH|S_IXOTH)) {
+      perror("chmod() failed for test/logs directory");
+      exit(-3);
+    }    
+    
     // Get name of test file without path
     char *test_name=test_file;
     for(int i=0;test_file[i];i++) if (test_file[i]=='/') test_name=&test_file[i+1];
@@ -579,22 +678,34 @@ int run_test(char *dir, char *test_file)
     
     //    pass:
 
+    fix_ownership(test_dir);
+    if (log) dump_logs(log_path,log);
+    
     fprintf(stderr,"\r\033[39m[\033[32mPASS\033[39m]  %s : %s\n",test_name,description); fflush(stderr);
     break;
       
   fail:
 
+    fix_ownership(test_dir);
+    if (log) dump_logs(log_path,log);
+    
     fprintf(stderr,"\r\033[39m[\033[31mFAIL\033[39m]  %s : %s\n",test_name,description); fflush(stderr);
     retVal=1;
     break;
 
   error:
 
+    fix_ownership(test_dir);
+    if (log) dump_logs(log_path,log);
+
     fprintf(stderr,"\r\033[39m[\033[31;1;5mEROR\033[39;0m]  %s : %s\n",test_name,description); fflush(stderr);
     retVal=2;
     break;
     
   fatal:
+
+    fix_ownership(test_dir);
+    if (log) dump_logs(log_path,log);
 
     fprintf(stderr,"\r\033[39m[\033[31;1;5mDIED\033[39;0m]  %s : %s\n",test_name, description); fflush(stderr);
     retVal=3;
@@ -761,20 +872,6 @@ int main(int argc,char **argv)
     perror("chmod() failed for test/sessions directory");
     exit(-3);
   }
-
-  snprintf(tmp,2048,"%s/logs",test_dir);
-  if (mkdir(tmp,0777)) {
-    perror("mkdir() failed for test/logs directory");
-    exit(-3);
-  }
-  // Now make sessions directory writeable by all users
-  if (chmod(tmp,S_IRUSR|S_IWUSR|S_IXUSR|
-	    S_IRGRP|S_IWGRP|S_IXGRP|
-	    S_IROTH|S_IWOTH|S_IXOTH)) {
-    perror("chmod() failed for test/logs directory");
-    exit(-3);
-  }
-
   
   // Make sure we have a test log directory
   mkdir("testlogs",0755);
@@ -802,6 +899,7 @@ int main(int argc,char **argv)
   // Clean up after ourselves
   fprintf(stderr,"Cleaning up...\n");
 #if 0
+  fix_ownership(test_dir);
   if (recursive_delete(test_dir)) {
     fprintf(stderr,"Error encountered while deleting temporary directories.\n");
   }
