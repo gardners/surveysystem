@@ -26,6 +26,31 @@ wchar_t *as_wchar(const char *s)
   else return as_wchar_out;
 }
 
+void log_python_error(void)
+{
+  int retVal=0;
+  do {
+    //    if (PyErr_Occurred()) {
+    if (1) {
+      PyObject *ptype=NULL,*pvalue=NULL,*ptraceback=NULL;
+      PyErr_Fetch(&ptype,&pvalue,&ptraceback);
+      PyObject* objectsRepresentation = PyObject_Repr(ptype);
+      const char* s = PyUnicode_AsUTF8(objectsRepresentation);
+      LOG_ERRORV_CONT("Python exception type: %s",s);
+      objectsRepresentation = PyObject_Repr(pvalue);
+      const char *s2 = PyUnicode_AsUTF8(objectsRepresentation);
+      LOG_ERRORV_CONT("Python error value: %s",s2);
+      objectsRepresentation = PyObject_Repr(ptraceback);
+      const char *s3 = PyUnicode_AsUTF8(objectsRepresentation);
+      LOG_ERRORV_CONT("Python back-trace: %s",s3); 
+    }
+    
+  } while(0);
+  
+  return;
+}
+
+
 int is_python_started=0;
 PyObject *nq_python_module=NULL;
 int setup_python(void)
@@ -46,15 +71,48 @@ int setup_python(void)
     Py_SetProgramName(name);
     Py_Initialize();
 
-    // Add python directory to python's search path
+    PyObject *syspath_o=PySys_GetObject("path");
+    PyObject* rep = PyObject_Repr(syspath_o);
+    const char *syspath = PyUnicode_AsUTF8(rep);
+    LOG_ERRORV_CONT("Python sys.path='%s'",syspath);
+
     char append_cmd[1024];
-    snprintf(append_cmd,1024,
-	     "import sys\n"
-	     "sys.path.append('%s/python')\n", getenv("SURVEY_HOME"));
-    PyRun_SimpleString(append_cmd);
-		      
+    snprintf(append_cmd,1024,"%s/python/", getenv("SURVEY_HOME"));
+    if (!strstr(syspath,append_cmd)) {
+      // Add python directory to python's search path
+      snprintf(append_cmd,1024,
+	       "import sys\n"
+	       "sys.path.append('%s/python/')\n", getenv("SURVEY_HOME"));
+      if (PyRun_SimpleString(append_cmd))
+	{
+	  log_python_error();
+	  LOG_ERRORV("Failed to setup python search path using \"%s\"",append_cmd);
+	}
+    } else {
+      LOG_ERRORV_CONT("Python sys.path already contains '%s'",append_cmd);
+    }
+    
+    //    else
+    //      LOG_ERRORV_CONT("Set up python search path using \"%s\"",append_cmd);
+
+#if 0
+    wchar_t path_as_wchar[4096];
+    snprintf(append_cmd,1024,"%s/python/", getenv("SURVEY_HOME"));
+    int len= mbstowcs(path_as_wchar, append_cmd, 100);
+    PySys_SetPath(path_as_wchar);
+    syspath_o=PySys_GetObject("path");
+    rep = PyObject_Repr(syspath_o);
+    syspath = PyUnicode_AsUTF8(syspath_o);
+    LOG_ERRORV_CONT("AFTER Python sys.path='%s'",syspath);
+#endif
+    
     nq_python_module = PyImport_ImportModule("nextquestion");
 
+    if (PyErr_Occurred()) {
+      log_python_error();
+      LOG_ERROR("PyImport_ImportModule('nextquestion') failed.");
+    }
+    
     if (!nq_python_module) {
       PyErr_Print();
       
@@ -119,8 +177,7 @@ int call_python_nextquestion(struct session *s,
 
     // Setup python
     if (setup_python()) {
-      fprintf(stderr,"Failed to initialise python:\n");
-      dump_errors(stderr); retVal=-1; break;
+      LOG_ERROR("Failed to initialise python.\n");
     }
     if (!nq_python_module) LOG_ERROR("Python module 'nextquestion' not loaded. Does it have an error?");
 
@@ -216,7 +273,8 @@ int call_python_nextquestion(struct session *s,
 
     if (!result) {
       is_error=1;
-      LOG_ERRORV("Python function '%s' did not return anything (does it have the correct arguments defined? If not, this can happen)",function_name);
+      log_python_error();
+      LOG_ERRORV("Python function '%s' did not return anything (does it have the correct arguments defined? If not, this can happen. Check the backtrace and error messages above, in case they give you any clues.)",function_name);
     }
     // PyObject_Print(result,stderr,0);
     if (PyUnicode_Check(result)) {

@@ -2,6 +2,7 @@ void clear_errors(void);
 void dump_errors(FILE *F);
 int remember_error(const char *file,const int line, const char *function,const char *message,...);
 #define LOG_ERRORV(MSG,...) { retVal=-1; remember_error(__FILE__,__LINE__,__FUNCTION__,MSG,__VA_ARGS__); break; }
+#define LOG_ERRORV_CONT(MSG,...) { retVal=-1; remember_error(__FILE__,__LINE__,__FUNCTION__,MSG,__VA_ARGS__); }
 #define LOG_ERROR(MSG) { retVal=-1; remember_error(__FILE__,__LINE__,__FUNCTION__,"%s",MSG); break; }
 #define LOG_MAYBE_ERRORV(LOGP,MSG,...) { retVal=-1; if (LOGP) { remember_error(__FILE__,__LINE__,__FUNCTION__,MSG,__VA_ARGS__); } break; }
 #define LOG_MAYBE_ERROR(LOGP,MSG) { retVal=-1; if (LOGP) { remember_error(__FILE__,__LINE__,__FUNCTION__,"%s",MSG); } break; }
