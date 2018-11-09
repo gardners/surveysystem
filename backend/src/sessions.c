@@ -291,7 +291,7 @@ int create_session(char *survey_id,char *session_id_out)
       if (generate_path(session_path_suffix,session_path,1024)) LOG_ERRORV("generate_path('%s') failed to build path for new session for survey '%s'",session_path_suffix,survey_id);
 
       if (rename(temp_path,session_path)) LOG_ERRORV("Could not rename survey specification copy to name of hash from '%s' to '%s'",temp_path,session_path);
-      
+      LOG_INFOV("Created new hashed survey specification file '%s' for survey '%s'",session_path,survey_id);
     }
     
     
@@ -338,6 +338,8 @@ int create_session(char *survey_id,char *session_id_out)
 
     // Export new session ID
     strncpy(session_id_out,session_id,36+1);
+
+    LOG_INFOV("Created new session file '%s' for survey '%s'",session_path,survey_id);
     
   } while(0);
 
@@ -371,6 +373,8 @@ int delete_session(char *session_id)
     if ( access( session_path, F_OK ) == -1 ) LOG_ERRORV("Session file '%s' does not exist",session_path);
 
     if (unlink(session_path)) LOG_ERRORV("unlink('%s') failed",session_path);
+
+    LOG_INFOV("Deleted session '%s'.",session_path);
     
   } while(0);
 
@@ -624,6 +628,9 @@ int save_session(struct session *s)
     }
     fclose(o); o=NULL;
 
+    LOG_INFOV("Updated session file '%s'.",session_path);
+
+    
   }  while(0);
   if (o) fclose(o);
   return retVal;
@@ -651,6 +658,10 @@ int session_add_answer(struct session *ses,struct answer *a)
     ses->answers[ses->answer_count]=a;
     ses->answer_count++;
 
+    char serialised_answer[65536]="(could not serialise)";
+    serialise_answer(a,serialised_answer,65536);
+    LOG_INFOV("Added to session '%s' answer '%s'.",ses->session_id,serialised_answer);
+    
   } while(0);
   return retVal;
 }
@@ -671,6 +682,11 @@ int session_delete_answers_by_question_uid(struct session *ses,char *uid)
       while ((i<ses->answer_count)&&(!strcmp(ses->answers[i]->uid,uid)))
 	{
 	  // Delete matching questions
+
+	  char serialised_answer[65536]="(could not serialise)";
+	  serialise_answer(ses->answers[i],serialised_answer,65536);
+	  LOG_INFOV("Deleted from session '%s' answer '%s'.",ses->session_id,serialised_answer);
+	  
 	  free_answer(ses->answers[i]);
 	  ses->answer_count--;
 	  for(int j=i;j<ses->answer_count;j++)
@@ -701,6 +717,11 @@ int session_delete_answer(struct session *ses,struct answer *a)
       while ((i<ses->answer_count)&&(!compare_answers(a,ses->answers[i],MISMATCH_IS_NOT_AN_ERROR)))
 	{
 	  // Delete matching questions
+
+	  char serialised_answer[65536]="(could not serialise)";
+	  serialise_answer(ses->answers[i],serialised_answer,65536);
+	  LOG_INFOV("Deleted from session '%s' answer '%s'.",ses->session_id,serialised_answer);
+
 	  free_answer(ses->answers[i]);
 	  ses->answer_count--;
 	  for(int j=i;j<ses->answer_count;j++)
