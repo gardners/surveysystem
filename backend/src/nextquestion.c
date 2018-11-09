@@ -18,9 +18,9 @@ wchar_t *as_wchar(const char *s)
 {
   int retVal=0;
   do {
-    if (strlen(s)>=(MAX_WLEN-1)) LOG_ERROR("String too long",s);
+    if (strlen(s)>=(MAX_WLEN-1)) LOG_ERRORV("String too long '%s', should be < %d characters",s,MAX_WLEN);
     size_t result=mbstowcs(as_wchar_out,s,MAX_WLEN-1);
-    if (result<0) LOG_ERROR("mbstowcs() failed",s);
+    if (result<0) LOG_ERRORV("mbstowcs('%s') failed",s);
   } while (0);
   if (retVal) return NULL;
   else return as_wchar_out;
@@ -38,10 +38,10 @@ int setup_python(void)
     
     if (is_python_started) break;
 
-    if (!getenv("SURVEY_HOME")) LOG_ERROR("SURVEY_HOME environment variable not set","");
+    if (!getenv("SURVEY_HOME")) LOG_ERROR("SURVEY_HOME environment variable not set");
     
     wchar_t *name=as_wchar("nextquestion");
-    if (!name) LOG_ERROR("Could not convert string to wchar_t *","nextquestion");
+    if (!name) LOG_ERROR("Could not convert string 'nextquestion' to wchar_t *");
 
     Py_SetProgramName(name);
     Py_Initialize();
@@ -58,7 +58,7 @@ int setup_python(void)
     if (!nq_python_module) {
       PyErr_Print();
       
-      LOG_ERROR("Failed to load python module","nextquestion");
+      LOG_ERROR("Failed to load python module 'nextquestion'");
     }
 
     is_python_started=1;
@@ -88,18 +88,18 @@ int mark_next_question(struct session *s,struct question *next_questions[],
   int retVal=0;
   do {
     int qn;
-    if (!s) LOG_ERROR("session structure is NULL","");
-    if (!next_questions) LOG_ERROR("next_questions is null","");
-    if (!next_question_count) LOG_ERROR("next_question_count is null","");
-    if (!uid) LOG_ERROR("question UID is null","");
-    if ((*next_question_count)>=MAX_QUESTIONS) LOG_ERROR("Too many questions in list.",uid);
+    if (!s) LOG_ERROR("session structure is NULL");
+    if (!next_questions) LOG_ERROR("next_questions is null");
+    if (!next_question_count) LOG_ERROR("next_question_count is null");
+    if (!uid) LOG_ERROR("question UID is null");
+    if ((*next_question_count)>=MAX_QUESTIONS) LOG_ERRORV("Too many questions in list when marking question uid='%s'",uid);
     
     for(qn=0;qn<s->question_count;qn++)
       if (!strcmp(s->questions[qn]->uid,uid)) break;
-    if (qn==s->question_count) LOG_ERROR("Asked to mark non-existent question UID",uid);
+    if (qn==s->question_count) LOG_ERRORV("Asked to mark non-existent question UID '%s'",uid);
     for(int j=0;j<(*next_question_count);j++)
       if (next_questions[j]==s->questions[qn])
-	LOG_ERROR("Duplicate question UID in list of next questions",uid);
+	LOG_ERRORV("Duplicate question UID '%s' in list of next questions",uid);
     next_questions[*next_question_count]=s->questions[qn];
     (*next_question_count)++;
   } while(0);
@@ -112,17 +112,17 @@ int call_python_nextquestion(struct session *s,
   int retVal=0;
   int is_error=0;
   do {
-    if (!s) LOG_ERROR("session structure is NULL","");
-    if (!next_questions) LOG_ERROR("next_questions is null","");
-    if (!next_question_count) LOG_ERROR("next_question_count is null","");
-    if ((*next_question_count)>=MAX_QUESTIONS) LOG_ERROR("Too many questions in list.","");
+    if (!s) LOG_ERROR("session structure is NULL");
+    if (!next_questions) LOG_ERROR("next_questions is null");
+    if (!next_question_count) LOG_ERROR("next_question_count is null");
+    if ((*next_question_count)>=MAX_QUESTIONS) LOG_ERROR("Too many questions in list.");
 
     // Setup python
     if (setup_python()) {
       fprintf(stderr,"Failed to initialise python:\n");
       dump_errors(stderr); retVal=-1; break;
     }
-    if (!nq_python_module) LOG_ERROR("Python module not loaded. Does it have an error?","nextquestion");
+    if (!nq_python_module) LOG_ERROR("Python module 'nextquestion' not loaded. Does it have an error?");
 
     // Build names of candidate functions.
     // nextquestion_<survey_id>_<hash of survey>
@@ -150,11 +150,11 @@ int call_python_nextquestion(struct session *s,
       myFunction = PyObject_GetAttrString(nq_python_module,function_name);
     }
 
-    if (!myFunction) LOG_ERROR("No matching python function for survey",s->survey_id);
+    if (!myFunction) LOG_ERRORV("No matching python function for survey '%s'",s->survey_id);
 
     if (!PyCallable_Check(myFunction)) {
       is_error=1;
-      LOG_ERROR("Python function is not callable",function_name);
+      LOG_ERRORV("Python function '%s' is not callable",function_name);
     }
 
     // Okay, we have the function object, so build the argument list and call it.
@@ -165,7 +165,7 @@ int call_python_nextquestion(struct session *s,
       PyObject *item = PyUnicode_FromString(s->questions[i]->uid);
       if (PyList_SetItem(questions,i,item)) {
 	Py_DECREF(item);
-	LOG_ERROR("Error inserting question name into Python list",s->questions[i]->uid); 
+	LOG_ERRORV("Error inserting question name '%s' into Python list",s->questions[i]->uid); 
       }
     }
     for(int i=0;i<s->answer_count;i++) {
@@ -200,12 +200,12 @@ int call_python_nextquestion(struct session *s,
 
       if (errors) {
 	Py_DECREF(dict);
-	LOG_ERROR("Could not construct answer structure for Python. Memory has been leaked.",s->answers[i]->uid);
+	LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.",s->answers[i]->uid);
       }
       
       if (PyList_SetItem(answers,i,dict)) {
 	Py_DECREF(dict);
-	LOG_ERROR("Error inserting question name into Python list",s->questions[i]->uid); 
+	LOG_ERRORV("Error inserting question name '%s' into Python list",s->questions[i]->uid); 
       }
     }
     
@@ -216,7 +216,7 @@ int call_python_nextquestion(struct session *s,
 
     if (!result) {
       is_error=1;
-      LOG_ERROR("Python function did not return anything (does it have the correct arguments defined? If not, this can happen)",function_name);
+      LOG_ERRORV("Python function '%s' did not return anything (does it have the correct arguments defined? If not, this can happen)",function_name);
     }
     // PyObject_Print(result,stderr,0);
     if (PyUnicode_Check(result)) {
@@ -225,12 +225,12 @@ int call_python_nextquestion(struct session *s,
       if (!question) {
 	is_error=1;
 	Py_DECREF(result);
-	LOG_ERROR("String in reply from Python function is null",function_name);
+	LOG_ERRORV("String in reply from Python function '%s' is null",function_name);
       }
       if (mark_next_question(s,next_questions,next_question_count,question)) {
 	is_error=1;
 	Py_DECREF(result);
-	LOG_ERROR("Error adding question to list of next questions.  Is it a valid question UID?",question);
+	LOG_ERRORV("Error adding question '%s' to list of next questions.  Is it a valid question UID?",question);
       }
     } else if (PyList_Check(result)) {
       // XXX Go through list adding values
@@ -243,21 +243,21 @@ int call_python_nextquestion(struct session *s,
 	  if (!question) {
 	    is_error=1;
 	    Py_DECREF(result);
-	    LOG_ERROR("String in reply from Python function is null",function_name);
+	    LOG_ERRORV("String in reply from Python function '%s' is null",function_name);
 	  }
 	  if (mark_next_question(s,next_questions,next_question_count,question)) {
 	    is_error=1;
 	    Py_DECREF(result);
-	    LOG_ERROR("Error adding question to list of next questions.  Is it a valid question UID?",question);
+	    LOG_ERRORV("Error adding question '%s' to list of next questions.  Is it a valid question UID?",question);
 	  }
 	} else {
 	  Py_DECREF(result);    
-	  LOG_ERROR("List item is not a string in response from Python",function_name);
+	  LOG_ERRORV("List item is not a string in response from Python function '%s'",function_name);
 	}
       }
     } else {
       Py_DECREF(result);    
-      LOG_ERROR("Return value from Python is neither string nor list.  Empty return should be an empty list.",function_name);
+      LOG_ERRORV("Return value from Python function '%s' is neither string nor list.  Empty return should be an empty list.",function_name);
     }
 
     Py_DECREF(result);    
@@ -278,12 +278,12 @@ int get_next_questions_generic(struct session *s,
   do {
     int i,j;
 
-    if (!s) LOG_ERROR("struct session is NULL","");
-    if (!s->survey_id) LOG_ERROR("surveyname is NULL","");
-    if (!s->session_id) LOG_ERROR("session_uuid is NULL","");
-    if (!next_questions) LOG_ERROR("next_questions is NULL","");
-    if (max_next_questions<1) LOG_ERROR("max_next_questions < 1","");
-    if (!next_question_count) LOG_ERROR("next_question_count is NULL","");
+    if (!s) LOG_ERROR("struct session is NULL");
+    if (!s->survey_id) LOG_ERROR("surveyname is NULL");
+    if (!s->session_id) LOG_ERROR("session_uuid is NULL");
+    if (!next_questions) LOG_ERROR("next_questions is NULL");
+    if (max_next_questions<1) LOG_ERROR("max_next_questions < 1");
+    if (!next_question_count) LOG_ERROR("next_question_count is NULL");
     
     // Check each question to see if it has been answered already
     for(i=0;i<s->question_count;i++)
@@ -317,10 +317,10 @@ int get_next_questions(struct session *s,
   // If not, then return the list of all not-yet-answered questions
   int retVal=0;
   do {
-    if (!s) LOG_ERROR("session structure is NULL","");
-    if (!next_questions) LOG_ERROR("next_questions is null","");
-    if (!next_question_count) LOG_ERROR("next_question_count is null","");
-    if ((*next_question_count)>=MAX_QUESTIONS) LOG_ERROR("Too many questions in list.","");
+    if (!s) LOG_ERROR("session structure is NULL");
+    if (!next_questions) LOG_ERROR("next_questions is null");
+    if (!next_question_count) LOG_ERROR("next_question_count is null");
+    if ((*next_question_count)>=MAX_QUESTIONS) LOG_ERROR("Too many questions in list.");
 
 
     int r=call_python_nextquestion(s,next_questions,max_next_questions,next_question_count);
