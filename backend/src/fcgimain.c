@@ -696,25 +696,27 @@ static void fcgi_nextquestion(struct kreq *r)
 	    kjson_putstringp(&req,"type","checkbox");
 	  kjson_arrayp_open(&req,"choices");
 	  int len=strlen(q[i]->choices);
-	  for(int j=0;q[i]->choices[j];) {
-	    char choice[65536];
-	    int cl=0;
-	    choice[0]=0;
-	    while(
-		  ((j+cl)<len)
-		  &&q[i]->choices[j+cl]
-		  &&(q[i]->choices[j+cl]!=',')
-		  )
-	      {
-		if (cl<65535) {
-		  choice[cl]=q[i]->choices[j+cl];
-		  choice[cl+1]=0;
+	  if (len) {
+	    for(int j=0;q[i]->choices[j];) {
+	      char choice[65536];
+	      int cl=0;
+	      choice[0]=0;
+	      while(
+		    ((j+cl)<len)
+		    &&q[i]->choices[j+cl]
+		    &&(q[i]->choices[j+cl]!=',')
+		    )
+		{
+		  if (cl<65535) {
+		    choice[cl]=q[i]->choices[j+cl];
+		    choice[cl+1]=0;
+		  }
+		  cl++;
 		}
-		cl++;
-	      }
-	    kjson_putstring(&req,choice);
-	    j+=cl;
-	    if (q[i]->choices[j+cl]==',') j++;
+	      kjson_putstring(&req,choice);
+	      j+=cl;
+	      if (q[i]->choices[j+cl]==',') j++;
+	    }
 	  }
 	  kjson_array_close(&req);
 	  break;
