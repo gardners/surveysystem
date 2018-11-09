@@ -797,8 +797,8 @@ char *config_template=
   "server.upload-dirs          = ( \"/var/cache/lighttpd/uploads\" )\n"
   "server.errorlog             = \"/var/log/lighttpd/error.log\"\n"
   "server.pid-file             = \"/var/run/lighttpd.pid\"\n"
-  "server.username             = \"www-data\"\n"
-  "server.groupname            = \"www-data\"\n"
+  "server.username             = \"%s\"\n"
+  "server.groupname            = \"%s\"\n"
   "server.port                 = 80\n"
   "\n"
   "\n"
@@ -839,8 +839,12 @@ int configure_and_start_lighttpd(char *test_dir)
   // Create config file
   char conf_data[16384];
   char cwd[1024];
+  char user[1024]="www-data";
+  char group[1024]="www-data";
   int cwdlen=1024;
-  snprintf(conf_data,16384,config_template,getcwd(cwd,cwdlen),test_dir,getcwd(cwd,cwdlen));
+  snprintf(conf_data,16384,config_template,getcwd(cwd,cwdlen),
+	   user,group,
+	   test_dir,getcwd(cwd,cwdlen));
   char tmp_conf_file[1024];
   snprintf(tmp_conf_file,1024,"%s/lighttpd.conf",test_dir);
   FILE *f=fopen(tmp_conf_file,"w");
