@@ -80,10 +80,9 @@ int setup_python(void)
     snprintf(append_cmd,1024,"%s/python/", getenv("SURVEY_HOME"));
     if (!strstr(syspath,append_cmd)) {
       // Add python directory to python's search path
-      snprintf(append_cmd,1024,
-	       "import sys\n"
-	       "sys.path.append('%s/python/')\n", getenv("SURVEY_HOME"));
-      if (PyRun_SimpleString(append_cmd))
+
+      PyObject *sys_path = PySys_GetObject("path");
+      if (PyList_Append(sys_path, PyUnicode_FromString(append_cmd)))
 	{
 	  log_python_error();
 	  LOG_ERRORV("Failed to setup python search path using \"%s\"",append_cmd);
@@ -97,7 +96,7 @@ int setup_python(void)
 
 #if 0
     wchar_t path_as_wchar[4096];
-    snprintf(append_cmd,1024,"%s/python/", getenv("SURVEY_HOME"));
+    snprintf(append_cmd,1024,"%s/python", getenv("SURVEY_HOME"));
     int len= mbstowcs(path_as_wchar, append_cmd, 100);
     PySys_SetPath(path_as_wchar);
     syspath_o=PySys_GetObject("path");
