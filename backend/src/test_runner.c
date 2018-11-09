@@ -762,6 +762,20 @@ int main(int argc,char **argv)
     exit(-3);
   }
 
+  snprintf(tmp,2048,"%s/logs",test_dir);
+  if (mkdir(tmp,0777)) {
+    perror("mkdir() failed for test/logs directory");
+    exit(-3);
+  }
+  // Now make sessions directory writeable by all users
+  if (chmod(tmp,S_IRUSR|S_IWUSR|S_IXUSR|
+	    S_IRGRP|S_IWGRP|S_IXGRP|
+	    S_IROTH|S_IWOTH|S_IXOTH)) {
+    perror("chmod() failed for test/logs directory");
+    exit(-3);
+  }
+
+  
   // Make sure we have a test log directory
   mkdir("testlogs",0755);
 
