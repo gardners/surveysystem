@@ -47,8 +47,11 @@ int remember_error(const char *file,const int line, const char *function,const c
     snprintf(error_messages[error_count],1024,
 	     "%s:%d:%s(): %s",
 	     file,line,function,message);
-
+    
     error_count++;
+
+    // Also record the error into the general log
+    LOG_INFOV("LOG_ERROR : %s",message);
 
   } while(0);
     

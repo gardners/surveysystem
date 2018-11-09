@@ -340,12 +340,16 @@ void begin_500(struct kreq *req)
 static void fcgi_newsession(struct kreq *req)
 {
   enum kcgi_err    er;
+  int retVal=0;
   
   do {
 
+    LOG_INFO("Page handler entered.");
+    
     struct kpair *survey = req->fieldmap[KEY_SURVEYID];
     if (!survey) {
       // No survey ID, so return 400
+      LOG_ERROR("surveyid missing from query string");
       quick_error(req,KHTTP_400,"surveyid missing");
       break;
     }
@@ -364,6 +368,7 @@ static void fcgi_newsession(struct kreq *req)
     // Write some stuff in reply
     er = khttp_puts(req, session_id);
 
+    LOG_INFO("Leaving page handler");
     
   } while(0);
 
@@ -376,19 +381,24 @@ static void fcgi_addanswer(struct kreq *req)
   
   do {
 
+    LOG_INFO("Entering page handler.");
+    
     struct kpair *session = req->fieldmap[KEY_SESSIONID];
     if (!session) {
       // No session ID, so return 400
+      LOG_ERROR("sessionid missing from query string");
       quick_error(req,KHTTP_400,"sessionid missing");
       break;
     }
     if (!session->val) {
+      LOG_ERROR("sessionid is blank");
       quick_error(req,KHTTP_400,"sessionid is blank");
       break;
     }
     char *session_id=session->val;
     struct session *s=load_session(session_id);
     if (!s) {
+      LOG_ERRORV("Could not load session '%s'",session_id);
       quick_error(req,KHTTP_400,"Could not load specified session. Does it exist?");
       break;
     }
@@ -396,6 +406,7 @@ static void fcgi_addanswer(struct kreq *req)
     struct kpair *answer = req->fieldmap[KEY_ANSWER];
     if (!answer) {
       // No answer, so return 400
+      LOG_ERROR("answer is missing");
       quick_error(req,KHTTP_400,"answer missing");
       break;
     }
@@ -419,10 +430,12 @@ static void fcgi_addanswer(struct kreq *req)
 
     
     // All ok, so tell the caller the next question to be answered
-    return fcgi_nextquestion(req);
+    fcgi_nextquestion(req);
+
+    LOG_INFO("Leaving page handler.");
     
   } while(0);
-
+  
   return;
   
 }
@@ -432,6 +445,8 @@ static void fcgi_updateanswer(struct kreq *req)
   int retVal=0;
   
   do {
+
+    LOG_INFO("Entering page handler.");
 
     struct kpair *session = req->fieldmap[KEY_SESSIONID];
     if (!session) {
@@ -482,7 +497,9 @@ static void fcgi_updateanswer(struct kreq *req)
     }
     
     // All ok, so tell the caller the next question to be answered
-    return fcgi_nextquestion(req);
+    fcgi_nextquestion(req);
+
+    LOG_INFO("Leaving page handler.");
     
   } while(0);
 
@@ -495,6 +512,8 @@ static void fcgi_delanswer(struct kreq *req)
   int retVal=0;
   
   do {
+
+    LOG_INFO("Entering page handler.");
 
     struct kpair *session = req->fieldmap[KEY_SESSIONID];
     if (!session) {
@@ -564,7 +583,9 @@ static void fcgi_delanswer(struct kreq *req)
     }
     
     // All ok, so tell the caller the next question to be answered
-    return fcgi_nextquestion(req);
+    fcgi_nextquestion(req);
+
+    LOG_INFO("Leaving page handler.");
     
   } while(0);
 
@@ -578,6 +599,8 @@ static void fcgi_delsession(struct kreq *r)
   
   do {
 
+    LOG_INFO("Entering page handler.");
+    
     struct kpair *session = r->fieldmap[KEY_SESSIONID];
     if (!session) {
       // No session ID, so return 400
@@ -602,10 +625,11 @@ static void fcgi_delsession(struct kreq *r)
       break;
     }
 
+    quick_error(r,KHTTP_200,"Session deleted.");
+    
+    LOG_INFO("Leaving page handler.");
     
   } while(0);
-
-  quick_error(r,KHTTP_200,"Session deleted.");
   
   return;  
 }
@@ -616,6 +640,8 @@ static void fcgi_nextquestion(struct kreq *r)
   int retVal=0;
   
   do {
+
+    LOG_INFO("Entering page handler.");
 
     struct kpair *session = r->fieldmap[KEY_SESSIONID];
     if (!session) {
@@ -705,7 +731,9 @@ static void fcgi_nextquestion(struct kreq *r)
     kjson_array_close(&req); 
     kjson_obj_close(&req); 
     kjson_close(&req);
-        
+
+    LOG_INFO("Leaving page handler.");
+    
   } while(0);
 
   return;  
@@ -755,6 +783,9 @@ static void fcgi_accesstest(struct kreq *req)
   // Try to access paths, and report status.
 
   do {  
+
+    LOG_INFO("Entering page handler.");
+
     char test_path[8192];
     char failmsg[16384];
     FILE *f=NULL;
@@ -770,8 +801,11 @@ static void fcgi_accesstest(struct kreq *req)
     TEST_MKDIR("sessions/testdir");
     TEST_READ("sessions/testdir");
     TEST_WRITE("sessions/testdir/testfile");
+    TEST_READ("logs");
     
     quick_error(req,KHTTP_200,"All okay.");
+
+    LOG_INFO("Leaving page handler.");
     
   } while (0);
 
@@ -780,5 +814,10 @@ static void fcgi_accesstest(struct kreq *req)
 
 static void fcgi_fastcgitest(struct kreq *req)
 {
-  quick_error(req,KHTTP_200,"All okay.");
+  do {
+    LOG_INFO("Entering page handler.");
+    quick_error(req,KHTTP_200,"All okay.");
+    LOG_INFO("Leaving page handler.");
+  } while (0);
+  return;
 }
