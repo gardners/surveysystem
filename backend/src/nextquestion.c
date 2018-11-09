@@ -259,6 +259,8 @@ int call_python_nextquestion(struct session *s,
       LOG_ERRORV("Python function '%s' is not callable",function_name);
     }
 
+    LOG_INFOV("Preparing to call python function '%s' to get next question(s)",function_name);
+    
     // Okay, we have the function object, so build the argument list and call it.
     PyObject* questions = PyList_New(s->question_count);
     PyObject* answers = PyList_New(s->answer_count);
