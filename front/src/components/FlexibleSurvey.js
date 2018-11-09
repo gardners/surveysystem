@@ -33,6 +33,7 @@ class FlexibleSurvey extends React.Component {
 
 
 
+
     // Constructor, needed in every case in React
     // survey is the react component from surveyjs. It is the backbone of this front app
     // loading is used to know if an ajax request is being made. If so, a loading spinner is shown while loading == true
@@ -43,8 +44,6 @@ class FlexibleSurvey extends React.Component {
             loading : true
         };
     }
-
-
 
 
     //put here the configuration of the survey, such as the theme, event listeners, etc.
@@ -134,6 +133,7 @@ class FlexibleSurvey extends React.Component {
         let tmpSurvey = this.state.survey
         let tmpStepID = this.stepID
         let newPage = tmpSurvey.addNewPage(tmpStepID);
+        let nbOfQuestionsAdded = 0
         for (let id in questionIds){
             let questionId = questionIds[id]
             console.log("adding the next question (id="+questionId+") at the end of survey...");
@@ -145,12 +145,20 @@ class FlexibleSurvey extends React.Component {
             if(!this.isQuestionAlreadyInSurvey(questionId)){
                 newPage.addQuestion(questionToAdd);
                 console.log("question (id="+questionId+") added at the end of survey...");
+                nbOfQuestionsAdded++
             }
             else{
                 console.error("question (id="+questionId+") already exists in the survey, it is not added again");
             }
         }
-        let res = this.saveNewPage(tmpStepID, newPage);
+        let res = null
+        if (nbOfQuestionsAdded > 0){
+             res = this.saveNewPage(tmpStepID, newPage);
+        } else {
+            console.log("no pages are added at the end of the survey, since no questions were added" )
+            return null
+        }
+
         if (!res){
             console.error("Setting of the next question failed : an already existing id (id="+tmpStepID+") was used as argument ");
             return null;
@@ -183,10 +191,10 @@ class FlexibleSurvey extends React.Component {
         console.log('Going back to previous step...');
         this.setState({ loading: true }, async () => {
             await this.deleteAnswersFromServer()
+            this.deleteMostRecentPageOfSurvey()
             this.surveyCompleted = false
             this.pages = this.pages.slice(0, -1);
             this.stepID = this.stepID -1;
-            this.deleteMostRecentPageOfSurvey()
             console.log('Done going back to the previous step...');
             this.setState({
                 loading: false
@@ -254,7 +262,12 @@ class FlexibleSurvey extends React.Component {
         console.log("These questions will be added at the end of the survey :")
         console.log(questionIdToAdd)
         this.setNextQuestionOfSurvey(questionIdToAdd)
-        this.state.survey.nextPage()
+        let tmpSurvey = this.state.survey
+        tmpSurvey.nextPage()
+        this.setState({
+            survey : tmpSurvey
+        })
+
 
 
         // let nextQuestionId = data.nextQuestionId
@@ -367,12 +380,13 @@ class FlexibleSurvey extends React.Component {
 
     //TODO : comment that
     getCurrentPage(){
-        return this.state.survey.currentPage
+
+        return this.pages[this.stepID-1]
     }
 
     // TODO : comment that
     getCurrentQuestions(){
-        return this.state.survey.currentPage.questions
+        return this.pages[this.stepID-1].questions
     }
 
     //returns the questions Ids and their answers
