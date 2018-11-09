@@ -151,7 +151,7 @@ int run_test(char *dir, char *test_file)
   
     // Get name of test file without path
     char *test_name=test_file;
-    for(int i=0;test_file[i];i++) if (test_file[i]=='/') test_name=&test_file[i];
+    for(int i=0;test_file[i];i++) if (test_file[i]=='/') test_name=&test_file[i+1];
     
     in=fopen(test_file,"r");
     if (!in) {
@@ -172,7 +172,7 @@ int run_test(char *dir, char *test_file)
       retVal=-1; break;
     }
 
-    fprintf(stderr,"\033[39m[    ]  \033[37m%s\033[39m",description); fflush(stderr);
+    fprintf(stderr,"\033[39m[    ]  \033[37m%s : %s\033[39m",test_name,description); fflush(stderr);
     
     char testlog[1024];
     snprintf(testlog,1024,"testlog/%s.log",test_name);
@@ -579,24 +579,24 @@ int run_test(char *dir, char *test_file)
     
     //    pass:
 
-    fprintf(stderr,"\r\033[39m[\033[32mPASS\033[39m]  %s\n",description); fflush(stderr);
+    fprintf(stderr,"\r\033[39m[\033[32mPASS\033[39m]  %s : %s\n",test_name,description); fflush(stderr);
     break;
       
   fail:
 
-    fprintf(stderr,"\r\033[39m[\033[31mFAIL\033[39m]  %s\n",description); fflush(stderr);
+    fprintf(stderr,"\r\033[39m[\033[31mFAIL\033[39m]  %s : %s\n",test_name,description); fflush(stderr);
     retVal=1;
     break;
 
   error:
 
-    fprintf(stderr,"\r\033[39m[\033[31;1;5mEROR\033[39;0m]  %s\n",description); fflush(stderr);
+    fprintf(stderr,"\r\033[39m[\033[31;1;5mEROR\033[39;0m]  %s : %s\n",test_name,description); fflush(stderr);
     retVal=2;
     break;
     
   fatal:
 
-    fprintf(stderr,"\r\033[39m[\033[31;1;5mDIED\033[39;0m]  %s\n",description); fflush(stderr);
+    fprintf(stderr,"\r\033[39m[\033[31;1;5mDIED\033[39;0m]  %s : %s\n",test_name, description); fflush(stderr);
     retVal=3;
     break;
 
