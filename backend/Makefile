@@ -24,6 +24,7 @@ STATICHEADERS=	Makefile \
 STATICSRCS=	$(SRCDIR)/serialisers.c \
 		$(SRCDIR)/sha1.c \
 		$(SRCDIR)/paths.c \
+		$(SRCDIR)/log.c \
 		$(SRCDIR)/sessions.c \
 		$(SRCDIR)/nextquestion.c \
 		$(SRCDIR)/code_instrumentation.c \
@@ -35,11 +36,12 @@ GENERATEDSRCS=	$(SRCDIR)/question_types.c
 COREOBJS=	$(SRCDIR)/errorlog.o \
 		$(SRCDIR)/sha1.o \
 		$(SRCDIR)/paths.o \
+		$(SRCDIR)/log.o \
 		$(SRCDIR)/sessions.o \
 		$(SRCDIR)/nextquestion.o \
 		$(SRCDIR)/serialisers.o \
 		$(SRCDIR)/code_instrumentation.o \
-		$(SRCDIR)/question_types.o
+		$(SRCDIR)/question_types.o 
 TESTOBJS=	$(COREOBJS) \
 		$(SRCDIR)/test_serialisers.o
 
@@ -53,9 +55,12 @@ HEADERS=	$(STATICHEADERS) $(GENERATEDHEADERS)
 
 CC=	clang
 COPT=	-Wall -O3 -g -Iinclude `$(PYCONFIG) --includes` -Ikcgi
-LOPT=
+LOPT=	`$(PYCONFIG) --libs --ldflags`
 
-all:	test_serialisers surveycli surveyfcgi
+all:	test_serialisers surveycli surveyfcgi test_runner
+
+test_runner:	Makefile $(SRCDIR)/test_runner.o $(COREOBJS)
+	$(CC) $(COPT) -o test_runner $(SRCDIR)/test_runner.o $(COREOBJS) $(LOPT)  
 
 %.o:	%.c $(HEADERS)
 	$(CC) $(COPT) -c $< -o $@
@@ -74,10 +79,10 @@ $(SRCDIR)/question_types.c:	$(INCDIR)/survey.h $(HEADERS)
 	echo "  \"end of list\"};" >> $@
 
 test_serialisers:	$(TESTOBJS)
-	$(CC) $(COPT) -o $@ $^ $(LOPT) `$(PYCONFIG) --libs --ldflags`
+	$(CC) $(COPT) -o $@ $^ $(LOPT)
 
 surveycli:	$(CLIOBJS)
-	$(CC) $(COPT) -o $@ $^ $(LOPT) `$(PYCONFIG) --libs --ldflags`
+	$(CC) $(COPT) -o $@ $^ $(LOPT)
 
 $(KCGIARS):	
 	git submodule init
@@ -85,7 +90,7 @@ $(KCGIARS):
 	( cd kcgi ; ./configure && make )
 
 surveyfcgi:	$(FCGIOBJS) $(KCGIARS)
-	$(CC) $(COPT) -o $@ $^ $(LOPT) `$(PYCONFIG) --libs --ldflags` $(KCGIARS) -lz
+	$(CC) $(COPT) -o $@ $^ $(LOPT) $(KCGIARS) -lz
 
 clean:
 	rm $(SRCDIR)/*.o $(GENERATEDHEADERS) $(GENERATEDSRCS)

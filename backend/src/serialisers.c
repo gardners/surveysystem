@@ -23,19 +23,19 @@ int escape_string(char *in,char *out,int max_len)
   for(int i=0;in[i];i++) {
     switch(in[i]) {
     case '\r': case '\n': case '\t': case '\b':
-      if (out_len>=max_len) { LOG_ERROR("escaped version of string is too long",out); }
+      if (out_len>=max_len) { LOG_ERRORV("escaped version of string '%s' is too long",out); }
       else out[out_len++]='\\';
-      if (out_len>=max_len) { LOG_ERROR("escaped version of string is too long",out); }
+      if (out_len>=max_len) { LOG_ERRORV("escaped version of string '%s' is too long",out); }
       else out[out_len++]=in[i];
       break;
     case ':': case '\\':
-      if (out_len>=max_len) { LOG_ERROR("escaped version of string is too long",out); }
+      if (out_len>=max_len) { LOG_ERRORV("escaped version of string '%s' is too long",out); }
       else out[out_len++]=':';
-      if (out_len>=max_len) { LOG_ERROR("escaped version of string is too long",out); }
+      if (out_len>=max_len) { LOG_ERRORV("escaped version of string '%s' is too long",out); }
       else out[out_len++]=in[i];
       break;
     default:
-      if (out_len>=max_len) { LOG_ERROR("escaped version of string is too long",out); }
+      if (out_len>=max_len) { LOG_ERRORV("escaped version of string '%s' is too long",out); }
       else out[out_len++]=in[i];
       break;
     }
@@ -54,7 +54,7 @@ int serialise_int(int in,char *out,int max_len)
   char temp[16];
   do {
     snprintf(temp,16,"%d",in);
-    if (strlen(temp)>=max_len) { LOG_ERROR("integer converts to over-long string",temp); }
+    if (strlen(temp)>=max_len) { LOG_ERRORV("integer converts to over-long string '%s...'",temp); }
     else { strcpy(out,temp); retVal=strlen(temp); }
   } while (0);
   return retVal;
@@ -69,7 +69,7 @@ int serialise_longlong(long long in,char *out,int max_len)
   char temp[32];
   do {
     snprintf(temp,32,"%lld",in);
-    if (strlen(temp)>=max_len) { LOG_ERROR("long long converts to over-long string",temp); }
+    if (strlen(temp)>=max_len) { LOG_ERRORV("long long converts to over-long string '%s...'",temp); }
     else { strcpy(out,temp); retVal=strlen(temp); }
   } while (0);
   return retVal;
@@ -82,7 +82,7 @@ int space_check(int append_len,int existing_len,int max_len)
 {
   int retVal=0;
   do {
-    if ((existing_len+append_len)>max_len) { LOG_ERROR("Insufficient space to append next string",""); }
+    if ((existing_len+append_len)>max_len) { LOG_ERRORV("Insufficient space to append string of %d chars",append_len); }
   } while (0);
   return retVal;
 }
@@ -102,20 +102,20 @@ int deserialise_parse_field(char *in,int *in_offset,char *out)
   do {
     if (offset) {
       if (in[offset]!=':') {
-	LOG_ERROR("Expected : before next field\n",&in[offset]);
+	LOG_ERRORV("Expected : before next field when deseralising at offset %d of '%s'\n",offset,in);
 	break;
       }
       else offset++;
     }
     
     out[olen]=0;
-    if (!in) LOG_ERROR("input string is NULL","");
-    if (!in[0]) LOG_ERROR("input string is empty","");
+    if (!in) LOG_ERROR("input string is NULL");
+    if (!in[0]) LOG_ERROR("input string is empty");
     for(;in[offset]&&(olen<16383)&&in[offset]!=':';offset++)
       {
 	// Allow some \ escape characters
 	if (in[offset]=='\\') {
-	  if (!in[offset+1]) LOG_ERROR("String ends in \\\n",in);
+	  if (!in[offset+1]) LOG_ERRORV("String '%s' ends in \\\n",in);
 	  switch (in[offset+1]) {
 	  case ':': case '\\':
 	    out[olen++]=in[offset+1]; break;
@@ -123,7 +123,7 @@ int deserialise_parse_field(char *in,int *in_offset,char *out)
 	  case 'n': out[olen++]='\n'; break;
 	  case 'b': out[olen++]='\b'; break;
 	  default:
-	    LOG_ERROR("Illegal escape character\n",&in[offset+1]);
+	    LOG_ERRORV("Illegal escape character 0x%02x at offset %d of '%s'\n",in[offset+1],offset+1,in);
 	    break;
 	  }
 	  offset++;
@@ -148,12 +148,12 @@ int deserialise_int(char *field,int *s)
 {
   int retVal=0;
   do {
-    if (!field) LOG_ERROR("field is NULL","");
-    if (!strlen(field)) LOG_ERROR("field is empty string","");
+    if (!field) LOG_ERROR("field is NULL");
+    if (!strlen(field)) LOG_ERROR("field is empty string");
     int offset=0;
     if (field[offset]=='-') offset++;
     for(int i=offset;field[i];i++)
-      if (field[i]<'0'||field[i]>'9') LOG_ERROR("integer field contains non-digit",field);
+      if (field[i]<'0'||field[i]>'9') LOG_ERRORV("integer field '%s' contains non-digit",field);
     if (!retVal) *s=atoi(field);
     
   } while(0);
@@ -167,12 +167,12 @@ int deserialise_longlong(char *field,long long *s)
 {
   int retVal=0;
   do {
-    if (!field) LOG_ERROR("field is NULL","");
-    if (!strlen(field)) LOG_ERROR("field is empty string","");
+    if (!field) LOG_ERROR("field is NULL");
+    if (!strlen(field)) LOG_ERROR("field is empty string");
     int offset=0;
     if (field[offset]=='-') offset++;
     for(int i=offset;field[i];i++)
-      if (field[i]<'0'||field[i]>'9') LOG_ERROR("long long field contains non-digit",field);
+      if (field[i]<'0'||field[i]>'9') LOG_ERRORV("long long field '%s' contains non-digit",field);
     if (!retVal) *s=atoll(field);
     
   } while(0);
@@ -191,9 +191,9 @@ int deserialise_string(char *field,char **s)
   int retVal=0;
   do {
     *s=NULL;
-    if (!field) { LOG_ERROR("field is NULL",""); }
+    if (!field) { LOG_ERROR("field is NULL"); }
     else *s=strdup(field);
-    if (!*s) { LOG_ERROR("field is empty string",""); }
+    if (!*s) { LOG_ERROR("field is empty string"); }
   } while (0);
   return retVal;
 }
@@ -216,11 +216,11 @@ int deserialise_string(char *field,char **s)
   to debug when things go wrong.
 */
 #define DESERIALISE_BEGIN(O,L,ML) { int offset=0; char field[16384]; 
-#define DESERIALISE_COMPLETE(O,L,ML) if (offset<L) { LOG_ERROR("Junk at end of serialised object",""); } }
-#define DESERIALISE_NEXT_FIELD() if (deserialise_parse_field(in,&offset,field)) { LOG_ERROR("failed to parse next field",&in[offset]); }
+#define DESERIALISE_COMPLETE(O,L,ML) if (offset<L) { LOG_ERROR("Junk at end of serialised object"); } }
+#define DESERIALISE_NEXT_FIELD() if (deserialise_parse_field(in,&offset,field)) { LOG_ERRORV("failed to parse next field '%s' at offset %d",&in[offset],offset); }
 #define DESERIALISE_THING(S,DESERIALISER) \
   DESERIALISE_NEXT_FIELD();				\
-  if (DESERIALISER(field,&S)) { LOG_ERROR("call to " #DESERIALISER " failed",field); }
+  if (DESERIALISER(field,&S)) { LOG_ERRORV("call to " #DESERIALISER " failed with string '%s'",field); }
 #define DESERIALISE_INT(S) DESERIALISE_THING(S,deserialise_int)
 #define DESERIALISE_STRING(S) DESERIALISE_THING(S,deserialise_string);
 #define DESERIALISE_LONGLONG(S) DESERIALISE_THING(S,deserialise_longlong)
@@ -240,7 +240,7 @@ int deserialise_string(char *field,char **s)
 */
 #define APPEND_STRING(NEW,NL,O,L) { strcpy(&O[L],NEW); L+=NL; }
 
-#define APPEND_COLON(O,L,ML) { if (space_check(1,L,ML)) { LOG_ERROR("serialised string too long",""); } O[L++]=':'; O[L]=0; }
+#define APPEND_COLON(O,L,ML) { if (space_check(1,L,ML)) { LOG_ERROR("serialised string too long"); } O[L++]=':'; O[L]=0; }
 
 #define SERIALISE_BEGIN(O,L,ML) { int encoded_len=0; const int encoded_max_len=65536; char encoded[encoded_max_len]; L=0;
 
@@ -265,9 +265,9 @@ int serialise_question_type(int qt,char *out,int out_max_len)
 {
   int retVal=0;
   do {
-    if (qt<1) LOG_ERROR("was asked to serialise an illegal question type","");
-    if (qt>NUM_QUESTION_TYPES) LOG_ERROR("was asked to serialise an illegal question type","");
-    if (strlen(question_type_names[qt])>=out_max_len) LOG_ERROR("question type name too long",question_type_names[qt]);
+    if (qt<1) LOG_ERRORV("was asked to serialise an illegal question type #%d",qt);
+    if (qt>NUM_QUESTION_TYPES) LOG_ERRORV("was asked to serialise an illegal question type #%d",qt);
+    if (strlen(question_type_names[qt])>=out_max_len) LOG_ERRORV("question type '%s' name too long",question_type_names[qt]);
     strcpy(out,question_type_names[qt]); retVal=strlen(out);
   } while (0);
 
@@ -286,7 +286,7 @@ int deserialise_question_type(char *field,int *s)
 	*s=qt;
 	break;
       }
-    if (qt==NUM_QUESTION_TYPES) LOG_ERROR("invalid question type name",field);
+    if (qt==NUM_QUESTION_TYPES) LOG_ERRORV("invalid question type name '%s'",field);
   } while (0);
 
   return retVal;  
@@ -453,9 +453,9 @@ int deserialise_answer(char *in,struct answer *a)
   The following macros make it easier to compare fields between two instances of 
   a structure.
  */
-#define COMPARE_INT(S) { if (q1->S>q2->S) { LOG_MAYBE_ERROR(mismatchIsError,#S " fields do not match",""); }  else if (q1->S<q2->S) { LOG_MAYBE_ERROR(mismatchIsError,#S " fields do not match",""); } else retVal=0; if (retVal) break; }
+#define COMPARE_INT(S) { if (q1->S>q2->S) { LOG_MAYBE_ERRORV(mismatchIsError,#S " fields do not match: '%d' vs '%d'",q1->S,q1->S); }  else if (q1->S<q2->S) { LOG_MAYBE_ERRORV(mismatchIsError,#S " fields do not match",""); } else retVal=0; if (retVal) break; }
 #define COMPARE_LONGLONG(S) COMPARE_INT(S)
-#define COMPARE_STRING(S) { if ((!q1->S)||(!q2->S)) { LOG_MAYBE_ERROR(mismatchIsError, #S " fields dot not match",""); } else { if (strcmp(q1->S,q2->S)) { fprintf(stderr,#S " fields do not match\n");  LOG_MAYBE_ERROR(mismatchIsError,#S " fields do not match",""); }  } }
+#define COMPARE_STRING(S) { if ((!q1->S)||(!q2->S)) { LOG_MAYBE_ERRORV(mismatchIsError, #S " fields dot not match '%s' vs '%s'",q1->S,q2->S); } else { if (strcmp(q1->S,q2->S)) { fprintf(stderr,#S " fields do not match\n");  LOG_MAYBE_ERRORV(mismatchIsError,#S " fields do not match '%s' vs '%s'",q1->S,q2->S); }  } }
 
 /*
   Using the above convenience macros, quickly compare all fields in a pair of
