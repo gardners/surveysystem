@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdarg.h>
 
 #include "errorlog.h"
 
@@ -23,22 +24,37 @@ void dump_errors(FILE *f)
   return;
 }
 
-int remember_error(const char *file,const int line, const char *function,const char *message,const char *data)
+int remember_error(const char *file,const int line, const char *function,const char *format,...)
 {
-  if (error_count>=MAX_ERRORS) {
-    fprintf(stderr,"Too many errors encountered.  Error trace:\n");
-    dump_errors(stderr);
-    exit(-1);
-  }
 
-  if (data&&data[0])
-    snprintf(error_messages[error_count],1024,
-	     "%s:%d:%s(): %s (data='%s')",
-	     file,line,function,message,data);
-  else
+  char message[65536];
+
+  int retVal=0;
+
+  do {
+  
+    if (error_count>=MAX_ERRORS) {
+      fprintf(stderr,"Too many errors encountered.  Error trace:\n");
+      dump_errors(stderr);
+      exit(-1);
+    }
+
+    va_list argp;
+    va_start(argp,format);
+    vsnprintf(message,65536,format,argp);
+    va_end(argp);
+    
     snprintf(error_messages[error_count],1024,
 	     "%s:%d:%s(): %s",
 	     file,line,function,message);
-  error_count++;
-  return 0;
+    
+    error_count++;
+
+    // Also record the error into the general log
+    LOG_INFOV("LOG_ERROR : %s",message);
+
+  } while(0);
+    
+  return retVal;
 }
+

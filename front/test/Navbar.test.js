@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Navbar from "../src/Navbar";
+import Navbar from "../src/components/Navbar";
 
 it('renders without crashing', () => {
     const div = document.createElement('div');
