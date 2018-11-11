@@ -35,3 +35,10 @@ git submodule update
 cd kcgi
 make install
 ```
+
+Then create a folder for logs:
+
+```
+mkdir surveystsem/backend/logs
+sudo chmod 777 surveystsem/backend/logs
+```
