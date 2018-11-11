@@ -280,8 +280,8 @@ int run_test(char *dir, char *test_file)
     log=fopen(testlog,"w");
 
     if (!log) {
-      fprintf(stderr,"\rFATAL: Could not create test log file '%s' for test '%s'                                    \n",
-	      testlog,test_file);
+      fprintf(stderr,"\rFATAL: Could not create test log file '%s' for test '%s': %s                                    \n",
+	      testlog,test_file,strerror(errno));
       goto error;
     }
 
