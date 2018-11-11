@@ -39,6 +39,6 @@ make install
 Then create a folder for logs:
 
 ```
-mkdir surveystsem/backend/logs
-sudo chmod 777 surveystsem/backend/logs
+mkdir surveysystem/backend/logs
+sudo chmod 777 surveysystem/backend/logs
 ```
