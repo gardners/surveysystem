@@ -32,8 +32,9 @@ Then make sure to build and install kcgi:
 ```
 git submodule init
 git submodule update
-cd kcgi
-make install
+cd backend/kcgi
+./configure
+sudo make install
 ```
 
 Then create a folder for logs:
@@ -41,4 +42,6 @@ Then create a folder for logs:
 ```
 mkdir surveysystem/backend/logs
 sudo chmod 777 surveysystem/backend/logs
+mkdir surveysystem/backend/testlog
+sudo chmod 777 surveysystem/backend/testlog
 ```
