@@ -32,7 +32,8 @@ Then make sure to build and install kcgi:
 ```
 git submodule init
 git submodule update
-cd kcgi
+cd backend/kcgi
+./configure
 make install
 ```
 
