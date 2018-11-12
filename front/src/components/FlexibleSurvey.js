@@ -484,6 +484,7 @@ class FlexibleSurvey extends React.Component {
     async sendAnswersToServer(lastAnswersCSV){
         console.log('==============================================')
         console.log("sending answers to server...")
+        let lastResponse = null;
 
         for (let id in lastAnswersCSV){
             let answerToSend = lastAnswersCSV[id]
@@ -491,9 +492,12 @@ class FlexibleSurvey extends React.Component {
             if(resolved.error) {
                 console.error("An error happened while sending the next question ! log :")
                 console.log(resolved.error.response.data)
+            } else {
+                lastResponse = resolved.response.data;
+
             }
         }
-        return true
+        return lastResponse;
     }
 
     //TODO : function not finished yet, comment it later
@@ -512,8 +516,8 @@ class FlexibleSurvey extends React.Component {
         //loading while the questions are sent and the next question is not displayed
         this.setState({ loading: true }, async () => {
             //TODO : get the next question to display here
-            await this.sendAnswersToServer(lastAnswersCSV)
-            let nextQuestion = await this.askNextQuestion()
+            let nextQuestion = await this.sendAnswersToServer(lastAnswersCSV)
+            //let nextQuestion = await this.askNextQuestion()
             this.processQuestionReceived(nextQuestion)
             this.setState({ //stopping the loading screen
                 loading: false
