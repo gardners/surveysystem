@@ -413,7 +413,11 @@ int run_test(char *dir, char *test_file)
 	// Then restart, to clear out any old python code we had loaded before
 	tdelta=gettime_us()-start_time; tdelta/=1000;
 	fprintf(log,"T+%4.3fms : INFO : Restarting backend to clear loaded python code\n",tdelta);
-	configure_and_start_lighttpd(test_dir);
+	if (configure_and_start_lighttpd(test_dir)) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : FATAL : Backend restart failed\n",tdelta);
+	  goto fatal;
+	}
 	tdelta=gettime_us()-start_time; tdelta/=1000;
 	fprintf(log,"T+%4.3fms : INFO : Backend restart complete\n",tdelta);
 	
@@ -843,61 +847,69 @@ char *config_template=
   ;
 
 
-int first_time=1;
+time_t last_config_time=0;
+int first_time=0;
 int configure_and_start_lighttpd(char *test_dir)
-{ 
-  // Create config file
-  char conf_data[16384];
-  char cwd[1024];
-  char user[1024]="www-data";
-  char group[1024]="www-data";
-  int cwdlen=1024;
-  snprintf(conf_data,16384,config_template,getcwd(cwd,cwdlen),
-	   user,group,
-	   test_dir,getcwd(cwd,cwdlen));
-  char tmp_conf_file[1024];
-  snprintf(tmp_conf_file,1024,"%s/lighttpd.conf",test_dir);
-  FILE *f=fopen(tmp_conf_file,"w");
-  if (!f) {
-    perror("Failed to open temporary lighttpd.conf file");
-    exit(-3);
-  }
-  fprintf(f,"%s",conf_data);
-  fclose(f);
-  char cmd[2048];
-  snprintf(cmd,2048,"sudo -p 'Overwrite /etc/lighttpd/lighttpd.conf? Type your password to continue: ' cp %s/lighttpd.conf /etc/lighttpd/lighttpd.conf",test_dir);
-  if (first_time) fprintf(stderr,"WARNING: If you proceed, this test suite will overwrite /etc/lighttpd/lighttpd.conf.\n");
-  if (system(cmd)) {
-    perror("system() call to install lighttpd.conf failed");
-    exit(-3);
-  }
+{
+  int retVal=0;
 
-  if (first_time) fprintf(stderr,"Stopping lighttpd service...\n");
-  snprintf(cmd,2048,"sudo -p 'Restart lighttpd ready for running tests? Type your password to continue: ' service lighttpd restart");
-  if (system(cmd)) {
-    perror("system() call to restart lighttpd failed");
-    exit(-3);
-  }  
+  do {  
+    // Create config file
+    char conf_data[16384];
+    char cwd[1024];
+    char user[1024]="www-data";
+    char group[1024]="www-data";
+    int cwdlen=1024;
 
-  if (first_time) fprintf(stderr,"Updating surveyfcgi binary...\n");
-  snprintf(cmd,2048,"sudo -p 'Overwrite /var/www/fastcgi/surveyfcgi? Type your password to continue: ' cp surveyfcgi /var/www/fastcgi/surveyfcgi");
-  if (first_time) fprintf(stderr,"WARNING: If you proceed, this test suite will overwrite /var/www/fastcgi/surveycgi.\n");
-  if (system(cmd)) {
-    perror("system() call to install lighttpd.conf failed");
-    exit(-3);
-  }
+    // Make sure at least 10 seconds passes between restarts of the back end, so that we don't get
+    // spurious errors.
+    long long time_since_last=time(0)-last_config_time;
+    if (time_since_last<10) sleep(11-time_since_last);
+    last_config_time=time(0);
+    
+    snprintf(conf_data,16384,config_template,getcwd(cwd,cwdlen),
+	     user,group,
+	     test_dir,getcwd(cwd,cwdlen));
+    char tmp_conf_file[1024];
+    snprintf(tmp_conf_file,1024,"%s/lighttpd.conf",test_dir);
+    FILE *f=fopen(tmp_conf_file,"w");
+    if (!f) {
+      LOG_ERRORV("Failed to open temporary lighttpd.conf file: %s",strerror(errno));
+    }
+
+    fprintf(f,"%s",conf_data);
+    fclose(f);
+    char cmd[2048];
+    snprintf(cmd,2048,"sudo -p 'Overwrite /etc/lighttpd/lighttpd.conf? Type your password to continue: ' cp %s/lighttpd.conf /etc/lighttpd/lighttpd.conf",test_dir);
+    if (first_time) fprintf(stderr,"WARNING: If you proceed, this test suite will overwrite /etc/lighttpd/lighttpd.conf.\n");
+    if (system(cmd)) {
+      LOG_ERRORV("system() call to install lighttpd.conf failed: %s",strerror(errno));
+    }
+    
+    if (first_time) fprintf(stderr,"Stopping lighttpd service...\n");
+    snprintf(cmd,2048,"sudo -p 'Restart lighttpd ready for running tests? Type your password to continue: ' service lighttpd restart");
+    if (system(cmd)) {
+      LOG_ERRORV("system() call to restart lighttpd failed: %s",strerror(errno));
+    }  
+    
+    if (first_time) fprintf(stderr,"Updating surveyfcgi binary...\n");
+    snprintf(cmd,2048,"sudo -p 'Overwrite /var/www/fastcgi/surveyfcgi? Type your password to continue: ' cp surveyfcgi /var/www/fastcgi/surveyfcgi");
+    if (first_time) fprintf(stderr,"WARNING: If you proceed, this test suite will overwrite /var/www/fastcgi/surveycgi.\n");
+    if (system(cmd)) {
+      LOG_ERRORV("system() call to install lighttpd.conf failed: %s",strerror(errno));
+    }
+    
+    if (first_time) fprintf(stderr,"Restarting lighttpd service...\n");
+    snprintf(cmd,2048,"sudo -p 'Restart lighttpd ready for running tests? Type your password to continue: ' service lighttpd restart");
+    if (system(cmd)) {
+      LOG_ERRORV("system() call to start lighttpd failed: %s",strerror(errno));
+    }
+    if (first_time) fprintf(stderr,"Waiting for lighttpd to finish restarting...\n");
+    while(system("curl -s -o /dev/null -f http://localhost/surveyapi/fastcgitest")) continue;
+    if (first_time) fprintf(stderr,"lighttpd is now responding to requests.\n");
   
-  if (first_time) fprintf(stderr,"Restarting lighttpd service...\n");
-  snprintf(cmd,2048,"sudo -p 'Restart lighttpd ready for running tests? Type your password to continue: ' service lighttpd restart");
-  if (system(cmd)) {
-    perror("system() call to start lighttpd failed");
-    exit(-3);
-  }
-  if (first_time) fprintf(stderr,"Waiting for lighttpd to finish restarting...\n");
-  while(system("curl -s -o /dev/null -f http://localhost/surveyapi/fastcgitest")) continue;
-  if (first_time) fprintf(stderr,"lighttpd is now responding to requests.\n");
-
-  first_time=0;
+    first_time=0;
+  } while(0);
   
   return 0;
 }
@@ -958,7 +970,7 @@ int main(int argc,char **argv)
   mkdir("testlogs",0755);
 
   // Make config file pointing to the temp_dir, and start the server
-  configure_and_start_lighttpd(test_dir);
+  if (configure_and_start_lighttpd(test_dir)) exit(-3);
 
   fprintf(stderr,"\n");
 
