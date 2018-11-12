@@ -42,4 +42,6 @@ Then create a folder for logs:
 ```
 mkdir surveysystem/backend/logs
 sudo chmod 777 surveysystem/backend/logs
+mkdir surveysystem/backend/testlog
+sudo chmod 777 surveysystem/backend/testlog
 ```
