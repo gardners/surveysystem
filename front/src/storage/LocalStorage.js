@@ -1,13 +1,10 @@
 
 const LocalStorage = {
-
     get: function(key) {
-        let ret;
-
         const val = localStorage.getItem(key);
         if (val) {
             try {
-                JSON.parse(val);
+                return JSON.parse(val);
             } catch (e) {
                 return null;
             }
