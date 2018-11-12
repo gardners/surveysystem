@@ -40,6 +40,8 @@
 
 char test_dir[1024];
 
+int configure_and_start_lighttpd(char *test_dir);
+
 int fix_ownership(char *dir)
 {
   int retVal=0;
@@ -408,6 +410,12 @@ int run_test(char *dir, char *test_file)
 	  goto error;
 	}
 
+	// Then restart, to clear out any old python code we had loaded before
+	tdelta=gettime_us()-start_time; tdelta/=1000;
+	fprintf(log,"T+%4.3fms : INFO : Restarting backend to clear loaded python code\n",tdelta);
+	configure_and_start_lighttpd(test_dir);
+	tdelta=gettime_us()-start_time; tdelta/=1000;
+	fprintf(log,"T+%4.3fms : INFO : Backend restart complete\n",tdelta);
 	
       }
       else if (!strcmp(line,"extract_sessionid")) {
@@ -834,6 +842,8 @@ char *config_template=
   "include_shell \"/usr/share/lighttpd/include-conf-enabled.pl\"\n"
   ;
 
+
+int first_time=1;
 int configure_and_start_lighttpd(char *test_dir)
 { 
   // Create config file
@@ -856,37 +866,39 @@ int configure_and_start_lighttpd(char *test_dir)
   fclose(f);
   char cmd[2048];
   snprintf(cmd,2048,"sudo -p 'Overwrite /etc/lighttpd/lighttpd.conf? Type your password to continue: ' cp %s/lighttpd.conf /etc/lighttpd/lighttpd.conf",test_dir);
-  fprintf(stderr,"WARNING: If you proceed, this test suite will overwrite /etc/lighttpd/lighttpd.conf.\n");
+  if (first_time) fprintf(stderr,"WARNING: If you proceed, this test suite will overwrite /etc/lighttpd/lighttpd.conf.\n");
   if (system(cmd)) {
     perror("system() call to install lighttpd.conf failed");
     exit(-3);
   }
 
-  fprintf(stderr,"Stopping lighttpd service...\n");
+  if (first_time) fprintf(stderr,"Stopping lighttpd service...\n");
   snprintf(cmd,2048,"sudo -p 'Restart lighttpd ready for running tests? Type your password to continue: ' service lighttpd restart");
   if (system(cmd)) {
     perror("system() call to restart lighttpd failed");
     exit(-3);
   }  
 
-  fprintf(stderr,"Updating surveyfcgi binary...\n");
+  if (first_time) fprintf(stderr,"Updating surveyfcgi binary...\n");
   snprintf(cmd,2048,"sudo -p 'Overwrite /var/www/fastcgi/surveyfcgi? Type your password to continue: ' cp surveyfcgi /var/www/fastcgi/surveyfcgi");
-  fprintf(stderr,"WARNING: If you proceed, this test suite will overwrite /var/www/fastcgi/surveycgi.\n");
+  if (first_time) fprintf(stderr,"WARNING: If you proceed, this test suite will overwrite /var/www/fastcgi/surveycgi.\n");
   if (system(cmd)) {
     perror("system() call to install lighttpd.conf failed");
     exit(-3);
   }
   
-  fprintf(stderr,"Restarting lighttpd service...\n");
+  if (first_time) fprintf(stderr,"Restarting lighttpd service...\n");
   snprintf(cmd,2048,"sudo -p 'Restart lighttpd ready for running tests? Type your password to continue: ' service lighttpd restart");
   if (system(cmd)) {
     perror("system() call to start lighttpd failed");
     exit(-3);
   }
-  fprintf(stderr,"Waiting for lighttpd to finish restarting...\n");
+  if (first_time) fprintf(stderr,"Waiting for lighttpd to finish restarting...\n");
   while(system("curl -s -o /dev/null -f http://localhost/surveyapi/fastcgitest")) continue;
-  fprintf(stderr,"lighttpd is now responding to requests.\n");
+  if (first_time) fprintf(stderr,"lighttpd is now responding to requests.\n");
 
+  first_time=0;
+  
   return 0;
 }
 
