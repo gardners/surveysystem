@@ -34,7 +34,7 @@ git submodule init
 git submodule update
 cd backend/kcgi
 ./configure
-make install
+sudo make install
 ```
 
 Then create a folder for logs:
