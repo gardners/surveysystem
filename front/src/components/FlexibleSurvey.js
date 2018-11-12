@@ -5,7 +5,7 @@ import { Configuration } from '../conf/config';
 import LoadingSpinner from './LoadingSpinner';
 import geolocationQuestion from '../customQuestions/geolocationQuestion'
 import api from '../api/api'
-
+import LocalStorage from '../storage/LocalStorage';
 
 // Represents the Flexible Survey
 class FlexibleSurvey extends React.Component {
@@ -171,6 +171,7 @@ class FlexibleSurvey extends React.Component {
         return true
     }
 
+
     //TODO : comment it later
     async deleteAnswersFromServer(){
         console.log('==============================================')
@@ -192,20 +193,26 @@ class FlexibleSurvey extends React.Component {
         this.setState({ loading: true }, async () => {
             await this.deleteAnswersFromServer()
             this.deleteMostRecentPageOfSurvey()
-            this.surveyCompleted = false
             this.pages = this.pages.slice(0, -1);
             this.stepID = this.stepID -1;
             console.log('Done going back to the previous step...');
             this.setState({
                 loading: false
+
             })
         });
+
+        // update localstorage
+        this.saveStateToStore();
     }
 
-    //TODO: not used yet in the new version, document it when it's done
+
+    //TODO: put completeText in a new function
     deleteMostRecentPageOfSurvey(){
         let pageToDelete = this.getCurrentPage()
         let tmpSurvey = this.state.survey
+        tmpSurvey.completeText = "Next"
+        this.surveyCompleted = false
         tmpSurvey.removePage(pageToDelete)
         this.setState({
             survey: tmpSurvey
@@ -242,11 +249,14 @@ class FlexibleSurvey extends React.Component {
         this.setState({
             survey : tmpSurvey
         })
+
+        // delete session from localstorage, since the journey is finished
+        this.removeStateFromStore();
     }
 
-    //TODO: not used yet in the new version, document it when it's done
-    isThereAnotherQuestion(questionId){
-        if  (questionId === "stop"){
+    //there are no more questions to display when no more questions are sent from the server (i.e. when the array questions is empty)
+    isThereAnotherQuestion(questionIds){
+        if (Array.isArray(questionIds) && questionIds.length === 0){
             return false
         }
         return true
@@ -258,27 +268,20 @@ class FlexibleSurvey extends React.Component {
         console.log("A question was received from the server")
         console.log("Data received by the server :")
         console.log(questionInJson)
-        let questionIdToAdd = this.deserialize(questionInJson)
-        console.log("These questions will be added at the end of the survey :")
-        console.log(questionIdToAdd)
-        this.setNextQuestionOfSurvey(questionIdToAdd)
-        let tmpSurvey = this.state.survey
-        tmpSurvey.nextPage()
-        this.setState({
-            survey : tmpSurvey
-        })
-
-
-
-        // let nextQuestionId = data.nextQuestionId
-        // console.log("the next question id is " + nextQuestionId)
-        // if (this.isThereAnotherQuestion(nextQuestionId)) {
-        //     this.setNextQuestionOfSurvey(nextQuestionId)
-        //     this.state.survey.nextPage()
-        // } else{
-        //     this.finishSurvey();
-        // }
-
+        let questionIdsToAdd = this.deserialize(questionInJson)
+        if (this.isThereAnotherQuestion(questionIdsToAdd)) {
+            console.log("These questions will be added at the end of the survey :")
+            console.log(questionIdsToAdd)
+            this.setNextQuestionOfSurvey(questionIdsToAdd)
+            let tmpSurvey = this.state.survey
+            tmpSurvey.nextPage()
+            this.setState({
+                survey : tmpSurvey
+            })
+        } else{
+            console.log("There is no more questions to display, the survey can be completed ")
+            this.finishSurvey()
+        }
     }
 
 
@@ -487,6 +490,7 @@ class FlexibleSurvey extends React.Component {
     async sendAnswersToServer(lastAnswersCSV){
         console.log('==============================================')
         console.log("sending answers to server...")
+        let lastResponse = null;
 
         for (let id in lastAnswersCSV){
             let answerToSend = lastAnswersCSV[id]
@@ -494,9 +498,12 @@ class FlexibleSurvey extends React.Component {
             if(resolved.error) {
                 console.error("An error happened while sending the next question ! log :")
                 console.log(resolved.error.response.data)
+            } else {
+                lastResponse = resolved.response.data;
+
             }
         }
-        return true
+        return lastResponse;
     }
 
     //TODO : function not finished yet, comment it later
@@ -508,14 +515,19 @@ class FlexibleSurvey extends React.Component {
         if(!lastAnswers){
             return null
         }
+
+        //update local storage
+        this.saveStateToStore();
+
         //format it to csv
         const lastAnswersCSV = this.serializeToCSV(lastAnswers)
         console.log("This data will be sent to the server :")
         console.log(lastAnswersCSV)
         //loading while the questions are sent and the next question is not displayed
         this.setState({ loading: true }, async () => {
-            await this.sendAnswersToServer(lastAnswersCSV)
-            let nextQuestion = await this.askNextQuestion()
+            //TODO : get the next question to display here
+            let nextQuestion = await this.sendAnswersToServer(lastAnswersCSV)
+            //let nextQuestion = await this.askNextQuestion()
             this.processQuestionReceived(nextQuestion)
             this.setState({ //stopping the loading screen
                 loading: false
@@ -571,7 +583,7 @@ class FlexibleSurvey extends React.Component {
 
     // function launched once at the beginning, that sets up the survey and ask to create a new session with a given survey id
      init(){
-        console.log("version 3")
+        console.log("version 6")
         this.setState({ loading: true }, async () => {
             let receivedSessionId = await this.createNewSession()
             this.extractSessionId(receivedSessionId)
@@ -582,6 +594,51 @@ class FlexibleSurvey extends React.Component {
                 loading: false
             })
         })
+    }
+
+    // TODO separate out
+
+    /**
+     * Stores the current suvery state in localStorage
+     * @returns {void}
+     */
+    saveStateToStore() {
+        const {
+            surveyID,
+            sessionID,
+            questions,
+            pages,
+            stepID,
+            currentQuestionsBeingAnswered,
+            surveyCompleted
+        } = this;
+
+        return LocalStorage.set('sessionstate', {
+            survey: this.state.survey,
+            surveyID,
+            sessionID,
+            questions,
+            pages,
+            stepID,
+            currentQuestionsBeingAnswered,
+            surveyCompleted
+        });
+    }
+
+    /**
+     * Stores the current suvery state in localStorage
+     * @returns {object|null}
+     */
+    getStateFromStore() {
+        return LocalStorage.get('sessionstate');
+    }
+
+    /**
+     * Stores the current suvery state in localStorage
+     * @returns {object|null}
+     */
+    removeStateFromStore() {
+        return LocalStorage.delete('sessionstate');
     }
 
 
