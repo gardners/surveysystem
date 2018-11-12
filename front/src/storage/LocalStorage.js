@@ -16,12 +16,12 @@ const LocalStorage = {
 
     set: function(key, value) {
         const json = JSON.stringify(value);
-        return localStorage.setItem(delete);
+        return localStorage.setItem(key, json);
     },
 
-    delete(key) {
-        localStorage.removeItem();
-    }
+    delete: function(key) {
+        localStorage.removeItem(key);
+    },
 };
 
 export default LocalStorage;

@@ -5,7 +5,7 @@ import { Configuration } from '../conf/config';
 import LoadingSpinner from './LoadingSpinner';
 import geolocationQuestion from '../customQuestions/geolocationQuestion'
 import api from '../api/api'
-
+import LocalStorage from '../storage/LocalStorage';
 
 // Represents the Flexible Survey
 class FlexibleSurvey extends React.Component {
@@ -201,6 +201,9 @@ class FlexibleSurvey extends React.Component {
 
             })
         });
+
+        // update localstorage
+        this.saveStateToStore();
     }
 
 
@@ -246,6 +249,9 @@ class FlexibleSurvey extends React.Component {
         this.setState({
             survey : tmpSurvey
         })
+
+        // delete session from localstorage, since the journey is finished
+        this.removeStateFromStore();
     }
 
     //there are no more questions to display when no more questions are sent from the server (i.e. when the array questions is empty)
@@ -509,6 +515,10 @@ class FlexibleSurvey extends React.Component {
         if(!lastAnswers){
             return null
         }
+
+        //update local storage
+        this.saveStateToStore();
+
         //format it to csv
         const lastAnswersCSV = this.serializeToCSV(lastAnswers)
         console.log("This data will be sent to the server :")
@@ -584,6 +594,51 @@ class FlexibleSurvey extends React.Component {
                 loading: false
             })
         })
+    }
+
+    // TODO separate out
+
+    /**
+     * Stores the current suvery state in localStorage
+     * @returns {void}
+     */
+    saveStateToStore() {
+        const {
+            surveyID,
+            sessionID,
+            questions,
+            pages,
+            stepID,
+            currentQuestionsBeingAnswered,
+            surveyCompleted
+        } = this;
+
+        return LocalStorage.set('sessionstate', {
+            survey: this.state.survey,
+            surveyID,
+            sessionID,
+            questions,
+            pages,
+            stepID,
+            currentQuestionsBeingAnswered,
+            surveyCompleted
+        });
+    }
+
+    /**
+     * Stores the current suvery state in localStorage
+     * @returns {object|null}
+     */
+    getStateFromStore() {
+        return LocalStorage.get('sessionstate');
+    }
+
+    /**
+     * Stores the current suvery state in localStorage
+     * @returns {object|null}
+     */
+    removeStateFromStore() {
+        return LocalStorage.delete('sessionstate');
     }
 
 
