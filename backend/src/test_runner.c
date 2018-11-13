@@ -323,6 +323,10 @@ int run_test(char *dir, char *test_file)
 	// Read survey definition and create survey file
 	char survey_file[8192];
 
+	// Trim trailing white space from survey name to avoid annoying mismatches
+	while (surveyname[0]&&surveyname[strlen(surveyname)-1]==' ')
+	  surveyname[strlen(surveyname)-1]=0;
+
 	snprintf(survey_file,8192,"%s/surveys/%s",dir,surveyname);
 	mkdir(survey_file,0777);
 	if (chmod(survey_file,S_IRUSR|S_IWUSR|S_IXUSR|
