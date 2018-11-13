@@ -238,6 +238,7 @@ int call_python_nextquestion(struct session *s,
     // Try all three possible function names
     snprintf(function_name,1024,"nextquestion_%s",s->survey_id);
     for(int i=0;function_name[i];i++) if (function_name[i]=='/') function_name[i]='_';
+      LOG_WARNV("Searching for python function '%s'",function_name);
 
     PyObject* myFunction = PyObject_GetAttrString(nq_python_module,function_name);
 
@@ -245,10 +246,12 @@ int call_python_nextquestion(struct session *s,
       // Try again without _hash on the end
       snprintf(function_name,1024,"nextquestion_%s",s->survey_id);      
       for(int i=0;function_name[i];i++) if (function_name[i]=='/') function_name[i]=0;
+      LOG_WARNV("Searching for python function '%s'",function_name);
       myFunction = PyObject_GetAttrString(nq_python_module,function_name);      
     }
     if (!myFunction) {
       snprintf(function_name,1024,"nextquestion");
+      LOG_WARNV("Searching for python function '%s'",function_name);
       myFunction = PyObject_GetAttrString(nq_python_module,function_name);
     }
 
