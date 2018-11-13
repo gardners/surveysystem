@@ -6,6 +6,7 @@ import LoadingSpinner from './LoadingSpinner';
 import geolocationQuestion from '../customQuestions/geolocationQuestion'
 import api from '../api/api'
 import LocalStorage from '../storage/LocalStorage';
+import Dev from './Dev';
 
 // Represents the Flexible Survey
 class FlexibleSurvey extends React.Component {
@@ -677,11 +678,15 @@ class FlexibleSurvey extends React.Component {
     // if an ajax request is loading, a spinner is shown. If a question is available, the survey is shown
     render(){
         return(
-            <div className="jumbotron jumbotron-fluid">
-                <div className="container">
-                    {this.state.loading ? <LoadingSpinner /> : <Survey.Survey model={this.state.survey}/>}
+            <section>
+                <div className="jumbotron jumbotron-fluid">
+                    <div className="container">
+                        {this.state.loading ? <LoadingSpinner /> : <Survey.Survey model={this.state.survey}/>}
+                    </div>
                 </div>
-            </div>
+                <pre>step: { this.stepID }, session: { this.sessionID } </pre>
+                <Dev label="localState" data={ this.getStateFromStore() } open={ false }/>
+            </section>
         );
     }
 }
