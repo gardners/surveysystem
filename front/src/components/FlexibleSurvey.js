@@ -647,6 +647,26 @@ class FlexibleSurvey extends React.Component {
     }
 
 
+    /**
+     * validates the state in localstorage against the current (initialized) instance
+     * ? stored suveyID === current surveyID
+     * ? has seeionId
+     * @returns {boolean}
+     */
+    validateStoredState() {
+        const stored = this.getStateFromStore();
+        if(!stored) {
+            return false;
+        }
+
+        const { surveyID, sessionID } = stored;
+        if(surveyID === this.surveyID && sessionID) {
+            return true;
+        }
+
+        return false;
+    }
+
     //this function is fired when the page is loaded
     componentDidMount(){
         this.init();
