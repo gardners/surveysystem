@@ -47,18 +47,24 @@ class FlexibleSurvey extends React.Component {
     }
 
 
-    //put here the configuration of the survey, such as the theme, event listeners, etc.
-    configureSurvey(){
+    // configure SuveyJs
+    // put here the configuration of the global survey object, such as the theme, etc.
+    initSurveyJs(){
         Survey.StylesManager.applyTheme(Configuration.surveyTheme)
         Survey.CustomWidgetCollection.Instance.addCustomWidget(geolocationQuestion, "customtype")
-        this.configureNextAndPreviousButtons()
         this.addCustomProperties()
+    }
+
+    // initializes Survey
+    // such as event listeners, etc.
+    initSurvey(survey){
+        this.configureNextAndPreviousButtons(survey)
     }
 
     //adds the listeners to next and previous buttons
     //it also configures the diplayed text on the completeText button
-    configureNextAndPreviousButtons(){
-        let tmpSurvey = this.state.survey
+    configureNextAndPreviousButtons(survey = null){
+        let tmpSurvey = (survey) ? survey : this.state.survey
         tmpSurvey.completeText = "Next"
 
         //eventlistener when user presses prev
@@ -73,6 +79,7 @@ class FlexibleSurvey extends React.Component {
         //eventlistener when user presses next
         //it is not really the next button, but complete button, with a display text set at 'Next', since the current displayed page is always the last one.
         tmpSurvey.onCompleting.add(function(sender, options){
+            //alert(3);
             if (this.surveyCompleted){
                 options.allowComplete = true
             } else {
@@ -376,6 +383,26 @@ class FlexibleSurvey extends React.Component {
         return question;
     }
 
+
+    //converts a json formatted page into  a PageModel class of surveyjs
+    createPageObjectFromJson(survey, step, jsonData, questions) {
+        const classInstance = survey.addNewPage(step);
+
+        if(!classInstance ){
+            console.error("failed to create the page object from the json");
+            return null;
+        }
+
+        // add question instances to page
+        questions.map((questionJson) => {
+            // build question instance
+            const q = this.createQuestionObjectFromJson(questionJson);
+            classInstance.addQuestion(q);
+        });
+
+        return classInstance;
+    }
+
     //checks that the user answered the question before submitting it (i.e its not an empty question)
     isAnswerEmpty(answer){
         if (!answer){
@@ -585,14 +612,22 @@ class FlexibleSurvey extends React.Component {
     }
 
     // function launched once at the beginning, that sets up the survey and ask to create a new session with a given survey id
-     init(){
+
+    /**
+     * Create a new survey session
+     * @see componentDidMount
+     */
+    initNewSession(){
         console.log("version 6")
         this.setState({ loading: true }, async () => {
+
             let receivedSessionId = await this.createNewSession()
             this.extractSessionId(receivedSessionId)
-            this.configureSurvey()
+            this.initSurveyJs();
+            this.initSurvey();
             let nextQuestion = await this.askNextQuestion()
             this.processQuestionReceived(nextQuestion)
+
             this.setState({
                 loading: false
             })
@@ -600,6 +635,23 @@ class FlexibleSurvey extends React.Component {
             //update local storage
             this.saveStateToStore();
         })
+    }
+
+    /**
+     * Restore a cached survey session
+     * @param {object} cachedSess session data from localCache
+     * @see componentDidMount
+     */
+    initStoredSession(cachedSess){
+        console.log("load cached session");
+        this.initSurveyJs();
+        const survey = this.mergeStoredState(cachedSess);
+        console.log('jb',survey);
+        this.initSurvey(survey);
+        this.setState({
+            loading: false
+        });
+        this.saveStateToStore();
     }
 
     // TODO separate out
@@ -668,9 +720,64 @@ class FlexibleSurvey extends React.Component {
         return false;
     }
 
+    /**
+     * validates the state in localstorage against the current (initialized) instance
+     * ? stored suveyID === current surveyID
+     * ? has seeionId
+     * @returns {Survey.Model}
+     */
+    mergeStoredState(storedState) {
+        const {
+            surveyID,
+            sessionID,
+            questions,
+            pages,
+            stepID,
+            currentQuestionsBeingAnswered,
+            surveyCompleted,
+            survey,
+        } = storedState;
+
+        // 1. assign top level class properties (no state!)
+
+        Object.assign(this, {
+            surveyID,
+            sessionID,
+            questions,
+            pages,
+            stepID,
+            currentQuestionsBeingAnswered,
+            surveyCompleted
+        });
+
+        // 2. create a new survey model instance from cache
+
+        const surveyModel = new Survey.Model();
+
+        // 3. set the page models and add questions
+        pages.forEach((page, index) => {
+            const questions = page.elements;
+            const p = this.createPageObjectFromJson(surveyModel, page, index, questions);
+            surveyModel.addPage(p);
+        });
+
+        //console.log('jb', surveyModel.getPageByName(pages[pageNo]));
+        // surveyModel.currentPage = surveyModel.getPageByName(pages[pageNo].name);
+        surveyModel.currentPageNo = stepID - 1;
+
+        return surveyModel;
+    }
+
     //this function is fired when the page is loaded
     componentDidMount(){
-        this.init();
+
+        if(this.validateStoredState()) {
+            const sess =  this.getStateFromStore();
+            this.initStoredSession(sess);
+            return;
+        }
+
+        this.initNewSession();
     }
 
 
