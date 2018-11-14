@@ -30,6 +30,7 @@
 #include <fts.h>
 #include <errno.h>
 #include <string.h>
+#include <strings.h>
 #include <time.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -414,6 +415,16 @@ int run_test(char *dir, char *test_file)
 	  goto error;
 	}
 
+	// Compile the python
+	char cmd[1024];
+	snprintf(cmd,1024,"python3.7 -m compileall %s",python_file);
+	int compile_result=system(cmd);
+	if (compile_result) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : FATAL : Failed to compile python module. Does the python have errors?\n",tdelta);
+	  goto fatal;
+	}
+	
 	// Then restart, to clear out any old python code we had loaded before
 	tdelta=gettime_us()-start_time; tdelta/=1000;
 	fprintf(log,"T+%4.3fms : INFO : Restarting backend to clear loaded python code\n",tdelta);
