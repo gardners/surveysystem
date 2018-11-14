@@ -287,7 +287,25 @@ class FlexibleSurvey extends React.Component {
         }
     }
 
-
+    //issue #4 : when an unknown property to surveyjs is found, it is added to it to not make the survey crash, and log an error to the user
+    checkThatEveryPropertyExist(questionJson){
+        console.log('checking that all the properties exist...')
+        const questionObject = Survey.JsonObject.metaData.createClass(questionJson.type);
+        if(!questionObject){
+            console.error("failed to create the question object from the json");
+            return null;
+        }
+        for (let property in questionJson){
+            console.log('tested property : ' + property )
+            if (property in questionObject || property === 'type'){//I guess that the type is not needed in the object at this stage
+                console.log('OK')
+            } else{
+                console.log('NOK')
+                Survey.JsonObject.metaData.addProperty('questionbase', { name: property, type: 'string' });
+                console.error('The property ' + property + ' was added in the survey. But it is a bad practice, you must declare custom properties in the config.js file !')
+            }
+        }
+    }
 
     // transforms the json list of questions into objects, used later to manipulate the survey.
     // at this point, the questions are not added in the survey, they just "exist" as objects
@@ -309,6 +327,8 @@ class FlexibleSurvey extends React.Component {
             let tmpJsonQuestion = questions[key];
             let questionId = this.getJsonAttribute("id", tmpJsonQuestion)
             questionIds.push(questionId)
+            //issue #4 : check that all the properties are recognised by surveyjs. If not, adds them and log an error message
+            this.checkThatEveryPropertyExist(tmpJsonQuestion)
             let newQuestion = this.createQuestionObjectFromJson(tmpJsonQuestion);
             this.saveNewQuestion(questionId, newQuestion);
             cpt++;
@@ -586,7 +606,7 @@ class FlexibleSurvey extends React.Component {
 
     // function launched once at the beginning, that sets up the survey and ask to create a new session with a given survey id
      init(){
-        console.log("version 6")
+        console.log("version 7")
         this.setState({ loading: true }, async () => {
             let receivedSessionId = await this.createNewSession()
             this.extractSessionId(receivedSessionId)
