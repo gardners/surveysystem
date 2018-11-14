@@ -5,13 +5,13 @@
   "dependencies": {
     "axios": "^0.18.0",
     "bootstrap": "^3.3.7",
-    "react": "^16.6.1",
+    "react": "^16.6.3",
     "react-bootstrap": "^0.32.4",
-    "react-dom": "^16.6.1",
+    "react-dom": "^16.6.3",
     "react-loader-spinner": "^2.2.0",
     "react-router-dom": "^4.3.1",
     "react-scripts": "1.1.4",
-    "survey-react": "^1.0.53"
+    "survey-react": "^1.0.54"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -20,6 +20,6 @@
     "eject": "react-scripts eject"
   },
   "devDependencies": {
-    "react-test-renderer": "^16.6.1"
+    "react-test-renderer": "^16.6.3"
   }
 }
