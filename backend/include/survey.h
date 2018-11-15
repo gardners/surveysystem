@@ -117,6 +117,7 @@ struct session {
 int generate_path(char *path_in,char *path_out,int max_len);
 int get_next_questions(struct session *s,
 		       struct question *next_questions_out[],int max_next_questions,int *next_question_count_out);
+int get_analysis(struct session *s,const unsigned char **output);
 int create_session(char *survey_id,char *session_id_out);
 int delete_session(char *session_id);
 struct session *load_session(char *session_id);
