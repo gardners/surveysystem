@@ -74,7 +74,6 @@ int setup_python(void)
     PyObject *syspath_o=PySys_GetObject("path");
     PyObject* rep = PyObject_Repr(syspath_o);
     const char *syspath = PyUnicode_AsUTF8(rep);
-    LOG_WARNV("Python sys.path='%s'",syspath);
 
     char append_cmd[1024];
     snprintf(append_cmd,1024,"%s/python/", getenv("SURVEY_HOME"));
