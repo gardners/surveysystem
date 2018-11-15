@@ -2,9 +2,9 @@ import axios from 'axios';
 import { resolve } from './resolve.js';
 import {Configuration} from "../conf/config";
 
+import Log from '../Log';
 //tuto : https://javascript.info/async-await
 // and : https://stackoverflow.com/questions/49500379/typical-file-structure-in-reactjs-application-grouping-api-calls-in-api-js
-
 
 const api = {
 
@@ -12,10 +12,12 @@ const api = {
         let apiConfig = Configuration.apiCalls.createNewSession
         let url = Configuration.serverBaseUrl().concat(apiConfig.path)
         apiConfig.params.surveyid = surveyID
-        console.log("Getting the Survey with ID="+ surveyID+"...")
-        console.log("requesting with " + apiConfig.method + ' request : '+ url + ', with these parameters :')
+
+        Log.log("Getting the Survey with ID="+ surveyID+"...");
+        Log.log("requesting with " + apiConfig.method + ' request : '+ url + ', with these parameters :');
+
         for (const [param, value] of Object.entries(apiConfig.params)) {
-            console.log(`${param}=${value}`)
+            Log.log(`${param}=${value}`)
         }
 
         let resolved = await resolve(
@@ -32,9 +34,11 @@ const api = {
         let apiConfig = Configuration.apiCalls.nextQuestion
         let url = Configuration.serverBaseUrl().concat(apiConfig.path)
         apiConfig.params.sessionid = sessionID
-        console.log("requesting with " + apiConfig.method + ' request : '+ url + ', with these parameters :')
+
+        Log.log("requesting with " + apiConfig.method + ' request : '+ url + ', with these parameters :')
+
         for (const [param, value] of Object.entries(apiConfig.params)) {
-            console.log(`${param}=${value}`)
+            Log.log(`${param}=${value}`)
         }
 
 
@@ -53,9 +57,11 @@ const api = {
         let url = Configuration.serverBaseUrl().concat(apiConfig.path)
         apiConfig.params.sessionid = sessionID
         apiConfig.params.answer = answer
-        console.log("requesting with " + apiConfig.method + ' request : '+ url + ', with these parameters :')
+
+        Log.log("requesting with " + apiConfig.method + ' request : '+ url + ', with these parameters :')
+
         for (const [param, value] of Object.entries(apiConfig.params)) {
-            console.log(`${param}=${value}`)
+            Log.log(`${param}=${value}`)
         }
 
 
@@ -74,9 +80,11 @@ const api = {
         let url = Configuration.serverBaseUrl().concat(apiConfig.path)
         apiConfig.params.sessionid = sessionID
         apiConfig.params.questionid = questionID
-        console.log("requesting with " + apiConfig.method + ' request : '+ url + ', with these parameters :')
+
+        Log.log("requesting with " + apiConfig.method + ' request : '+ url + ', with these parameters :')
+
         for (const [param, value] of Object.entries(apiConfig.params)) {
-            console.log(`${param}=${value}`)
+            Log.log(`${param}=${value}`)
         }
 
 
@@ -91,8 +99,4 @@ const api = {
     }
 }
 
-
-export default api
-
-
-
+export default api;
