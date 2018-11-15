@@ -14,6 +14,7 @@
     "survey-react": "^1.0.53"
   },
   "scripts": {
+    "dev": "xterm -e \"cd ../backend && sudo ./testrun\" && react-scripts start",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
