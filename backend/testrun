@@ -9,5 +9,5 @@ if [ ! -e ../front/node_modules ]; then
 fi
 echo "config file is $conf"
 sudo cp ${conf} /etc/lighttpd/lighttpd.conf
-sudo rm /var/log/lighttpd/error.log 
-make && ( cd ../front ; mkdir -p build ; npm run build ) && /usr/sbin/lighttpd -tt -f /etc/lighttpd/lighttpd.conf && service lighttpd stop && cp surveyfcgi /var/www/fastcgi && service lighttpd start
+sudo rm /var/log/lighttpd/error.log
+make && /usr/sbin/lighttpd -tt -f /etc/lighttpd/lighttpd.conf && service lighttpd stop && cp surveyfcgi /var/www/fastcgi && service lighttpd start
