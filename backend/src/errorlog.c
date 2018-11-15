@@ -24,7 +24,7 @@ void dump_errors(FILE *f)
   return;
 }
 
-int remember_error(const char *file,const int line, const char *function,const char *format,...)
+int remember_error(const char *severity,const char *file,const int line, const char *function,const char *format,...)
 {
 
   char message[65536];
@@ -51,7 +51,7 @@ int remember_error(const char *file,const int line, const char *function,const c
     error_count++;
 
     // Also record the error into the general log
-    LOG_INFOV("LOG_ERROR : %s",message);
+    LOG_INFOV("%s : %s",severity,message);
 
   } while(0);
     
