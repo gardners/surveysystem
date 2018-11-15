@@ -440,3 +440,138 @@ int get_next_questions(struct session *s,
 
   return retVal;
 }
+
+int get_analysis(struct session *s,const unsigned char **output)
+{
+  int retVal=0;
+  int is_error=0;
+  do {
+    if (!s) LOG_ERROR("session structure is NULL");
+    if (!output) LOG_ERROR("output is NULL");
+
+    // Setup python
+    if (setup_python()) {
+      LOG_ERROR("Failed to initialise python.\n");
+    }
+    if (!nq_python_module) LOG_ERROR("Python module 'nextquestion' not loaded. Does it have an error?");
+
+    // Build names of candidate functions.
+    // nextquestion_<survey_id>_<hash of survey>
+    // or failing that, nextquestion_<survey_id>
+    // or failing that, nextquestion
+    // In all cases, we pass in an list of questions, and an list of answers,
+    // and expect a list of strings of question UIDs to ask as the return value.
+
+    char function_name[1024];
+
+    // Try all three possible function names
+    snprintf(function_name,1024,"analyse_%s",s->survey_id);
+    for(int i=0;function_name[i];i++) if (function_name[i]=='/') function_name[i]='_';
+      LOG_WARNV("Searching for python function '%s'",function_name);
+
+    PyObject* myFunction = PyObject_GetAttrString(nq_python_module,function_name);
+
+    if (!myFunction) {
+      // Try again without _hash on the end
+      snprintf(function_name,1024,"analyse_%s",s->survey_id);      
+      for(int i=0;function_name[i];i++) if (function_name[i]=='/') function_name[i]=0;
+      LOG_WARNV("Searching for python function '%s'",function_name);
+      myFunction = PyObject_GetAttrString(nq_python_module,function_name);      
+    }
+    if (!myFunction) {
+      snprintf(function_name,1024,"analyse");
+      LOG_WARNV("Searching for python function '%s'",function_name);
+      myFunction = PyObject_GetAttrString(nq_python_module,function_name);
+    }
+
+    if (!myFunction) LOG_ERRORV("No matching python function for survey '%s'",s->survey_id);
+
+    if (!PyCallable_Check(myFunction)) {
+      is_error=1;
+      LOG_ERRORV("Python function '%s' is not callable",function_name);
+    }
+
+    LOG_INFOV("Preparing to call python function '%s' to get next question(s)",function_name);
+    
+    // Okay, we have the function object, so build the argument list and call it.
+    PyObject* questions = PyList_New(s->question_count);
+    PyObject* answers = PyList_New(s->answer_count);
+
+    for(int i=0;i<s->question_count;i++) {
+      PyObject *item = PyUnicode_FromString(s->questions[i]->uid);
+      if (PyList_SetItem(questions,i,item)) {
+	Py_DECREF(item);
+	LOG_ERRORV("Error inserting question name '%s' into Python list",s->questions[i]->uid); 
+      }
+    }
+    for(int i=0;i<s->answer_count;i++) {
+      PyObject *dict = PyDict_New();
+      PyObject *uid = PyUnicode_FromString(s->answers[i]->uid);
+      PyObject *text = PyUnicode_FromString(s->answers[i]->text);
+      PyObject *value = PyLong_FromLongLong(s->answers[i]->value);
+      PyObject *lat = PyLong_FromLongLong(s->answers[i]->lat);
+      PyObject *lon = PyLong_FromLongLong(s->answers[i]->lon);
+      PyObject *time_begin = PyLong_FromLongLong(s->answers[i]->time_begin);
+      PyObject *time_end = PyLong_FromLongLong(s->answers[i]->time_end);
+      PyObject *time_zone_delta = PyLong_FromLongLong(s->answers[i]->time_zone_delta);
+      PyObject *dst_delta = PyLong_FromLongLong(s->answers[i]->dst_delta);
+      PyObject *uid_l = PyUnicode_FromString("uid");
+      PyObject *text_l = PyUnicode_FromString("text");
+      PyObject *value_l = PyUnicode_FromString("value");
+      PyObject *lat_l = PyUnicode_FromString("latitude");
+      PyObject *lon_l = PyUnicode_FromString("longitude");
+      PyObject *time_begin_l = PyUnicode_FromString("time_begin");
+      PyObject *time_end_l = PyUnicode_FromString("time_end");
+      PyObject *time_zone_delta_l = PyUnicode_FromString("time_zone_delta");
+      PyObject *dst_delta_l = PyUnicode_FromString("dst_delta");
+      int errors = PyDict_SetItem(dict,uid_l,uid);
+      errors += PyDict_SetItem(dict,text_l,text);
+      errors += PyDict_SetItem(dict,value_l,value);
+      errors += PyDict_SetItem(dict,lat_l,lat);
+      errors += PyDict_SetItem(dict,lon_l,lon);
+      errors += PyDict_SetItem(dict,time_begin_l,time_begin);
+      errors += PyDict_SetItem(dict,time_end_l,time_end);
+      errors += PyDict_SetItem(dict,time_zone_delta_l,time_zone_delta);
+      errors += PyDict_SetItem(dict,dst_delta_l,dst_delta);
+
+      if (errors) {
+	Py_DECREF(dict);
+	LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.",s->answers[i]->uid);
+      }
+      
+      if (PyList_SetItem(answers,i,dict)) {
+	Py_DECREF(dict);
+	LOG_ERRORV("Error inserting question name '%s' into Python list",s->questions[i]->uid); 
+      }
+    }
+    
+    PyObject* args = PyTuple_Pack(2,questions,answers);
+    
+    PyObject* result = PyObject_CallObject(myFunction, args);
+    Py_DECREF(args);
+
+    if (!result) {
+      is_error=1;
+      log_python_error();
+      LOG_ERRORV("Python function '%s' did not return anything (does it have the correct arguments defined? If not, this can happen. Check the backtrace and error messages above, in case they give you any clues.)",function_name);
+    }
+    // PyObject_Print(result,stderr,0);
+    if (PyUnicode_Check(result)) {
+      // Get value and put it as single response
+      const char *return_string = PyUnicode_AsUTF8(result);
+      if (!return_string) {
+	is_error=1;
+	Py_DECREF(result);
+	LOG_ERRORV("String in reply from Python function '%s' is null",function_name);
+      }
+      *output=return_string;
+    } else {
+      Py_DECREF(result);    
+      LOG_ERRORV("Return value from Python function '%s' is not a string.",function_name);
+    }
+
+    Py_DECREF(result);    
+  } while(0);
+  if (is_error) retVal=-99;
+  return retVal;
+}
