@@ -84,6 +84,7 @@ enum	page {
 	PAGE_DELSESSION,
 	PAGE_ACCESTEST,
 	PAGE_FCGITEST,
+	PAGE_ANALYSE,
 	PAGE__MAX
 };
 
@@ -97,6 +98,7 @@ static void fcgi_delanswer(struct kreq *);
 static void fcgi_delsession(struct kreq *);
 static void fcgi_accesstest(struct kreq *);
 static void fcgi_fastcgitest(struct kreq *);
+static void fcgi_analyse(struct kreq *);
 
 static const disp disps[PAGE__MAX] = {
   fcgi_newsession,
@@ -106,7 +108,8 @@ static const disp disps[PAGE__MAX] = {
   fcgi_delanswer,
   fcgi_delsession,
   fcgi_accesstest,
-  fcgi_fastcgitest
+  fcgi_fastcgitest,
+  fcgi_analyse
 };
 
 static const char *const pages[PAGE__MAX] = {
@@ -117,7 +120,8 @@ static const char *const pages[PAGE__MAX] = {
   "delanswer",
   "delsession",
   "accesstest",
-  "fastcgitest"
+  "fastcgitest",
+  "analyse"
 };
   
 void dump_errors_kcgi(struct kreq *req)
@@ -210,7 +214,7 @@ int main(int argc,char **argv)
   return retVal;
 }
 
-void quick_error(struct kreq *req,int e,char *msg)
+void quick_error(struct kreq *req,int e,const char *msg)
 {
   enum kcgi_err    er;
   do {
@@ -822,4 +826,54 @@ static void fcgi_fastcgitest(struct kreq *req)
     LOG_INFO("Leaving page handler.");
   } while (0);
   return;
+}
+
+
+static void fcgi_analyse(struct kreq *r)
+{
+  //  enum kcgi_err    er;
+  int retVal=0;
+  
+  do {
+
+    LOG_INFO("Entering page handler.");
+
+    struct kpair *session = r->fieldmap[KEY_SESSIONID];
+    if (!session) {
+      // No session ID, so return 400
+      quick_error(r,KHTTP_400,"sessionid missing");
+      break;
+    }
+    if (!session->val) {
+      quick_error(r,KHTTP_400,"sessionid is blank");
+      break;
+    }
+    char *session_id=session->val;
+
+    struct session *s=load_session(session_id);
+    if (!s) {
+      quick_error(r,KHTTP_400,"Could not load specified session. Does it exist?");
+      break;
+    }
+    const unsigned char *analysis=NULL;
+    // string is returned from python in a way that we don't have to deallocate it here
+    if (get_analysis(s,&analysis)) {
+      quick_error(r,KHTTP_500,"Could not retrieve analysis.");
+      LOG_ERRORV("get_analysis('%s') failed",session_id);
+    }
+    if (!analysis) {
+      quick_error(r,KHTTP_500,"Could not retrieve analysis (NULL result).");
+      LOG_ERRORV("get_analysis('%s') returned NULL result",session_id);
+    }
+    if (!analysis[0]) {
+      quick_error(r,KHTTP_500,"Could not retrieve analysis (empty result).");
+      LOG_ERRORV("get_analysis('%s') returned empty result",session_id);
+    }
+    quick_error(r,KHTTP_200,(const char *)analysis);
+
+    LOG_INFO("Leaving page handler.");
+    
+  } while(0);
+
+  return;  
 }

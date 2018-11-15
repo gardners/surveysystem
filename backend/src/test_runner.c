@@ -417,7 +417,7 @@ int run_test(char *dir, char *test_file)
 
 	// Compile the python
 	char cmd[1024];
-	snprintf(cmd,1024,"python3.7 -m compileall %s",python_file);
+	snprintf(cmd,1024,"python3.7 -m compileall %s 2>&1 >>%s",python_file,testlog);
 	int compile_result=system(cmd);
 	if (compile_result) {
 	  tdelta=gettime_us()-start_time; tdelta/=1000;
