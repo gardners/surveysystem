@@ -20,6 +20,7 @@
     "eject": "react-scripts eject"
   },
   "devDependencies": {
+    "jest-localstorage-mock": "^2.3.0",
     "react-test-renderer": "^16.6.1"
   }
 }
