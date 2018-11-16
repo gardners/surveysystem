@@ -1,6 +1,5 @@
 import React from 'react';
 import * as Survey from "survey-react";
-import axios from 'axios';
 import { Configuration } from '../conf/config';
 import LoadingSpinner from './LoadingSpinner';
 import geolocationQuestion from '../customQuestions/geolocationQuestion'
@@ -58,14 +57,15 @@ class FlexibleSurvey extends React.Component {
     // initializes Survey
     // such as event listeners, etc.
     initSurvey(survey){
-        this.configureNextAndPreviousButtons(survey)
+        //this.configureNextAndPreviousButtons(survey)
+        this.configureNextAndPreviousButtons()
     }
 
     //adds the listeners to next and previous buttons
     //it also configures the diplayed text on the completeText button
     configureNextAndPreviousButtons(survey = null){
         let tmpSurvey = (survey) ? survey : this.state.survey
-        tmpSurvey.completeText = "Next"
+        tmpSurvey.completeText = "Next - fake"
 
         //eventlistener when user presses prev
         tmpSurvey.onCurrentPageChanged.add(function(sender, options){
@@ -211,20 +211,18 @@ class FlexibleSurvey extends React.Component {
             console.log('Done going back to the previous step...');
             this.setState({
                 loading: false
-
-            })
-
-            // update localstorage
-            this.saveStateToStore();
+            }, () => {this.saveStateToStore(this.state.survey)})
         });
     }
 
 
     //TODO: put completeText in a new function
     deleteMostRecentPageOfSurvey(){
+        console.log("page to delete : ")
+        console.log(this.getCurrentPage())
         let pageToDelete = this.getCurrentPage()
         let tmpSurvey = this.state.survey
-        tmpSurvey.completeText = "Next"
+        tmpSurvey.completeText = "Next - Fake"
         this.surveyCompleted = false
         tmpSurvey.removePage(pageToDelete)
         this.setState({
@@ -501,7 +499,7 @@ class FlexibleSurvey extends React.Component {
             let questionType = this.defineAnswerType(lastAnswer)
             answerFieldsCSV[questionType] = lastAnswer.answer //at this moment, the answerFieldsCSV contains the questionID, and the answer of the question in the good field
             for (let fieldID in answerFieldsCSV){
-                if(fieldID == "uid"){
+                if(fieldID === "uid"){
                     lastAnswerCSV = lastAnswerCSV.concat(answerFieldsCSV[fieldID])
                 }
                 else {
@@ -538,7 +536,7 @@ class FlexibleSurvey extends React.Component {
 
     //TODO : function not finished yet, comment it later
     //function called when the user press Next button
-    onNextButtonPressed(result, options){
+      onNextButtonPressed(result, options){
         console.log("NEXT button pressed")
         const lastAnswers = this.getAnswersOfCurrentPage()
         console.log(lastAnswers)
@@ -558,10 +556,7 @@ class FlexibleSurvey extends React.Component {
             this.processQuestionReceived(nextQuestion)
             this.setState({ //stopping the loading screen
                 loading: false
-            })
-
-            //update local storage
-            this.saveStateToStore();
+            }, () => {this.saveStateToStore(this.state.survey)})
         })
     }
 
@@ -630,10 +625,7 @@ class FlexibleSurvey extends React.Component {
 
             this.setState({
                 loading: false
-            })
-
-            //update local storage
-            this.saveStateToStore();
+            }, () => {this.saveStateToStore(this.state.survey)})
         })
     }
 
@@ -643,15 +635,23 @@ class FlexibleSurvey extends React.Component {
      * @see componentDidMount
      */
     initStoredSession(cachedSess){
-        console.log("load cached session");
-        this.initSurveyJs();
-        const survey = this.mergeStoredState(cachedSess);
-        console.log('jb',survey);
-        this.initSurvey(survey);
-        this.setState({
-            loading: false
-        });
-        this.saveStateToStore();
+
+        console.log("load cached session, version 6");
+        this.setState({ loading: true }, async () => {
+            this.initSurveyJs();
+            this.mergeStoredState(cachedSess);
+            this.initSurvey();
+            this.setState({
+                loading: false
+            })
+
+        })
+
+
+
+
+
+
     }
 
     // TODO separate out
@@ -660,27 +660,39 @@ class FlexibleSurvey extends React.Component {
      * Stores the current suvery state in localStorage
      * @returns {void}
      */
-    saveStateToStore() {
-        const {
-            surveyID,
-            sessionID,
-            questions,
-            pages,
-            stepID,
-            currentQuestionsBeingAnswered,
-            surveyCompleted
-        } = this;
+    saveStateToStore(survey) {
+        const res = {
+            currentPageNo: survey.currentPageNo,
+            data: survey.data,
+            surveyID : this.surveyID,
+            sessionID : this.sessionID,
+            pages : this.pages,
+            stepID : this.stepID,
+            currentQuestionsBeingAnswered: this.currentQuestionsBeingAnswered,
+            surveyCompleted : this.surveyCompleted
+        };
+        localStorage.setItem('sessionstate', JSON.stringify(res))
 
-        return LocalStorage.set('sessionstate', {
-            survey: this.state.survey,
-            surveyID,
-            sessionID,
-            questions,
-            pages,
-            stepID,
-            currentQuestionsBeingAnswered,
-            surveyCompleted
-        });
+        // const {
+        //     surveyID,
+        //     sessionID,
+        //     questions,
+        //     pages,
+        //     stepID,
+        //     currentQuestionsBeingAnswered,
+        //     surveyCompleted
+        // } = this;
+        //
+        // return LocalStorage.set('sessionstate', {
+        //     survey: this.state.survey,
+        //     surveyID,
+        //     sessionID,
+        //     questions,
+        //     pages,
+        //     stepID,
+        //     currentQuestionsBeingAnswered,
+        //     surveyCompleted
+        // });
     }
 
     /**
@@ -720,6 +732,32 @@ class FlexibleSurvey extends React.Component {
         return false;
     }
 
+    //when restoring this.pages from the localstorage, the pages stored are an object, and not a PageModel object
+
+    restorePages(pages, data){
+        let newPages=[]
+        for (let id in pages){
+            let page = pages[id]
+            let newPage = new Survey.PageModel()
+            for (let questionID in page.elements){
+                let questionJson = page.elements[questionID]
+                let questionObject = this.createQuestionObjectFromJson(questionJson)
+                newPage.addQuestion(questionObject)
+                questionObject.value = data[questionObject.name]
+                newPages[id] = newPage
+            }
+        }
+        console.log(newPages)
+        return newPages
+    }
+
+    restoreSurvey(survey){
+        for (let id in this.pages){
+            let page = this.pages[id]
+            survey.addPage(page);
+        }
+        return survey
+    }
     /**
      * validates the state in localstorage against the current (initialized) instance
      * ? stored suveyID === current surveyID
@@ -727,45 +765,70 @@ class FlexibleSurvey extends React.Component {
      * @returns {Survey.Model}
      */
     mergeStoredState(storedState) {
-        const {
-            surveyID,
-            sessionID,
-            questions,
-            pages,
-            stepID,
-            currentQuestionsBeingAnswered,
-            surveyCompleted,
-            survey,
-        } = storedState;
+        let tmpSurvey = this.state.survey
 
-        // 1. assign top level class properties (no state!)
+        let res = storedState
+        this.stepID = res.stepID
+        this.surveyID = res.surveyID
+        this.pages = res.pages
+        this.sessionID = res.sessionID
+        this.surveyCompleted = res.surveyCompleted
+        this.currentQuestionsBeingAnswered = res.currentQuestionsBeingAnswered
 
-        Object.assign(this, {
-            surveyID,
-            sessionID,
-            questions,
-            pages,
-            stepID,
-            currentQuestionsBeingAnswered,
-            surveyCompleted
-        });
+        this.pages = this.restorePages(res.pages, res.data)
+        tmpSurvey = this.restoreSurvey(tmpSurvey)
 
-        // 2. create a new survey model instance from cache
 
-        const surveyModel = new Survey.Model();
+        //Set the loaded data into the survey.
+        if (res.currentPageNo)
+            tmpSurvey.currentPageNo = res.currentPageNo;
+        if (res.data)
+            tmpSurvey.data = res.data;
 
-        // 3. set the page models and add questions
-        pages.forEach((page, index) => {
-            const questions = page.elements;
-            const p = this.createPageObjectFromJson(surveyModel, page, index, questions);
-            surveyModel.addPage(p);
-        });
+        this.setState({
+            survey : tmpSurvey
+        })
 
-        //console.log('jb', surveyModel.getPageByName(pages[pageNo]));
-        // surveyModel.currentPage = surveyModel.getPageByName(pages[pageNo].name);
-        surveyModel.currentPageNo = stepID - 1;
 
-        return surveyModel;
+        // const {
+        //     surveyID,
+        //     sessionID,
+        //     questions,
+        //     pages,
+        //     stepID,
+        //     currentQuestionsBeingAnswered,
+        //     surveyCompleted,
+        //     survey,
+        // } = storedState;
+        //
+        // // 1. assign top level class properties (no state!)
+        //
+        // Object.assign(this, {
+        //     surveyID,
+        //     sessionID,
+        //     questions,
+        //     pages,
+        //     stepID,
+        //     currentQuestionsBeingAnswered,
+        //     surveyCompleted
+        // });
+        //
+        // // 2. create a new survey model instance from cache
+        //
+        // const surveyModel = new Survey.Model();
+        //
+        // // 3. set the page models and add questions
+        // pages.forEach((page, index) => {
+        //     const questions = page.elements;
+        //     const p = this.createPageObjectFromJson(surveyModel, page, index, questions);
+        //     surveyModel.addPage(p);
+        // });
+        //
+        // //console.log('jb', surveyModel.getPageByName(pages[pageNo]));
+        // // surveyModel.currentPage = surveyModel.getPageByName(pages[pageNo].name);
+        // surveyModel.currentPageNo = stepID - 1;
+        //
+        // return surveyModel;
     }
 
     //this function is fired when the page is loaded
@@ -791,7 +854,7 @@ class FlexibleSurvey extends React.Component {
                         {this.state.loading ? <LoadingSpinner /> : <Survey.Survey model={this.state.survey}/>}
                     </div>
                 </div>
-                <pre>step: { this.stepID }, session: { this.sessionID } </pre>
+                <pre>step: { this.stepID }, session: { this.sessionID }</pre>
                 <Dev label="localState" data={ this.getStateFromStore() } open={ false }/>
             </section>
         );
