@@ -10,4 +10,19 @@ fi
 echo "config file is $conf"
 sudo cp ${conf} /etc/lighttpd/lighttpd.conf
 sudo rm /var/log/lighttpd/error.log
-make && /usr/sbin/lighttpd -tt -f /etc/lighttpd/lighttpd.conf && service lighttpd stop && cp surveyfcgi /var/www/fastcgi && service lighttpd start
+
+make \
+&& /usr/sbin/lighttpd -tt -f /etc/lighttpd/lighttpd.conf \
+&& service lighttpd stop \
+&& cp surveyfcgi /var/www/fastcgi \
+&& service lighttpd start
+
+#todo flexible position
+if [[ $1 == "--skip-npm-build" ]]
+then
+    echo "running without npm build"
+    exit
+fi
+
+echo "build front"
+cd ../front && npm run build
