@@ -468,6 +468,19 @@ int run_test(char *dir, char *test_file)
 	  goto fail;
 	}
       }
+      else if (sscanf(line,"nomatch_string %[^\r\n]",glob)==1) {
+	// Check that the response contains the supplied pattern
+	int matches=0;
+	for(int i=0;i<response_line_count;i++) {
+	  if (strstr(response_lines[i],glob))
+	    matches++;
+	  }
+	if (matches) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : FAIL : There are matches for literal string.\n",tdelta);
+	  goto fail;
+	}
+      }
       else if (sscanf(line,"for %s = %d to %d",var,&first,&last)==3) {
 	if (for_count>10) {
 	  tdelta=gettime_us()-start_time; tdelta/=1000;
@@ -529,6 +542,30 @@ int run_test(char *dir, char *test_file)
 	if (!matches) {
 	  tdelta=gettime_us()-start_time; tdelta/=1000;
 	  fprintf(log,"T+%4.3fms : FAIL : No match for regular expression.\n",tdelta);
+	  goto fail;
+	}
+      }
+      else if (sscanf(line,"nomatch %[^\r\n]",glob)==1) {
+	// Check that the response contains the supplied pattern
+	regex_t regex;
+	int matches=0;
+	int error_code=regcomp(&regex,glob,REG_EXTENDED|REG_NOSUB);
+	if (error_code) {
+	  char err[8192]="";
+	  regerror(error_code,&regex,err,8192);
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : FATAL : Could not compile regular expression: %s\n",
+		  tdelta,err);
+	  goto fatal;
+	}
+	for(int i=0;i<response_line_count;i++) {
+	  if (REG_NOMATCH!=regexec(&regex,response_lines[i],0,NULL,0)) {
+	    matches++;
+	  }
+	}
+	if (matches) {
+	  tdelta=gettime_us()-start_time; tdelta/=1000;
+	  fprintf(log,"T+%4.3fms : FAIL : There is a match to the regular expression.\n",tdelta);
 	  goto fail;
 	}
       }
