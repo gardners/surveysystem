@@ -732,8 +732,9 @@ class FlexibleSurvey extends React.Component {
         return false;
     }
 
-    //when restoring this.pages from the localstorage, the pages stored are an object, and not a PageModel object
-
+    // in localstorage, pages are stored as objects, and not as PageModels
+    // this function create a new page model, add all the questions and their answers to it.
+    // this functions creates as many new page models as there are pages stored in the localstorage
     restorePages(pages, data){
         let newPages=[]
         for (let id in pages){
@@ -751,6 +752,7 @@ class FlexibleSurvey extends React.Component {
         return newPages
     }
 
+    // this function adds to the survey the restored pages just before
     restoreSurvey(survey){
         for (let id in this.pages){
             let page = this.pages[id]
