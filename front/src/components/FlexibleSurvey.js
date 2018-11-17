@@ -877,7 +877,7 @@ class FlexibleSurvey extends React.Component {
                         {this.state.loading ? <LoadingSpinner /> : <Survey.Survey model={this.state.survey}/>}
                     </div>
                 </div>
-                <pre>step: { this.stepID }, session: { this.sessionID }</pre>
+                <pre>step: { this.stepID }, session: { this.sessionID }, env: { process.env.NODE_ENV }</pre>
                 <Dev label="localState" data={ this.getStateFromStore() } open={ false }/>
             </section>
         );
