@@ -76,7 +76,8 @@ let widget = {
             maximumAge: 0
         }
 
-        button.onclick = function () {
+        button.onclick = function (e) {
+            e.preventDefault();
             navigator.geolocation.getCurrentPosition(success, error, options);
 
         }
