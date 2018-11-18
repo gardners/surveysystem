@@ -4,5 +4,5 @@
  * This requires commonjs module loader (no dynamic imports), no worries webpack takes care of that
  */
 
-const config = require(`./config.${process.env.NODE_ENV}.js`);
+const config = require(`./${process.env.NODE_ENV}.config.js`);
 module.exports = config;
