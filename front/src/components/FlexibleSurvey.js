@@ -3,9 +3,13 @@ import * as Survey from "survey-react";
 import { Configuration } from '../conf/config';
 import LoadingSpinner from './LoadingSpinner';
 import geolocationQuestion from '../customQuestions/geolocationQuestion'
-import api from '../api/api'
+
+import api from '../api';
+import Log from '../Log';
 import LocalStorage from '../storage/LocalStorage';
+
 import Dev from './Dev';
+import MessageTray from './MessageTray';
 
 // Represents the Flexible Survey
 class FlexibleSurvey extends React.Component {
@@ -41,7 +45,8 @@ class FlexibleSurvey extends React.Component {
         super(props);
         this.state = {
             survey : new Survey.Model(),
-            loading : true
+            loading : true,
+            messages : [],
         };
     }
 
@@ -71,7 +76,7 @@ class FlexibleSurvey extends React.Component {
         tmpSurvey.onCurrentPageChanged.add(function(sender, options){
             if(!options.oldCurrentPage || !options.newCurrentPage) return; //showing first page
             if(options.oldCurrentPage.visibleIndex > options.newCurrentPage.visibleIndex){
-                console.log('button PREV pressed')
+                Log.log('button PREV pressed')
                 this.goBackToPreviousStep();
             }
         }.bind(this));
@@ -79,7 +84,6 @@ class FlexibleSurvey extends React.Component {
         //eventlistener when user presses next
         //it is not really the next button, but complete button, with a display text set at 'Next', since the current displayed page is always the last one.
         tmpSurvey.onCompleting.add(function(sender, options){
-            //alert(3);
             if (this.surveyCompleted){
                 options.allowComplete = true
             } else {
@@ -112,7 +116,7 @@ class FlexibleSurvey extends React.Component {
     getQuestionById(id){
         const tmpQuestions = this.questions;
         if (!(id in tmpQuestions)){
-            console.error("There is no questions defined by the id "+id);
+            Log.error("There is no questions defined by the id "+id);
             return null;
         }
         return tmpQuestions[id];
@@ -122,7 +126,7 @@ class FlexibleSurvey extends React.Component {
     getPageById(id){
         let tmpPages = this.pages
         if (!(id in tmpPages)){
-            console.error("There is no page defined by the id "+id);
+            Log.error("There is no page defined by the id "+id);
             return null;
         }
         return tmpPages[id];
@@ -149,31 +153,31 @@ class FlexibleSurvey extends React.Component {
         let nbOfQuestionsAdded = 0
         for (let id in questionIds){
             let questionId = questionIds[id]
-            console.log("adding the next question (id="+questionId+") at the end of survey...");
+            Log.log("adding the next question (id="+questionId+") at the end of survey...");
             const questionToAdd = this.getQuestionById(questionId);
             if (!questionToAdd){
-                console.error("failed to get the question with id "+questionId+" !");
+                Log.error("failed to get the question with id "+questionId+" !");
                 return null;
             }
             if(!this.isQuestionAlreadyInSurvey(questionId)){
                 newPage.addQuestion(questionToAdd);
-                console.log("question (id="+questionId+") added at the end of survey...");
+                Log.log("question (id="+questionId+") added at the end of survey...");
                 nbOfQuestionsAdded++
             }
             else{
-                console.error("question (id="+questionId+") already exists in the survey, it is not added again");
+                Log.error("question (id="+questionId+") already exists in the survey, it is not added again");
             }
         }
         let res = null
         if (nbOfQuestionsAdded > 0){
              res = this.saveNewPage(tmpStepID, newPage);
         } else {
-            console.log("no pages are added at the end of the survey, since no questions were added" )
+            Log.log("no pages are added at the end of the survey, since no questions were added" )
             return null
         }
 
         if (!res){
-            console.error("Setting of the next question failed : an already existing id (id="+tmpStepID+") was used as argument ");
+            Log.error("Setting of the next question failed : an already existing id (id="+tmpStepID+") was used as argument ");
             return null;
         }
         this.currentQuestionsBeingAnswered[this.stepID]  = questionIds
@@ -187,28 +191,28 @@ class FlexibleSurvey extends React.Component {
 
     //TODO : comment it later
     async deleteAnswersFromServer(){
-        console.log('==============================================')
-        console.log('deleting answers from server...')
+        Log.log('==============================================')
+        Log.log('deleting answers from server...')
         let currentQuestions = this.getCurrentQuestions()
         for (let id in currentQuestions) {
             let questionToDelete = currentQuestions[id]
             let resolved = await api.deleteAnswer(this.sessionID, questionToDelete.id)
             if(resolved.error) {
-                console.error("An error happened while asking to create a new session ! log :")
-                console.log(resolved.error.response.data)
+                Log.error("An error happened while asking to create a new session ! log :")
+                Log.log(resolved.error.response.data)
             }
         }
     }
 
     //TODO: not used yet in the new version, document it when it's done
     goBackToPreviousStep(){
-        console.log('Going back to previous step...');
+        Log.log('Going back to previous step...');
         this.setState({ loading: true }, async () => {
             await this.deleteAnswersFromServer()
             this.deleteMostRecentPageOfSurvey()
             this.pages = this.pages.slice(0, -1);
             this.stepID = this.stepID -1;
-            console.log('Done going back to the previous step...');
+            Log.log('Done going back to the previous step...');
             this.setState({
                 loading: false
             }, () => {this.saveStateToStore(this.state.survey)})
@@ -218,8 +222,8 @@ class FlexibleSurvey extends React.Component {
 
     //TODO: put completeText in a new function
     deleteMostRecentPageOfSurvey(){
-        console.log("page to delete : ")
-        console.log(this.getCurrentPage())
+        Log.log("page to delete : ")
+        Log.log(this.getCurrentPage())
         let pageToDelete = this.getCurrentPage()
         let tmpSurvey = this.state.survey
         tmpSurvey.completeText = "Next - Fake"
@@ -234,7 +238,8 @@ class FlexibleSurvey extends React.Component {
     //allows to get the root element of the json received by the server
     //when receiving the survey from the server, they must be encapsulated in a root element, like data (by default with a nodejs server) or questions (or whatever you want)
     getRootFromJson(json){
-        console.log('getting the root element from the json...')
+
+        Log.log('getting the root element from the json...')
         let root
         let cpt = 0
         for (let key in json){
@@ -242,11 +247,11 @@ class FlexibleSurvey extends React.Component {
             cpt++
         }
         if(cpt > 1){
-            console.error("ERROR : the json sent must be encapsulated in a UNIQUE root element(that contains all the data)")
+            Log.error("ERROR : the json sent must be encapsulated in a UNIQUE root element(that contains all the data)")
             return null
         }
         if(!root){
-            console.error("ERROR : the json received from the server is empty !")
+            Log.error("ERROR : the json received from the server is empty !")
             return null
         }
         return root
@@ -273,41 +278,43 @@ class FlexibleSurvey extends React.Component {
 
     //TODO : partly done for the moment, wait until its finished before commenting
     processQuestionReceived(questionInJson){
-        console.log("A question was received from the server")
-        console.log("Data received by the server :")
-        console.log(questionInJson)
+        Log.log("A question was received from the server")
+        Log.log("Data received by the server :")
+        Log.log(questionInJson)
+
         let questionIdsToAdd = this.deserialize(questionInJson)
         if (this.isThereAnotherQuestion(questionIdsToAdd)) {
-            console.log("These questions will be added at the end of the survey :")
-            console.log(questionIdsToAdd)
+            Log.log("These questions will be added at the end of the survey :")
+            Log.log(questionIdsToAdd)
             this.setNextQuestionOfSurvey(questionIdsToAdd)
             let tmpSurvey = this.state.survey
             tmpSurvey.nextPage()
             this.setState({
                 survey : tmpSurvey
             })
+            this.saveStateToStore(tmpSurvey)
         } else{
-            console.log("There is no more questions to display, the survey can be completed ")
+            Log.log("There is no more questions to display, the survey can be completed ")
             this.finishSurvey()
         }
     }
 
     //issue #4 : when an unknown property to surveyjs is found, it is added to it to not make the survey crash, and log an error to the user
     checkThatEveryPropertyExist(questionJson){
-        console.log('checking that all the properties exist...')
+        Log.log('checking that all the properties exist...')
         const questionObject = Survey.JsonObject.metaData.createClass(questionJson.type);
         if(!questionObject){
-            console.error("failed to create the question object from the json");
+            Log.error("failed to create the question object from the json");
             return null;
         }
         for (let property in questionJson){
-            console.log('tested property : ' + property )
+            Log.log('tested property : ' + property )
             if (property in questionObject || property === 'type'){//I guess that the type is not needed in the object at this stage
-                console.log('OK')
+                Log.log('OK')
             } else{
-                console.log('NOK')
+                Log.log('NOK')
                 Survey.JsonObject.metaData.addProperty('questionbase', { name: property, type: 'string' });
-                console.error('The property ' + property + ' was added in the survey. But it is a bad practice, you must declare custom properties in the config.js file !')
+                Log.error('The property ' + property + ' was added in the survey. But it is a bad practice, you must declare custom properties in the config.js file !')
             }
         }
     }
@@ -316,19 +323,19 @@ class FlexibleSurvey extends React.Component {
     // at this point, the questions are not added in the survey, they just "exist" as objects
     // warn : each question MUST have a unique id property
     deserialize(json){
-        console.log("starting the deserialization...");
+        Log.log("starting the deserialization...");
 
         let questionIds = [];
         const root = this.getRootFromJson(json)
         if (!root){
-            console.error("ERROR : the json data received by the server is not adequate")
+            Log.error("ERROR : the json data received by the server is not adequate")
             return null
         }
         const questions = json[root];
         let cpt =0;
 
         for ( let key in questions){
-            console.log("deserializing question number " + cpt);
+            Log.log("deserializing question number " + cpt);
             let tmpJsonQuestion = questions[key];
             let questionId = this.getJsonAttribute("id", tmpJsonQuestion)
             questionIds.push(questionId)
@@ -339,7 +346,7 @@ class FlexibleSurvey extends React.Component {
             cpt++;
         }
 
-        console.log("deserialization complete of the " + cpt + " incoming questions")
+        Log.log("deserialization complete of the " + cpt + " incoming questions")
         return(questionIds)
     }
 
@@ -349,12 +356,13 @@ class FlexibleSurvey extends React.Component {
     // returns the attribute
     // warn : the attribute should be a direct attribute of the object (doesn't work with attributes of children)
     getJsonAttribute(attribute, jsonObject){
-        console.log("getting attribute "+ attribute + "...");
+        Log.log('jb', attribute, jsonObject);
+        Log.log("getting attribute "+ attribute + "...");
         if (!jsonObject.hasOwnProperty(attribute)){
-            console.error("the attribute " + attribute + " doesn't exist ! You MUST give an id attribute to each question in the JSON");
+            Log.error("the attribute " + attribute + " doesn't exist ! You MUST give an id attribute to each question in the JSON");
             return null;
         }
-        console.log("attribute " + attribute + " get");
+        Log.log("attribute " + attribute + " get");
         return jsonObject[attribute];
 
     }
@@ -362,39 +370,39 @@ class FlexibleSurvey extends React.Component {
     //saves a new question into the Component properties
     // at this stage, the question is bound with an id, and only "exists" : it is not part of the survey yet
     saveNewQuestion(id, question){
-        console.log("saving question with id="+id+"...");
+        Log.log("saving question with id="+id+"...");
         let tmpQuestions = this.questions;
         tmpQuestions[id] = question;
         this.questions = tmpQuestions;
-        console.log("question with id="+id+" saved");
+        Log.log("question with id="+id+" saved");
     }
 
 
     //saves a new page into the array of pages
     // its ID is the current stepID value
     saveNewPage(id, page){
-        console.log("saving page with id="+id+"...");
+        Log.log("saving page with id="+id+"...");
         let tmpPages = this.pages;
         if (id in tmpPages){
-            console.error("You want to add a page with the same id(id="+id+") as an already existing page !");
+            Log.error("You want to add a page with the same id(id="+id+") as an already existing page !");
             return null;
         }
 
         tmpPages[id] = page;
         this.pages = tmpPages;
-        console.log("page with id="+id+" saved");
+        Log.log("page with id="+id+" saved");
         return true;
     }
 
     //converts a json formatted question into a Question class of surveyjs
     createQuestionObjectFromJson(questionJson) {
         if(!questionJson.type){
-            console.error("no type found in question");
+            Log.error("no type found in question");
             return null;
         }
         const question = Survey.JsonObject.metaData.createClass(questionJson.type);
         if(!question){
-            console.error("failed to create the question object from the json");
+            Log.error("failed to create the question object from the json");
             return null;
         }
         Survey.JsonObject.prototype.toObject(questionJson, question);
@@ -407,7 +415,7 @@ class FlexibleSurvey extends React.Component {
         const classInstance = survey.addNewPage(step);
 
         if(!classInstance ){
-            console.error("failed to create the page object from the json");
+            Log.error("failed to create the page object from the json");
             return null;
         }
 
@@ -445,7 +453,7 @@ class FlexibleSurvey extends React.Component {
     getAnswersOfCurrentPage(){
         let answers = []
         let cpt =0
-        console.log('Getting answers from the current page...')
+        Log.log('Getting answers from the current page...')
         const questionsList = this.getCurrentQuestions()
         for (let id in questionsList){
             let question = questionsList[id]
@@ -457,7 +465,7 @@ class FlexibleSurvey extends React.Component {
                 }
                 cpt++
             } else {
-                console.error('Please answer the question')
+                Log.error('Please answer the question')
                 return null
             }
         }
@@ -467,7 +475,7 @@ class FlexibleSurvey extends React.Component {
     //TODO : this function must be completed and improved
     defineAnswerType(answer){
         if(!answer){
-            console.error('The answer type cannot be determined since the answer is null or undefined !')
+            Log.error('The answer type cannot be determined since the answer is null or undefined !')
             return null
         }
         let questionType = null
@@ -481,7 +489,7 @@ class FlexibleSurvey extends React.Component {
         else{
             questionType = 'text'
         }
-        console.log('The answer type of question #' + answer.id + ' is : ' + questionType)
+        Log.log('The answer type of question #' + answer.id + ' is : ' + questionType)
         return questionType
     }
 
@@ -499,7 +507,7 @@ class FlexibleSurvey extends React.Component {
     // DESERIALISE_INT(a->time_zone_delta);
     // DESERIALISE_INT(a->dst_delta);
     serializeToCSV(lastAnswers){
-        console.log("Serializing" + lastAnswers.length + " answers to CSV...")
+        Log.log("Serializing" + lastAnswers.length + " answers to CSV...")
         let lastAnswersCSV = []
         for(let id in lastAnswers){
             let cptForLogs = parseInt(id) + 1
@@ -527,127 +535,69 @@ class FlexibleSurvey extends React.Component {
                 }
 
             }
-            console.log("Serialization of answer " + cptForLogs + "/" + lastAnswers.length + " done ! output = " + lastAnswerCSV)
+            Log.log("Serialization of answer " + cptForLogs + "/" + lastAnswers.length + " done ! output = " + lastAnswerCSV)
             lastAnswersCSV[id] = lastAnswerCSV
         }
         return lastAnswersCSV
     }
 
 
-    // an answer is sent only if the user answered it
-    async sendAnswersToServer(lastAnswersCSV){
-        console.log('==============================================')
-        console.log("sending answers to server...")
-        let lastResponse = null;
-
-        for (let id in lastAnswersCSV){
-            let answerToSend = lastAnswersCSV[id]
-            let resolved = await api.updateAnswer(this.sessionID, answerToSend)
-            if(resolved.error) {
-                console.error("An error happened while sending the next question ! log :")
-                console.log(resolved.error.response.data)
-            } else {
-                lastResponse = resolved.response.data;
-
-            }
-        }
-        return lastResponse;
-    }
-
     //TODO : function not finished yet, comment it later
     //function called when the user press Next button
       onNextButtonPressed(result, options){
-        console.log("NEXT button pressed")
+        this.setState({ loading: true });
+
+        Log.log("NEXT button pressed")
+        // fetch input value of current question
         const lastAnswers = this.getAnswersOfCurrentPage()
-        console.log(lastAnswers)
+        Log.log(lastAnswers)
         if(!lastAnswers){
-            return null
+            this.setState({ loading: false });
+            return;
         }
 
-        //format it to csv
+        //format current answer to csv
         const lastAnswersCSV = this.serializeToCSV(lastAnswers)
-        console.log("This data will be sent to the server :")
-        console.log(lastAnswersCSV)
+        Log.log("This data will be sent to the server :")
+        Log.log(lastAnswersCSV)
+
+        // send current answer
         //loading while the questions are sent and the next question is not displayed
-        this.setState({ loading: true }, async () => {
-            //TODO : get the next question to display here
-            let nextQuestion = await this.sendAnswersToServer(lastAnswersCSV)
-            //let nextQuestion = await this.askNextQuestion()
-            this.processQuestionReceived(nextQuestion)
-            this.setState({ //stopping the loading screen
-                loading: false
-            }, () => {this.saveStateToStore(this.state.survey)})
-        })
+
+        Promise.all(
+            Object.keys(lastAnswersCSV).map(id => api.updateAnswer(this.sessionID, lastAnswersCSV[id]))
+        )
+        .then(responses => responses.pop()) // last
+        .then(nextQuestion => this.processQuestionReceived(nextQuestion))
+        .then(this.setState({ loading: false }));
     }
 
 
-    //sends a request to the server to get the next set of questions to display
-    async askNextQuestion(){
-        console.log('==============================================')
-        console.log("asking the next question to display...")
-        let resolved = await api.nextQuestion(this.sessionID)
-
-        if(resolved.error) {
-            console.error("An error happened while asking the next question ! log :")
-            console.log(resolved.error.response.data)
-            return null
-        }
-        else{
-            //data contains the next question sent by the server
-            return resolved.response.data
-        }
+    // //sends a request to the server to get the next set of questions to display
+    askNextQuestion(){
+        api.nextQuestion(this.sessionID)
+        .then(nextQuestion => this.processQuestionReceived(nextQuestion))
+        .then(() => this.setState({ loading: false }))
     }
-
-
-    extractSessionId(receivedSessionId){
-        console.log("extracting session ID : ")
-        console.log(receivedSessionId)
-        if (!receivedSessionId){
-            console.error("an error occured while extracting the  session ID ! ")
-            return null
-        }
-        this.sessionID = receivedSessionId
-        return true
-    }
-
-    // TODO : comment
-    async createNewSession(){
-        console.log('==============================================')
-        console.log('creating a new session...')
-        let resolved = await api.createNewSession(this.surveyID)
-        if(resolved.error) {
-            console.error("An error happened while asking to create a new session ! log :")
-            console.log(resolved.error.response.data)
-            return null
-        }
-        else{
-            //data contains the session ID sent by the server
-            return resolved.response.data
-        }
-    }
-
-    // function launched once at the beginning, that sets up the survey and ask to create a new session with a given survey id
-
 
     /**
      * Create a new survey session
      * @see componentDidMount
      */
     initNewSession(){
-        console.log("version 6")
-        this.setState({ loading: true }, async () => {
+        Log.log("version 6")
+        this.setState({ loading: true });
 
-            let receivedSessionId = await this.createNewSession()
-            this.extractSessionId(receivedSessionId)
-            this.initSurveyJs();
-            this.initSurvey();
-            let nextQuestion = await this.askNextQuestion()
-            this.processQuestionReceived(nextQuestion)
+        this.initSurveyJs();
 
-            this.setState({
-                loading: false
-            }, () => {this.saveStateToStore(this.state.survey)})
+        api.createNewSession(this.surveyID)
+        .then((sessID) => {
+             this.sessionID = sessID;
+             this.initSurvey();
+             return sessID;
         })
+        .then(sessID => this.askNextQuestion(sessID))
+        .catch((err) => { throw err; });
     }
 
     /**
@@ -656,23 +606,12 @@ class FlexibleSurvey extends React.Component {
      * @see componentDidMount
      */
     initStoredSession(cachedSess){
-
-        console.log("load cached session, version 6");
-        this.setState({ loading: true }, async () => {
-            this.initSurveyJs();
-            this.mergeStoredState(cachedSess);
-            this.initSurvey();
-            this.setState({
-                loading: false
-            })
-
-        })
-
-
-
-
-
-
+        Log.log("load cached session, version 6");
+        this.setState({ loading: true });
+        this.initSurveyJs();
+        this.mergeStoredState(cachedSess);
+        this.initSurvey();
+        this.setState({ loading: false });
     }
 
     // TODO separate out
@@ -692,28 +631,7 @@ class FlexibleSurvey extends React.Component {
             currentQuestionsBeingAnswered: this.currentQuestionsBeingAnswered,
             surveyCompleted : this.surveyCompleted
         };
-        localStorage.setItem('sessionstate', JSON.stringify(res))
-
-        // const {
-        //     surveyID,
-        //     sessionID,
-        //     questions,
-        //     pages,
-        //     stepID,
-        //     currentQuestionsBeingAnswered,
-        //     surveyCompleted
-        // } = this;
-        //
-        // return LocalStorage.set('sessionstate', {
-        //     survey: this.state.survey,
-        //     surveyID,
-        //     sessionID,
-        //     questions,
-        //     pages,
-        //     stepID,
-        //     currentQuestionsBeingAnswered,
-        //     surveyCompleted
-        // });
+        localStorage.setItem('sessionstate', JSON.stringify(res));
     }
 
     /**
@@ -769,7 +687,6 @@ class FlexibleSurvey extends React.Component {
                 newPages[id] = newPage
             }
         }
-        console.log(newPages)
         return newPages
     }
 
@@ -801,61 +718,24 @@ class FlexibleSurvey extends React.Component {
         this.pages = this.restorePages(res.pages, res.data)
         tmpSurvey = this.restoreSurvey(tmpSurvey)
 
-
         //Set the loaded data into the survey.
-        if (res.currentPageNo)
+        if (res.currentPageNo) {
             tmpSurvey.currentPageNo = res.currentPageNo;
-        if (res.data)
+        }
+
+        if (res.data) {
             tmpSurvey.data = res.data;
+        }
 
         this.setState({
             survey : tmpSurvey
         })
-
-
-        // const {
-        //     surveyID,
-        //     sessionID,
-        //     questions,
-        //     pages,
-        //     stepID,
-        //     currentQuestionsBeingAnswered,
-        //     surveyCompleted,
-        //     survey,
-        // } = storedState;
-        //
-        // // 1. assign top level class properties (no state!)
-        //
-        // Object.assign(this, {
-        //     surveyID,
-        //     sessionID,
-        //     questions,
-        //     pages,
-        //     stepID,
-        //     currentQuestionsBeingAnswered,
-        //     surveyCompleted
-        // });
-        //
-        // // 2. create a new survey model instance from cache
-        //
-        // const surveyModel = new Survey.Model();
-        //
-        // // 3. set the page models and add questions
-        // pages.forEach((page, index) => {
-        //     const questions = page.elements;
-        //     const p = this.createPageObjectFromJson(surveyModel, page, index, questions);
-        //     surveyModel.addPage(p);
-        // });
-        //
-        // //console.log('jb', surveyModel.getPageByName(pages[pageNo]));
-        // // surveyModel.currentPage = surveyModel.getPageByName(pages[pageNo].name);
-        // surveyModel.currentPageNo = stepID - 1;
-        //
-        // return surveyModel;
     }
 
     //this function is fired when the page is loaded
     componentDidMount(){
+
+        Log.subscribe('FlexibleSurvey', messages => this.setState({ messages }));
 
         if(this.validateStoredState()) {
             const sess =  this.getStateFromStore();
@@ -872,13 +752,17 @@ class FlexibleSurvey extends React.Component {
     render(){
         return(
             <section>
+                <pre>step: { this.stepID }, session: { this.sessionID }, env: { process.env.NODE_ENV }</pre>
+
+
                 <div className="jumbotron jumbotron-fluid">
                     <div className="container">
                         {this.state.loading ? <LoadingSpinner /> : <Survey.Survey model={this.state.survey}/>}
                     </div>
                 </div>
-                <pre>step: { this.stepID }, session: { this.sessionID }, env: { process.env.NODE_ENV }</pre>
+
                 <Dev label="localState" data={ this.getStateFromStore() } open={ false }/>
+                <MessageTray entries={ this.state.messages } />
             </section>
         );
     }
