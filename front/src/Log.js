@@ -1,4 +1,5 @@
 /**
+ * @module Log
  * Simple console.log wrapper
  * output disabled in production mode
  */
@@ -6,10 +7,10 @@ import { isScalar } from './Utils';
 
 const toConsole = (process.env.NODE_ENV !== 'production');
 
+
 const add = function (severity, msg, store) {
     const message = (msg === undefined || isScalar(msg)) ? msg : JSON.stringify(msg);
     store.push({
-        id: performance.now(),
         severity,
         message,
     });
@@ -19,7 +20,15 @@ const add = function (severity, msg, store) {
     }
 };
 
+/**
+ * @class
+ * @classdesc Log store
+ */
 class Log {
+    /**
+     * Create a Log store
+     * @return {void}
+     */
     constructor() {
         this.messages = [];
         this.subscribers = {};
@@ -110,22 +119,4 @@ class Log {
     }
 };
 
-
 export default new Log();
-
-// const cons = (typeof window !== 'undefined' && console in window) ? window.console : console;
-//
-// const Log = {};
-//
-// let key;
-// for (key in cons) {
-//     if (typeof cons[key] !== 'function') {
-//         continue;
-//     }
-//     if (process.env.NODE_ENV !== 'production') {
-//         Log[key] = function() {};
-//         continue;
-//     }
-//     Log[key] = cons[key].bind(cons);
-// }
-// export default Log;

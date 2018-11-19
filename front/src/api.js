@@ -1,8 +1,18 @@
+/**
+ * @module APIhttp request API to surveysystem/backend
+ */
+
 import {Configuration} from './conf/config';
 import Log from './Log';
 
 const Api = {
 
+    /**
+     * Request a new session
+     * @param {string} surveyID
+     *
+     * @returns {Promise}
+     */
     createNewSession: function(surveyID){
         let apiConfig = Configuration.apiCalls.createNewSession
         let url = Configuration.serverBaseUrl().concat(apiConfig.path)
@@ -15,6 +25,12 @@ const Api = {
         ;
     },
 
+    /**
+     * Fetches next question(s)
+     * @param {string} surveyID
+     *
+     * @returns {Promise} deserialized json including next questions
+     */
     nextQuestion: function(sessionID){
         let apiConfig = Configuration.apiCalls.nextQuestion
         let url = Configuration.serverBaseUrl().concat(apiConfig.path)
@@ -27,6 +43,12 @@ const Api = {
         ;
     },
 
+    /**
+     * Send answer to current question and receive next question(s)
+     * @param {string} surveyID
+     *
+     * @returns {Promise} deserialized json including next questions
+     */
     updateAnswer: function(sessionID, answer){
         let apiConfig = Configuration.apiCalls.updateAnswer
         let url = Configuration.serverBaseUrl().concat(apiConfig.path)
@@ -38,6 +60,12 @@ const Api = {
         ;
     },
 
+    /**
+     * Delete answer with acurrent id and receive next question(s)
+     * @param {string} surveyID
+     *
+     * @returns {Promise} deserialized json including next questions
+     */
     deleteAnswer: function(sessionID, questionID){
         let apiConfig = Configuration.apiCalls.deleteAnswer
         let url = Configuration.serverBaseUrl().concat(apiConfig.path)
