@@ -757,7 +757,8 @@ class FlexibleSurvey extends React.Component {
 
                 <div className="jumbotron jumbotron-fluid">
                     <div className="container">
-                        {this.state.loading ? <LoadingSpinner /> : <Survey.Survey model={this.state.survey}/>}
+                        <LoadingSpinner loading={ this.state.loading} />
+                        { !this.state.loading && <Survey.Survey model={ this.state.survey }/> }
                     </div>
                 </div>
 

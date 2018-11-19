@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-
+import PropTypes from 'prop-types';
 
 class Welcome extends Component {
     render() {
@@ -8,5 +8,7 @@ class Welcome extends Component {
         );
     }
 }
+
+Welcome.propTypes = {};
 
 export default Welcome;
