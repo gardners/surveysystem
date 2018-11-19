@@ -52,6 +52,10 @@ struct question {
   // Try to populate automatically using a sensor.
   // Only meaningful for lat,lon, where GPS is used, and for date/time
   // questions, where the current date and time are acquired.
+#define FLAG_Mandatory 128
+  // Indicates if it is mandatory to have a (non-null?) answer to the question
+  
+
 
 
   // Text rendering of default value.
