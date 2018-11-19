@@ -160,7 +160,6 @@ class FlexibleSurvey extends React.Component {
             // TODO handle validation properties returned by backend (currently not implemented)
             questionToAdd.isRequired = true;
 
-            questionToAdd
             if (!questionToAdd){
                 Log.error("failed to get the question with id "+questionId+" !");
                 return null;
