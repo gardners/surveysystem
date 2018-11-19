@@ -1,53 +1,77 @@
-import {Configuration} from './conf/config';
+/**
+ * @module APIhttp request API to surveysystem/backend
+ */
+
+import { Configuration } from './conf/config';
 import Log from './Log';
 
 const Api = {
 
-    createNewSession: function(surveyID){
-        let apiConfig = Configuration.apiCalls.createNewSession
-        let url = Configuration.serverBaseUrl().concat(apiConfig.path)
+    /**
+     * Request a new session
+     * @param {string} surveyID
+     *
+     * @returns {Promise}
+     */
+    createNewSession: function(surveyID) {
+        const apiConfig = Configuration.apiCalls.createNewSession;
+        const url = Configuration.serverBaseUrl().concat(apiConfig.path);
 
-        Log.log("Getting the Survey with ID="+ surveyID+"...");
-        Log.log("requesting with " + apiConfig.method + ' request : '+ url + ', with these parameters :');
+        Log.log('Getting the Survey with ID=' + surveyID + '...');
+        Log.log('requesting with ' + apiConfig.method + ' request : ' + url + ', with these parameters :');
 
         return fetch(`${url}?surveyid=${surveyID}`)
-            .then(response => response.text())
-        ;
+            .then(response => response.text());
     },
 
-    nextQuestion: function(sessionID){
-        let apiConfig = Configuration.apiCalls.nextQuestion
-        let url = Configuration.serverBaseUrl().concat(apiConfig.path)
-        apiConfig.params.sessionid = sessionID
+    /**
+     * Fetches next question(s)
+     * @param {string} surveyID
+     *
+     * @returns {Promise} deserialized json including next questions
+     */
+    nextQuestion: function(sessionID) {
+        const apiConfig = Configuration.apiCalls.nextQuestion;
+        const url = Configuration.serverBaseUrl().concat(apiConfig.path);
+        apiConfig.params.sessionid = sessionID;
 
-        Log.log("requesting with " + apiConfig.method + ' request : '+ url + ', with these parameters :')
+        Log.log('requesting with ' + apiConfig.method + ' request : ' + url + ', with these parameters :');
 
         return fetch(`${url}?sessionid=${sessionID}`)
-            .then(response => response.json())
-        ;
+            .then(response => response.json());
     },
 
-    updateAnswer: function(sessionID, answer){
-        let apiConfig = Configuration.apiCalls.updateAnswer
-        let url = Configuration.serverBaseUrl().concat(apiConfig.path)
+    /**
+     * Send answer to current question and receive next question(s)
+     * @param {string} surveyID
+     *
+     * @returns {Promise} deserialized json including next questions
+     */
+    updateAnswer: function(sessionID, answer) {
+        const apiConfig = Configuration.apiCalls.updateAnswer;
+        const url = Configuration.serverBaseUrl().concat(apiConfig.path);
 
-        Log.log("requesting with " + apiConfig.method + ' request : '+ url + ', with these parameters :')
+        Log.log('requesting with ' + apiConfig.method + ' request : ' + url + ', with these parameters :');
 
         return fetch(`${url}?sessionid=${sessionID}&answer=${answer}`)
-            .then(response => response.json())
-        ;
+            .then(response => response.json());
     },
 
-    deleteAnswer: function(sessionID, questionID){
-        let apiConfig = Configuration.apiCalls.deleteAnswer
-        let url = Configuration.serverBaseUrl().concat(apiConfig.path)
+    /**
+     * Delete answer with acurrent id and receive next question(s)
+     * @param {string} surveyID
+     *
+     * @returns {Promise} deserialized json including next questions
+     */
+    deleteAnswer: function(sessionID, questionID) {
+        const apiConfig = Configuration.apiCalls.deleteAnswer;
+        const url = Configuration.serverBaseUrl().concat(apiConfig.path);
 
-        Log.log("requesting with " + apiConfig.method + ' request : '+ url + ', with these parameters :')
+        Log.log('requesting with ' + apiConfig.method + ' request : ' + url + ', with these parameters :');
 
         return fetch(`${url}?sessionid=${sessionID}&questionid=${questionID}`)
-            .then(response => response.text())
-        ;
+            .then(response => response.text());
     }
-}
+};
 
 export default Api;

@@ -1,4 +1,5 @@
 /**
+ * @module Log
  * Simple console.log wrapper
  * output disabled in production mode
  */
@@ -6,20 +7,28 @@ import { isScalar } from './Utils';
 
 const toConsole = (process.env.NODE_ENV !== 'production');
 
-const add = function (severity, msg, store) {
+
+const add = function(severity, msg, store) {
     const message = (msg === undefined || isScalar(msg)) ? msg : JSON.stringify(msg);
     store.push({
-        id: performance.now(),
         severity,
         message,
     });
 
-    if(toConsole) {
+    if (toConsole) {
         (typeof console[severity] === 'function') ? console[severity](msg) : console.log(`[${severity}] ${msg}`);
     }
 };
 
+/**
+ * @class
+ * @classdesc Log store
+ */
 class Log {
+    /**
+     * Create a Log store
+     * @return {void}
+     */
     constructor() {
         this.messages = [];
         this.subscribers = {};
@@ -44,7 +53,7 @@ class Log {
      * @return {void}
      */
     unsubscribe(id) {
-        delete(this.subscribers[id]);
+        delete (this.subscribers[id]);
     }
 
     /**
@@ -66,7 +75,7 @@ class Log {
     log(message) {
         add('log', message, this.messages);
         this.invokeSubscribers();
-        if(toConsole) {
+        if (toConsole) {
             console.log(message);
         }
     }
@@ -79,7 +88,7 @@ class Log {
     error(message) {
         add('error', message, this.messages);
         this.invokeSubscribers();
-        if(toConsole) {
+        if (toConsole) {
             console.error(message);
         }
     }
@@ -92,7 +101,7 @@ class Log {
     warn(message) {
         add('warn', message, this.messages);
         this.invokeSubscribers();
-        if(toConsole) {
+        if (toConsole) {
             console.warn(message);
         }
     }
@@ -104,28 +113,10 @@ class Log {
      */
     debug(message) {
         add('debug', message, this.messages);
-        if(toConsole) {
+        if (toConsole) {
             console.debug(message);
         }
     }
-};
-
+}
 
 export default new Log();
-
-// const cons = (typeof window !== 'undefined' && console in window) ? window.console : console;
-//
-// const Log = {};
-//
-// let key;
-// for (key in cons) {
-//     if (typeof cons[key] !== 'function') {
-//         continue;
-//     }
-//     if (process.env.NODE_ENV !== 'production') {
-//         Log[key] = function() {};
-//         continue;
-//     }
-//     Log[key] = cons[key].bind(cons);
-// }
-// export default Log;
