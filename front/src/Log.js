@@ -8,14 +8,14 @@ import { isScalar } from './Utils';
 const toConsole = (process.env.NODE_ENV !== 'production');
 
 
-const add = function (severity, msg, store) {
+const add = function(severity, msg, store) {
     const message = (msg === undefined || isScalar(msg)) ? msg : JSON.stringify(msg);
     store.push({
         severity,
         message,
     });
 
-    if(toConsole) {
+    if (toConsole) {
         (typeof console[severity] === 'function') ? console[severity](msg) : console.log(`[${severity}] ${msg}`);
     }
 };
@@ -53,7 +53,7 @@ class Log {
      * @return {void}
      */
     unsubscribe(id) {
-        delete(this.subscribers[id]);
+        delete (this.subscribers[id]);
     }
 
     /**
@@ -75,7 +75,7 @@ class Log {
     log(message) {
         add('log', message, this.messages);
         this.invokeSubscribers();
-        if(toConsole) {
+        if (toConsole) {
             console.log(message);
         }
     }
@@ -88,7 +88,7 @@ class Log {
     error(message) {
         add('error', message, this.messages);
         this.invokeSubscribers();
-        if(toConsole) {
+        if (toConsole) {
             console.error(message);
         }
     }
@@ -101,7 +101,7 @@ class Log {
     warn(message) {
         add('warn', message, this.messages);
         this.invokeSubscribers();
-        if(toConsole) {
+        if (toConsole) {
             console.warn(message);
         }
     }
@@ -113,10 +113,10 @@ class Log {
      */
     debug(message) {
         add('debug', message, this.messages);
-        if(toConsole) {
+        if (toConsole) {
             console.debug(message);
         }
     }
-};
+}
 
 export default new Log();

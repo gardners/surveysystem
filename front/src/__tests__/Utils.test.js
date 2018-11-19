@@ -1,8 +1,8 @@
 import { isScalar } from '../Utils';
 
-describe('isScalar', function() {
+describe('isScalar', () => {
 
-    test('should accept scalar values', function() {
+    test('should accept scalar values', () => {
         expect(isScalar(0)).toBe(true);
         expect(isScalar(42)).toBe(true);
         expect(isScalar(Math.PI)).toBe(true);
@@ -21,17 +21,17 @@ describe('isScalar', function() {
 
     });
 
-    test('should reject undefined values and not defined params', function() {
+    test('should reject undefined values and not defined params', () => {
         expect(isScalar(undefined)).toBe(false);
         expect(isScalar()).toBe(false);
     });
 
-    test('should reject complex values', function() {
+    test('should reject complex values', () => {
         expect(isScalar({})).toBe(false);
         expect(isScalar([])).toBe(false);
         expect(isScalar(Symbol())).toBe(false);
         expect(isScalar(Date)).toBe(false);
-        expect(isScalar(()=> 42)).toBe(false);
+        expect(isScalar(() => 42)).toBe(false);
     });
 
 });
