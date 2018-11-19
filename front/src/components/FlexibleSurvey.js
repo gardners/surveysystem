@@ -155,6 +155,12 @@ class FlexibleSurvey extends React.Component {
             let questionId = questionIds[id]
             Log.log("adding the next question (id="+questionId+") at the end of survey...");
             const questionToAdd = this.getQuestionById(questionId);
+
+            // issues #5, #28 set answer to "required"
+            // TODO handle validation properties returned by backend (currently not implemented)
+            questionToAdd.isRequired = true;
+
+            questionToAdd
             if (!questionToAdd){
                 Log.error("failed to get the question with id "+questionId+" !");
                 return null;
