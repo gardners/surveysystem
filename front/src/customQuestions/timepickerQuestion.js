@@ -1,31 +1,31 @@
-let timepicker = {
-    name: "timepicker",
-    title: "time picker",
-    iconName: "",
+const timepicker = {
+    name: 'timepicker',
+    title: 'time picker',
+    iconName: '',
     //load widget icon and name at left panel
     widgetIsLoaded: function() {
         return !!$ && !!$.fn.timepicker;
     },
     isFit: function(question) {
-        return question.getType() === "timepicker";
+        return question.getType() === 'timepicker';
     },
     //Append control type of widget
     htmlTemplate: "<input class='form-control widget-timepicker' type='text'>",
     afterRender: function(question, el) {
-        var $el = $(el).is(".widget-timepicker") ? $(el) : $(el).find(".widget-timepicker");
-        var config = question.config || {};
-        var pickerWidget = $el.timepicker(config);
+        const $el = $(el).is('.widget-timepicker') ? $(el) : $(el).find('.widget-timepicker');
+        const config = question.config || {};
+        const pickerWidget = $el.timepicker(config);
 
         //set time on question.value changed
-        var updateValueHandler = function() {
+        const updateValueHandler = function() {
             pickerWidget.timepicker('update', question.value);
 
         };
         if (question.isReadOnly) {
-            el.setAttribute("disabled", true);
+            el.setAttribute('disabled', true);
         }
         //Update question value on value change
-        pickerWidget.on('changeTime.timepicker', function(e) {
+        pickerWidget.on('changeTime.timepicker', (e) => {
             question.value = e.time.value;
         });
         //set initial data
@@ -33,28 +33,28 @@ let timepicker = {
         question.valueChangedCallback = updateValueHandler;
         question.readOnlyChangedCallback = function() {
             if (question.isReadOnly) {
-                el.setAttribute("disabled", true);
+                el.setAttribute('disabled', true);
             } else {
-                el.removeAttribute("disabled");
+                el.removeAttribute('disabled');
             }
         };
     },
     activatedByChanged: function(activatedBy) {
         Survey.JsonObject.metaData.addClass(
-            "timepicker", [{
-                name: "inputType",
+            'timepicker', [{
+                name: 'inputType',
                 visible: false
             }, {
-                name: "inputFormat",
+                name: 'inputFormat',
                 visible: false
             }, {
-                name: "inputMask",
+                name: 'inputMask',
                 visible: false
             }],
             null,
-            "text"
+            'text'
         );
-        Survey.JsonObject.metaData.addProperty("timepicker", {
+        Survey.JsonObject.metaData.addProperty('timepicker', {
             pickTime: false
         });
 
@@ -62,13 +62,11 @@ let timepicker = {
     },
 
     willUnmount: function(question, el) {
-        var $el = $(el).is(".widget-timepicker") ? $(el) : $(el).find(".widget-timepicker");
-        $el.timepicker("destroy");
+        const $el = $(el).is('.widget-timepicker') ? $(el) : $(el).find('.widget-timepicker');
+        $el.timepicker('destroy');
     }
 
 };
-
-
 
 
 export default timepicker;
