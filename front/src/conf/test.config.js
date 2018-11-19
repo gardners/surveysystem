@@ -7,8 +7,10 @@ export const Configuration = {
         return(baseURL)
     },
 
-    //survey theme
-    surveyTheme: '', // leave empty for testing as suveyJs tries to read document.styleSheets
+    // survey meta data
+    surveyTheme: 'bootstrap',
+    surveyProvider: 'Bar',
+    surveys: ['foo'], // first survey is default survey
 
     //custom properties
     customProperties : [
