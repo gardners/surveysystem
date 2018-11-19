@@ -420,7 +420,7 @@ class FlexibleSurvey extends React.Component {
         }
 
         // add question instances to page
-        questions.map((questionJson) => {
+        questions.forEach((questionJson) => {
             // build question instance
             const q = this.createQuestionObjectFromJson(questionJson);
             classInstance.addQuestion(q);
@@ -510,7 +510,7 @@ class FlexibleSurvey extends React.Component {
         Log.log("Serializing" + lastAnswers.length + " answers to CSV...")
         let lastAnswersCSV = []
         for(let id in lastAnswers){
-            let cptForLogs = parseInt(id) + 1
+            let cptForLogs = parseInt(id, 10) + 1
             let lastAnswer = lastAnswers[id]
             let lastAnswerCSV = ""
             let answerFieldsCSV = {
