@@ -5,6 +5,15 @@
 import { Configuration } from './conf/config';
 import Log from './Log';
 
+
+const responseError = function (response) {
+    const { status, statusText } = response;
+    return response.text()
+        .then((text) => {
+            throw new Error(`[${status}: ${statusText}], reason: ${text}`)
+        });
+};
+
 const Api = {
 
     /**
@@ -21,7 +30,12 @@ const Api = {
         Log.log('requesting with ' + apiConfig.method + ' request : ' + url + ', with these parameters :');
 
         return fetch(`${url}?surveyid=${surveyID}`)
-            .then(response => response.text());
+            .then((response) => {
+                if (!response.ok) {
+                    return responseError(response);
+                }
+                return response.text();
+            });
     },
 
     /**
@@ -38,7 +52,12 @@ const Api = {
         Log.log('requesting with ' + apiConfig.method + ' request : ' + url + ', with these parameters :');
 
         return fetch(`${url}?sessionid=${sessionID}`)
-            .then(response => response.json());
+            .then((response) => {
+                if (!response.ok) {
+                    return responseError(response);
+                }
+                return response.json();
+            });
     },
 
     /**
@@ -54,7 +73,12 @@ const Api = {
         Log.log('requesting with ' + apiConfig.method + ' request : ' + url + ', with these parameters :');
 
         return fetch(`${url}?sessionid=${sessionID}&answer=${answer}`)
-            .then(response => response.json());
+            .then((response) => {
+                if (!response.ok) {
+                    return responseError(response);
+                }
+                return response.json();
+            });
     },
 
     /**
@@ -70,7 +94,12 @@ const Api = {
         Log.log('requesting with ' + apiConfig.method + ' request : ' + url + ', with these parameters :');
 
         return fetch(`${url}?sessionid=${sessionID}&questionid=${questionID}`)
-            .then(response => response.text());
+            .then((response) => {
+                if (!response.ok) {
+                    return responseError(response);
+                }
+                return response.json();
+            });
     }
 };
 
