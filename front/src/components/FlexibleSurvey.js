@@ -202,35 +202,25 @@ class FlexibleSurvey extends React.Component {
         return true
     }
 
-    //TODO : comment it later
-    //TODO: new api calls!
-    async deleteAnswersFromServer(){
-        Log.log('==============================================')
-        Log.log('deleting answers from server...')
-        let currentQuestions = this.getCurrentQuestions()
-        for (let id in currentQuestions) {
-            let questionToDelete = currentQuestions[id]
-            let resolved = await api.deleteAnswer(this.sessionID, questionToDelete.id)
-            if(resolved.error) {
-                Log.error("An error happened while asking to create a new session ! log :")
-                Log.log(resolved.error.response.data)
-            }
-        }
-    }
-
-    //TODO: not used yet in the new version, document it when it's done
+    // TODO (vlad): not used yet in the new version, document it when it's done
+    // BIG TODO: delete request returns new next_questions.
+    //      They might be different due to the runtime nature of the survey
+    //      so we need to do the same as on "next" here
     goBackToPreviousStep(){
         Log.log('Going back to previous step...');
-        this.setState({ loading: true }, async () => {
-            await this.deleteAnswersFromServer()
-            this.deleteMostRecentPageOfSurvey()
-            this.pages = this.pages.slice(0, -1);
-            this.stepID = this.stepID -1;
-            Log.log('Done going back to the previous step...');
-            this.setState({
-                loading: false
-            }, () => {this.saveStateToStore(this.state.survey)})
-        });
+        const questions = this.getCurrentQuestions();
+        this.setState({ loading: true });
+        Promise.all(
+            questions.map(question => api.deleteAnswer(this.sessionID, question.id))
+        )
+            .then(() => {
+                this.deleteMostRecentPageOfSurvey();
+                this.pages = this.pages.slice(0, -1);
+                this.stepID = this.stepID - 1;
+                this.saveStateToStore(this.state.survey);
+                this.setState({ loading: false });
+            })
+            .catch(err => this.alert(err));
     }
 
     //TODO: put completeText in a new function
@@ -538,10 +528,10 @@ class FlexibleSurvey extends React.Component {
         Promise.all(
             Object.keys(csvRows).map(id => api.updateAnswer(this.sessionID, csvRows[id]))
         )
-        .then(responses => responses.pop()) // last
-        .then(nextQuestion => this.processQuestionReceived(nextQuestion))
-        .then(this.setState({ loading: false }))
-        .catch(err => this.alert(err));
+            .then(responses => responses.pop()) // last
+            .then(nextQuestion => this.processQuestionReceived(nextQuestion))
+            .then(this.setState({ loading: false }))
+            .catch(err => this.alert(err));
     }
 
 
