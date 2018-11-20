@@ -7,6 +7,7 @@ import geolocationQuestion from '../customQuestions/geolocationQuestion'
 import api from '../api';
 import Log from '../Log';
 import LocalStorage from '../storage/LocalStorage';
+import { serializeAnswer } from '../payload-serializer';
 
 import Dev from './Dev';
 import MessageTray from './MessageTray';
@@ -35,9 +36,6 @@ class FlexibleSurvey extends React.Component {
     //when there are no more questions to ask, set to true
     surveyCompleted = false
 
-
-
-
     // Constructor, needed in every case in React
     // survey is the react component from surveyjs. It is the backbone of this front app
     // loading is used to know if an ajax request is being made. If so, a loading spinner is shown while loading == true
@@ -49,7 +47,6 @@ class FlexibleSurvey extends React.Component {
             messages : [],
         };
     }
-
 
     // configure SuveyJs
     // put here the configuration of the global survey object, such as the theme, etc.
@@ -193,7 +190,6 @@ class FlexibleSurvey extends React.Component {
         return true
     }
 
-
     //TODO : comment it later
     async deleteAnswersFromServer(){
         Log.log('==============================================')
@@ -224,7 +220,6 @@ class FlexibleSurvey extends React.Component {
         });
     }
 
-
     //TODO: put completeText in a new function
     deleteMostRecentPageOfSurvey(){
         Log.log("page to delete : ")
@@ -238,7 +233,6 @@ class FlexibleSurvey extends React.Component {
             survey: tmpSurvey
         })
     }
-
 
     //allows to get the root element of the json received by the server
     //when receiving the survey from the server, they must be encapsulated in a root element, like data (by default with a nodejs server) or questions (or whatever you want)
@@ -279,7 +273,6 @@ class FlexibleSurvey extends React.Component {
         }
         return true
     }
-
 
     //TODO : partly done for the moment, wait until its finished before commenting
     processQuestionReceived(questionInJson){
@@ -498,79 +491,39 @@ class FlexibleSurvey extends React.Component {
         return questionType
     }
 
-
-    //TODO : not finished yet properly, wait until commenting
-    //TODO : special case for lat lon not implemented
-    // the answer has these fields :
-    // DESERIALISE_STRING(a->uid);
-    // DESERIALISE_STRING(a->text);
-    // DESERIALISE_LONGLONG(a->value);
-    // DESERIALISE_LONGLONG(a->lat);
-    // DESERIALISE_LONGLONG(a->lon);
-    // DESERIALISE_LONGLONG(a->time_begin);
-    // DESERIALISE_LONGLONG(a->time_end);
-    // DESERIALISE_INT(a->time_zone_delta);
-    // DESERIALISE_INT(a->dst_delta);
-    serializeToCSV(lastAnswers){
-        Log.log("Serializing" + lastAnswers.length + " answers to CSV...")
-        let lastAnswersCSV = []
-        for(let id in lastAnswers){
-            let cptForLogs = parseInt(id, 10) + 1
-            let lastAnswer = lastAnswers[id]
-            let lastAnswerCSV = ""
-            let answerFieldsCSV = {
-                uid : lastAnswer.id,
-                text : '0',
-                value : '0',
-                lat : '0',
-                lon : '0',
-                time_begin : '0',
-                time_end : '0',
-                time_zone_delta : '0',
-                dst_delta : '0'
-            }
-            let questionType = this.defineAnswerType(lastAnswer)
-            answerFieldsCSV[questionType] = lastAnswer.answer //at this moment, the answerFieldsCSV contains the questionID, and the answer of the question in the good field
-            for (let fieldID in answerFieldsCSV){
-                if(fieldID === "uid"){
-                    lastAnswerCSV = lastAnswerCSV.concat(answerFieldsCSV[fieldID])
-                }
-                else {
-                    lastAnswerCSV = lastAnswerCSV.concat(':',answerFieldsCSV[fieldID])
-                }
-
-            }
-            Log.log("Serialization of answer " + cptForLogs + "/" + lastAnswers.length + " done ! output = " + lastAnswerCSV)
-            lastAnswersCSV[id] = lastAnswerCSV
-        }
-        return lastAnswersCSV
-    }
-
-
-    //TODO : function not finished yet, comment it later
-    //function called when the user press Next button
-      onNextButtonPressed(result, options){
+    /**
+     * Send answers as csv fragments to backend. This is injected as a SurveyJS callback and will invoked when the user presses the "next" button
+     * @see https://surveyjs.io/Documentation/Library/?id=surveymodel#onCompleting
+     *
+     * @returns {void}
+     */
+     // TODO (Vlad): function not finished yet, comment it later
+     // TODO Joerg: this can be further separeated out
+    onNextButtonPressed(){
         this.setState({ loading: true });
 
-        Log.log("NEXT button pressed")
-        // fetch input value of current question
-        const lastAnswers = this.getAnswersOfCurrentPage()
-        Log.log(lastAnswers)
-        if(!lastAnswers){
+        Log.log('onNextButtonPressed')
+
+        // 1. fetch input value of current question
+        const answers = this.getAnswersOfCurrentPage()
+        Log.log(answers)
+        if(!answers){
             this.setState({ loading: false });
             return;
         }
 
-        //format current answer to csv
-        const lastAnswersCSV = this.serializeToCSV(lastAnswers)
-        Log.log("This data will be sent to the server :")
-        Log.log(lastAnswersCSV)
+        // 2. format current answer to csv
+        const csvRows = answers.map((entry) => {
+            const { id, answer, question } = entry;
+            const type = question.getType();
+            return serializeAnswer(id, answer, type);
+        });
 
-        // send current answer
-        //loading while the questions are sent and the next question is not displayed
-
+        // 3. send current answer(s)
+        // loading while the questions are sent and the next question is not displayed
+        // each answer is a single request, we are bundling them into Promise.all
         Promise.all(
-            Object.keys(lastAnswersCSV).map(id => api.updateAnswer(this.sessionID, lastAnswersCSV[id]))
+            Object.keys(csvRows).map(id => api.updateAnswer(this.sessionID, csvRows[id]))
         )
         .then(responses => responses.pop()) // last
         .then(nextQuestion => this.processQuestionReceived(nextQuestion))
