@@ -4,14 +4,13 @@ description Answer questions, and obtain a sensible next question each time
 definesurvey 004_pythonAlgSequencedAnswer
 version 1
 Silly test survey updated
-email,2,email,,"Email Address","{}",""
-password1,2,password1,,"Password","{}",""
-password2,2,password2,,"Confirm Password","{}",""
-beforeStartingSurvey,2,beforeStartingSurvey,,"Please answer the following important questions before commencing the survey...","{}","'subQnCount', 3"
-MedicalConditions,1,MedicalConditions,,"Are you currently under the care of a physician for depression and/or anxiety?","{Yes,No}",""
-Medication,1,Medication,,"Are you currently taking prescription medications that may cause you to be drowsy during the day","{Yes,No}",""
-RestlessLegs,1,RestlessLegs,,"Do you regularly experience unpleasant sensations in your legs that cause an urge to move your legs predominantly occurring in the evening or at night?","{Yes,No}",""
-disclaimer,2,disclaimer,,"The SleepBetter Survey is designed to determine if adults suffer from one or more common sleep disorders and to help them manage their sleep problems - it does not apply to infants or children.\n The SleepBetter Survey may recommend treatments for sleep problems that may not provide optimal results for people who have a serious medical condition known to disturb sleep such as heart failure, poorly controlled asthma or severe lung disease, end stage kidney disease requiring renal dialysis, severe pain requiring daily opioid medication, cancer on chemotherapy, severe depression or anxiety.\n If you suffer from any of these conditions please consult a doctor before implementing any sleep improvement measures.","{}",""endofsurvey
+email:Email Address:Email Address:TEXT:-1:email:-999:999:2:0:0:
+password1:Password:Password:TEXT:-1:password1:-999:999:2:0:0:
+password2:Confirm Password:Confirm Password:TEXT:-1:password2:-999:999:2:0:0:
+beforeStartingSurvey:Please answer the following important questions before commencing the survey...:Please answer the following important questions before commencing the survey...:TEXT:-1:beforeStartingSurvey:-999:999:2:0:0:
+MedicalConditions:Are you currently under the care of a physician for depression and/or anxiety?:Are you currently under the care of a physician for depression and/or anxiety?:MULTICHOICE:-1:MedicalConditions:-999:999:2:2:Yes,No:
+Medication:Are you currently taking prescription medications that may cause you to be drowsy during the day:Are you currently taking prescription medications that may cause you to be drowsy during the day:MULTICHOICE:-1:Medication:-999:999:2:2:Yes,No:
+endofsurvey
 
 python
 from os.path import expanduser
@@ -19,14 +18,16 @@ import sys
 sys.path.insert(0,'/home/wall0159/code/surveysystem/backend/python')
 from questionLogic import ProcessQuestions
 def nextquestion_004_pythonAlgSequencedAnswer(questions,answers):
+        
         PQ = ProcessQuestions(questions=questions)
         nextID = PQ.calcNextQnID(None,answers)
-        with open('/tmp/pythoninputs.txt', 'w') as f:
+        with open('/tmp/pythoninputs.txt', 'a') as f:
+                f.write('==================')
                 f.write("QNs: %s\n" % questions)
                 f.write("Qn len: %d\n" % len(questions))
                 f.write("ans: %s\n" % answers)
                 f.write("ans len: %d\n" % len(answers))
-                f.write("nextID: %s\n" % nextID)
+                f.write("nextID: '%s'\n" % nextID)
         return(nextID)
 endofpython
 
@@ -42,41 +43,43 @@ verify_session
 endofsession
 
 request 200 addanswer?sessionid=$SESSION&answer=email:test.email@domain.com:0:0:0:0:0:0:0
-
+# password1:Password:Password:TEXT:-1:password1:-999:999:2:0:0:
 # Check that we are offered the next question to answer
-#match_string {"next_questions": [{"id": "password1", "name": "question2", "title": "What is the answer to question 1?", "title_text": "What is the answer to question 2?", "type": "text"}]}
-match_string 'password1'
-
-# Make sure answer ends up in file
-verify_session
-004_pythonAlgSequencedAnswer/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
-email:test2.email@domain.com:0:0:0:0:0:0:0
-endofsession
-
-request 200 addanswer?sessionid=$SESSION&answer=password1:myPa$$w0rD:0:0:0:0:0:0:0
-
-# Check that we are offered the next question to answer
-match_string {"next_questions": [{"id": "question3", "name": "question3", "title": "How boring was question 1?", "title_text": "How boring was question 2?", "type": "text"}]}
+match_string {"next_questions": [{"id": "password1", "name": "password1", "title": "Password", "title_text": "Password", "type": "text"}]}
+match_string "password1"
 
 # Make sure answer ends up in file
 verify_session
 004_pythonAlgSequencedAnswer/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 email:test.email@domain.com:0:0:0:0:0:0:0
-pasSword1:myPa$$w0rD:0:0:0:0:0:0:0
 endofsession
 
-request 200 addanswer?sessionid=$SESSION&answer=password22:myPa$$w0rD:0:0:0:0:0:0:0
-
-# Check that we are offered the next question to answer
-match_string {"next_questions": [{"id": "question3", "name": "question3", "title": "How boring was question 1?", "title_text": "How boring was question 2?", "type": "text"}]}
-
-# Make sure answer ends up in file
+request 200 addanswer?sessionid=$SESSION&answer=password1:myPaSSw0rD:0:0:0:0:0:0:0
+#
+## Check that we are offered the next question to answer
+##match_string {"next_questions": [{"id": "password2", "name": "question3", "title": "How boring was question 1?", "title_text": "How boring was question 2?", "type": "text"}]}
+match_string "password2"
+#
+## Make sure answer ends up in file
 verify_session
 004_pythonAlgSequencedAnswer/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 email:test.email@domain.com:0:0:0:0:0:0:0
-password1:myPa$$w0rD:0:0:0:0:0:0:0
-password2:myPa$$w0rD:0:0:0:0:0:0:0
+password1:myPaSSw0rD:0:0:0:0:0:0:0
 endofsession
-
+#
+request 200 addanswer?sessionid=$SESSION&answer=password2:myPaSSw0rD:0:0:0:0:0:0:0
+#
+## Check that we are offered the next question to answer
+##match_string {"next_questions": [{"id": "beforeStartingSurvey", "name": "question3", "title": "How boring was question 1?", "title_text": "How boring was question 2?", "type": "text"}]}
+match_string "beforeStartingSurvey"
+#
+## Make sure answer ends up in file
+verify_session
+004_pythonAlgSequencedAnswer/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+email:test.email@domain.com:0:0:0:0:0:0:0
+password1:myPaSSw0rD:0:0:0:0:0:0:0
+password2:myPaSSw0rD:0:0:0:0:0:0:0
+endofsession
+#
 
 
