@@ -202,35 +202,25 @@ class FlexibleSurvey extends React.Component {
         return true
     }
 
-    //TODO : comment it later
-    //TODO: new api calls!
-    async deleteAnswersFromServer(){
-        Log.log('==============================================')
-        Log.log('deleting answers from server...')
-        let currentQuestions = this.getCurrentQuestions()
-        for (let id in currentQuestions) {
-            let questionToDelete = currentQuestions[id]
-            let resolved = await api.deleteAnswer(this.sessionID, questionToDelete.id)
-            if(resolved.error) {
-                Log.error("An error happened while asking to create a new session ! log :")
-                Log.log(resolved.error.response.data)
-            }
-        }
-    }
-
-    //TODO: not used yet in the new version, document it when it's done
+    // TODO (vlad): not used yet in the new version, document it when it's done
+    // BIG TODO: delete request returns new next_questions.
+    //      They might be different due to the runtime nature of the survey
+    //      so we need to do the same as on "next" here
     goBackToPreviousStep(){
         Log.log('Going back to previous step...');
-        this.setState({ loading: true }, async () => {
-            await this.deleteAnswersFromServer()
-            this.deleteMostRecentPageOfSurvey()
-            this.pages = this.pages.slice(0, -1);
-            this.stepID = this.stepID -1;
-            Log.log('Done going back to the previous step...');
-            this.setState({
-                loading: false
-            }, () => {this.saveStateToStore(this.state.survey)})
-        });
+        const questions = this.getCurrentQuestions();
+        this.setState({ loading: true });
+        Promise.all(
+            questions.map(question => api.deleteAnswer(this.sessionID, question.id))
+        )
+            .then(() => {
+                this.deleteMostRecentPageOfSurvey();
+                this.pages = this.pages.slice(0, -1);
+                this.stepID = this.stepID - 1;
+                this.saveStateToStore(this.state.survey);
+                this.setState({ loading: false });
+            })
+            .catch(err => this.alert(err));
     }
 
     //TODO: put completeText in a new function
@@ -247,28 +237,6 @@ class FlexibleSurvey extends React.Component {
         })
     }
 
-    //allows to get the root element of the json received by the server
-    //when receiving the survey from the server, they must be encapsulated in a root element, like data (by default with a nodejs server) or questions (or whatever you want)
-    getRootFromJson(json){
-
-        Log.log('getting the root element from the json...')
-        let root
-        let cpt = 0
-        for (let key in json){
-            root = key
-            cpt++
-        }
-        if(cpt > 1){
-            Log.error("ERROR : the json sent must be encapsulated in a UNIQUE root element(that contains all the data)")
-            return null
-        }
-        if(!root){
-            Log.error("ERROR : the json received from the server is empty !")
-            return null
-        }
-        return root
-    }
-
     //TODO: not used yet in the new version, document it when it's done
     finishSurvey(){
         let tmpSurvey = this.state.survey
@@ -280,6 +248,7 @@ class FlexibleSurvey extends React.Component {
     }
 
     //there are no more questions to display when no more questions are sent from the server (i.e. when the array questions is empty)
+    // TODO migrate to TODO separate to new SurveyJSManager module
     isThereAnotherQuestion(questionIds){
         if (Array.isArray(questionIds) && questionIds.length === 0){
             return false
@@ -311,6 +280,7 @@ class FlexibleSurvey extends React.Component {
     }
 
     //issue #4 : when an unknown property to surveyjs is found, it is added to it to not make the survey crash, and log an error to the user
+    // TODO migrate to TODO separate to new SurveyJSManager module
     checkThatEveryPropertyExist(questionJson){
         Log.log('checking that all the properties exist...')
         const questionObject = Survey.JsonObject.metaData.createClass(questionJson.type);
@@ -333,49 +303,31 @@ class FlexibleSurvey extends React.Component {
     // transforms the json list of questions into objects, used later to manipulate the survey.
     // at this point, the questions are not added in the survey, they just "exist" as objects
     // warn : each question MUST have a unique id property
+    // TODO migrate to TODO separate to new SurveyJSManager module
     deserialize(json){
         Log.log("starting the deserialization...");
 
-        let questionIds = [];
-        const root = this.getRootFromJson(json)
-        if (!root){
-            Log.error("ERROR : the json data received by the server is not adequate")
-            return null
+        if (typeof json.next_questions === 'undefined') {
+            this.alert(new Error("the json data received by the server is not adequate"));
+            return [];
         }
-        const questions = json[root];
-        let cpt =0;
 
-        for ( let key in questions){
-            Log.log("deserializing question number " + cpt);
-            let tmpJsonQuestion = questions[key];
-            let questionId = this.getJsonAttribute("id", tmpJsonQuestion)
-            questionIds.push(questionId)
+        const questionIds = [];
+        const questions = json.next_questions;
+
+        questions.forEach((question, index) => {
+            Log.log("deserializing question number " + index);
+            const { id } = question;
+
             //issue #4 : check that all the properties are recognised by surveyjs. If not, adds them and log an error message
-            this.checkThatEveryPropertyExist(tmpJsonQuestion)
-            let newQuestion = this.createQuestionObjectFromJson(tmpJsonQuestion);
-            this.saveNewQuestion(questionId, newQuestion);
-            cpt++;
-        }
+            this.checkThatEveryPropertyExist(question)
+            let questionInstance = this.createQuestionObjectFromJson(question);
+            this.saveNewQuestion(id, questionInstance);
+            questionIds.push(id);
+        });
 
-        Log.log("deserialization complete of the " + cpt + " incoming questions")
-        return(questionIds)
-    }
-
-
-    // allows to get attributes in question objects, like the id (a question shouldn't have an id attribute in surveyjs)
-    // can be also used to get any attribute of any object
-    // returns the attribute
-    // warn : the attribute should be a direct attribute of the object (doesn't work with attributes of children)
-    getJsonAttribute(attribute, jsonObject){
-        Log.log('jb', attribute, jsonObject);
-        Log.log("getting attribute "+ attribute + "...");
-        if (!jsonObject.hasOwnProperty(attribute)){
-            Log.error("the attribute " + attribute + " doesn't exist ! You MUST give an id attribute to each question in the JSON");
-            return null;
-        }
-        Log.log("attribute " + attribute + " get");
-        return jsonObject[attribute];
-
+        Log.log("deserialization complete of the " + questions.length + " incoming questions")
+        return questionIds;
     }
 
     //saves a new question into the Component properties
@@ -538,10 +490,10 @@ class FlexibleSurvey extends React.Component {
         Promise.all(
             Object.keys(csvRows).map(id => api.updateAnswer(this.sessionID, csvRows[id]))
         )
-        .then(responses => responses.pop()) // last
-        .then(nextQuestion => this.processQuestionReceived(nextQuestion))
-        .then(this.setState({ loading: false }))
-        .catch(err => this.alert(err));
+            .then(responses => responses.pop()) // last
+            .then(nextQuestion => this.processQuestionReceived(nextQuestion))
+            .then(this.setState({ loading: false }))
+            .catch(err => this.alert(err));
     }
 
 
