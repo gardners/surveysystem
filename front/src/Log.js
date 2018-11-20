@@ -14,10 +14,6 @@ const add = function(severity, msg, store) {
         severity,
         message,
     });
-
-    if (toConsole) {
-        (typeof console[severity] === 'function') ? console[severity](msg) : console.log(`[${severity}] ${msg}`);
-    }
 };
 
 /**
