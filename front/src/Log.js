@@ -9,7 +9,13 @@ const toConsole = (process.env.NODE_ENV !== 'production');
 
 
 const add = function(severity, msg, store) {
-    const message = (msg === undefined || isScalar(msg)) ? msg : JSON.stringify(msg);
+    let message = null;
+    if (msg instanceof Error) { // stringifying Error instances returns an empty object
+        message = msg.toString();
+    } else {
+        message = (msg === undefined || isScalar(msg)) ? msg : JSON.stringify(msg);//TODO try catch
+    }
+
     store.push({
         severity,
         message,
