@@ -59,7 +59,6 @@ describe('serialize to CSV row', () => {
     });
 
     xtest('type: datetime', () => {
-
     });
 
 });

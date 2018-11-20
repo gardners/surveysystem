@@ -9,6 +9,8 @@ import Log from '../Log';
 import LocalStorage from '../storage/LocalStorage';
 import { serializeAnswer } from '../payload-serializer';
 
+import Alert from './Alert';
+
 import Dev from './Dev';
 import MessageTray from './MessageTray';
 
@@ -45,6 +47,7 @@ class FlexibleSurvey extends React.Component {
             survey : new Survey.Model(),
             loading : true,
             messages : [],
+            alerts: [],
         };
     }
 
@@ -107,6 +110,15 @@ class FlexibleSurvey extends React.Component {
             Survey.JsonObject.metaData.addProperty(customProperty.basetype, { name: customProperty.name, type: customProperty.type });
         }
 
+    }
+
+    alert(error) {
+        Log.error(error);
+        let { alerts } = this.state;
+        alerts.push(error);
+        this.setState({
+            alerts,
+        });
     }
 
     //get a question saved in the component's properties by its id
@@ -191,6 +203,7 @@ class FlexibleSurvey extends React.Component {
     }
 
     //TODO : comment it later
+    //TODO: new api calls!
     async deleteAnswersFromServer(){
         Log.log('==============================================')
         Log.log('deleting answers from server...')
@@ -527,7 +540,8 @@ class FlexibleSurvey extends React.Component {
         )
         .then(responses => responses.pop()) // last
         .then(nextQuestion => this.processQuestionReceived(nextQuestion))
-        .then(this.setState({ loading: false }));
+        .then(this.setState({ loading: false }))
+        .catch(err => this.alert(err));
     }
 
 
@@ -536,6 +550,7 @@ class FlexibleSurvey extends React.Component {
         api.nextQuestion(this.sessionID)
         .then(nextQuestion => this.processQuestionReceived(nextQuestion))
         .then(() => this.setState({ loading: false }))
+        .catch(err => this.alert(err));
     }
 
     /**
@@ -555,7 +570,7 @@ class FlexibleSurvey extends React.Component {
              return sessID;
         })
         .then(sessID => this.askNextQuestion(sessID))
-        .catch((err) => { throw err; });
+        .catch(err => this.alert(err));
     }
 
     /**
@@ -712,6 +727,7 @@ class FlexibleSurvey extends React.Component {
             <section>
                 <pre>step: { this.stepID }, session: { this.sessionID }, env: { process.env.NODE_ENV }</pre>
 
+                { this.state.alerts.map((error, index) => <Alert key={ index } message={ error} />) }
 
                 <div className="jumbotron jumbotron-fluid">
                     <div className="container">
