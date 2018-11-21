@@ -1,16 +1,21 @@
 import React from 'react';
+
+// surveyjs and customizations
 import * as Survey from "survey-react";
-import { Configuration } from '../conf/config';
-import LoadingSpinner from './LoadingSpinner';
 import geolocationQuestion from '../customQuestions/geolocationQuestion'
 
+//configuration
+import { Configuration } from '../conf/config';
+
+// apis
 import api from '../api';
 import Log from '../Log';
 import LocalStorage from '../storage/LocalStorage';
 import { serializeAnswer } from '../payload-serializer';
 
+// components
+import LoadingSpinner from './LoadingSpinner';
 import Alert from './Alert';
-
 import Dev from './Dev';
 import MessageTray from './MessageTray';
 
