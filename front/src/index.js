@@ -15,7 +15,7 @@ import FlexibleSurvey from "./components/FlexibleSurvey";
 import Page404 from "./components/Page404"
 import Surveys from "./components/Surveys"
 
-const { surveys, defaultSurveyID } = Configuration;
+const { surveys } = Configuration;
 const Navigation = withRouter(Navbar);
 
 const App = function(props) {
