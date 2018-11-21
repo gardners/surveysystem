@@ -26,7 +26,7 @@ class Surveys extends Component {
                             <div>
                                 { (cachedTime) ? <p><small>last access: <i>{ new Date(cachedTime).toLocaleString() }</i>, session ID: { cache.sessionID }</small></p> : 'n/a' }
                                 <Link to={ `/survey/${survey}/${cache.sessionID}` } className="btn btn-primary">Continue</Link>
-                                <Link to={ `/survey/${survey}/new` } className="btn btn-default">Restart</Link>
+                                <Link to={ `/survey/${survey}/new` } onClick={ () => LocalStorage.delete('sessionstate') } className="btn btn-default">Restart</Link>
                             </div>
                             :
                         <Link to={ `/survey/${survey}` } className="btn btn-primary">Start</Link> }
