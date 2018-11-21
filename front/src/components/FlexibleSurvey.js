@@ -565,7 +565,7 @@ class FlexibleSurvey extends React.Component {
             surveyCompleted : this.surveyCompleted,
             time: Date.now(),
         };
-        localStorage.setItem('sessionstate', JSON.stringify(res));
+        LocalStorage.set('sessionstate', res);
     }
 
     /**
