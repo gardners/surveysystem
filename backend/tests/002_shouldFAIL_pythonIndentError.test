@@ -25,7 +25,7 @@ def nextquestion_001nextquestionpythonActualLogic(questions,answers):
 		f.write("QNs: %s\n" % questions)
 		f.write("Qn len: %d\n" % len(questions))
 		#TODO: this next line is a python indentation error and should cause the test to FAIL
-	f.write("ans: %s\n" % answers)
+	f.write("ans: %s\n % answers)
 		f.write("ans len: %d\n" % len(answers))
 		f.write("nextID: %s\n" % nextID)
 	return(nextID)
