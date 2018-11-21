@@ -14,25 +14,22 @@ import Surveys from "./components/Surveys"
 import { BrowserRouter as Router, Route, Switch, Redirect, withRouter } from 'react-router-dom';
 
 const { surveys, defaultSurveyID } = Configuration;
-
 const Navigation = withRouter(Navbar);
 
-//rendering the routes
-//ReactDOM.render(
-//
-//    document.getElementById("header"));
+const App = function(props) {
+    return (
+        <Router>
+            <div>
+                <Navigation />
+                <Switch>
+                    <Route exact path="/" render={ props => (surveys.length) ? <Redirect to={ `/survey/${surveys[0]}` } /> : <Surveys /> } />
+                    <Route path="/surveys" component={ Surveys } />
+                    <Route path="/survey/:id/:sessionID?" component={ FlexibleSurvey } />
+                    <Route path="*" component={ Page404 } />
+                </Switch>
+            </div>
+        </Router>
+    );
+};
 
-ReactDOM.render(
-    <Router>
-        <div>
-            <Navigation />
-            <Switch>
-                <Route exact path="/" render={ props => (surveys.length) ? <Redirect to={ `/survey/${surveys[0]}` } /> : <Surveys /> } />
-                <Route path="/surveys" component={ Surveys } />
-                <Route path="/survey/:id/:sessionID?" component={ FlexibleSurvey } />
-                <Route path="*" component={ Page404 } />
-            </Switch>
-        </div>
-    </Router>,
-    document.getElementById('app')
-);
+ReactDOM.render(<App />, document.getElementById('app'));
