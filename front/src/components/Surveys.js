@@ -24,7 +24,7 @@ class Surveys extends Component {
                         <h3>{ survey }</h3>
                         { (cachedSurveyID === survey) ?
                             <div>
-                                { (cachedTime) ? <p><small>last access: <i>{ new Date(cachedTime).toLocaleString() }</i>, session ID: { cache. sessionID }</small></p> : 'n/a' }
+                                { (cachedTime) ? <p><small>last access: <i>{ new Date(cachedTime).toLocaleString() }</i>, session ID: { cache.sessionID }</small></p> : 'n/a' }
                                 <Link to={ `/survey/${survey}/${cache.sessionID}` } className="btn btn-primary">Continue</Link>
                                 <Link to={ `/survey/${survey}/new` } className="btn btn-default">Restart</Link>
                             </div>
