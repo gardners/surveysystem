@@ -1,5 +1,6 @@
 //Basic Navbar made with bootstrap
 import React, { Component } from 'react';
+import { Link } from 'react-router-dom';
 
 class Navbar extends Component {
     render() {
@@ -10,7 +11,7 @@ class Navbar extends Component {
                         <a className="navbar-brand" >Survey Project</a>
                     </div>
                     <ul className="nav navbar-nav">
-                        <li className="active"><a >Survey List</a></li>
+                        <li className="active"><Link to="/surveys">Survey List</Link></li>
                         <li><a >Page 1</a></li>
                         <li><a >Page 2</a></li>
                     </ul>
