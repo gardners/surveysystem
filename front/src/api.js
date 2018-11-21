@@ -5,7 +5,6 @@
 import { Configuration } from './conf/config';
 import Log from './Log';
 
-
 const responseError = function (response) {
     const { status, statusText } = response;
     return response.text()

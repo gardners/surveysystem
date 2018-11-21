@@ -29,7 +29,7 @@ const MessageTray = function (props, index) {
     });
 
     return (
-        <div className="app-message-trail">
+        <div className="app--message-trail">
         {
             filtered.map((entry, index) => {
                 return <div key={ index } className={ 'entry ' + btClass(entry.severity) }>[{ entry.severity }] { entry.message }</div>

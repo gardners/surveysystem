@@ -1,30 +1,40 @@
 import React from 'react';
-import Loader from 'react-loader-spinner'
 import PropTypes from 'prop-types';
+
+import '../style/spinners.css';
 
 const LoadingSpinner = function (props) {
     const loading = props.loading || false;
-
+    console.log('jb',props.message);
     if (!loading) {
         return (null);
     }
 
     return (
-        <div className="mx-auto w-50 p-3 text-center">
-
-            <span><Loader
-                type="Puff"
-                color="#00BFFF"
-                height="100"
-                width="100"
-            /></span>
-            <div> Processing your answer...</div>
+        <div className="loader">
+            <div className="spinner">
+                <div className="double-bounce1" style={{ backgroundColor: props.color, }}></div>
+                <div className="double-bounce2" style={{ backgroundColor: props.color, }}></div>
+                <div className="message" style={{ color: props.color, }}> { props.message || 'Processing your answer...' } </div>
+            </div>
         </div>
     );
 };
 
+LoadingSpinner.defaultProps = {
+    loading: false,
+    message: 'Processing your answer...',
+    color: '#337ab7', // bootstrap-primary
+};
+
 LoadingSpinner.propTypes = {
-    loading:  PropTypes.bool,
+    loading: PropTypes.oneOfType([
+        PropTypes.bool,
+        PropTypes.string,
+    ]),
+    message: PropTypes.string,
+    spinnerClass: PropTypes.string,
+    messageClass: PropTypes.string,
 };
 
 export default LoadingSpinner;
