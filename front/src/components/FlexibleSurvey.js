@@ -554,7 +554,8 @@ class FlexibleSurvey extends React.Component {
             pages : this.pages,
             stepID : this.stepID,
             currentQuestionsBeingAnswered: this.currentQuestionsBeingAnswered,
-            surveyCompleted : this.surveyCompleted
+            surveyCompleted : this.surveyCompleted,
+            time: Date.now(),
         };
         localStorage.setItem('sessionstate', JSON.stringify(res));
     }
