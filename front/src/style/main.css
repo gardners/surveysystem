@@ -4,7 +4,13 @@ body {
   font-family: sans-serif;
 }
 
-.app-message-trail {
+/* navigation */
+.app--main-nav {
+    border-radius: 0;
+}
+/* debug components */
+
+.app--message-trail {
     padding: .5em;
     margin: .5em;
     font-size: .8em;

@@ -1,14 +1,12 @@
 {
   "name": "sleepproject",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "axios": "^0.18.0",
     "bootstrap": "^3.3.7",
     "react": "^16.6.3",
     "react-bootstrap": "^0.32.4",
     "react-dom": "^16.6.3",
-    "react-loader-spinner": "^2.2.0",
     "react-router-dom": "^4.3.1",
     "react-scripts": "1.1.4",
     "survey-react": "^1.0.54"
