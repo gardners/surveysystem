@@ -52,7 +52,7 @@ class FlexibleSurvey extends React.Component {
         this.surveyID = props.match.params.id;
         this.state = {
             survey : new Survey.Model(),
-            loading : true,
+            loading : '',
             messages : [],
             alerts: [],
         };
@@ -216,7 +216,7 @@ class FlexibleSurvey extends React.Component {
     goBackToPreviousStep(){
         Log.log('Going back to previous step...');
         const questions = this.getCurrentQuestions();
-        this.setState({ loading: true });
+        this.setState({ loading: 'Going back to previous step...' });
         Promise.all(
             questions.map(question => api.deleteAnswer(this.sessionID, question.id))
         )
@@ -225,7 +225,7 @@ class FlexibleSurvey extends React.Component {
                 this.pages = this.pages.slice(0, -1);
                 this.stepID = this.stepID - 1;
                 this.saveStateToStore(this.state.survey);
-                this.setState({ loading: false });
+                this.setState({ loading: '' });
             })
             .catch(err => this.alert(err));
     }
@@ -472,7 +472,7 @@ class FlexibleSurvey extends React.Component {
      // TODO (Vlad): function not finished yet, comment it later
      // TODO Joerg: this can be further separeated out
     onNextButtonPressed(){
-        this.setState({ loading: true });
+        this.setState({ loading: 'Submitting your answer...' });
 
         Log.log('onNextButtonPressed')
 
@@ -480,7 +480,7 @@ class FlexibleSurvey extends React.Component {
         const answers = this.getAnswersOfCurrentPage()
         Log.log(answers)
         if(!answers){
-            this.setState({ loading: false });
+            this.setState({ loading: '' });
             return;
         }
 
@@ -499,16 +499,17 @@ class FlexibleSurvey extends React.Component {
         )
             .then(responses => responses.pop()) // last
             .then(nextQuestion => this.processQuestionReceived(nextQuestion))
-            .then(this.setState({ loading: false }))
+            .then(this.setState({ loading: '' }))
             .catch(err => this.alert(err));
     }
 
 
     // //sends a request to the server to get the next set of questions to display
     askNextQuestion(){
+        this.setState({ loading: 'Fetching next question...' });
         api.nextQuestion(this.sessionID)
         .then(nextQuestion => this.processQuestionReceived(nextQuestion))
-        .then(() => this.setState({ loading: false }))
+        .then(() => this.setState({ loading: '' }))
         .catch(err => this.alert(err));
     }
 
@@ -517,8 +518,8 @@ class FlexibleSurvey extends React.Component {
      * @see componentDidMount
      */
     initNewSession(){
-        Log.log("version 6")
-        this.setState({ loading: true });
+        Log.log('Initializing session...')
+        this.setState({ loading: 'Initializing session...' });
 
         this.initSurveyJs();
 
@@ -538,12 +539,12 @@ class FlexibleSurvey extends React.Component {
      * @see componentDidMount
      */
     initStoredSession(cachedSess){
-        Log.log("load cached session, version 6");
-        this.setState({ loading: true });
+        Log.log('Loading cached session...');
+        this.setState({ loading: 'Loading cached session...' });
         this.initSurveyJs();
         this.mergeStoredState(cachedSess);
         this.initSurvey();
-        this.setState({ loading: false });
+        this.setState({ loading: '' });
     }
 
     // TODO separate out
@@ -691,7 +692,7 @@ class FlexibleSurvey extends React.Component {
 
                 <div className="jumbotron jumbotron-fluid">
                     <div className="container">
-                        <LoadingSpinner loading={ this.state.loading} />
+                        <LoadingSpinner loading={ this.state.loading } message={ this.state.loading }/>
                         { !this.state.loading && <Survey.Survey model={ this.state.survey }/> }
                     </div>
                 </div>

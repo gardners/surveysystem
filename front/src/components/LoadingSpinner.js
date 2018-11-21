@@ -5,7 +5,7 @@ import '../style/spinners.css';
 
 const LoadingSpinner = function (props) {
     const loading = props.loading || false;
-
+    console.log('jb',props.message);
     if (!loading) {
         return (null);
     }
@@ -28,7 +28,10 @@ LoadingSpinner.defaultProps = {
 };
 
 LoadingSpinner.propTypes = {
-    loading: PropTypes.bool,
+    loading: PropTypes.oneOfType([
+        PropTypes.bool,
+        PropTypes.string,
+    ]),
     message: PropTypes.string,
     spinnerClass: PropTypes.string,
     messageClass: PropTypes.string,
