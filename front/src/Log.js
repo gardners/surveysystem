@@ -7,11 +7,18 @@ import { isScalar } from './Utils';
 
 const toConsole = (process.env.NODE_ENV !== 'production');
 
-
+/**
+ * Add an entry object ot a store
+ * !! Forces servity "error" if message is an instance of Error
+ * @param {string} severity message serverity level
+ * @param {(string|number|Error)} message as string or Error instance
+ * @returns {void}
+ */
 const add = function(severity, msg, store) {
     let message = null;
     if (msg instanceof Error) { // stringifying Error instances returns an empty object
         message = msg.toString();
+        severity = 'error';
     } else {
         message = (msg === undefined || isScalar(msg)) ? msg : JSON.stringify(msg);//TODO try catch
     }
@@ -29,7 +36,7 @@ const add = function(severity, msg, store) {
 class Log {
     /**
      * Create a Log store
-     * @return {void}
+     * @returns {void}
      */
     constructor() {
         this.messages = [];
@@ -40,8 +47,7 @@ class Log {
      * Register a subscriber callback
      * @param {string} id
      * @param {function} callback
-     *
-     * @return {void}
+     * @returns {void}
      */
     subscribe(id, callback) {
         this.subscribers[id] = callback;
@@ -51,8 +57,7 @@ class Log {
      * Remove a subscriber callback
      * @param {string} id
      * @param {function} callback
-     *
-     * @return {void}
+     * @returns {void}
      */
     unsubscribe(id) {
         delete (this.subscribers[id]);
@@ -60,8 +65,7 @@ class Log {
 
     /**
      * Trigger registered subscriber callbacks
-     *
-     * @return {void}
+     * @returns {void}
      */
     invokeSubscribers() {
         Object.keys(this.subscribers).forEach((id) => {
@@ -85,7 +89,7 @@ class Log {
     /**
      * Log an error
      * @param {mixed} message
-     * @return {void}
+     * @returns {void}
      */
     error(message) {
         add('error', message, this.messages);
@@ -98,7 +102,7 @@ class Log {
     /**
      * Log a warning
      * @param {mixed} message
-     * @return {void}
+     * @returns {void}
      */
     warn(message) {
         add('warn', message, this.messages);
@@ -111,7 +115,7 @@ class Log {
     /**
      * Log a debug message
      * @param {mixed} message
-     * @return {void}
+     * @returns {void}
      */
     debug(message) {
         add('debug', message, this.messages);

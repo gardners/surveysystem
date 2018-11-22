@@ -5,7 +5,7 @@ import '../style/spinners.css';
 
 const LoadingSpinner = function (props) {
     const loading = props.loading || false;
-    console.log('jb',props.message);
+
     if (!loading) {
         return (null);
     }
@@ -33,8 +33,7 @@ LoadingSpinner.propTypes = {
         PropTypes.string,
     ]),
     message: PropTypes.string,
-    spinnerClass: PropTypes.string,
-    messageClass: PropTypes.string,
+    color: PropTypes.string,
 };
 
 export default LoadingSpinner;

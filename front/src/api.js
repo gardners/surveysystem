@@ -13,12 +13,14 @@ const responseError = function (response) {
         });
 };
 
+/**
+ * Backend requests
+ * @type {object}
+ */
 const Api = {
 
     /**
      * Request a new session
-     * @param {string} surveyID
-     *
      * @returns {Promise}
      */
     createNewSession: function(surveyID) {
