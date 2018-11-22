@@ -64,7 +64,6 @@ const Api = {
     /**
      * Send answer to current question and receive next question(s)
      * @param {string} surveyID
-     *
      * @returns {Promise} deserialized json including next questions
      */
     updateAnswer: function(sessionID, answer) {
@@ -85,7 +84,6 @@ const Api = {
     /**
      * Delete answer with acurrent id and receive next question(s)
      * @param {string} surveyID
-     *
      * @returns {Promise} deserialized json including next questions
      */
     deleteAnswer: function(sessionID, questionID) {
