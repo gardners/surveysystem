@@ -36,7 +36,18 @@ const { isFinite } = Number; //not Math!
     DESERIALISE_INT(a->dst_delta);
 */
 
+/**
+ * Csv separator
+ * @const
+ * @type {string}
+ */
 const CSV_SEPARATOR = ':';
+
+/**
+ * Regex for sanitizing csv string values
+ * @const
+ * @type {sRegExp}
+ */
 const escPattern = new RegExp(`${CSV_SEPARATOR}'"`, 'g');
 // example build: console.log(new RegExp([CSV_SEPARATOR, '\'', '"'].join(''), 'g'));
 
@@ -45,6 +56,27 @@ const escPattern = new RegExp(`${CSV_SEPARATOR}'"`, 'g');
 // Defaults
 ////
 
+/**
+ * @typedef AnswerModel
+ * @type {object}
+ * @property {string} uid - answer id.
+ * @property {string} text - answer, type: text.
+ * @property {number} value - answer, type: number (FLOAT)
+ * @property {number} lat - geolocation answer (latitude), type: number (FLOAT)
+ * @property {number} lon - geolocation answer (longitude), type: number (FLOAT)
+ * @property {number} time_begin - timeperiod answer (start) in seconds, type: number (INT)
+ * @property {number} time_end - timeperiod answer (end) in seconds, type: number (INT)
+ * @property {number} time_zone_delta - timeperiod timzone offset in seconds, type: number (INT)
+ * @property {number} dst_delta - distance(?), type: number (INT)
+
+ * @see backend/src/question_types.c
+ * @see backend/src/deserialise_parse_field.c
+ */
+
+/**
+ * Provides default Model object
+ * returns {AnswerModel}
+ */
 const getModel = function() {
     return {
         uid : '',               // id
@@ -67,7 +99,7 @@ const getModel = function() {
  * CSV Sanitize a value of any type
  * @param {*} val value to sanitize
  *
- * @returns {string|number|boolean|null}
+ * @returns {(string|number|boolean|null)}
  */
 const sanitize = function(val) {
     const type = typeof val;
@@ -93,7 +125,7 @@ const sanitize = function(val) {
  * parse and validate string
  * @param {string} val already sanitized string
  *
- * @returns {number|Error}
+ * @returns {(number|Error)}
  */
 const castFloat = function(val) {
     const value = parseFloat(val);
@@ -109,10 +141,10 @@ const castFloat = function(val) {
 };
 
 /**
- * parse and validate string
+ * Parse and validate string
  * @param {string} val already sanitized string
  *
- * @returns {sting|Error}
+ * @returns {(sting|Error)}
  */
 const castString = function(text) {
     if (!text) {
@@ -122,10 +154,10 @@ const castString = function(text) {
 };
 
 /**
- * parse and validate comma separated geolocation string into object ready to be merged in to model
+ * Parse and validate comma separated geolocation string into object ready to be merged in to model
  * @param {string} val already sanitized string
  *
- * @returns {Array|Error} Error on invalid value or an array of format [lat, lon]
+ * @returns {(Array|Error)} Error on invalid value or an array of format [lat, lon]
  */
 const castGeoLocObject = function(val) {
     if(typeof val !== 'string') {
@@ -153,7 +185,7 @@ const castGeoLocObject = function(val) {
  * parse and validate comma separated geolocation string into object ready to be merged in to model
  * @param {string} val already sanitized string
  *
- * @returns {number|Error} UNIX timestamp or error
+ * @returns {(number|Error)} UNIX timestamp or error
  */
 // const castDateTime = function(val) {
 //     return new Error ('TODO, CSV serializer: not implemented');
@@ -167,8 +199,10 @@ const castGeoLocObject = function(val) {
  * Parses a csv row from a SurveyJS answer instance
  * example format of a row: "question1:gfdsg:0:0:0:0:0:0:0"
  *
- * @param {}
- * @returns {string|Error}  csv row or Error to be displayed
+ * @param {string} id question id
+ * @param {*} answer answer value to submit
+ * @param {string} questionType
+ * @returns {{string|Error)}  csv row or Error to be displayed
  */
 const serializeAnswer = function(id, answer, questionType) {
 
