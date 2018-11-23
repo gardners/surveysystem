@@ -3,7 +3,6 @@
  */
 
 import { Configuration } from './conf/config';
-import Log from './Log';
 
 const responseError = function (response) {
     const { status, statusText } = response;
@@ -27,9 +26,6 @@ const Api = {
         const apiConfig = Configuration.apiCalls.createNewSession;
         const url = Configuration.serverBaseUrl().concat(apiConfig.path);
 
-        Log.log('Getting the Survey with ID=' + surveyID + '...');
-        Log.log('requesting with ' + apiConfig.method + ' request : ' + url + ', with these parameters :');
-
         return fetch(`${url}?surveyid=${surveyID}`)
             .then((response) => {
                 if (!response.ok) {
@@ -50,8 +46,6 @@ const Api = {
         const url = Configuration.serverBaseUrl().concat(apiConfig.path);
         apiConfig.params.sessionid = sessionID;
 
-        Log.log('requesting with ' + apiConfig.method + ' request : ' + url + ', with these parameters :');
-
         return fetch(`${url}?sessionid=${sessionID}`)
             .then((response) => {
                 if (!response.ok) {
@@ -70,8 +64,6 @@ const Api = {
         const apiConfig = Configuration.apiCalls.updateAnswer;
         const url = Configuration.serverBaseUrl().concat(apiConfig.path);
 
-        Log.log('requesting with ' + apiConfig.method + ' request : ' + url + ', with these parameters :');
-
         return fetch(`${url}?sessionid=${sessionID}&answer=${answer}`)
             .then((response) => {
                 if (!response.ok) {
@@ -89,8 +81,6 @@ const Api = {
     deleteAnswer: function(sessionID, questionID) {
         const apiConfig = Configuration.apiCalls.deleteAnswer;
         const url = Configuration.serverBaseUrl().concat(apiConfig.path);
-
-        Log.log('requesting with ' + apiConfig.method + ' request : ' + url + ', with these parameters :');
 
         return fetch(`${url}?sessionid=${sessionID}&questionid=${questionID}`)
             .then((response) => {
