@@ -1,5 +1,4 @@
 {
-    "mockDescription": "returns all questionr types in an answer",
     "next_questions": [
         {
             "id": "multichoice",
@@ -8,12 +7,6 @@
             "title_text": "Select one of the following",
             "type": "radiogroup",
             "choices": ["Yes", "No", "", "Maybe"]
-        }, {
-            "id": "password1",
-            "name": "password1",
-            "title": "Password",
-            "title_text": "Password",
-            "type": "text"
         }
     ]
 }
