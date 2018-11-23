@@ -4,7 +4,12 @@ const Url = require('url');
 const querystring = require('querystring');
 const fs = require('fs');
 
+// survey
+const Survey = require('./survey-model');
 const SURVEY_SESSION_ID = Date.now().toString();
+const SURVEY_DIR = './survey';
+const SURVEY_COUNT = Survey.countAnswers(SURVEY_DIR);
+
 let count = 0;
 
 const server = (() => {
@@ -15,20 +20,15 @@ const server = (() => {
 
         const name = path.basename(url.pathname, extname);
         const dirname = path.dirname(url.pathname);
+        const { query } = url.query;
 
         const contentType = 'application/json';
-
         let body = '';
 
+        // headers
         response.setHeader('content-type', contentType);
 
-        // include some request data into response
-        response.setHeader('x-req-content-type', request.headers['content-type'] || '');
-        response.setHeader('x-req-search', url.search);
-        response.setHeader('x-req-method', request.method);
-        response.setHeader('x-req-content-length', request.headers['content-length'] || '');
-
-        // CORS
+        // CORS headers
         response.setHeader('Access-Control-Allow-Origin', '*');
         response.setHeader('Access-Control-Allow-Methods', 'HEAD, GET, OPTIONS, POST, PUT, DELETE, PATCH');
 
@@ -50,6 +50,8 @@ const server = (() => {
         });
 
         let payload = '';
+        let answer;
+
         request.on('end', () => {
 
             // default
@@ -60,53 +62,75 @@ const server = (() => {
 
                 case 'newsession':
                     response.statusCode = 200;
+                    response.statusText = 'OK';
                     response.end(SURVEY_SESSION_ID, 'utf-8');
+                    count = 0;
                     break;
 
                 case 'nextquestion':
-                    response.statusCode = 200;
-                    response.end(fs.readFileSync(path.resolve() +'/questionTypes.json'), 'utf-8');
-                    count += 1;
+                    answer = Survey.getAnswer(count, SURVEY_DIR),
+
+                    response.statusCode = answer.statusCode;
+                    response.statusText = answer.statusText;
+                    response.end(answer.payload, 'utf-8');
+                    count += (count < SURVEY_COUNT - 1) ? 1 : 0;
                     break;
 
                 case 'delanswer':
-                    response.statusCode = 200;
-                    response.end(fs.readFileSync(path.resolve() +'/questionTypes.json'), 'utf-8');
                     if(count) {
                         count -= 1;
                     }
+                    answer = Survey.getAnswer(count, SURVEY_DIR),
+
+                    response.statusCode = answer.statusCode;
+                    response.statusText = answer.statusText;
+                    response.end(answer.payload, 'utf-8');
                     break;
 
                 case 'updateanswer':
-                    response.statusCode = 200;
-                    response.end(fs.readFileSync(path.resolve() +'/questionTypes.json'), 'utf-8');
-                    count += 1;
+                    answer = Survey.getAnswer(count, SURVEY_DIR),
+
+                    response.statusCode = answer.statusCode;
+                    response.statusText = answer.statusText;
+                    response.end(answer.payload, 'utf-8');
+                    count += (count < SURVEY_COUNT - 1) ? 1 : 0;
                     break;
 
                 // status tests
 
                 case '404':
                     response.statusCode = 404;
+                    response.statusText = 'OK';
                     response.end(payload, 'utf-8');
                     break;
 
                 case '200':
                     response.statusCode = 200;
+                    response.statusText = 'OK';
                     response.end(payload, 'utf-8');
                     break;
 
                 case '204':
                     response.statusCode = 204;
+                    response.statusText = 'No Content';
                     response.end('', 'utf-8');
                     break;
 
                 case '400':
                     response.statusCode = 400;
+                    response.statusText = 'Bad Request';
+                    response.end(payload, 'utf-8');
+                    break;
+
+                case '401':
+                    response.statusCode = 401;
+                    response.statusText = 'Unauthorized';
                     response.end(payload, 'utf-8');
                     break;
 
                 default:
                     response.statusCode = 500;
+                    response.statusText = 'Internal Server Error';
                     response.end(payload, 'utf-8');
             }
 
