@@ -1,3 +1,11 @@
 {
-    "next_questions": []
+    "next_questions": [
+        {
+            "id": "geolocation",
+            "name": "geolocation",
+            "title": "Your position?",
+            "title_text": "Your position?",
+            "type": "geolocation"
+        }
+    ]
 }
