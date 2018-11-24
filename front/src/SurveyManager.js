@@ -41,10 +41,9 @@ class SurveyManager {
      * @returns {void}
      */
     add(questions) {
-        console.log(questions);
+        // TODO double submissions of current
         if(!questions.length) {
             this.finished = true;
-            return;
         }
         this.questions.push(questions);
         this.step += 1;
