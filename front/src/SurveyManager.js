@@ -12,7 +12,7 @@ class SurveyManager {
      * @returns {void}
      */
     constructor(surveyID, cached = null) {
-        this.surveyID = surveyID;
+        this.surveyID = surveyID || null;
         this.sessionID = null;
         this.step = -1;
         this.finished = false;
@@ -33,16 +33,44 @@ class SurveyManager {
     }
 
     /**
+     * Validates if a cache object can be merged
+     * @param {object} cached deserialized JSON
+     * @returns {boolean} flag indicating if cache can be merged
+     */
+    canMerge(cached) {
+
+        if(!cached) {
+            return false;
+        }
+
+        const cachedSurveyID = cached.surveyID || null;
+        const cachedSessionID = cached.sessionID || null;
+
+        // this without sessionID
+        // cache with sessionID
+        // cache with surveyID
+        // surveyIDs match
+
+        if (!this.surveyID || this.surveyID !== cachedSurveyID){
+            return false;
+        }
+
+        if (!cachedSessionID || this.sessionID){
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Merges a cached session object
      * @param {object} cached deserialized JSON
-     * @returns {void}
+     * @returns {boolean} flag indicating if cache matched survey an was merged
      */
     merge(cached) {
-        // simple surveyID check
-        const surveyID = cached.surveyID || '';
-        if(surveyID !== this.surveyID) {
-            Log.warn(`SessionManger.merge: surveyID supplied values doesn't match ${this.surveyI}`);
-            return;
+        if(!this.canMerge(cached)) {
+            Log.warn(`SessionManager.merge: surveyID:sessionID supplied values doesn't match ${this.surveyID}:${this.sessionID}`);
+            return false;
         }
 
         Object.keys(cached).forEach((key) => {
@@ -53,8 +81,9 @@ class SurveyManager {
 
             this[key] = cached[key];
         });
-    }
 
+        return true;
+    }
 
     /**
      * Adds a new set of QuestionItems and sets progress flags
