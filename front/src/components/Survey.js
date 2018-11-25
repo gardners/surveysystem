@@ -8,6 +8,7 @@ import { Configuration } from '../conf/config';
 import api from '../api';
 import { serializeAnswer } from '../payload-serializer';
 import SurveyManager from '../SurveyManager';
+import LocalStorage from '../storage/LocalStorage';
 
 import TextInput from './form/TextInput';
 import RadioGroup from './form/RadioGroup';
@@ -20,6 +21,9 @@ import Alert from './Alert';
 
 // devel
 import Dev from './Dev';
+
+// config
+const CACHE_KEY = process.env.REACT_APP_SURVEYCACHEKEY;
 
 class Survey extends Component {
     constructor(props) {
@@ -37,17 +41,20 @@ class Survey extends Component {
 
     componentDidMount() {
         const { survey } = this.state;
-        this.setState({ loading: 'Initializing survey...' });
 
-        api.createNewSession(survey.surveyID)
-        .then(sessID => survey.init(sessID))
-        .then(() => api.nextQuestion(survey.sessionID))
-        .then(response => survey.add(response.next_questions))
-        .then(() => this.setState({
+        const cached = LocalStorage.get(CACHE_KEY);
+
+        if(!survey.canMerge(cached)) {
+            this.initNewSession();
+            return;
+        }
+
+        survey.merge(cached);
+        this.setState({
             loading: '',
             survey,
-        }))
-        .catch(err => this.alert(err));
+            answers: [],
+        });
     }
 
     /**
@@ -97,8 +104,27 @@ class Survey extends Component {
     // form submissions
     ////
 
+    initNewSession(e) {
+        e && e.preventDefault();
+
+        const { survey } = this.state;
+        this.setState({ loading: 'Initializing survey...' });
+
+        api.createNewSession(survey.surveyID)
+        .then(sessID => survey.init(sessID))
+        .then(() => api.nextQuestion(survey.sessionID))
+        .then(response => survey.add(response.next_questions))
+        .then(() => this.setState({
+            loading: '',
+            survey,
+            answers: [],
+        }))
+        .then(() => LocalStorage.set(CACHE_KEY, survey))
+        .catch(err => this.alert(err));
+    }
+
     handleUpdateAnswers(e) {
-        e.preventDefault();
+        e && e.preventDefault();
 
         const { survey, answers } = this.state;
         this.setState({ loading: 'Sending answer...' });
@@ -123,11 +149,12 @@ class Survey extends Component {
             survey,
             answers: {}, // TODO
         }))
+        .then(() => LocalStorage.set(CACHE_KEY, survey))
         .catch(err => this.alert(err));
     }
 
     handleDelAnswer(e) {
-        e.preventDefault();
+        e && e.preventDefault();
 
         const { survey } = this.state;
         this.setState({ loading: 'Fetching previous question...' });
@@ -138,11 +165,12 @@ class Survey extends Component {
             loading: '',
             survey,
         }))
+        .then(() => LocalStorage.set(CACHE_KEY, survey))
         .catch(err => this.alert(err));
     }
 
     handleFinishSurvey(e) {
-        e.preventDefault();
+        e && e.preventDefault();
 
         const { survey } = this.state;
         this.setState({ loading: 'Fetching previous question...' });
@@ -152,6 +180,7 @@ class Survey extends Component {
             loading: '',
             survey,
         }))
+        .then(() => LocalStorage.delete(CACHE_KEY, survey))
         .catch(err => this.alert(err));
     }
 
