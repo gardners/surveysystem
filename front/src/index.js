@@ -11,8 +11,7 @@ import { Configuration } from './conf/config';
 
 // views
 import Navbar from "./components/Navbar";
-//import FlexibleSurvey from "./components/FlexibleSurvey";
-import FlexibleSurvey from "./components/Survey";
+import Survey from "./components/Survey";
 import Page404 from "./components/Page404"
 import Surveys from "./components/Surveys"
 
@@ -27,7 +26,7 @@ const App = function(props) {
                 <Switch>
                     <Route exact path="/" render={ props => (surveys.length) ? <Redirect to={ `/survey/${surveys[0]}` } /> : <Surveys /> } />
                     <Route path="/surveys" component={ Surveys } />
-                    <Route path="/survey/:id/:sessionID?" component={ FlexibleSurvey } />
+                    <Route path="/survey/:id/:sessionID?" component={ Survey } />
                     <Route path="*" component={ Page404 } />
                 </Switch>
             </div>
