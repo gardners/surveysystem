@@ -2,9 +2,14 @@
  * @module APIhttp request API to surveysystem/backend
  */
 
-import { Configuration } from './conf/config';
-import Log from './Log';
+// config
+const BaseUri = process.env.REACT_APP_API_ENDPOINT;
 
+/**
+ * handles and ormats response errors in a promise context
+ * @param {Response} fetch response object @see https://developer.mozilla.org/en-US/docs/Web/API/Response
+ * @returns {Promise} Promise object throwing an exception (being catched in flow)
+ */
 const responseError = function (response) {
     const { status, statusText } = response;
     return response.text()
@@ -12,6 +17,7 @@ const responseError = function (response) {
             throw new Error(`[${status}: ${statusText}], reason: ${text}`)
         });
 };
+
 
 /**
  * Backend requests
@@ -24,11 +30,7 @@ const Api = {
      * @returns {Promise}
      */
     createNewSession: function(surveyID) {
-        const apiConfig = Configuration.apiCalls.createNewSession;
-        const url = Configuration.serverBaseUrl().concat(apiConfig.path);
-
-        Log.log('Getting the Survey with ID=' + surveyID + '...');
-        Log.log('requesting with ' + apiConfig.method + ' request : ' + url + ', with these parameters :');
+        const url = BaseUri + '/surveyapi/newsession';
 
         return fetch(`${url}?surveyid=${surveyID}`)
             .then((response) => {
@@ -46,11 +48,7 @@ const Api = {
      * @returns {Promise} deserialized json including next questions
      */
     nextQuestion: function(sessionID) {
-        const apiConfig = Configuration.apiCalls.nextQuestion;
-        const url = Configuration.serverBaseUrl().concat(apiConfig.path);
-        apiConfig.params.sessionid = sessionID;
-
-        Log.log('requesting with ' + apiConfig.method + ' request : ' + url + ', with these parameters :');
+        const url = BaseUri + '/surveyapi/nextquestion';
 
         return fetch(`${url}?sessionid=${sessionID}`)
             .then((response) => {
@@ -64,14 +62,10 @@ const Api = {
     /**
      * Send answer to current question and receive next question(s)
      * @param {string} surveyID
-     *
      * @returns {Promise} deserialized json including next questions
      */
     updateAnswer: function(sessionID, answer) {
-        const apiConfig = Configuration.apiCalls.updateAnswer;
-        const url = Configuration.serverBaseUrl().concat(apiConfig.path);
-
-        Log.log('requesting with ' + apiConfig.method + ' request : ' + url + ', with these parameters :');
+        const url = BaseUri + '/surveyapi/updateanswer';
 
         return fetch(`${url}?sessionid=${sessionID}&answer=${answer}`)
             .then((response) => {
@@ -85,14 +79,10 @@ const Api = {
     /**
      * Delete answer with acurrent id and receive next question(s)
      * @param {string} surveyID
-     *
      * @returns {Promise} deserialized json including next questions
      */
     deleteAnswer: function(sessionID, questionID) {
-        const apiConfig = Configuration.apiCalls.deleteAnswer;
-        const url = Configuration.serverBaseUrl().concat(apiConfig.path);
-
-        Log.log('requesting with ' + apiConfig.method + ' request : ' + url + ', with these parameters :');
+        const url = BaseUri + '/surveyapi/delanswer';
 
         return fetch(`${url}?sessionid=${sessionID}&questionid=${questionID}`)
             .then((response) => {

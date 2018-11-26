@@ -1,7 +1,8 @@
 export const Configuration = {
     //back end config
     serverUrl: 'http://localhost',
-    serverPort: '80',
+    //serverPort: '80',
+    serverPort: '3099',
     serverBaseUrl: function() {
         const baseURL = this.serverUrl.concat(':', this.serverPort);
         return (baseURL);
@@ -10,7 +11,7 @@ export const Configuration = {
     // survey meta data
     surveyTheme: 'bootstrap',
     surveyProvider: 'Bar',
-    surveys: ['foo'], // first survey is default survey
+    surveys: ['foo', 'sleepcompanion'], // first survey is default survey
 
     //custom properties
     customProperties: [

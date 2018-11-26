@@ -10,12 +10,14 @@ const LocalStorage = {
      */
     get: function(key) {
         const val = localStorage.getItem(key);
-        if (val) {
-            try {
-                return JSON.parse(val);
-            } catch (e) {
-                return null;
-            }
+        if (val === null) {
+            return val;
+        }
+
+        try {
+            return JSON.parse(val);
+        } catch (e) {
+            return null;
         }
     },
 

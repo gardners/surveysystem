@@ -5,9 +5,11 @@ body {
 }
 
 /* navigation */
+
 .app--main-nav {
     border-radius: 0;
 }
+
 /* debug components */
 
 .app--message-trail {
@@ -16,4 +18,55 @@ body {
     font-size: .8em;
     font-family: 'monospace';
     background-color: #eaeaea;
+}
+
+/*
+ * arrow buttons
+ * courtesy dannydao @see https://codepen.io/dannydns/pen/JYoYEQ
+ */
+
+.btn-arrow-right,
+.btn-arrow-left {
+   position: relative;
+   padding-left: 18px;
+   padding-right: 18px;
+}
+
+.btn-arrow-left {
+   margin-right: 2em;
+}
+
+.btn-arrow-right:after,
+.btn-arrow-left:before {
+   content: "";
+   position: absolute;
+   top: 5px;
+   width: 22px;
+   height: 22px;
+   background: inherit;
+   border: inherit;
+   border-left-color: transparent;
+   border-bottom-color: transparent;
+   border-radius: 0px 4px 0px 0px;
+}
+
+.btn-arrow-right:after {
+   transform: rotate(45deg);
+}
+
+.btn-arrow-left:before {
+   transform: rotate(225deg);
+}
+
+.btn-arrow-left:before {
+   left: -11px;
+}
+
+.btn-arrow-right:after {
+   right: -11px;
+}
+
+.btn-arrow-right:after,
+.btn-arrow-left:before {
+   z-index: 1;
 }
