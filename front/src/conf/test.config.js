@@ -1,7 +1,7 @@
 export const Configuration = {
     //back end config
     serverUrl: 'http://localhost',
-    serverPort: '80',
+    serverPort: '3099',
     serverBaseUrl: function() {
         const baseURL = this.serverUrl.concat(':', this.serverPort);
         return (baseURL);
