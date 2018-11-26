@@ -7,27 +7,6 @@ import { isScalar } from './Utils';
 
 const toConsole = (process.env.NODE_ENV !== 'production');
 
-/**
- * Add an entry object ot a store
- * !! Forces servity "error" if message is an instance of Error
- * @param {string} severity message serverity level
- * @param {(string|number|Error)} message as string or Error instance
- * @returns {void}
- */
-const add = function(severity, msg, store) {
-    let message = null;
-    if (msg instanceof Error) { // stringifying Error instances returns an empty object
-        message = msg.toString();
-        severity = 'error';
-    } else {
-        message = (msg === undefined || isScalar(msg)) ? msg : JSON.stringify(msg);//TODO try catch
-    }
-
-    store.push({
-        severity,
-        message,
-    });
-};
 
 /**
  * @class
@@ -74,16 +53,45 @@ class Log {
     }
 
     /**
+    * Add an entry object ot a store
+    * !! Forces servity "error" if message is an instance of Error
+    * @param {(string|number|Error)} message as string or Error instance
+    * @param {string} severity message serverity level
+    * @returns {void}
+    */
+    add(msg, severity) {
+        let message = null;
+
+        if (msg instanceof Error) { // stringifying Error instances returns an empty object
+            message = msg.toString();
+            severity = 'error';
+        } else {
+            message = (msg === undefined || isScalar(msg)) ? msg : JSON.stringify(msg);//TODO try catch
+        }
+
+        const index = this.messages.push({
+            severity,
+            message,
+        });
+
+        this.invokeSubscribers();
+
+        if (toConsole) {
+            const fn = (typeof console[severity] === 'function') ? severity: 'log';
+            console[fn](message);
+        }
+
+        return this.messages[index - 1];
+    };
+
+
+    /**
      * Log a message
      * @param {mixed} message
      * @return {void}
      */
     log(message) {
-        add('log', message, this.messages);
-        this.invokeSubscribers();
-        if (toConsole) {
-            console.log(message);
-        }
+        return this.add(message, 'info');
     }
 
     /**
@@ -92,11 +100,7 @@ class Log {
      * @returns {void}
      */
     error(message) {
-        add('error', message, this.messages);
-        this.invokeSubscribers();
-        if (toConsole) {
-            console.error(message);
-        }
+        return this.add(message, 'error');
     }
 
     /**
@@ -105,11 +109,7 @@ class Log {
      * @returns {void}
      */
     warn(message) {
-        add('warn', message, this.messages);
-        this.invokeSubscribers();
-        if (toConsole) {
-            console.warn(message);
-        }
+        return this.add(message, 'warn');
     }
 
     /**
@@ -118,11 +118,10 @@ class Log {
      * @returns {void}
      */
     debug(message) {
-        add('debug', message, this.messages);
-        if (toConsole) {
-            console.debug(message);
-        }
+        this.add(message, 'debug');
     }
+
+
 }
 
 export default new Log();

@@ -24,6 +24,7 @@ class RadioGroup extends Component {
         const { choices } = question;
         return (
             <div className="form-group">
+                <p> { question.title_text }</p>
                 { choices.map((value, index) => {
                     return <div key={index} className="radio">
                         <label>
