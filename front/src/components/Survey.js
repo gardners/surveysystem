@@ -158,12 +158,22 @@ class Survey extends Component {
 
         const { survey } = this.state;
         this.setState({ loading: 'Fetching previous question...' });
+        console.log(survey.current());
 
-        api.deleteAnswer(survey.sessionID)
+        const questionIds = survey.current().map(question => question.id);
+        survey.back();
+
+        // delete current answer(s)
+        // each answer is a single request, we are bundling them into Promise.all
+        Promise.all(
+            questionIds.map(id => api.deleteAnswer(survey.sessionID, id))
+        )
+        .then(responses => responses.pop()) // last
         .then(response => survey.add(response.next_questions))
         .then(() => this.setState({
             loading: '',
             survey,
+            answers: {},
         }))
         .then(() => LocalStorage.set(CACHE_KEY, survey))
         .catch(err => this.alert(err));
