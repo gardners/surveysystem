@@ -17,16 +17,16 @@ class Alert extends Component {
     }
 
     render() {
-        const { message, status } = this.props;
+        const { message, severity } = this.props;
         const isErr = (message instanceof Error);
-        const statusClass = (isErr) ? 'danger' : status;
+        const severityClass = (isErr || severity === 'error') ? 'danger' : severity;
 
         if(this.state.closed) {
             return(null);
         }
 
         return (
-            <div className={ `alert alert-${statusClass}` } role="alert">
+            <div className={ `alert alert-${severityClass}` } role="alert">
                 { (isErr) ? message.toString() : message }
                 <button type="button" className="close" data-dismiss="alert" aria-label="Close"
                     onClick= { this.toggle.bind(this) }><span aria-hidden="true">&times;</span></button>
@@ -44,7 +44,7 @@ Alert.propTypes = {
         PropTypes.string,
         PropTypes.instanceOf(Error)
     ]).isRequired,
-    state:PropTypes.string,
+    severity:PropTypes.string,
 };
 
 export default Alert;

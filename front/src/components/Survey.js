@@ -9,6 +9,7 @@ import api from '../api';
 import { serializeAnswer } from '../payload-serializer';
 import SurveyManager from '../SurveyManager';
 import LocalStorage from '../storage/LocalStorage';
+import Log from '../Log';
 
 import TextInput from './form/TextInput';
 import RadioGroup from './form/RadioGroup';
@@ -18,6 +19,7 @@ import PeriodRange from './form/PeriodRange';
 // components
 import LoadingSpinner from './LoadingSpinner';
 import Alert from './Alert';
+
 
 // devel
 import Dev from './Dev';
@@ -35,7 +37,7 @@ class Survey extends Component {
             answers: {}, // TODO consider moving answer map into SurveyManager as well
 
             loading: '',
-            messages: [],
+            alerts: [],
         };
     }
 
@@ -58,28 +60,24 @@ class Survey extends Component {
     }
 
     /**
-     * Sends an Error to this.state.alerts
+     * Sends a message or an Error to this.state.alerts
      * This method ist tpically used by the request api in case of response or network errors
      * @param {Error} error
      * @returns {void}
      */
-    notify(message, status) {
-        if(status === 'error'  && !message instanceof Error) {
-            message = new Error(message);
+    alert(message, severity) {
+        const { alerts } = this.state;
+
+        if(severity !== 'error' && message instanceof Error) {
+            severity = 'error';
         }
 
-        if(status !== 'error' && message instanceof Error) {
-            status = 'error';
-        }
-
-        const { messages } = this.state;
-        messages.push({
-            status,
-            message,
-        });
+        const entry = Log.add(message, severity);
+        alerts.push(entry);
 
         this.setState({
-            messages,
+            loading: '',
+            alerts,
         });
     }
 
@@ -190,7 +188,7 @@ class Survey extends Component {
             loading: '',
             survey,
         }))
-        .then(() => LocalStorage.delete(CACHE_KEY, survey))
+        .then(() => LocalStorage.delete(CACHE_KEY))
         .catch(err => this.alert(err));
     }
 
@@ -213,7 +211,7 @@ class Survey extends Component {
                         <form id={ Date.now() /*trickout autofill*/ }>
                             <input type="hidden" value={ Date.now() /*trick autofill*/ } />
 
-                            { this.state.messages.map((entry, index) => <Alert key={ index } status={ entry.status } message={ entry.message } />) }
+                            { this.state.alerts.map((entry, index) => <Alert key={ index } severity={ entry.severity } message={ entry.message } />) }
 
                             {
                                 questions.map((question, index) => {
