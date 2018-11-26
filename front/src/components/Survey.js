@@ -1,9 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-// configuration
-import { Configuration } from '../conf/config';
-
 // apis
 import api from '../api';
 import { serializeAnswer } from '../payload-serializer';
@@ -20,12 +17,31 @@ import PeriodRange from './form/PeriodRange';
 import LoadingSpinner from './LoadingSpinner';
 import Alert from './Alert';
 
-
 // devel
 import Dev from './Dev';
 
 // config
 const CACHE_KEY = process.env.REACT_APP_SURVEYCACHEKEY;
+
+const Panel = function(props) {
+    const pStyle = props.panelStyle || 'default';
+    const glyphicon = props.glyphicon || '';
+    return(
+        <div className={ `panel panel-${pStyle}` }>
+            { props.heading && <div className="panel-heading">
+                { glyphicon && <span className={ `glyphicon glyphicon-${glyphicon}` } style={ { marginRight: '1em' } }></span>}
+                { props.heading }
+            </div> }
+            <div className="panel-body">{ props.children }</div>
+        </div>
+    );
+};
+
+Panel.propTypes = {
+    panelStyle: PropTypes.string,
+    heading:  PropTypes.string,
+    glyphicon:  PropTypes.string,
+};
 
 class Survey extends Component {
     constructor(props) {
@@ -127,6 +143,7 @@ class Survey extends Component {
         const { survey, answers } = this.state;
         this.setState({ loading: 'Sending answer...' });
 
+        //TODO check if errors returned from serializer
         const csvFragments = Object.keys(answers).map((id) => {
             const entry = answers[id];
             const { answer, question } = entry;
@@ -156,10 +173,10 @@ class Survey extends Component {
 
         const { survey } = this.state;
         this.setState({ loading: 'Fetching previous question...' });
-        console.log(survey.current());
 
-        const questionIds = survey.current().map(question => question.id);
+        // FIRST go back to previous (does not render) and then get questionIds
         survey.back();
+        const questionIds = survey.current().map(question => question.id);
 
         // delete current answer(s)
         // each answer is a single request, we are bundling them into Promise.all
@@ -198,85 +215,84 @@ class Survey extends Component {
 
 
         return (
-            <section>
+            <section className="container">
                 <pre>step: { this.state.survey.step }, session: { this.state.survey.sessionID }, env: { process.env.NODE_ENV }</pre>
+                <h1>{ survey.surveyID } <small>Step { this.state.survey.step }</small></h1>
 
-                <pre>{ JSON.stringify(questions) }</pre>
+                <LoadingSpinner loading={ this.state.loading } message={ this.state.loading }/>
 
-                <div className="jumbotron jumbotron-fluid">
-                    <div className="container">
+                { survey.finished && <Panel panelStyle="primary" heading="Survey completed." glyphicon="ok">Thank you for your time!</Panel> }
 
-                        <LoadingSpinner loading={ this.state.loading } message={ this.state.loading }/>
+                <form id={ Date.now() /*trickout autofill*/ }>
+                    <input type="hidden" value={ Date.now() /*trick autofill*/ } />
 
-                        <form id={ Date.now() /*trickout autofill*/ }>
-                            <input type="hidden" value={ Date.now() /*trick autofill*/ } />
+                    { this.state.alerts.map((entry, index) => <Alert key={ index } severity={ entry.severity } message={ entry.message } />) }
 
-                            { this.state.alerts.map((entry, index) => <Alert key={ index } severity={ entry.severity } message={ entry.message } />) }
+                    {
+                        questions.map((question, index) => {
+                            switch(question.type) {
+                                case 'radiogroup':
+                                    return <Panel key={ index } heading={ question.name }>
+                                    <RadioGroup
+                                        question={ question }
+                                        handleChange={ this.handleChange.bind(this) } />
+                                    </Panel>
 
-                            {
-                                questions.map((question, index) => {
-                                    switch(question.type) {
-                                        case 'radiogroup':
-                                            return <RadioGroup
-                                                key={ index }
-                                                question={ question }
-                                                handleChange={ this.handleChange.bind(this) } />
+                                case 'geolocation':
+                                    return <Panel key={ index } heading={ question.name }>
+                                    <GeoLocation
+                                        question={ question }
+                                        handleChange={ this.handleChange.bind(this) } />
+                                    </Panel>
 
-                                        case 'geolocation':
-                                            return <GeoLocation
-                                                key={ index }
-                                                question={ question }
-                                                handleChange={ this.handleChange.bind(this) } />
+                                case 'datetime':
+                                    return <Panel key={ index } heading={ question.name }>
+                                    <PeriodRange
+                                        question={ question }
+                                        handleChange={ this.handleChange.bind(this) } />
+                                    </Panel>
 
-                                        case 'datetime':
-                                            return <PeriodRange
-                                                key={ index }
-                                                question={ question }
-                                                handleChange={ this.handleChange.bind(this) } />
+                                default:
+                                    return  <Panel key={ index } heading={ question.name }>
+                                    <TextInput
+                                        question={ question }
+                                        handleChange={ this.handleChange.bind(this) } />
+                                    </Panel>
 
-                                        default:
-                                            return <TextInput
-                                                key={ index }
-                                                question={ question }
-                                                handleChange={ this.handleChange.bind(this) } />
-
-                                    }
-
-                                })
                             }
 
-                            { (survey.step <= 0 && questions.length) ?
-                                <div>
-                                    <button type="submit" className="btn btn-default btn-primary btn-arrow-right"
-                                        onClick={ this.handleUpdateAnswers.bind(this) }>Next Question</button>
-                                </div>
-                            : null }
+                        })
+                    }
 
-                            { (!survey.finished && survey.step > 0 && questions.length) ?
-                                <div>
-                                    <button type="submit" className="btn btn-default btn-arrow-left"
-                                        onClick={ this.handleDelAnswer.bind(this) }>Previous Question</button>
-                                    <button type="submit" className="btn btn-default btn-primary btn-arrow-right"
-                                        onClick={ this.handleUpdateAnswers.bind(this) }>Next Question</button>
-                                </div>
-                            : null }
+                    { (survey.step <= 0 && questions.length) ?
+                        <div className="well">
+                            <button type="submit" className="btn btn-default btn-primary btn-arrow-right"
+                                onClick={ this.handleUpdateAnswers.bind(this) }>Next Question</button>
+                        </div>
+                    : null }
 
-                            { (survey.finished) ?
-                                <div>
-                                    <button type="submit" className="btn btn-default btn-primary"
-                                        onClick={ this.handleFinishSurvey.bind(this) }>Finish Survey</button>
-                                </div>
-                            : null }
+                    { (!survey.finished && survey.step > 0 && questions.length) ?
+                        <div className="well">
+                            <button type="submit" className="btn btn-default btn-arrow-left"
+                                onClick={ this.handleDelAnswer.bind(this) }>Previous Question</button>
+                            <button type="submit" className="btn btn-default btn-primary btn-arrow-right"
+                                onClick={ this.handleUpdateAnswers.bind(this) }>Next Question</button>
+                        </div>
+                    : null }
 
-                        </form>
+                    { (survey.finished) ?
+                        <div className="well">
+                            <button type="submit" className="btn btn-default btn-primary"
+                                onClick={ this.handleFinishSurvey.bind(this) }>Finish Survey</button>
+                        </div>
+                    : null }
 
-                    </div>
+                </form>
 
-                    <Dev label="survey" data={ survey } open={ true }/>
-                    <Dev label="questions" data={ questions } open={ true }/>
-                    <Dev label="answers" data={ answers } open={ true }/>
+                <Dev label="survey" data={ survey } open={ true }/>
+                <Dev label="questions" data={ questions } open={ true }/>
+                <Dev label="answers" data={ answers } open={ true }/>
 
-                </div>
             </section>
         );
     }
