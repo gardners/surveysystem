@@ -217,6 +217,7 @@ const serializeAnswer = function(id, answer, questionType) {
 
     // cast values, define keys
     switch (questionType) {
+        case 'multichoice':
         case 'text':
             key = 'text';
             value = castString(sanitized);
