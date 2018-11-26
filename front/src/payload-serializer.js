@@ -217,12 +217,6 @@ const serializeAnswer = function(id, answer, questionType) {
 
     // cast values, define keys
     switch (questionType) {
-        case 'multichoice':
-        case 'text':
-            key = 'text';
-            value = castString(sanitized);
-        break;
-
         case 'number':
             key = 'value';
             value = castFloat(sanitized);
@@ -240,8 +234,8 @@ const serializeAnswer = function(id, answer, questionType) {
         // break;
 
         default:
-            key = '';
-            value = new Error('CSV serializer: Unspecified error ');
+            key = 'text';
+            value = castString(sanitized);
     }
 
     // handle errors
