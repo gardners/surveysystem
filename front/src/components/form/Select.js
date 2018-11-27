@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-class RadioGroup extends Component {
+class Select extends Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -25,31 +25,24 @@ class RadioGroup extends Component {
         return (
             <div className="form-group">
                 <p><strong> { question.title_text }</strong></p>
+                <select
+                    id={ question.id }
+                    name={ question.name }
+                    className="form-control">
                 { choices.map((value, index) => {
-                    return <div key={index} className="radio">
-                        <label>
-                            <input
-                                type="radio"
-                                name={ question.name }
-                                id={ question.id }
-                                value={ value }
-                                onChange={ this.handleChange.bind(this)}
-                                checked={ value === this.state.value }
-                                />
-                            { value }
-                        </label>
-                    </div>
+                    return  <option key={ index } value={ value } selected={ value === this.state.value }>{ value }</option>
                 }) }
+                </select>
             </div>
         );
     }
 }
 
-RadioGroup.defaultProps = {
+Select.defaultProps = {
     placeholder: null,
 };
 
-RadioGroup.propTypes = {
+Select.propTypes = {
     handleChange: PropTypes.func.isRequired,
     question: PropTypes.shape({
         id: PropTypes.string.isRequired,
@@ -63,4 +56,4 @@ RadioGroup.propTypes = {
     placeholder: PropTypes.string,
 };
 
-export default RadioGroup;
+export default Select;
