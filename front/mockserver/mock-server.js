@@ -4,23 +4,23 @@ const Url = require('url');
 const querystring = require('querystring');
 const fs = require('fs');
 
-// survey
 const Survey = require('./survey-model');
-const SURVEY_SESSION_ID = Date.now().toString();
-const SURVEY_DIR = './survey';
-const SURVEY_COUNT = Survey.countAnswers(SURVEY_DIR);
 
-let count = 0;
+// survey
+
+const SURVEY_DIR = './survey';
+let CURRENT = -1; // current survey index
+let SURVEY_ID = '';
 
 const server = (() => {
     return http.createServer(function(request, response) {
 
-        const url = Url.parse(request.url);
+        const url = Url.parse(request.url, true);// with query parsing
         const extname = path.extname(url.pathname).toLowerCase();
 
         const name = path.basename(url.pathname, extname);
         const dirname = path.dirname(url.pathname);
-        const { query } = url.query;
+        const { query } = url;
 
         const contentType = 'application/json';
         let body = '';
@@ -50,50 +50,51 @@ const server = (() => {
         });
 
         let payload = '';
-        let answer;
+        let res;
 
         request.on('end', () => {
+            // console.log('current (before update)', CURRENT);
 
-            // default
             switch (name) {
 
                 // api
                 // todo check session id
 
                 case 'newsession':
-                    response.statusCode = 200;
-                    response.statusText = 'OK';
-                    response.end(SURVEY_SESSION_ID, 'utf-8');
-                    count = 0;
+                    res = Survey.newsession(query.surveyid);
+                    SURVEY_ID = query.surveyid;
+                    CURRENT = res.current;
+
+                    response.statusCode = res.statusCode;
+                    response.statusText = res.statusText;
+                    response.end(res.payload, 'utf-8');
                     break;
 
                 case 'nextquestion':
-                    answer = Survey.getAnswer(count, SURVEY_DIR),
+                    res = Survey.nextquestion(SURVEY_ID, CURRENT);
+                    CURRENT = res.current;
 
-                    response.statusCode = answer.statusCode;
-                    response.statusText = answer.statusText;
-                    response.end(answer.payload, 'utf-8');
-                    count += (count < SURVEY_COUNT - 1) ? 1 : 0;
+                    response.statusCode = res.statusCode;
+                    response.statusText = res.statusText;
+                    response.end(res.payload, 'utf-8');
                     break;
 
                 case 'delanswer':
-                    if(count) {
-                        count -= 1;
-                    }
-                    answer = Survey.getAnswer(count, SURVEY_DIR),
+                    res = Survey.delanswer(SURVEY_ID, CURRENT);
+                    CURRENT = res.current;
 
-                    response.statusCode = answer.statusCode;
-                    response.statusText = answer.statusText;
-                    response.end(answer.payload, 'utf-8');
+                    response.statusCode = res.statusCode;
+                    response.statusText = res.statusText;
+                    response.end(res.payload, 'utf-8');
                     break;
 
                 case 'updateanswer':
-                    answer = Survey.getAnswer(count, SURVEY_DIR),
+                    res = Survey.updateanswer(SURVEY_ID, query.answer, CURRENT);
+                    CURRENT = res.current;
 
-                    response.statusCode = answer.statusCode;
-                    response.statusText = answer.statusText;
-                    response.end(answer.payload, 'utf-8');
-                    count += (count < SURVEY_COUNT - 1) ? 1 : 0;
+                    response.statusCode = res.statusCode;
+                    response.statusText = res.statusText;
+                    response.end(res.payload, 'utf-8');
                     break;
 
                 // status tests
@@ -135,8 +136,6 @@ const server = (() => {
             }
 
         });
-
-        //console.log('count', count);
 
     });
 
