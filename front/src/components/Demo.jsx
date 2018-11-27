@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+// form elements
 import GeoLocation from './form/GeoLocation';
 import PeriodRange from './form/PeriodRange';
 import RadioGroup from './form/RadioGroup';
