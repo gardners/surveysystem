@@ -10,10 +10,11 @@ import './style/main.css';
 import { Configuration } from './conf/config';
 
 // views
-import Navbar from "./components/Navbar";
-import Survey from "./components/Survey";
-import Page404 from "./components/Page404"
-import Surveys from "./components/Surveys"
+import Navbar from './components/Navbar';
+import Survey from './components/Survey';
+import Page404 from './components/Page404';
+import Surveys from './components/Surveys';
+import Demo from './components/Demo';
 
 const { surveys } = Configuration;
 const Navigation = withRouter(Navbar);
@@ -22,13 +23,18 @@ const App = function(props) {
     return (
         <Router>
             <div>
-                <Navigation />
-                <Switch>
-                    <Route exact path="/" render={ props => (surveys.length) ? <Redirect to={ `/survey/${surveys[0]}` } /> : <Surveys /> } />
-                    <Route path="/surveys" component={ Surveys } />
-                    <Route path="/survey/:id/:sessionID?" component={ Survey } />
-                    <Route path="*" component={ Page404 } />
-                </Switch>
+                <header>
+                    <Navigation />
+                </header>
+                <main>
+                    <Switch>
+                        <Route exact path="/" render={ props => (surveys.length) ? <Redirect to={ `/survey/${surveys[0]}` } /> : <Surveys /> } />
+                        <Route path="/surveys" component={ Surveys } />
+                        <Route path="/demo" component={ Demo } />
+                        <Route path="/survey/:id/:sessionID?" component={ Survey } />
+                        <Route path="*" component={ Page404 } />
+                    </Switch>
+                </main>
             </div>
         </Router>
     );
