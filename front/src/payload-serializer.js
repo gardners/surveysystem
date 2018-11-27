@@ -205,7 +205,6 @@ const castGeoLocObject = function(val) {
  * @returns {{string|Error)}  csv row or Error to be displayed
  */
 const serializeAnswer = function(id, answer, questionType) {
-
     const model = getModel();
     const sanitized = sanitize(answer);
 

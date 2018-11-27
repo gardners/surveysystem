@@ -14,6 +14,7 @@ const TextInput = function(props) {
                 placeholder={ placeholder }
                 autoComplete="off"
                 onChange={ (e) => handleChange(e.target.value, question) }
+                defaultValue={ question.defaultValue || null }
             />
         </div>
     );

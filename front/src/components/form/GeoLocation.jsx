@@ -9,6 +9,10 @@ const options = {
     maximumAge: 0,
 };
 
+const latlonString = function(coords) {
+    return (coords) ? [coords.latitude, coords.longitude].toString() : '';
+};
+
 const fetchLocation = function() {
     return new Promise(function(resolve, reject) {
 
@@ -25,6 +29,7 @@ const fetchLocation = function() {
     });
 };
 
+
 /**
  * Tries to fetch current device location
  */
@@ -32,15 +37,19 @@ class GeoLocation extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            value: null,
+            value: '',
         };
     }
 
     componentDidMount() {
         const { question } = this.props;
         fetchLocation()
-        .then(coords => this.setState({ value: coords }))
-        .then(this.props.handleChange(this.state.value, question))
+        .then((coords) => {
+            const value = latlonString(coords);
+            this.setState({ value });
+            // send immediately to survey
+            this.props.handleChange(this.state.value, question);
+        })
         .catch(err => console.error(err)); // TODO
     }
 
@@ -57,7 +66,7 @@ class GeoLocation extends Component {
                     type="text"
                     className="form-control"
                     placeholder={ this.props.placeholder }
-                    value={ (value) ? [value.latitude, value.longitude].toString() : '' }
+                    value={ value }
                 />
             </div>
         );

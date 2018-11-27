@@ -30,7 +30,7 @@ class Select extends Component {
                     name={ question.name }
                     className="form-control">
                 { choices.map((value, index) => {
-                    return  <option key={ index } value={ value } selected={ value === this.state.value }>{ value }</option>
+                    return <option key={ index } value={ value }>{ value }</option>
                 }) }
                 </select>
             </div>
