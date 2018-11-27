@@ -1,0 +1,59 @@
+[
+  {
+    "next_questions": [
+      {
+        "id": "password1",
+        "name": "password1",
+        "title": "Password",
+        "title_text": "Password",
+        "type": "text"
+      }
+    ]
+  },
+
+  {
+    "next_questions": [
+      {
+        "id": "multichoice",
+        "name": "multichoice",
+        "title": "Select one of the following",
+        "title_text": "Select one of the following",
+        "type": "radiogroup",
+        "choices": [
+          "Yes",
+          "No",
+          "",
+          "Maybe"
+        ]
+      }
+    ]
+  },
+
+  {
+    "next_questions": [
+      {
+        "id": "geolocation",
+        "name": "geolocation",
+        "title": "Your position?",
+        "title_text": "Your position?",
+        "type": "geolocation"
+      }
+    ]
+  },
+
+  {
+    "next_questions": [
+      {
+        "id": "datetime",
+        "name": "datetime",
+        "title": "Your average sleep hours?",
+        "title_text": "Your average sleep hours?",
+        "type": "datetime"
+      }
+    ]
+  },
+
+  {
+    "next_questions": []
+  }
+]
