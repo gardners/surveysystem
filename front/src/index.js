@@ -23,14 +23,18 @@ const App = function(props) {
     return (
         <Router>
             <div>
-                <Navigation />
-                <Switch>
-                    <Route exact path="/" render={ props => (surveys.length) ? <Redirect to={ `/survey/${surveys[0]}` } /> : <Surveys /> } />
-                    <Route path="/surveys" component={ Surveys } />
-                    <Route path="/demo" component={ Demo } />
-                    <Route path="/survey/:id/:sessionID?" component={ Survey } />
-                    <Route path="*" component={ Page404 } />
-                </Switch>
+                <header>
+                    <Navigation />
+                </header>
+                <main>
+                    <Switch>
+                        <Route exact path="/" render={ props => (surveys.length) ? <Redirect to={ `/survey/${surveys[0]}` } /> : <Surveys /> } />
+                        <Route path="/surveys" component={ Surveys } />
+                        <Route path="/demo" component={ Demo } />
+                        <Route path="/survey/:id/:sessionID?" component={ Survey } />
+                        <Route path="*" component={ Page404 } />
+                    </Switch>
+                </main>
             </div>
         </Router>
     );
