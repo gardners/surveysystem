@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Route, Switch, Redirect, withRouter } from 're
 
 // styles
 import 'bootstrap/dist/css/bootstrap.css';
+import 'font-awesome/css/font-awesome.min.css';
 import './style/main.css';
 
 // config
@@ -27,7 +28,7 @@ const App = function(props) {
         <Router>
             <div>
                 <Navigation />
-                <main>
+                <main className="container-fluid" style={{ marginTop: '60px' /*fixed header*/ }}>
                     <Switch>
                         <Route exact path="/" render={ props => (surveys.length) ? <Redirect to={ `/survey/${surveys[0]}` } /> : <Surveys /> } />
                         <Route path="/surveys" component={ Surveys } />
