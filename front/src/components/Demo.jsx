@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import { FormRow } from './FormHelpers';
+
 // form elements
 import GeoLocation from './form/GeoLocation';
 import PeriodRange from './form/PeriodRange';
@@ -21,15 +23,12 @@ const Question = function(props) {
     }, props);
 
     return (
-        <div className="panel panel-default">
-            <div className="panel-heading">Component: { props.component.name }</div>
-            <div className="panel-body">
+        <FormRow className="list-group-item" legend={ question.name }>
                 <props.component
                     question={ question }
                     handleChange={ () => {} }
                 />
-            </div>
-        </div>
+        </FormRow>
     );
 };
 
@@ -40,22 +39,12 @@ Question.propTypes = {
 class Demo extends Component {
     render() {
         return (
-            <section className="container">
-                <div>
-                    <Question component={ GeoLocation } />
-                </div>
-                <div>
-                    <Question component={ PeriodRange } />
-                </div>
-                <div>
-                    <Question component={ RadioGroup } choices={ ['Yes', 'No', 'Maybe' ] } defaultValue="Maybe"/>
-                </div>
-                <div>
-                    <Question component={ Select } choices={ ['First', 'Second', 'Third' ] } defaultValue="Second"/>
-                </div>
-                <div>
-                    <Question component={ TextInput }/>
-                </div>
+            <section class="list-group">
+                <Question component={ GeoLocation } />
+                <Question component={ PeriodRange } />
+                <Question component={ RadioGroup } choices={ ['Yes', 'No', 'Maybe' ] } defaultValue="Maybe"/>
+                <Question component={ Select } choices={ ['First', 'Second', 'Third' ] } defaultValue="Second"/>
+                <Question component={ TextInput }/>
             </section>
         );
     }

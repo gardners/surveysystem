@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
+const SessionDelimiter = '://';
+
 const loadSurveyFile = function(surveyid) {
     const file = path.resolve(__dirname) + '/surveys/' + surveyid + '.json';
     const exists = fs.existsSync(file);
@@ -61,7 +63,7 @@ const newsession = function(surveyid) {
             current: -1,
             statusCode: '200',
             statusText: 'OK',
-            payload: '' + Date.now(),
+            payload: surveyid + SessionDelimiter + Date.now(),
         };
     }
 
@@ -72,6 +74,20 @@ const newsession = function(surveyid) {
         payload: '',
     };
 };
+
+const parseSIDfromSession = function(sessionID) {
+    sessionID = sessionID || '';
+
+    if(!sessionID) {
+        return '';
+    }
+
+    const parts = sessionID.split(SessionDelimiter);
+    if(!parts.length) {
+        return '';
+    }
+    return parts[0];
+}
 
 const nextquestion = function(surveyid, previous) {
     const survey = loadSurveyFile(surveyid);
@@ -135,6 +151,7 @@ const updateanswer = function(surveyid, answer, previous) {
 };
 
 module.exports = {
+    parseSIDfromSession,
     newsession,
     nextquestion,
     delanswer,

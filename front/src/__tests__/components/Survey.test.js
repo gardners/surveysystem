@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import FlexibleSurvey from '../../components/FlexibleSurvey';
+import Survey from '../../components/Survey';
 
 const createMockXHR = (responseJSON) => {
     const mockXHR = {
@@ -21,6 +21,7 @@ const match = {
         id: SurveyID,
     },
 };
+
 describe('withXHR mock', () => {
     const oldXMLHttpRequest = window.XMLHttpRequest;
     let mockXHR = null;
@@ -36,7 +37,7 @@ describe('withXHR mock', () => {
 
     it('renders without crashing', () => {
         const div = document.createElement('div');
-        ReactDOM.render(<FlexibleSurvey match={ match }/>, div);
+        ReactDOM.render(<Survey match={ match }/>, div);
         ReactDOM.unmountComponentAtNode(div);
     });
 });

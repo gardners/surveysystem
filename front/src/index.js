@@ -3,30 +3,34 @@ import ReactDOM from 'react-dom';
 import { BrowserRouter as Router, Route, Switch, Redirect, withRouter } from 'react-router-dom';
 
 // styles
-import 'bootstrap/dist/css/bootstrap.css';
-import './style/main.css';
+import './styles/index.scss';
+
+// icons
+import '@fortawesome/fontawesome-free/css/solid.min.css';
+import '@fortawesome/fontawesome-free/css/fontawesome.min.css';
 
 // config
 import { Configuration } from './conf/config';
 
+// scaffolding
+import HeaderNav from './components/HeaderNav';
+import Footer from './components/Footer';
+
 // views
-import Navbar from './components/Navbar';
 import Survey from './components/Survey';
 import Page404 from './components/Page404';
 import Surveys from './components/Surveys';
 import Demo from './components/Demo';
 
 const { surveys } = Configuration;
-const Navigation = withRouter(Navbar);
+const Navigation = withRouter(HeaderNav);
 
 const App = function(props) {
     return (
         <Router>
             <div>
-                <header>
-                    <Navigation />
-                </header>
-                <main>
+                <Navigation />
+                <main className="container-fluid" style={{ marginTop: '60px' /*fixed header*/ }}>
                     <Switch>
                         <Route exact path="/" render={ props => (surveys.length) ? <Redirect to={ `/survey/${surveys[0]}` } /> : <Surveys /> } />
                         <Route path="/surveys" component={ Surveys } />
@@ -35,6 +39,7 @@ const App = function(props) {
                         <Route path="*" component={ Page404 } />
                     </Switch>
                 </main>
+                <Footer />
             </div>
         </Router>
     );
@@ -42,4 +47,4 @@ const App = function(props) {
 
 App.propTypes = {};
 
-ReactDOM.render(<App />, document.getElementById('app'));
+ReactDOM.render(<App />, document.getElementById('root'));
