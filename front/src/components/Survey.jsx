@@ -211,7 +211,7 @@ class Survey extends Component {
                     {
                         (survey.finished) ?
                         <FormRow className="list-group-item text-white bg-success">
-                            <h2> <i className="fa fa-check-circle"></i> Survey completed.</h2>
+                            <h2> <i className="fas fa-check-circle"></i> Survey completed.</h2>
                             Thank you for your time!
                         </FormRow>
                         : null
@@ -256,18 +256,18 @@ class Survey extends Component {
                     <FormRow className="list-group-item bg-light">
                         {
                             (survey.step <= 0 && questions.length) ?
-                                <button type="submit" className="btn btn-default btn-primary btn-arrow-right"
-                                    onClick={ this.handleUpdateAnswers.bind(this) }>Next Question</button>
+                                <button type="submit" className="app--btn-arrow btn btn-default btn-primary"
+                                    onClick={ this.handleUpdateAnswers.bind(this) }>Next Question <i className="fas fa-arrow-circle-right"></i></button>
                             : null
                         }
 
                         {
                             (!survey.finished && survey.step > 0 && questions.length) ?
                             <div>
-                                <button type="submit" className="btn btn-default btn-arrow-left"
-                                    onClick={ this.handleDelAnswer.bind(this) }>Previous Question</button>
-                                <button type="submit" className="btn btn-default btn-primary btn-arrow-right"
-                                    onClick={ this.handleUpdateAnswers.bind(this) }>Next Question</button>
+                                <button type="submit" className="app--btn-arrow btn btn-default"
+                                    onClick={ this.handleDelAnswer.bind(this) }><i className="fas fa-arrow-circle-left"></i> Previous Question</button>
+                                <button type="submit" className="app--btn-arrow btn btn-default btn-primary"
+                                    onClick={ this.handleUpdateAnswers.bind(this) }>Next Question <i className="fas fa-arrow-circle-right"></i></button>
                             </div>
                             : null
                         }

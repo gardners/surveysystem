@@ -20,8 +20,8 @@ class Surveys extends Component {
                 <div className="row">
 
                     { surveys.map(survey =>
-                        <div className="col col-sm-6">
-                            <div key={survey} className="card">
+                        <div key={survey} className="col col-sm-6">
+                            <div className="card">
                                 <div className="card-body">
                                     <h3 className="card-title">{ survey }</h3>
                                     { (cachedSurveyID === survey) ?
