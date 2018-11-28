@@ -11,30 +11,31 @@ Runs the app **and** starts *mockserver* (node-http) in an external terminal ins
 
 ### troubleshooting dev servers
 
-#### mocksever exits with `EADDRINUSE`
+* mocksever exits with `EADDRINUSE`
 
-```
+```bash
 sudo kill $(sudo lsof -t -i:<YOUR PORT>)
-``
-
-## backend server: CORS/Network error in browser console
-
 ```
+
+* backend server: CORS/Network error in browser console
+
+```bash
 # check status
 sudo service lighttpd status
 # check systemd logs
 sudo  sudo journalctl -u lighttpd
 ```
 
-In most cases your port is likely being used by another service!
+In most cases your port is being used by another service!
 Let's say you configured the backend on port 80, but have `nginx` running on port 80 already. Either change port or stop (or disable) the nginx service.
 
-```
+```bash
 sudo lsof  -i:80
 # Ah! nginx processes listed!
 sudo service nginx stop
 sudo service lighttpd start
 ```
+
 ---
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
