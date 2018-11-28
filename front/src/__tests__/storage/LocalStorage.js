@@ -19,15 +19,11 @@ describe('LocalStorage', () => {
     });
 
     test('store stringified JSON', () => {
-        const json = JSON.stringify([1, 2, 3]);
+        const data = JSON.stringify([1, 2, 3]);
 
-        Storage.set(KEY, json);
+        Storage.set(KEY, data);
         const res = localStorage.getItem(KEY);
-
-        it('shouldn\'t double encode JSON strings', () => {
-            expect(res).toBe(JSON.stringify(data));
-        })
-
+        expect(res).toBe(JSON.stringify(data));
     });
 
     test('fetch invalid JSON', () => {
@@ -35,11 +31,7 @@ describe('LocalStorage', () => {
 
         localStorage.setItem(KEY, json);
         const res = Storage.get(KEY);
-
-        it('should return NULL in case the stored value is invalid json', () => {
-            expect(res).toStrictEqual(null);
-        })
-
+        expect(res).toStrictEqual(null);
     });
 
     test('store and fetch undefined data', () => {
@@ -47,11 +39,7 @@ describe('LocalStorage', () => {
 
         Storage.set(KEY, data);
         const res = Storage.get(KEY);
-
-        it('should return NULL in case the stored value is invalid json', () => {
-            expect(res).toStrictEqual(null);
-        })
-
+        expect(res).toStrictEqual(null);
     });
 
 });
