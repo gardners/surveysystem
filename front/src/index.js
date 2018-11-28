@@ -3,9 +3,11 @@ import ReactDOM from 'react-dom';
 import { BrowserRouter as Router, Route, Switch, Redirect, withRouter } from 'react-router-dom';
 
 // styles
-import 'bootstrap/dist/css/bootstrap.css';
-import 'font-awesome/css/font-awesome.min.css';
-import './style/main.css';
+import './styles/index.scss';
+
+// icons
+import '@fortawesome/fontawesome-free/css/solid.min.css';
+import '@fortawesome/fontawesome-free/css/fontawesome.min.css';
 
 // config
 import { Configuration } from './conf/config';
@@ -45,4 +47,4 @@ const App = function(props) {
 
 App.propTypes = {};
 
-ReactDOM.render(<App />, document.getElementById('app'));
+ReactDOM.render(<App />, document.getElementById('root'));

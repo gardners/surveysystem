@@ -3,25 +3,32 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "bootstrap": "^4.1.0",
+    "bootstrap": "^4.1.3",
     "react": "^16.6.3",
-    "react-bootstrap": "^0.32.4",
     "react-dom": "^16.6.3",
     "react-router-dom": "^4.3.1",
-    "react-scripts": "1.1.4",
-    "survey-react": "^1.0.56"
+    "react-scripts": "2.1.1"
   },
   "scripts": {
     "dev": "xterm -e \"cd ../backend & sudo ./testrun --skip-npm-build\" && react-scripts start",
-    "dev-mock": "xterm -e \"./mocks/start\" & react-scripts start",
+    "dev-mock": "xterm -e \"./mockserver/start\" & react-scripts start",
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
+    "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ],
   "devDependencies": {
-    "font-awesome": "^4.7.0",
+    "@fortawesome/fontawesome-free": "^5.5.0",
     "jest-localstorage-mock": "^2.3.0",
-    "react-test-renderer": "^16.6.3"
+    "node-sass": "^4.10.0"
   }
 }
