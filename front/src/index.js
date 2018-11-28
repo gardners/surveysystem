@@ -9,23 +9,24 @@ import './style/main.css';
 // config
 import { Configuration } from './conf/config';
 
+// scaffolding
+import HeaderNav from './components/HeaderNav';
+import Footer from './components/Footer';
+
 // views
-import Navbar from './components/Navbar';
 import Survey from './components/Survey';
 import Page404 from './components/Page404';
 import Surveys from './components/Surveys';
 import Demo from './components/Demo';
 
 const { surveys } = Configuration;
-const Navigation = withRouter(Navbar);
+const Navigation = withRouter(HeaderNav);
 
 const App = function(props) {
     return (
         <Router>
             <div>
-                <header>
-                    <Navigation />
-                </header>
+                <Navigation />
                 <main>
                     <Switch>
                         <Route exact path="/" render={ props => (surveys.length) ? <Redirect to={ `/survey/${surveys[0]}` } /> : <Surveys /> } />
@@ -35,6 +36,7 @@ const App = function(props) {
                         <Route path="*" component={ Page404 } />
                     </Switch>
                 </main>
+                <Footer />
             </div>
         </Router>
     );
