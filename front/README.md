@@ -11,7 +11,7 @@ Runs the app **and** starts *mockserver* (node-http) in an external terminal ins
 
 ### troubleshooting dev servers
 
-## mocksever exits with `EADDRINUSE`
+#### mocksever exits with `EADDRINUSE`
 
 ```
 sudo kill $(sudo lsof -t -i:<YOUR PORT>)
