@@ -53,6 +53,20 @@ const server = (() => {
         let res;
 
         request.on('end', () => {
+
+
+
+            switch (dirname) {
+                case '/surveyapi':
+                    if(!SURVEY_ID) {
+                        SURVEY_ID = Survey.parseSIDfromSession(query.sessionid);
+                    }
+                break;
+
+                default:
+                    // nothing
+            }
+
             // console.log('current (before update)', CURRENT);
 
             switch (name) {
