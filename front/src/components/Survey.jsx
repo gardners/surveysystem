@@ -17,31 +17,14 @@ import PeriodRange from './form/PeriodRange';
 import LoadingSpinner from './LoadingSpinner';
 import Alert from './Alert';
 
+import { Card } from './bootstrap/Cards';
+import { FormRow } from './FormHelpers';
+
 // devel
 import Dev from './Dev';
 
 // config
 const CACHE_KEY = process.env.REACT_APP_SURVEYCACHEKEY;
-
-const Panel = function(props) {
-    const pStyle = props.panelStyle || 'default';
-    const glyphicon = props.glyphicon || '';
-    return(
-        <div className={ `panel panel-${pStyle}` }>
-            { props.heading && <div className="panel-heading">
-                { glyphicon && <span className={ `glyphicon glyphicon-${glyphicon}` } style={ { marginRight: '1em' } }></span>}
-                { props.heading }
-            </div> }
-            <div className="panel-body">{ props.children }</div>
-        </div>
-    );
-};
-
-Panel.propTypes = {
-    panelStyle: PropTypes.string,
-    heading:  PropTypes.string,
-    glyphicon:  PropTypes.string,
-};
 
 class Survey extends Component {
     constructor(props) {
@@ -215,77 +198,87 @@ class Survey extends Component {
 
 
         return (
-            <section className="container">
+            <section>
                 <pre>step: { this.state.survey.step }, session: { this.state.survey.sessionID }, env: { process.env.NODE_ENV }</pre>
                 <h1>{ survey.surveyID } <small>Step { this.state.survey.step }</small></h1>
 
                 <LoadingSpinner loading={ this.state.loading } message={ this.state.loading }/>
+                { this.state.alerts.map((entry, index) => <Alert key={ index } severity={ entry.severity } message={ entry.message } />) }
 
-                { survey.finished && <Panel panelStyle="primary" heading="Survey completed." glyphicon="ok">Thank you for your time!</Panel> }
-
-                <form id={ Date.now() /*trickout autofill*/ }>
+                <form id={ Date.now() /*trickout autofill*/ } className="list-group">
                     <input type="hidden" value={ Date.now() /*trick autofill*/ } />
 
-                    { this.state.alerts.map((entry, index) => <Alert key={ index } severity={ entry.severity } message={ entry.message } />) }
+                    {
+                        (survey.finished) ?
+                        <FormRow className="list-group-item text-white bg-success">
+                            <h2> <i className="fa fa-check-circle"></i> Survey completed.</h2>
+                            Thank you for your time!
+                        </FormRow>
+                        : null
+                    }
 
                     {
                         questions.map((question, index) => {
                             switch(question.type) {
                                 case 'radiogroup':
-                                    return <Panel key={ index } heading={ question.name }>
+                                    return <FormRow key={ index } className="list-group-item" legend={ question.name }>
                                     <RadioGroup
                                         question={ question }
                                         handleChange={ this.handleChange.bind(this) } />
-                                    </Panel>
+                                    </FormRow>
 
                                 case 'geolocation':
-                                    return <Panel key={ index } heading={ question.name }>
+                                    return <FormRow key={ index } className="list-group-item" legend={ question.name }>
                                     <GeoLocation
                                         question={ question }
                                         handleChange={ this.handleChange.bind(this) } />
-                                    </Panel>
+                                    </FormRow>
 
                                 case 'datetime':
-                                    return <Panel key={ index } heading={ question.name }>
+                                    return <FormRow key={ index } className="list-group-item" legend={ question.name }>
                                     <PeriodRange
                                         question={ question }
                                         handleChange={ this.handleChange.bind(this) } />
-                                    </Panel>
+                                    </FormRow>
 
                                 default:
-                                    return  <Panel key={ index } heading={ question.name }>
+                                    return  <FormRow key={ index } className="list-group-item" legend={ question.name }>
                                     <TextInput
                                         question={ question }
                                         handleChange={ this.handleChange.bind(this) } />
-                                    </Panel>
+                                    </FormRow>
 
                             }
 
                         })
                     }
 
-                    { (survey.step <= 0 && questions.length) ?
-                        <div className="well">
-                            <button type="submit" className="btn btn-default btn-primary btn-arrow-right"
-                                onClick={ this.handleUpdateAnswers.bind(this) }>Next Question</button>
-                        </div>
-                    : null }
+                    <FormRow className="list-group-item bg-light">
+                        {
+                            (survey.step <= 0 && questions.length) ?
+                                <button type="submit" className="btn btn-default btn-primary btn-arrow-right"
+                                    onClick={ this.handleUpdateAnswers.bind(this) }>Next Question</button>
+                            : null
+                        }
 
-                    { (!survey.finished && survey.step > 0 && questions.length) ?
-                        <div className="well">
-                            <button type="submit" className="btn btn-default btn-arrow-left"
-                                onClick={ this.handleDelAnswer.bind(this) }>Previous Question</button>
-                            <button type="submit" className="btn btn-default btn-primary btn-arrow-right"
-                                onClick={ this.handleUpdateAnswers.bind(this) }>Next Question</button>
-                        </div>
-                    : null }
+                        {
+                            (!survey.finished && survey.step > 0 && questions.length) ?
+                            <div>
+                                <button type="submit" className="btn btn-default btn-arrow-left"
+                                    onClick={ this.handleDelAnswer.bind(this) }>Previous Question</button>
+                                <button type="submit" className="btn btn-default btn-primary btn-arrow-right"
+                                    onClick={ this.handleUpdateAnswers.bind(this) }>Next Question</button>
+                            </div>
+                            : null
+                        }
 
-                    { (survey.finished) ?
-                        <div className="well">
+                        {
+                            (survey.finished) ?
                             <button type="submit" className="btn btn-default btn-primary"
                                 onClick={ this.handleFinishSurvey.bind(this) }>Finish Survey</button>
-                        </div>
-                    : null }
+                            : null
+                        }
+                    </FormRow>
 
                 </form>
 
