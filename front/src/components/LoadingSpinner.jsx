@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import '../style/spinners.css';
+import '../styles/spinners.scss';
 
 const LoadingSpinner = function (props) {
     const loading = props.loading || false;
