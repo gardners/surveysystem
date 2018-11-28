@@ -6,9 +6,6 @@ body {
 
 /* navigation */
 
-.app--main-nav {
-    border-radius: 0;
-}
 
 /* debug components */
 
@@ -30,6 +27,8 @@ body {
     position: relative;
     padding-left: 18px;
     padding-right: 18px;
+    padding-bottom: 6px;
+    padding-top: 6px;
     /* margin for arrow width and spacing between buttons */
     margin-left: 11px;
     margin-right: 11px;
