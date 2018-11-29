@@ -8,13 +8,15 @@ class SurveyManager {
 
     /**
      * @constructor
-     * @param {string} surveyID The surveyID returned from backend. Note that ther is no logic attached to the property, it just houses it for convenience
+     * @param {string} surveyID The surveyID returned from backend. Note that there is no logic attached to the property, it just houses it for convenience
+     * @param {string} endpoint survey api endpoint
      * @returns {void}
      */
-    constructor(surveyID, cached = null) {
+    constructor(surveyID, endpoint) {
         // meta data
         this.surveyID = surveyID || null;
         this.sessionID = null;
+        this.endpoint = endpoint;
 
         // progress
         this.step = -1;
@@ -23,10 +25,6 @@ class SurveyManager {
 
         // questions
         this.questions = []; // QuestionSets
-
-        if (cached) {
-            this.merge(cached);
-        }
     }
 
     /**
@@ -60,18 +58,33 @@ class SurveyManager {
 
         const cachedSurveyID = cached.surveyID || null;
         const cachedSessionID = cached.sessionID || null;
+        const cachedEndpoint = cached.endpoint || null;
 
         // this without sessionID
         // cache with sessionID
         // cache with surveyID
+
+        // this with endpoint
+        // cache with endpoint
+        // this endpoint and cache endpoint match
+
         // surveyIDs match
         // !closed
 
+        // keeping code readable
         if (!this.surveyID || this.surveyID !== cachedSurveyID){
             return false;
         }
 
         if (!cachedSessionID || this.sessionID){
+            return false;
+        }
+
+        if (!cachedEndpoint || !this.endpoint){
+            return false;
+        }
+
+        if (cachedEndpoint !== this.endpoint){
             return false;
         }
 
