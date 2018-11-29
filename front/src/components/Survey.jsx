@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 // apis
-import api from '../api';
+import api, { BaseUri } from '../api';
 import { serializeAnswer } from '../payload-serializer';
 import SurveyManager from '../SurveyManager';
 import LocalStorage from '../storage/LocalStorage';
@@ -32,7 +32,7 @@ class Survey extends Component {
         const surveyID = props.match.params.id;
 
         this.state = {
-            survey: new SurveyManager(surveyID),
+            survey: new SurveyManager(surveyID, BaseUri),
             answers: {}, // TODO consider moving answer map into SurveyManager as well
 
             loading: '',
