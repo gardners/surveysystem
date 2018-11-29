@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 // apis
-import api from '../api';
+import api, { BaseUri } from '../api';
 import { serializeAnswer } from '../payload-serializer';
 import SurveyManager from '../SurveyManager';
 import LocalStorage from '../storage/LocalStorage';
@@ -18,7 +18,7 @@ import LoadingSpinner from './LoadingSpinner';
 import Alert from './Alert';
 
 import { Card } from './bootstrap/Cards';
-import { FormRow } from './FormHelpers';
+import { FormRow, FieldValidator } from './FormHelpers';
 
 // devel
 import Dev from './Dev';
@@ -32,7 +32,7 @@ class Survey extends Component {
         const surveyID = props.match.params.id;
 
         this.state = {
-            survey: new SurveyManager(surveyID),
+            survey: new SurveyManager(surveyID, BaseUri),
             answers: {}, // TODO consider moving answer map into SurveyManager as well
 
             loading: '',
@@ -91,10 +91,15 @@ class Survey extends Component {
             answers: Object.assign(answers, {
                 [id]: {
                     answer,
+                    error: (!answer) ? `Field ${question.name} is required` : '',
                     question,
                 },
             })
         });
+    }
+
+    getFormErrors() {
+        return Object.keys(this.state.answers).filter(answer => (typeof answer.error !== 'undefined') && answer.error)
     }
 
     ////
@@ -114,7 +119,8 @@ class Survey extends Component {
         .then(() => this.setState({
             loading: '',
             survey,
-            answers: [],
+            answers: {}, // clear answers
+            alerts: [], // clear previous alerts
         }))
         .then(() => LocalStorage.set(CACHE_KEY, survey))
         .catch(err => this.alert(err));
@@ -145,7 +151,8 @@ class Survey extends Component {
         .then(() => this.setState({
             loading: '',
             survey,
-            answers: {}, // TODO
+            answers: {}, // clear answers
+            alerts: [], // clear previous alerts
         }))
         .then(() => LocalStorage.set(CACHE_KEY, survey))
         .catch(err => this.alert(err));
@@ -171,7 +178,8 @@ class Survey extends Component {
         .then(() => this.setState({
             loading: '',
             survey,
-            answers: {},
+            answers: {}, // clear answers
+            alerts: [], // clear previous alerts
         }))
         .then(() => LocalStorage.set(CACHE_KEY, survey))
         .catch(err => this.alert(err));
@@ -181,12 +189,15 @@ class Survey extends Component {
         e && e.preventDefault();
 
         const { survey } = this.state;
-        this.setState({ loading: 'Fetching previous question...' });
+        this.setState({ loading: 'Fetching results...' });
 
         Promise.resolve('TODO ANALYTICS')
+        .then(() => survey.close())
         .then(() => this.setState({
             loading: '',
             survey,
+            answers: {}, // clear answers
+            alerts: [], // clear previous alerts
         }))
         .then(() => LocalStorage.delete(CACHE_KEY))
         .catch(err => this.alert(err));
@@ -195,7 +206,8 @@ class Survey extends Component {
     render() {
         const { survey, answers } = this.state;
         const questions = survey.current();
-
+        const errors = this.getFormErrors();
+        const countAnswers = Object.keys(answers).length;
 
         return (
             <section>
@@ -209,7 +221,8 @@ class Survey extends Component {
                     <input type="hidden" value={ Date.now() /*trick autofill*/ } />
 
                     {
-                        (survey.finished) ?
+                        /* show if survey is finished but not closed yet */
+                        (survey.finished && !survey.closed) ?
                         <FormRow className="list-group-item text-white bg-success">
                             <h2> <i className="fas fa-check-circle"></i> Survey completed.</h2>
                             Thank you for your time!
@@ -222,30 +235,35 @@ class Survey extends Component {
                             switch(question.type) {
                                 case 'radiogroup':
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name }>
-                                    <RadioGroup
-                                        question={ question }
-                                        handleChange={ this.handleChange.bind(this) } />
+                                        <RadioGroup
+                                            question={ question }
+                                            handleChange={ this.handleChange.bind(this) }
+                                        />
+                                        <FieldValidator answer={ this.state.answers[question.id] || null } />
                                     </FormRow>
 
                                 case 'geolocation':
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name }>
-                                    <GeoLocation
-                                        question={ question }
-                                        handleChange={ this.handleChange.bind(this) } />
+                                        <GeoLocation
+                                            question={ question }
+                                            handleChange={ this.handleChange.bind(this) } />
+                                        <FieldValidator answer={ this.state.answers[question.id] || null } />
                                     </FormRow>
 
                                 case 'datetime':
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name }>
-                                    <PeriodRange
-                                        question={ question }
-                                        handleChange={ this.handleChange.bind(this) } />
+                                        <PeriodRange
+                                            question={ question }
+                                            handleChange={ this.handleChange.bind(this) } />
+                                        <FieldValidator answer={ this.state.answers[question.id] || null } />
                                     </FormRow>
 
                                 default:
                                     return  <FormRow key={ index } className="list-group-item" legend={ question.name }>
-                                    <TextInput
-                                        question={ question }
-                                        handleChange={ this.handleChange.bind(this) } />
+                                        <TextInput
+                                            question={ question }
+                                            handleChange={ this.handleChange.bind(this) } />
+                                        <FieldValidator answer={ this.state.answers[question.id] || null } />
                                     </FormRow>
 
                             }
@@ -257,6 +275,7 @@ class Survey extends Component {
                         {
                             (survey.step <= 0 && questions.length) ?
                                 <button type="submit" className="app--btn-arrow btn btn-default btn-primary"
+                                    disabled={ errors.length || !countAnswers }
                                     onClick={ this.handleUpdateAnswers.bind(this) }>Next Question <i className="fas fa-arrow-circle-right"></i></button>
                             : null
                         }
@@ -267,6 +286,7 @@ class Survey extends Component {
                                 <button type="submit" className="app--btn-arrow btn btn-default"
                                     onClick={ this.handleDelAnswer.bind(this) }><i className="fas fa-arrow-circle-left"></i> Previous Question</button>
                                 <button type="submit" className="app--btn-arrow btn btn-default btn-primary"
+                                    disabled={ errors.length || !countAnswers }
                                     onClick={ this.handleUpdateAnswers.bind(this) }>Next Question <i className="fas fa-arrow-circle-right"></i></button>
                             </div>
                             : null

@@ -10,8 +10,8 @@
     "react-scripts": "2.1.1"
   },
   "scripts": {
-    "dev": "xterm -e \"cd ../backend & sudo ./testrun --skip-npm-build\" && react-scripts start",
-    "dev-mock": "xterm -e \"./mockserver/start\" & react-scripts start",
+    "dev": "xterm -hold -e \"cd ../backend & sudo ./testrun --skip-npm-build\" && react-scripts start",
+    "dev-mock": "xterm -hold -e \"./mockserver/start\"& react-scripts start",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
