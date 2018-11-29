@@ -9,6 +9,7 @@ describe('SurveyManager', () => {
         expect(that.sessionID).toBe(null);
         expect(that.step).toBe(-1);
         expect(that.finished).toBe(false);
+        expect(that.closed).toBe(false);
         // array and empty
         expect(JSON.stringify(that.questions)).toBe('[]');
     });
@@ -35,6 +36,15 @@ describe('SurveyManager', () => {
         expect(that.sessionID).toBe('123');
     });
 
+    test('close', () => {
+        const that = new SurveyManager('test');
+        that.init('123');
+        that.close();
+
+        expect(that.finished).toBe(true);
+        expect(that.closed).toBe(true);
+    });
+
     test('add', () => {
         const that = new SurveyManager('test');
         that.init('123');
@@ -43,6 +53,24 @@ describe('SurveyManager', () => {
 
         that.add([{ id: 2 }]);
         expect(JSON.stringify(that.questions)).toBe('[[{"id":1}],[{"id":2}]]');
+    });
+
+    test('add has no effect on closed suvey', () => {
+        let did;
+        const that = new SurveyManager('test');
+        that.init('123');
+
+        // before close
+        did = that.add([{ id: 1 }]);
+        expect(did).toBe(true);
+        expect(JSON.stringify(that.questions)).toBe('[[{"id":1}]]');
+
+        that.close();
+
+        // after close
+        did = that.add([{ id: 2 }]);
+        expect(did).toBe(false);
+        expect(JSON.stringify(that.questions)).toBe('[[{"id":1}]]');
     });
 
     xtest('add - merges double submissions of question ids', () => {
@@ -55,7 +83,26 @@ describe('SurveyManager', () => {
         that.add([{ id: 2 }]);
         that.back();
         expect(JSON.stringify(that.questions)).toBe('[[{"id":1}]]');
+    });
 
+    test('back  has no effect on closed suvey', () => {
+        let did;
+        const that = new SurveyManager('test');
+        that.init('123');
+        that.add([{ id: 1 }]);
+        that.add([{ id: 2 }]);
+
+        // before close
+        did = that.back();
+        expect(did).toBe(true);
+        expect(JSON.stringify(that.questions)).toBe('[[{"id":1}]]');
+
+        that.close();
+
+        // after close
+        did = that.back();
+        did = expect(did).toBe(false);
+        expect(JSON.stringify(that.questions)).toBe('[[{"id":1}]]');
     });
 
     test('current', () => {
