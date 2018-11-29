@@ -94,4 +94,4 @@ const Api = {
     }
 };
 
-export default Api;
+export { Api as default, BaseUri };
