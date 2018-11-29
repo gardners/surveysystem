@@ -221,7 +221,8 @@ class Survey extends Component {
                     <input type="hidden" value={ Date.now() /*trick autofill*/ } />
 
                     {
-                        (survey.finished) ?
+                        /* show if survey is finished but not closed yet */
+                        (survey.finished && !survey.closed) ?
                         <FormRow className="list-group-item text-white bg-success">
                             <h2> <i className="fas fa-check-circle"></i> Survey completed.</h2>
                             Thank you for your time!

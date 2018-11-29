@@ -12,10 +12,16 @@ class SurveyManager {
      * @returns {void}
      */
     constructor(surveyID, cached = null) {
+        // meta data
         this.surveyID = surveyID || null;
         this.sessionID = null;
+
+        // progress
         this.step = -1;
-        this.finished = false;
+        this.finished = false; // all questions are answered
+        this.closed = false; // all questions are answered && survey is closed
+
+        // questions
         this.questions = []; // QuestionSets
 
         if (cached) {
@@ -30,6 +36,15 @@ class SurveyManager {
      */
     init(sessionID) {
         this.sessionID = sessionID;
+    }
+
+    /**
+     * Finalizes session
+     * @returns {void}
+     */
+    close() {
+        this.finished = true;
+        this.closed = true;
     }
 
     /**
@@ -50,12 +65,17 @@ class SurveyManager {
         // cache with sessionID
         // cache with surveyID
         // surveyIDs match
+        // !closed
 
         if (!this.surveyID || this.surveyID !== cachedSurveyID){
             return false;
         }
 
         if (!cachedSessionID || this.sessionID){
+            return false;
+        }
+
+        if (this.closed){
             return false;
         }
 
@@ -88,15 +108,19 @@ class SurveyManager {
     /**
      * Adds a new set of QuestionItems and sets progress flags
      * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
-     * @returns {void}
+     * @returns {boolean} whether question was added
      */
     add(questions) {
+        if(this.closed) {
+            return false;
+        }
         // TODO double submissions of current
         if(!questions.length) {
             this.finished = true;
         }
         this.questions.push(questions);
         this.step += 1;
+        return true;
     }
 
     /**
@@ -110,12 +134,16 @@ class SurveyManager {
 
     /**
      * Removes current (last) QuestionSet and sets progress flags
-     * @returns {void}
+     * @returns {boolean} whether step back was performed
      */
     back() {
+        if(this.closed) {
+            return false;
+        }
         this.questions.splice(-1, 1);
         this.step -= 1
         this.finished = false;
+        return true;
     }
 }
 
