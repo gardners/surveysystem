@@ -8,19 +8,23 @@ class SurveyManager {
 
     /**
      * @constructor
-     * @param {string} surveyID The surveyID returned from backend. Note that ther is no logic attached to the property, it just houses it for convenience
+     * @param {string} surveyID The surveyID returned from backend. Note that there is no logic attached to the property, it just houses it for convenience
+     * @param {string} endpoint survey api endpoint
      * @returns {void}
      */
-    constructor(surveyID, cached = null) {
+    constructor(surveyID, endpoint) {
+        // meta data
         this.surveyID = surveyID || null;
         this.sessionID = null;
-        this.step = -1;
-        this.finished = false;
-        this.questions = []; // QuestionSets
+        this.endpoint = endpoint;
 
-        if (cached) {
-            this.merge(cached);
-        }
+        // progress
+        this.step = -1;
+        this.finished = false; // all questions are answered
+        this.closed = false; // all questions are answered && survey is closed
+
+        // questions
+        this.questions = []; // QuestionSets
     }
 
     /**
@@ -30,6 +34,15 @@ class SurveyManager {
      */
     init(sessionID) {
         this.sessionID = sessionID;
+    }
+
+    /**
+     * Finalizes session
+     * @returns {void}
+     */
+    close() {
+        this.finished = true;
+        this.closed = true;
     }
 
     /**
@@ -45,17 +58,37 @@ class SurveyManager {
 
         const cachedSurveyID = cached.surveyID || null;
         const cachedSessionID = cached.sessionID || null;
+        const cachedEndpoint = cached.endpoint || null;
 
         // this without sessionID
         // cache with sessionID
         // cache with surveyID
-        // surveyIDs match
 
+        // this with endpoint
+        // cache with endpoint
+        // this endpoint and cache endpoint match
+
+        // surveyIDs match
+        // !closed
+
+        // keeping code readable
         if (!this.surveyID || this.surveyID !== cachedSurveyID){
             return false;
         }
 
         if (!cachedSessionID || this.sessionID){
+            return false;
+        }
+
+        if (!cachedEndpoint || !this.endpoint){
+            return false;
+        }
+
+        if (cachedEndpoint !== this.endpoint){
+            return false;
+        }
+
+        if (this.closed){
             return false;
         }
 
@@ -88,15 +121,19 @@ class SurveyManager {
     /**
      * Adds a new set of QuestionItems and sets progress flags
      * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
-     * @returns {void}
+     * @returns {boolean} whether question was added
      */
     add(questions) {
+        if(this.closed) {
+            return false;
+        }
         // TODO double submissions of current
         if(!questions.length) {
             this.finished = true;
         }
         this.questions.push(questions);
         this.step += 1;
+        return true;
     }
 
     /**
@@ -110,12 +147,16 @@ class SurveyManager {
 
     /**
      * Removes current (last) QuestionSet and sets progress flags
-     * @returns {void}
+     * @returns {boolean} whether step back was performed
      */
     back() {
+        if(this.closed) {
+            return false;
+        }
         this.questions.splice(-1, 1);
         this.step -= 1
         this.finished = false;
+        return true;
     }
 }
 

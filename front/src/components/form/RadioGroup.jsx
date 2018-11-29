@@ -16,10 +16,12 @@ class RadioGroup extends Component {
         this.setState({
             value: value
         });
+
         this.props.handleChange(value, question);
     }
 
     render() {
+        console.log(this);
         const { question } = this.props;
         const { choices } = question;
         return (
