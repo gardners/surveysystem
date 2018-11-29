@@ -12,9 +12,29 @@ const FormRow = function(props) {
 
 FormRow.propTypes = {
     className: PropTypes.string,
-    header:  PropTypes.string,
-    title:  PropTypes.string,
-    glyphicon:  PropTypes.string,
+    legend:  PropTypes.string,
 };
 
-export { FormRow };
+const FieldValidator = function(props) {
+    const error = (props.answer) ? props.answer.error : '';
+
+    if(!error) {
+        return(null);
+    }
+
+    return(
+        <div className="text-danger">
+            { error }
+        </div>
+    );
+};
+
+FieldValidator.propTypes = {
+    answer: PropTypes.shape({
+        answer: PropTypes.any,
+        error: PropTypes.string,
+        question: PropTypes.object,
+    }),
+};
+
+export { FormRow, FieldValidator };
