@@ -17,7 +17,7 @@ BACKEND_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 PARENT_DIR="$(dirname $BACKEND_DIR)"
 
 # documentroot parent && fastcgi dirs
-WWW_DIR="$PARENT_DIR/www"
+WWW_DIR="/var/www"
 FASTCGI_DIR="$WWW_DIR/fastcgi"
 
 # frontend src dir
@@ -103,6 +103,11 @@ fi
 if [ ! -d "$VHOST_DIR" ]; then
     mkdir -p "$VHOST_DIR"
 fi
+
+### symlink to www
+
+echo "${DOT} create symlink to www folder for quick access ${CLR}"
+ln -s "$WWW_DIR" "$PARENT_DIR/www"
 
 echo "${DOT} ${YELLOW}apply ownership (www-data:www-data)${CLR}"
 
