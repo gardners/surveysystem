@@ -34,12 +34,11 @@ class Navbar extends Component {
                             </li>
                         </ul>
 
-                        { /*
-                        <form className="form-inline mt-2 mt-md-0">
-                            <input className="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search" />
-                            <button className="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-                        </form>
-                        */ }
+                        <ul className="navbar-nav mt-2 mt-md-0">
+                            <li className={ (/^\/demo/.test(this.props.location.pathname)) ? 'nav-item active my-2 my-sm-0' : 'nav-item my-2 my-sm-0' }>
+                                <Link className="nav-link" to="/demo">Demo form</Link>
+                            </li>
+                        </ul>
                     </div>
                 </nav>
             </header>
