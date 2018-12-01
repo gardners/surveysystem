@@ -1,0 +1,146 @@
+#!/bin/bash
+
+# meta vars
+CLIENT="sleepcompanion"
+PORT="3099"
+
+# colors
+CLR=$(echo -en '\033[0m')
+RED=$(echo -en '\033[00;31m')
+GREEN=$(echo -en '\033[00;32m')
+YELLOW=$(echo -en '\033[00;33m')
+BLUE=$(echo -en '\033[00;34m')
+DOT="${BLUE} * ${CLR}"
+
+# base dirs of this script
+BACKEND_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+PARENT_DIR="$(dirname $BACKEND_DIR)"
+
+# documentroot parent && fastcgi dirs
+WWW_DIR="$PARENT_DIR/www"
+FASTCGI_DIR="$WWW_DIR/fastcgi"
+
+# frontend src dir
+FRONT_DIR="$PARENT_DIR/front"
+
+# frontend vhost dirs
+CLIENT_DIR="$WWW_DIR/$CLIENT"
+LOG_DIR="$CLIENT_DIR/log"
+VHOST_DIR="$CLIENT_DIR/build"
+
+### require root privileges
+
+if [[ $UID != 0 ]]; then
+    echo "${DOT} ${RED}[Error]${CLR} Please run this script with sudo: sudo $0 $*"
+    exit 1
+fi
+
+### run npm install if required
+
+if [ ! -e ../front/node_modules ]; then
+    echo "${DOT} ${YELLOW}running npm install${CLR}"
+    sudo -u $SUDO_USER -g $SUDO_USER -- ../front/npm run install
+fi
+
+### lighttpd conf
+
+if [ -e lighttpd.conf.template ]; then
+
+sed \
+    -e "s|\${WWW_DIR}|$WWW_DIR|" \
+    -e "s|\${BACKEND_DIR}|$BACKEND_DIR|" \
+    -e "s|\${FASTCGI_DIR}|$FASTCGI_DIR|" \
+    -e "s|\${LOG_DIR}|$LOG_DIR|" \
+    -e "s|\${VHOST_DIR}|$VHOST_DIR|" \
+    -e "s|\${PORT}|$PORT|" \
+    < lighttpd.conf.template \
+    > lighttpd.conf.tmp
+
+   CONF_FILE=lighttpd.conf.tmp
+
+elif [ -e lighttpd.conf.local ]; then
+   CONF_FILE=lighttpd.conf.local
+else
+   CONF_FILE=lighttpd.conf
+fi
+
+echo "${DOT} ${YELLOW}config file is $CONF_FILE${CLR}"
+cp ${CONF_FILE} /etc/lighttpd/lighttpd.conf
+
+### logs
+
+echo "${DOT} ${YELLOW}flush log and vhost dirs${CLR}"
+if [ -e "$LOG_DIR" ]; then
+    rm -r "$LOG_DIR"
+fi
+
+if [ -e "$VHOST_DIR" ]; then
+    rm -r "$VHOST_DIR"
+fi
+
+### folders
+
+echo "${DOT} ${YELLOW}create directory structure${CLR}"
+
+if [ ! -d "$FASTCGI_DIR" ]; then
+    mkdir -p "$FASTCGI_DIR"
+
+fi
+
+if [ ! -d "$WWW_DIR" ]; then
+    mkdir -p "$WWW_DIR"
+
+fi
+
+if [ ! -d "$CLIENT_DIR" ]; then
+    mkdir -p "$CLIENT_DIR"
+fi
+
+if [ ! -d "$LOG_DIR" ]; then
+    mkdir -p "$LOG_DIR"
+fi
+
+if [ ! -d "$VHOST_DIR" ]; then
+    mkdir -p "$VHOST_DIR"
+fi
+
+echo "${DOT} ${YELLOW}apply ownership (www-data:www-data)${CLR}"
+
+# fastcgi root:root
+chown -R www-data:www-data "$WWW_DIR"
+chown -R www-data:www-data "$CLIENT_DIR"
+chown -R www-data:www-data "$LOG_DIR"
+chown -R www-data:www-data "$VHOST_DIR"
+
+### fastcgi
+
+echo "${DOT} ${YELLOW}run make${CLR}"
+
+make
+# make --always-make
+
+### service
+
+echo "${DOT} ${YELLOW}set up lighttpd service${CLR}"
+/usr/sbin/lighttpd -tt -f /etc/lighttpd/lighttpd.conf \
+&& service lighttpd stop \
+&& chown -R www-data:www-data sessions logs surveys \
+&& chown -R www-data:www-data surveyfcgi \
+&& cp surveyfcgi "$FASTCGI_DIR" \
+&& service lighttpd start
+
+### npm build todo flexible position
+
+if [ -d "$FRONT_DIR/build" ]; then
+    rm -r "$FRONT_DIR/build"
+fi
+
+su - $SUDO_USER bash -c "npm --prefix $FRONT_DIR run build"
+
+### move build folder to vhost
+
+echo "${DOT} ${YELLOW} copy build to vhost${CLR}"
+cp -R "$FRONT_DIR/build/." "$VHOST_DIR/"
+chown -R www-data:www-data "$VHOST_DIR"
+
+echo "${DOT} ${YELLOW}Finished${CLR}"
