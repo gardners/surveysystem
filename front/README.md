@@ -1,3 +1,6 @@
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+
+# Custom usage
 
 ## custom scripts
 
@@ -36,9 +39,31 @@ sudo service nginx stop
 sudo service lighttpd start
 ```
 
+# Css Themes
+
+Css themes are located in the `styles` directories and extend bootstrap SASS.
+Some example themes are included from [https://bootswatch.com](https://bootswatch.com)
+
+Build App with a theme.
+
+```
+#start
+REACT_APP_THEME=<name> npm start
+# example: REACT_APP_THEME=slate npm start
+
+#build
+REACT_APP_THEME=<name> npm build
+# example: REACT_APP_THEME=slate npm build
+```
+Where the name of the theme is simply a folder name inside the `styles` dir
+
+Development only:
+
+add `?theme=slate` to the browser url and refresh
+
 ---
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Default usage
 
 ## Available Scripts
 

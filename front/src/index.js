@@ -4,10 +4,22 @@ import ReactDOM from 'react-dom';
 import App from './components/App';
 
 // styles
-import './styles/index.scss';
+//import './styles/index.scss';
 
 // icons
 import '@fortawesome/fontawesome-free/css/solid.min.css';
 import '@fortawesome/fontawesome-free/css/fontawesome.min.css';
+
+// theme
+const urlParams = new URLSearchParams(window.location.search);
+const themeParam = urlParams.get('theme');
+
+const theme = (themeParam) ? themeParam : (process.env.REACT_APP_THEME) ? process.env.REACT_APP_THEME : 'default';
+
+console.log(theme);
+import(`./styles/${theme}/index.scss`).then(() => {
+    /* ... */
+});
+
 
 ReactDOM.render(<App />, document.getElementById('root'));
