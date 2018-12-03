@@ -37,6 +37,9 @@ class Survey extends Component {
 
             loading: '',
             alerts: [],
+            // TODO tmp
+            // TODO if ready, include resetting in handle responses
+            evaluation: null,
         };
     }
 
@@ -191,14 +194,15 @@ class Survey extends Component {
         const { survey } = this.state;
         this.setState({ loading: 'Fetching results...' });
 
-        Promise.resolve('TODO ANALYTICS')
-        .then(() => survey.close())
-        .then(() => this.setState({
+        api.finishSurvey(survey.sessionID)
+        .then(evaluation => this.setState({
             loading: '',
             survey,
             answers: {}, // clear answers
             alerts: [], // clear previous alerts
+            evaluation,
         }))
+        .then(() => survey.close())
         .then(() => LocalStorage.delete(CACHE_KEY))
         .catch(err => this.alert(err));
     }
