@@ -1,0 +1,14 @@
+////
+// see https://bootswatch.com
+// https://github.com/twbs/bootstrap/blob/v4-dev/scss/_variables.scss
+// https://getbootstrap.com/docs/4.0/getting-started/theming/\
+////
+
+// 1. overwrite bootstrap vars
+/* yours here */
+
+// 2. import bootstrap
+@import "node_modules/bootstrap/scss/bootstrap";
+
+// 3. add custom css
+@import "main";
