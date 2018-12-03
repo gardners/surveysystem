@@ -90,7 +90,7 @@ const parseSIDfromSession = function(sessionID) {
 }
 
 const nextquestion = function(surveyid, previous) {
-    const survey = loadSurveyFile(surveyid);
+    const survey = loadSurveyFile(surveyid).survey;
 
     if(!survey) {
         return {
@@ -112,7 +112,7 @@ const nextquestion = function(surveyid, previous) {
 };
 
 const delanswer = function(surveyid, previous) {
-    const survey = loadSurveyFile(surveyid);
+    const survey = loadSurveyFile(surveyid).survey;
 
     if(!survey) {
         return {
@@ -135,7 +135,7 @@ const delanswer = function(surveyid, previous) {
 
 const updateanswer = function(surveyid, answer, previous) {
 
-    const survey = loadSurveyFile(surveyid);
+    const survey = loadSurveyFile(surveyid).survey;
 
     if(!survey) {
         return {
@@ -150,11 +150,42 @@ const updateanswer = function(surveyid, answer, previous) {
     return nextQuestionByansweredID(answerID, survey, previous);
 };
 
+// TODO: temporary endpoint
+const getevaluation = function(surveyid, previous) {
+
+    const data = loadSurveyFile(surveyid);
+    const surveyLength = data.survey.length;
+
+    //if(previous < data.survey.length - 1) {
+    //    return {
+    //        current: previous,
+    //        statusCode: '400',
+    //        statusText: 'Bad Request',
+    //        payload: 'The survey has not been finished yet',
+    //    };
+    //}
+
+    let evaluation = {};
+
+    if(typeof data.evaluationSrc !== 'undefined' && data.evaluationSrc) {
+        evaluation = require(path.resolve(__dirname, data.evaluationSrc));
+    }
+
+    return {
+        current: -1, // reset survey
+        statusCode: '200',
+        statusText: 'ok',
+        payload: JSON.stringify(evaluation),
+    };
+};
+
 module.exports = {
     parseSIDfromSession,
     newsession,
     nextquestion,
     delanswer,
     updateanswer,
+    // TODO: temporary endpoint
+    getevaluation,
 };
 
