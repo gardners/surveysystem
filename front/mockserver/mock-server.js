@@ -54,8 +54,6 @@ const server = (() => {
 
         request.on('end', () => {
 
-
-
             switch (dirname) {
                 case '/surveyapi':
                     if(!SURVEY_ID) {
@@ -104,6 +102,16 @@ const server = (() => {
 
                 case 'updateanswer':
                     res = Survey.updateanswer(SURVEY_ID, query.answer, CURRENT);
+                    CURRENT = res.current;
+
+                    response.statusCode = res.statusCode;
+                    response.statusText = res.statusText;
+                    response.end(res.payload, 'utf-8');
+                    break;
+
+                // TODO: temporary endpoint
+                case 'finishsurvey':
+                    res = Survey.getevaluation(SURVEY_ID, CURRENT);
                     CURRENT = res.current;
 
                     response.statusCode = res.statusCode;

@@ -2,6 +2,8 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 
+import ThemePicker from './ThemePicker';
+
 // toggles navbar collapse
 // element.classList support is ie > 10, we ned this to work always!
 const toggle = function(el){
@@ -38,6 +40,7 @@ class Navbar extends Component {
                             <li className={ (/^\/demo/.test(this.props.location.pathname)) ? 'nav-item active my-2 my-sm-0' : 'nav-item my-2 my-sm-0' }>
                                 <Link className="nav-link" to="/demo">Demo form</Link>
                             </li>
+                            <ThemePicker className="nav-item active my-2 my-sm-0" />
                         </ul>
                     </div>
                 </nav>
