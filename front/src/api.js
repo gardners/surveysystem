@@ -91,7 +91,35 @@ const Api = {
                 }
                 return response.json();
             });
-    }
+    },
+
+    // TODO: this is a temporary implementation
+
+    /**
+     * Mark survey as finished and receive evaluation
+     * @param {string} surveyID
+     * @returns {Promise} deserialized json with evaluationdata
+     */
+    finishSurvey: function(sessionID) {
+        const url = BaseUri + '/surveyapi/finishsurvey';
+
+        // TODO: remove if implemented on backend
+        if(process.env.NODE_ENV !== 'development') {
+
+            return Promise.resolve({
+                TODO: 'TODO'
+            });
+        }
+
+        return fetch(`${url}?sessionid=${sessionID}`)
+            .then((response) => {
+                console.log(response);
+                if (!response.ok) {
+                    return responseError(response);
+                }
+                return response.json();
+            });
+    },
 };
 
 export { Api as default, BaseUri };

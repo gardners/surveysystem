@@ -15,7 +15,7 @@ const ThemePicker = function(props) {
             window.location.href = url.toString();
         } }>
             <option>Pick theme...</option>
-            { ['default', 'slate', 'lux', 'simplex', 'superhero', 'united', 'minty'].map(val => <option value={ val }>{ val }</option>) }
+            { ['default', 'slate', 'lux', 'simplex', 'superhero', 'united', 'minty'].map((val, index) => <option key={ index } value={ val }>{ val }</option>) }
         </select>
     );
 }
