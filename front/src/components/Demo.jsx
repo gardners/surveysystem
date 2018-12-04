@@ -39,7 +39,7 @@ Question.propTypes = {
 class Demo extends Component {
     render() {
         return (
-            <section class="list-group">
+            <section className="list-group">
                 <Question component={ GeoLocation } />
                 <Question component={ PeriodRange } />
                 <Question component={ RadioGroup } choices={ ['Yes', 'No', 'Maybe' ] } defaultValue="Maybe"/>
