@@ -11,7 +11,7 @@ import TextInput from './form/TextInput';
 import Select from './form/Select';
 
 const Question = function(props) {
-    const question = Object.assign({
+    const question = {
         id: props.component.name,
         name: props.component.name,
         title: 'title',
@@ -19,15 +19,19 @@ const Question = function(props) {
         type: '',
 
         defaultValue: props.defaultValue || 'default',
+        choices: props.choices || [],
+    };
 
+    const mergedProps = Object.assign({
+        question,
+        handleChange: () => {},
     }, props);
 
     return (
         <FormRow className="list-group-item" legend={ question.name }>
-                <props.component
-                    question={ question }
-                    handleChange={ () => {} }
-                />
+            <props.component
+                { ...mergedProps }
+            />
         </FormRow>
     );
 };
@@ -40,7 +44,7 @@ class Demo extends Component {
     render() {
         return (
             <section className="list-group">
-                <Question component={ GeoLocation } />
+                <Question component={ GeoLocation } withButton={ true } />
                 <Question component={ PeriodRange } />
                 <Question component={ RadioGroup } choices={ ['Yes', 'No', 'Maybe' ] } defaultValue="Maybe"/>
                 <Question component={ Select } choices={ ['First', 'Second', 'Third' ] } defaultValue="Second"/>
