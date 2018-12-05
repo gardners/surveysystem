@@ -15,17 +15,36 @@ FormRow.propTypes = {
     legend:  PropTypes.string,
 };
 
-const FieldValidator = function(props) {
-    const error = (props.answer) ? props.answer.error : '';
+const FieldError = function(props) {
 
-    if(!error) {
+    if(!props.error) {
         return(null);
     }
 
     return(
         <div className="text-danger">
-            { error }
+            { (typeof error === 'string') ? props.error : props.error.toString() }
         </div>
+    );
+};
+
+FieldError.propTypes = {
+    error: PropTypes.oneOf([
+        PropTypes.string,
+        PropTypes.instanceOf(Error),
+        PropTypes.array,
+    ]),
+};
+
+const FieldValidator = function(props) {
+    const error = (props.answer) ? props.answer.error : '';
+
+    if(!error) {
+        return (null);
+    }
+
+    return(
+        <FieldError error={error}/ >
     );
 };
 
@@ -37,4 +56,4 @@ FieldValidator.propTypes = {
     }),
 };
 
-export { FormRow, FieldValidator };
+export { FormRow, FieldError, FieldValidator };
