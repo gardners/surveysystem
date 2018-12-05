@@ -4,13 +4,14 @@ import PropTypes from 'prop-types';
 import InputRange from 'react-input-range';
 import './PeriodRange.scss';
 
-const d2sec = 86400; // 24 hours
-const h2sec = 3600;
+const DaySec = 86400; // 24 hours
 
+// bg gradient
 const dark = '#212077';
 const light = '#ffc107';
 const gradient = `linear-gradient(to right, ${dark} 15%, ${light} 30%, ${light} 70%, ${dark} 85%)`;
 
+// styles
 const wrapperStyle = {
     background: gradient,
     padding: '1rem',
@@ -58,29 +59,34 @@ class PeriodRange extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            time_begin: 0,
-            time_end: 0,
+            value: {
+                min:  9 * 3600,
+                max: 20 * 3600
+            }
         };
     }
 
     handleChange(value) {
         const { question } = this.props;
+        const { type } = question;
 
-        const updated = this.state;
-        updated['time_begin'] = value.min;
-        updated['time_end'] = value.max;
+        const model = {
+            time_begin: value.min,
+            time_end: value.max,
+        };
 
-        this.setState(updated);
+        this.props.handleChange({
+            [type]: model,
+        }, question);
 
         // TODO validate here?
-        this.props.handleChange(updated, question);
+        this.props.handleChange(model, question);
     }
 
     render() {
-        const { question, timeBeginLabel, timeEndLabel } = this.props;
-        const { time_begin, time_end } = this.state;
+        const { question } = this.props;
+        const { value } = this.state;
 
-        const domain = [0, d2sec];
         return (
             <div className="form-group">
             <div style={ wrapperStyle }>
@@ -91,11 +97,10 @@ class PeriodRange extends Component {
                 </div>
                 <InputRange
                     minValue={ 0 }
-                    maxValue={ d2sec }
-                    defaultValue={ [1000, 3000] }
-                    value={ { min: time_begin, max: time_end } }
+                    maxValue={ DaySec }
+                    value={ value }
                     onChange={ this.handleChange.bind(this) }
-                    formatLabel={ value => prettyHours(value) }
+                    formatLabel={ val => prettyHours(val) }
                 />
             </div>
             </div>
