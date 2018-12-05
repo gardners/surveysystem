@@ -7,6 +7,7 @@ var.PORT        = ${PORT}
 
 server.modules = (
     "mod_access",
+    "mod_accesslog",
     "mod_alias",
     "mod_compress",
     "mod_redirect",
@@ -22,12 +23,11 @@ server.username             = "www-data"
 server.groupname            = "www-data"
 server.port                 = PORT
 
-
+accesslog.filename          = LOG_DIR + "/access.log"
 index-file.names            = ( "index.php", "index.html", "index.lighttpd.html" )
 url.access-deny             = ( "~", ".inc" )
 static-file.exclude-extensions = ( ".php", ".pl", ".fcgi" )
-server.error-handler-404   = "/index.html"
-
+server.error-handler-404    = "/index.html"
 
 compress.cache-dir          = "/var/cache/lighttpd/compress/"
 compress.filetype           = ( "application/javascript", "text/css", "text/html", "text/plain" )
