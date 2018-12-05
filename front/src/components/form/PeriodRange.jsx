@@ -1,73 +1,103 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-const max = 86400; // 24 hours
+import InputRange from 'react-input-range';
+import './PeriodRange.scss';
 
-const computeStyles = function() {
+const d2sec = 86400; // 24 hours
+const h2sec = 3600;
 
+const dark = '#212077';
+const light = '#ffc107';
+const gradient = `linear-gradient(to right, ${dark} 15%, ${light} 30%, ${light} 70%, ${dark} 85%)`;
+
+const wrapperStyle = {
+    background: gradient,
+    padding: '1rem',
+    borderRadius: '1rem',
 };
 
+const tableStyle = {
+    display: 'table',
+    width: '100%',
+    padding: '.5em',
+    tableLayout: 'fixed',    /* For cells of equal size */
+};
+
+const cellStyle = function(percent) {
+    const textAlign = ((percent === 50) ? 'center' : (percent < 50) ? 'left' : 'right');
+    return {
+        width: '25%',
+        display: 'table-cell',
+        textAlign,
+        fontSize: '2em',
+    };
+};
+
+const prettyHours = function(sec) {
+    let hours   = Math.floor(sec / 3600);
+    let minutes = Math.floor((sec - (hours * 3600)) / 60);
+    let seconds = sec - (hours * 3600) - (minutes * 60);
+
+    if (hours   < 10) {hours   = "0" + hours;}
+    let t = 'am';
+    if (hours > 12) {
+        hours -= 12;
+        t = 'pm';
+    }
+    if (minutes < 10) {minutes = "0" + minutes;}
+    if (seconds < 10) {seconds = "0" + seconds;}
+    return `${hours}:${minutes} ${t}`;
+};
+
+
 /**
- * range sliders for defining period values (seconds) within 24 hours
+ * range sliders for defining period secondss (seconds) within 24 hours
  */
 class PeriodRange extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            value: {
-                time_begin: 0,
-                time_end: 0,
-            },
+            time_begin: 0,
+            time_end: 0,
         };
     }
 
-    handleChange(e) {
-        const { name, value } = e.target;
+    handleChange(value) {
         const { question } = this.props;
 
-        const updated = this.state.value;
-        updated[name] = value;
+        const updated = this.state;
+        updated['time_begin'] = value.min;
+        updated['time_end'] = value.max;
 
-        this.setState({
-            value: updated,
-        });
+        this.setState(updated);
+
         // TODO validate here?
         this.props.handleChange(updated, question);
     }
 
     render() {
         const { question, timeBeginLabel, timeEndLabel } = this.props;
-        const { time_begin, time_end } = this.state.value;
+        const { time_begin, time_end } = this.state;
 
+        const domain = [0, d2sec];
         return (
             <div className="form-group">
-                <div id={ question.id } className="range">
-                    <label>
-                        <input
-                            type="range"
-                            name="time_begin"
-                            id="time_begin"
-                            min={ 0 }
-                            max={ (time_end)?  time_end : max }
-                            onChange={ this.handleChange.bind(this)}
-                            />
-                        { timeBeginLabel }
-                    </label>
+            <div style={ wrapperStyle }>
+                <div className={ this.props.className } style={ tableStyle }>
+                    <div style={ cellStyle(0)}><i className="fas fa-moon text-white"></i></div>
+                    <div style={ cellStyle(50) }><i className="fas fa-sun text-white"></i></div>
+                    <div style={ cellStyle(100) }><i className="fas fa-moon text-white"></i></div>
                 </div>
-
-                <div className="range">
-                    <label>
-                        <input
-                            type="range"
-                            name="time_end"
-                            id="time_end"
-                            min={ time_begin }
-                            max={ max }
-                            onChange={ this.handleChange.bind(this)}
-                            />
-                        { timeEndLabel }
-                    </label>
-                </div>
+                <InputRange
+                    minValue={ 0 }
+                    maxValue={ d2sec }
+                    defaultValue={ [1000, 3000] }
+                    value={ { min: time_begin, max: time_end } }
+                    onChange={ this.handleChange.bind(this) }
+                    formatLabel={ value => prettyHours(value) }
+                />
+            </div>
             </div>
         );
     }
