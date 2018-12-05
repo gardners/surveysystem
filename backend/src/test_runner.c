@@ -827,7 +827,7 @@ int run_test(char *dir, char *test_file)
     fix_ownership(test_dir);
     if (log) dump_logs(log_path,log);
 
-    fprintf(stderr,"\r\033[39m[\033[31;1;5mEROR\033[39;0m]  %s : %s\n",test_name,description); fflush(stderr);
+    fprintf(stderr,"\r\033[39m[\033[31;1;5mERROR\033[39;0m]  %s : %s\n",test_name,description); fflush(stderr);
     retVal=2;
     break;
     
