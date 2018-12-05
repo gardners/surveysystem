@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import 'rc-slider/assets/index.css';
-import Tooltip from 'rc-tooltip';
-import Slider from 'rc-slider';
+import InputRange from 'react-input-range';
+import './PeriodRange.scss';
 
 const d2sec = 86400; // 24 hours
 const h2sec = 3600;
@@ -12,12 +11,17 @@ const dark = '#212077';
 const light = '#ffc107';
 const gradient = `linear-gradient(to right, ${dark} 15%, ${light} 30%, ${light} 70%, ${dark} 85%)`;
 
+const wrapperStyle = {
+    background: gradient,
+    padding: '1rem',
+    borderRadius: '1rem',
+};
+
 const tableStyle = {
     display: 'table',
     width: '100%',
     padding: '.5em',
     tableLayout: 'fixed',    /* For cells of equal size */
-    background: gradient,
 };
 
 const cellStyle = function(percent) {
@@ -46,24 +50,6 @@ const prettyHours = function(sec) {
     return `${hours}:${minutes} ${t}`;
 };
 
-const Range = Slider.Range;
-
-const Handle = (props) => {
-  const { value, dragging, index, ...restProps } = props;
-  return (
-    <Tooltip
-      prefixCls="rc-slider-tooltip"
-      overlay={ prettyHours(value) }
-      placement="top"
-      key={ index }
-      trigger={ [] } /* overwrite */
-      visible={ true } /* overwrite */
-      defaultVisible={ true }
-    >
-      <Slider.Handle value={value} {...restProps} />
-    </Tooltip>
-  );
-};
 
 /**
  * range sliders for defining period secondss (seconds) within 24 hours
@@ -77,17 +63,15 @@ class PeriodRange extends Component {
         };
     }
 
-    handleChange(e) {
-        const { name, value } = e.target;
+    handleChange(value) {
         const { question } = this.props;
 
         const updated = this.state;
-        updated[name] = value;
+        updated['time_begin'] = value.min;
+        updated['time_end'] = value.max;
 
-        this.setState({
-            seconds: updated,
-            //step: (this.state.step < this.state.vals - 1) ? this.state.vals + 1 : this.state.step,
-        });
+        this.setState(updated);
+
         // TODO validate here?
         this.props.handleChange(updated, question);
     }
@@ -99,26 +83,21 @@ class PeriodRange extends Component {
         const domain = [0, d2sec];
         return (
             <div className="form-group">
+            <div style={ wrapperStyle }>
                 <div className={ this.props.className } style={ tableStyle }>
                     <div style={ cellStyle(0)}><i className="fas fa-moon text-white"></i></div>
                     <div style={ cellStyle(50) }><i className="fas fa-sun text-white"></i></div>
                     <div style={ cellStyle(100) }><i className="fas fa-moon text-white"></i></div>
                 </div>
-                <Range
-                    handle= { Handle }
-                    min={ 0 }
-                    max={ d2sec }
+                <InputRange
+                    minValue={ 0 }
+                    maxValue={ d2sec }
                     defaultValue={ [1000, 3000] }
-                    allowCross={ false }
-                    pushable={ true }
-
-                    activeDotStyle={ {
-                        backgroundColor: 'blue',
-                    } }
-                    //railStyle = {
-                    //    railStyle
-                    //}
+                    value={ { min: time_begin, max: time_end } }
+                    onChange={ this.handleChange.bind(this) }
+                    formatLabel={ value => prettyHours(value) }
                 />
+            </div>
             </div>
         );
     }

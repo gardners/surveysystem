@@ -1,0 +1,28 @@
+$input-range-primary-color : #ffffff;
+
+$input-range-slider-background: #28a745;
+$input-range-slider-border: 1px solid $input-range-primary-color !default;
+
+$input-range-track-height: .75rem;
+$input-range-slider-height: 1.5rem;
+$input-range-slider-width: 1.5rem;
+$input-range-track-active-background: lighten($input-range-slider-background, 10%);
+
+$input-range-label-color: #000000;
+$input-range-label-value-position-top: -3rem;
+
+@import 'react-input-range/src/scss/index.scss';
+
+.input-range__label-container {
+    background-color: #ffffff;
+    padding: 0.2rem;
+    opacity: .8;
+}
+.input-range__label--min,
+.input-range__label--max {
+    display:none;
+}
+
+.input-range__track--background {
+    box-shadow: inset 1px 1px 2px 0px rgba(0,0,0,1);
+}
