@@ -31,5 +31,5 @@ endofsession
 
 # Ask for next question
 request 200 nextquestion?sessionid=$SESSION
-match_string {"next_questions": [{"id": "question2", "name": "question2", "title": "How boring was question 1?", "title_text": "How boring was question 1?", "type": "text"}]}
+match_string {"next_questions": [{"id": "question2", "name": "question2", "title": "How boring was question 1?", "title_text": "How boring was question 1?", "type": "TEXT"}]}
 
