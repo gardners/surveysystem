@@ -75,7 +75,7 @@ const escPattern = new RegExp(`${CSV_SEPARATOR}'"`, 'g');
 
 /**
  * Provides default Model object
- * returns {AnswerModel}
+ * @returns {AnswerModel}
  */
 const getModel = function() {
     return {
@@ -89,6 +89,39 @@ const getModel = function() {
         time_zone_delta : 0,    // type: number (INT)
         dst_delta : 0,          // type: number (INT)
     };
+};
+
+/**
+ * Maps backend question types to corresponding model fields
+ * @property {string} questionType
+ * @returns {string[]}
+ */
+const mapTypeToField = function(questionType) {
+    switch(questionType) {
+
+        case 'TEXT':
+        case 'MULTICHOICE':
+        case 'MULTISELECT':
+            return ['text'];
+
+        case 'INT':
+        case 'FIXEDPOINT':
+            return ['value'];
+
+        case 'LATLON':
+            return ['lat', 'lon'];
+
+        case 'DATETIME':
+            return ['time_begin', 'time_zone_delta'];
+
+        case 'TIMERANGE':
+            return ['time_begin', 'time_end', 'time_zone_delta'];
+
+        // case 'UPLOAD': //TODO
+
+        default:
+            return ['text'];
+    }
 };
 
 ////
@@ -127,6 +160,25 @@ const sanitize = function(val) {
  *
  * @returns {(number|Error)}
  */
+const castInt = function(val) {
+    const value = parseInt(val, 10);
+
+    if(isNaN(value)) {
+        return new Error ('CSV serializer: Invalid value: is not a Number');
+    }
+
+    if(!isFinite(value)) {
+        return new Error ('CSV serializer: Invalid value: is infinite');
+    }
+    return value;
+};
+
+/**
+ * parse and validate string
+ * @param {string} val already sanitized string
+ *
+ * @returns {(number|Error)}
+ */
 const castFloat = function(val) {
     const value = parseFloat(val);
 
@@ -151,34 +203,6 @@ const castString = function(text) {
         return new Error('CSV serializer: Submitted answer (type: text) is empty)');
     }
     return text;
-};
-
-/**
- * Parse and validate comma separated geolocation string into object ready to be merged in to model
- * @param {string} val already sanitized string
- *
- * @returns {(Array|Error)} Error on invalid value or an array of format [lat, lon]
- */
-const castGeoLocObject = function(val) {
-    if(typeof val !== 'string') {
-        return new Error ('CSV serializer: Invalid geolocation data type');
-    }
-
-    const values = val.split(',');
-    if(values.length !== 2) {
-        return new Error ('CSV serializer: Invalid geolocation data');
-    }
-    const lat = parseFloat(values[0]);
-    const lon = parseFloat(values[1]);
-
-    if(isNaN(lat) || isNaN(lon)) {
-        return new Error ('CSV serializer: Invalid geolocation data, lat or lon is not a Number');
-    }
-
-    return {
-        lat,
-        lon,
-    };
 };
 
 /**
@@ -221,10 +245,34 @@ const mergeAnswerValue = function(model, id, answer, questionType) {
             value = castFloat(sanitized);
         break;
 
-        // @see customQuestions/*.js
-        case 'geolocation':
-            key = '<geoloc>';
-            value = castGeoLocObject(sanitized);
+        case 'lat':
+            key = questionType;
+            value = castFloat(sanitized);
+        break;
+
+        case 'lon':
+            key = questionType;
+            value = castFloat(sanitized);
+        break;
+
+        case 'time_begin':
+            key = questionType;
+            value = castFloat(sanitized);
+        break;
+
+        case 'time_end':
+            key = questionType;
+            value = castFloat(sanitized);
+        break;
+
+        case 'time_delta':
+            key = 'time_delta';
+            value = castInt(sanitized);
+        break;
+
+        case 'dst_delta':
+            key = questionType;
+            value = castInt(sanitized);
         break;
 
         // @TODO
@@ -300,4 +348,5 @@ const serializeAnswer = function (id, answer) {
 
     return Object.values(model).join(CSV_SEPARATOR);
 };
+
 export { serializeAnswer, serializeAnswerValue, CSV_SEPARATOR };
