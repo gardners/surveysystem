@@ -11,10 +11,6 @@ const options = {
     maximumAge: 0,
 };
 
-const latlonString = function(coords) {
-    return (coords) ? [coords.latitude, coords.longitude].toString() : '';
-};
-
 // at least in current Firefox PositionErrors don't seem to be instances of Error
 const handlePositionError = function(err = null) {
     if(!err) {
@@ -65,14 +61,16 @@ class GeoLocation extends Component {
 
         fetchLocation()
         .then((coords) => {
-            const value = latlonString(coords);
+
             this.setState({
-                value,
+                value: [coords.latitude, coords.longitude].toString(),
                 error: null,
             });
+
             // send immediately to survey
             this.props.handleChange({
-                [type]: this.state.value,
+                lat: coords.latitude,
+                lon: coords.longitude,
             }, question);
         })
         .catch(err => this.setState({

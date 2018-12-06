@@ -25,9 +25,9 @@ class RadioGroup extends Component {
     }
 
     render() {
-        console.log(this);
         const { question } = this.props;
         const { choices } = question;
+
         return (
             <div className="form-group">
                 <label> { question.title_text }</label>
