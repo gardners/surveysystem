@@ -237,7 +237,8 @@ class Survey extends Component {
                     {
                         questions.map((question, index) => {
                             switch(question.type) {
-                                case 'radiogroup':
+                                case 'MULTICHOICE':
+                                case 'radiogroup': // TODO
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name }>
                                         <RadioGroup
                                             question={ question }
@@ -246,7 +247,8 @@ class Survey extends Component {
                                         <FieldValidator answer={ this.state.answers[question.id] || null } />
                                     </FormRow>
 
-                                case 'geolocation':
+                                case 'LATLON':
+                                case 'geolocation': // TODO
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name }>
                                         <GeoLocation
                                             question={ question }
@@ -254,7 +256,8 @@ class Survey extends Component {
                                         <FieldValidator answer={ this.state.answers[question.id] || null } />
                                     </FormRow>
 
-                                case 'datetime':
+                                case 'TIMERANGE':
+                                case 'datetime': // TODO
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name }>
                                         <PeriodRange
                                             question={ question }
