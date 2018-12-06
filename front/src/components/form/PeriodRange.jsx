@@ -70,16 +70,15 @@ class PeriodRange extends Component {
         const { question } = this.props;
         const { type } = question;
 
+        this.setState({
+            value
+        });
+
         const model = {
             time_begin: value.min,
             time_end: value.max,
         };
 
-        this.props.handleChange({
-            [type]: model,
-        }, question);
-
-        // TODO validate here?
         this.props.handleChange(model, question);
     }
 
