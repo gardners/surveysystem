@@ -102,26 +102,48 @@ const mapTypeToField = function(questionType) {
         case 'TEXT':
         case 'MULTICHOICE':
         case 'MULTISELECT':
-            return ['text'];
+            return (text) => {
+                if (Object.prototype.toString.call(text) === '[object Array]') {
+                    text = text.map(v => v.replace(',' , '\,')).join(',');
+                }
+
+                return {
+                    text,
+                };
+            };
 
         case 'INT':
         case 'FIXEDPOINT':
-            return ['value'];
+            return (value) => ({
+                value,
+            });
 
         case 'LATLON':
-            return ['lat', 'lon'];
+            return (lat, lon) => ({
+                lat,
+                lon,
+            });
 
         case 'DATETIME':
-            return ['time_begin', 'time_zone_delta'];
+            return (time_begin, time_zone_delta) => ({
+                time_begin,
+                time_zone_delta,
+            });
 
         case 'TIMERANGE':
-            return ['time_begin', 'time_end', 'time_zone_delta'];
+            return (time_begin, time_end, time_zone_delta = 0) => ({
+                time_begin,
+                time_end,
+                time_zone_delta,
+            });
 
         // case 'UPLOAD': //TODO
 
         default:
-            return ['text'];
+         // nothing
     }
+
+    return new Error(`Unkown question type: {questionType}`);
 };
 
 ////
@@ -230,9 +252,10 @@ const castString = function(text) {
  * @returns {AnswerModel}  csv row or Error to be displayed
  */
 const mergeAnswerValue = function(model, id, answer, questionType) {
+
     const sanitized = sanitize(answer);
 
-    let key;
+    let key = '';
     let value;
 
     // assign id
@@ -240,7 +263,12 @@ const mergeAnswerValue = function(model, id, answer, questionType) {
 
     // cast values, define keys
     switch (questionType) {
-        case 'number':
+        case 'text':
+            key = questionType;
+            value = castString(sanitized);
+        break;
+
+        case 'value':
             key = 'value';
             value = castFloat(sanitized);
         break;
@@ -265,8 +293,8 @@ const mergeAnswerValue = function(model, id, answer, questionType) {
             value = castFloat(sanitized);
         break;
 
-        case 'time_delta':
-            key = 'time_delta';
+        case 'time_zone_delta':
+            key = questionType;
             value = castInt(sanitized);
         break;
 
@@ -279,10 +307,6 @@ const mergeAnswerValue = function(model, id, answer, questionType) {
         // case 'timepicker':
         //     value = castDateTime(sanitized);
         // break;
-
-        default:
-            key = 'text';
-            value = castString(sanitized);
     }
 
     // handle errors
@@ -295,13 +319,7 @@ const mergeAnswerValue = function(model, id, answer, questionType) {
     }
 
     // build
-    if(key === '<geoloc>') {
-        // complex
-        Object.assign(model, value);
-    } else {
-        // scalars
-        model[key] = value;
-    }
+    model[key] = value;
 
     return model;
 };
@@ -349,4 +367,4 @@ const serializeAnswer = function (id, answer) {
     return Object.values(model).join(CSV_SEPARATOR);
 };
 
-export { serializeAnswer, serializeAnswerValue, CSV_SEPARATOR };
+export { serializeAnswer, serializeAnswerValue, mapTypeToField, CSV_SEPARATOR };
