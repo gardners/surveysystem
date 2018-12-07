@@ -1,57 +1,94 @@
 {
     "survey": [
         {
-            "next_questions": [
-            {
-                "id": "password1",
-                "name": "password1",
-                "title": "Password",
-                "title_text": "Password",
-                "type": "text"
-            }
-            ]
+            "next_questions": [{
+                "id": "q1",
+                "name": "q1",
+                "title": "Question 1",
+                "title_text": "Your Hitchhicker name",
+                "type": "TEXT"
+            }]
         },
 
         {
-            "next_questions": [
-            {
-                "id": "multichoice",
-                "name": "multichoice",
-                "title": "Select one of the following",
-                "title_text": "Select one of the following",
-                "type": "radiogroup",
+            "next_questions": [{
+                "id": "q2",
+                "name": "q2",
+                "title": "Question 2",
+                "title_text": "Your Hitchhiker's Guide to the Galaxy password",
+                "type": "TEXT"
+            }]
+        },
+
+        {
+            "next_questions": [{
+                "id": "q3",
+                "name": "q3",
+                "title": "Question 3",
+                "title_text": "How many towels are you travelling with?",
+                "type": "INT"
+            }]
+        },
+
+        {
+            "next_questions": [{
+                "id": "q4",
+                "name": "q4",
+                "title": "Question 4",
+                "title_text": "What is the size of your current travel party? Use fraction values for any non-organic lifeforms",
+                "type": "FIXEDPOINT"
+            }]
+        },
+
+        {
+            "next_questions": [{
+                "id": "q5",
+                "name": "q5",
+                "title": "Question 5",
+                "title_text": "What is the answer to the ultimate question of life, the universe and everything? Select one of the following.",
+                "type": "MULTICHOICE",
                 "choices": [
-                "Yes",
-                "No",
-                "",
-                "Maybe"
+                    "E = mc^2",
+                    "42",
+                    "Why are we here?"
                 ]
-            }
-            ]
+            }]
         },
 
         {
-            "next_questions": [
-            {
-                "id": "geolocation",
-                "name": "geolocation",
-                "title": "Your position?",
-                "title_text": "Your position?",
-                "type": "geolocation"
-            }
-            ]
+            "next_questions": [{
+                "id": "q6",
+                "name": "q6",
+                "title": "Question 6",
+                "title_text": "Who would you NOT invite in your travel party? Select any of the following",
+                "type": "MULTISELECT",
+                "choices": [
+                    "Arthur Dent",
+                    "Zaphod Breeblebox",
+                    "Ford Prefect",
+                    "Marvin"
+                ]
+            }]
         },
 
         {
-            "next_questions": [
-            {
-                "id": "datetime",
-                "name": "datetime",
-                "title": "Your average sleep hours?",
-                "title_text": "Your average sleep hours?",
-                "type": "datetime"
-            }
-            ]
+            "next_questions": [{
+                "id": "q7",
+                "name": "q7",
+                "title": "Question 7",
+                "title_text": "Your current planetary position?",
+                "type": "LATLON"
+            }]
+        },
+
+        {
+            "next_questions": [{
+                "id": "q8",
+                "name": "q8",
+                "title": "Q8",
+                "title_text": "During an average day, when are you inside an SEP field. (Typically work hours). An SEP is something we can't see, or don't see, or our brain doesn't let us see, because we think that it's somebody else's problem. That’s what SEP means. Somebody Else’s Problem. The brain just edits it out, it's like a blind spot. ",
+                "type": "TIMERANGE"
+            }]
         },
 
         {
