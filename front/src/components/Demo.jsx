@@ -6,11 +6,12 @@ import { FormRow } from './FormHelpers';
 // form elements
 import GeoLocation from './form/GeoLocation';
 import PeriodRange from './form/PeriodRange';
+import CheckboxGroup from './form/CheckboxGroup';
 import RadioGroup from './form/RadioGroup';
 import TextInput from './form/TextInput';
 import Select from './form/Select';
 
-import { serializeAnswer } from '../payload-serializer';
+import { serializeAnswer, mapTypeToField } from '../payload-serializer';
 
 const Answer = function(props) {
 
@@ -49,7 +50,16 @@ class Question extends Component {
         }
     }
 
-    handleChange(answer, question) {
+    handleChange(question, ...values) {
+        const fn = mapTypeToField(question.type);
+        let answer;
+
+        if (fn instanceof Error) {
+            answer = fn;
+        } else {
+            answer = fn(...values);
+        }
+
         this.setState({
             value: serializeAnswer(question.id, answer),
         });
@@ -79,6 +89,7 @@ class Demo extends Component {
             <section className="list-group">
                 <Question type={ 'LATLON' } component={ GeoLocation } withButton={ true } />
                 <Question type={ 'TIMERANGE' } component={ PeriodRange } />
+                <Question type={ 'MULTICHOICE' } component={ CheckboxGroup } choices={ ['This', 'That', 'Another one' ] } defaultValue="Maybe"/>
                 <Question type={ 'TEXT' } component={ RadioGroup } choices={ ['Yes', 'No', 'Maybe' ] } defaultValue="Maybe"/>
                 <Question type={ 'TEXT' } component={ Select } choices={ ['First', 'Second', 'Third' ] } defaultValue="Second"/>
                 <Question type={ 'TEXT' } component={ TextInput }/>
