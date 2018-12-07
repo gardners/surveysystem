@@ -1,17 +1,21 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import { Redirect } from 'react-router-dom';
+
 // apis
 import api, { BaseUri } from '../api';
-import { serializeAnswer } from '../payload-serializer';
+import { serializeAnswer, mapTypeToField } from '../payload-serializer';
 import SurveyManager from '../SurveyManager';
 import LocalStorage from '../storage/LocalStorage';
 import Log from '../Log';
 
 import TextInput from './form/TextInput';
 import RadioGroup from './form/RadioGroup';
+import CheckboxGroup from './form/CheckboxGroup';
 import GeoLocation from './form/GeoLocation';
 import PeriodRange from './form/PeriodRange';
+import NumberInput from './form/NumberInput';
 
 // components
 import LoadingSpinner from './LoadingSpinner';
@@ -57,7 +61,7 @@ class Survey extends Component {
         this.setState({
             loading: '',
             survey,
-            answers: [],
+            answers: {},
         });
     }
 
@@ -87,22 +91,35 @@ class Survey extends Component {
     // form processing
     ////
 
-    handleChange(answer, question) {
+    handleChange(question, ...values) {
         const { answers } = this.state;
-        const { id } = question;
+        const { id, type } = question;
+
+        let error = null;
+        let answer = (typeof answers[id] !== 'undefined') ? answers[id].answer : null;
+        console.log(values);
+        // TODO validate
+        const fn = mapTypeToField(type);
+        if (fn instanceof Error) {
+            error = fn;
+        } else {
+            answer = fn(...values);
+        }
+        console.log(id, type, answer, error);
+        answers[id] = {
+            answer,
+            values,
+            error,
+            question,
+        };
+
         this.setState({
-            answers: Object.assign(answers, {
-                [id]: {
-                    answer,
-                    error: (!answer) ? `Field ${question.name} is required` : '',
-                    question,
-                },
-            })
+            answers,
         });
     }
 
     getFormErrors() {
-        return Object.keys(this.state.answers).filter(answer => (typeof answer.error !== 'undefined') && answer.error)
+        return Object.keys(this.state.answers).filter(answer => typeof answer.error !== 'undefined' && answer.error)
     }
 
     ////
@@ -154,7 +171,6 @@ class Survey extends Component {
         .then(() => this.setState({
             loading: '',
             survey,
-            answers: {}, // clear answers
             alerts: [], // clear previous alerts
         }))
         .then(() => LocalStorage.set(CACHE_KEY, survey))
@@ -176,12 +192,11 @@ class Survey extends Component {
         Promise.all(
             questionIds.map(id => api.deleteAnswer(survey.sessionID, id))
         )
-        .then(responses => responses.pop()) // last
+        .then(responses => responses.pop()) // last ?TODO multi elements mode
         .then(response => survey.add(response.next_questions))
         .then(() => this.setState({
             loading: '',
             survey,
-            answers: {}, // clear answers
             alerts: [], // clear previous alerts
         }))
         .then(() => LocalStorage.set(CACHE_KEY, survey))
@@ -198,7 +213,7 @@ class Survey extends Component {
         .then(evaluation => this.setState({
             loading: '',
             survey,
-            answers: {}, // clear answers
+            answers: {}, // clear previous answers
             alerts: [], // clear previous alerts
             evaluation,
         }))
@@ -208,7 +223,19 @@ class Survey extends Component {
     }
 
     render() {
-        const { survey, answers } = this.state;
+
+        const { survey, answers, evaluation } = this.state;
+
+        if (evaluation) {
+            return(
+                <Redirect to={ {
+                    pathname: `/evaluation/${survey.surveyID}`,
+                    state: { evaluation }
+                    } }
+                />
+            );
+        }
+
         const questions = survey.current();
         const errors = this.getFormErrors();
         const countAnswers = Object.keys(answers).length;
@@ -235,31 +262,56 @@ class Survey extends Component {
                     }
 
                     {
-                        questions.map((question, index) => {
+                        !this.state.loading && questions.map((question, index) => {
+
+                            const answer = this.state.answers[question.id] || null;
+
                             switch(question.type) {
                                 case 'MULTICHOICE':
-                                case 'radiogroup': // TODO
+                                case 'radiogroup': // TODO, legacy
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name }>
                                         <RadioGroup
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) }
                                         />
-                                        <FieldValidator answer={ this.state.answers[question.id] || null } />
+                                        <FieldValidator answer={ answer } />
+                                    </FormRow>
+
+                                case 'MULTISELECT':
+                                    return <FormRow key={ index } className="list-group-item" legend={ question.name }>
+                                        <CheckboxGroup
+                                            question={ question }
+                                            handleChange={ this.handleChange.bind(this) }
+                                        />
+                                        <FieldValidator answer={ answer } />
                                     </FormRow>
 
                                 case 'LATLON':
-                                case 'geolocation': // TODO
+                                case 'geolocation': // TODO, legacy
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name }>
                                         <GeoLocation
+                                            value={ (answer) ? answer.values : '' }
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) } />
-                                        <FieldValidator answer={ this.state.answers[question.id] || null } />
+                                        <FieldValidator answer={ answer } />
                                     </FormRow>
 
                                 case 'TIMERANGE':
-                                case 'datetime': // TODO
+                                case 'date': // TODO, legacy
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name }>
                                         <PeriodRange
+                                            value={ (answer) ? answer.values : '' }
+                                            question={ question }
+                                            handleChange={ this.handleChange.bind(this) } />
+                                        <FieldValidator answer={ answer } />
+                                    </FormRow>
+
+                                case 'INT':
+                                case 'FIXEDPOINT':
+                                case 'fixedpoint': // TODO, legacy
+                                    return <FormRow key={ index } className="list-group-item" legend={ question.name }>
+                                        <NumberInput
+                                            value={ (answer) ? answer.values[0] : null }
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) } />
                                         <FieldValidator answer={ this.state.answers[question.id] || null } />
@@ -268,6 +320,7 @@ class Survey extends Component {
                                 default:
                                     return  <FormRow key={ index } className="list-group-item" legend={ question.name }>
                                         <TextInput
+                                            value={ (answer) ? answer.values[0] : null }
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) } />
                                         <FieldValidator answer={ this.state.answers[question.id] || null } />
