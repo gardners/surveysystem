@@ -102,6 +102,9 @@ const mapTypeToField = function(questionType) {
         case 'TEXT':
         case 'MULTICHOICE':
         case 'MULTISELECT':
+        case 'text': // TODO, legacy
+        case 'radiobuttons': // TODO, legacy
+        case 'checkbox': // TODO, legacy
             return (text) => {
                 if (Object.prototype.toString.call(text) === '[object Array]') {
                     text = text.map(v => v.replace(',' , '\,')).join(',');
@@ -114,6 +117,7 @@ const mapTypeToField = function(questionType) {
 
         case 'INT':
         case 'FIXEDPOINT':
+        case 'fixedpoint': // TODO, legacy
             return (value) => ({
                 value,
             });
@@ -124,7 +128,8 @@ const mapTypeToField = function(questionType) {
                 lon,
             });
 
-        case 'DATETIME':
+        case 'DATETIME': //TODO fcgimain.c puts it into "text" clarify
+        case 'date': // TODO, legacy
             return (time_begin, time_zone_delta) => ({
                 time_begin,
                 time_zone_delta,
@@ -143,7 +148,7 @@ const mapTypeToField = function(questionType) {
          // nothing
     }
 
-    return new Error(`Unkown question type: {questionType}`);
+    return new Error(`Unkown question type: ${questionType}`);
 };
 
 ////
