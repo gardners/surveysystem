@@ -18,9 +18,7 @@ class Select extends Component {
             value: value
         });
 
-        this.props.handleChange({
-            [type]: value,
-        }, question);
+        this.props.handleChange(question, value);
     }
 
     render() {

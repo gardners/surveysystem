@@ -74,12 +74,7 @@ class PeriodRange extends Component {
             value
         });
 
-        const model = {
-            time_begin: value.min,
-            time_end: value.max,
-        };
-
-        this.props.handleChange(model, question);
+        this.props.handleChange(question, value.min, value.max, value.max - value.min);
     }
 
     render() {
