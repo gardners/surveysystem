@@ -268,7 +268,7 @@ class Survey extends Component {
 
                             switch(question.type) {
                                 case 'MULTICHOICE':
-                                case 'radiogroup': // TODO
+                                case 'radiogroup': // TODO, legacy
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name }>
                                         <RadioGroup
                                             question={ question }
@@ -287,7 +287,7 @@ class Survey extends Component {
                                     </FormRow>
 
                                 case 'LATLON':
-                                case 'geolocation': // TODO
+                                case 'geolocation': // TODO, legacy
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name }>
                                         <GeoLocation
                                             value={ (answer) ? answer.values : '' }
@@ -297,7 +297,7 @@ class Survey extends Component {
                                     </FormRow>
 
                                 case 'TIMERANGE':
-                                case 'datetime': // TODO
+                                case 'date': // TODO, legacy
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name }>
                                         <PeriodRange
                                             value={ (answer) ? answer.values : '' }
@@ -308,7 +308,7 @@ class Survey extends Component {
 
                                 case 'INT':
                                 case 'FIXEDPOINT':
-                                case 'number': // TODO
+                                case 'fixedpoint': // TODO, legacy
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name }>
                                         <NumberInput
                                             value={ (answer) ? answer.values[0] : null }
