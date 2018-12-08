@@ -46,6 +46,14 @@ class SurveyManager {
     }
 
     /**
+     * check if suvey is finished
+     * @returns {boolean}
+     */
+    isFinished() {
+        return (this.finished && this.closed);
+    }
+
+    /**
      * Validates if a cache object can be merged
      * @param {object} cached deserialized JSON
      * @returns {boolean} flag indicating if cache can be merged
