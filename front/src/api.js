@@ -120,6 +120,9 @@ const Api = {
                 return response.json();
             });
     },
+
 };
+
+Api.getEvaluation = Api.finishSurvey; //TODO tmp
 
 export { Api as default, BaseUri };
