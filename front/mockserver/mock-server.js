@@ -109,8 +109,9 @@ const server = (() => {
                     response.end(res.payload, 'utf-8');
                     break;
 
-                // TODO: temporary endpoint
+                // TODO: temporary endpoints
                 case 'finishsurvey':
+                case 'getevaluation':
                     res = Survey.getevaluation(SURVEY_ID, CURRENT);
                     CURRENT = res.current;
 
