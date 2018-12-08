@@ -151,7 +151,7 @@ const updateanswer = function(surveyid, answer, previous) {
 };
 
 // TODO: temporary endpoint
-const getevaluation = function(surveyid, previous) {
+const getevaluation = function(surveyid, previous = 0) {
 
     const data = loadSurveyFile(surveyid);
     const surveyLength = data.survey.length;
