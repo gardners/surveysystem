@@ -5,19 +5,20 @@ class Select extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            value: props.question.defaultValue || '',
+            value: '',
         };
     }
 
     handleChange(e) {
         const { value } = e.target;
         const { question } = this.props;
+        const { type } = question;
 
         this.setState({
             value: value
         });
 
-        this.props.handleChange(value, question);
+        this.props.handleChange(question, value);
     }
 
     render() {
@@ -27,6 +28,7 @@ class Select extends Component {
             <div className="form-group">
                 <p><strong> { question.title_text }</strong></p>
                 <select
+                    onChange={ this.handleChange.bind(this) }
                     id={ question.id }
                     name={ question.name }
                     className="form-control">
