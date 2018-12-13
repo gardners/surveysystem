@@ -102,9 +102,6 @@ const mapTypeToField = function(questionType) {
         case 'TEXT':
         case 'MULTICHOICE':
         case 'MULTISELECT':
-        case 'text': // TODO, legacy
-        case 'radiobuttons': // TODO, legacy
-        case 'checkbox': // TODO, legacy
             return (text) => {
                 if (Object.prototype.toString.call(text) === '[object Array]') {
                     text = text.map(v => v.replace(',' , '\,')).join(',');
@@ -117,7 +114,6 @@ const mapTypeToField = function(questionType) {
 
         case 'INT':
         case 'FIXEDPOINT':
-        case 'fixedpoint': // TODO, legacy
             return (value) => ({
                 value,
             });
@@ -129,7 +125,6 @@ const mapTypeToField = function(questionType) {
             });
 
         case 'DATETIME': //TODO fcgimain.c puts it into "text" clarify
-        case 'date': // TODO, legacy
             return (time_begin, time_zone_delta) => ({
                 time_begin,
                 time_zone_delta,
@@ -246,16 +241,18 @@ const castString = function(text) {
 // Serializers
 ////
 
+
 /**
- * Parses a csv row from a SurveyJS answer instance
- * example format of a row: "question1:gfdsg:0:0:0:0:0:0:0"
+ * Merges (mutates) an answer value in a model
  *
+ * @param {AnswerModel} model
  * @param {string} id question id
  * @param {*} answer answer value to submit
  * @param {string} questionType
- * @returns {{string|Error)}  csv row or Error to be displayed
+ * @returns {AnswerModel}  csv row or Error to be displayed
  */
-    const model = getModel();
+const mergeAnswerValue = function(model, id, answer, questionType) {
+
     const sanitized = sanitize(answer);
 
     let key = '';
@@ -324,7 +321,50 @@ const castString = function(text) {
     // build
     model[key] = value;
 
+    return model;
+};
+
+/**
+ * Parses a csv row from a SurveyJS answer instance
+ * example format of a row: "question1:gfdsg:0:0:0:0:0:0:0"
+ *
+ * @param {string} id question id
+ * @param {*} answer answer value to submit
+ * @param {string} questionType
+ * @returns {{string|Error)}  csv row or Error to be displayed
+ */
+const serializeAnswerValue = function(id, answer, questionType) {
+    const model = mergeAnswerValue(getModel(), id, answer, questionType);
+    return (model instanceof Error) ? model : Object.values(model).join(CSV_SEPARATOR);
+};
+
+/**
+ * Parses a csv row from a SurveyJS answer instance
+ * example format of a row: "question1:gfdsg:0:0:0:0:0:0:0"
+ *
+ * @param {string} id question id
+ * @param {object} answer answer object where keys are matching a model properites and values is the answer value
+ * @returns {{string|Error)}  csv row or Error to be displayed
+ */
+const serializeAnswer = function (id, answer) {
+    let model = getModel();
+    let key;
+    let res;
+
+    if(Object.prototype.toString.call(answer) !== '[object Object]') {
+        return new Error('Missing answer');
+    }
+
+    for (key in answer) {
+        if(answer.hasOwnProperty(key)) {
+            model = mergeAnswerValue(model, id, answer[key], key);
+            if(model instanceof Error) {
+                return model;
+            }
+        }
+    }
+
     return Object.values(model).join(CSV_SEPARATOR);
 };
 
-export { serializeAnswer, CSV_SEPARATOR };
+export { serializeAnswer, serializeAnswerValue, mapTypeToField, CSV_SEPARATOR };

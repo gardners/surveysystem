@@ -101,7 +101,7 @@ const Api = {
      * @returns {Promise} deserialized json with evaluationdata
      */
     finishSurvey: function(sessionID) {
-        const url = BaseUri + '/surveyapi/finishsurvey';
+        const url = BaseUri + '/surveyapi/analyse';
 
         // TODO: remove if implemented on backend
         if(process.env.NODE_ENV !== 'development') {
@@ -120,6 +120,9 @@ const Api = {
                 return response.json();
             });
     },
+
 };
+
+Api.getEvaluation = Api.finishSurvey; //TODO tmp
 
 export { Api as default, BaseUri };
