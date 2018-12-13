@@ -60,6 +60,11 @@ const DirtyJson = {
 
         return (isArray(v)) ? v : [];
     },
+
+    get(v, key, r = null) {
+        return (v && typeof v[key] !== 'undefined') ? v[key] : r;
+    },
+
 };
 
 export {
