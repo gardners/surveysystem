@@ -104,6 +104,7 @@ const mapTypeToField = function(questionType) {
         case 'MULTISELECT':
         case 'text': // TODO, legacy
         case 'radiobuttons': // TODO, legacy
+        case 'radiogroup': // TODO, legacy
         case 'checkbox': // TODO, legacy
             return (text) => {
                 if (Object.prototype.toString.call(text) === '[object Array]') {
