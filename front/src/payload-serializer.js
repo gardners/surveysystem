@@ -246,18 +246,16 @@ const castString = function(text) {
 // Serializers
 ////
 
-
 /**
- * Merges (mutates) an answer value in a model
+ * Parses a csv row from a SurveyJS answer instance
+ * example format of a row: "question1:gfdsg:0:0:0:0:0:0:0"
  *
- * @param {AnswerModel} model
  * @param {string} id question id
  * @param {*} answer answer value to submit
  * @param {string} questionType
- * @returns {AnswerModel}  csv row or Error to be displayed
+ * @returns {{string|Error)}  csv row or Error to be displayed
  */
-const mergeAnswerValue = function(model, id, answer, questionType) {
-
+    const model = getModel();
     const sanitized = sanitize(answer);
 
     let key = '';
@@ -326,50 +324,7 @@ const mergeAnswerValue = function(model, id, answer, questionType) {
     // build
     model[key] = value;
 
-    return model;
-};
-
-/**
- * Parses a csv row from a SurveyJS answer instance
- * example format of a row: "question1:gfdsg:0:0:0:0:0:0:0"
- *
- * @param {string} id question id
- * @param {*} answer answer value to submit
- * @param {string} questionType
- * @returns {{string|Error)}  csv row or Error to be displayed
- */
-const serializeAnswerValue = function(id, answer, questionType) {
-    const model = mergeAnswerValue(getModel(), id, answer, questionType);
-    return (model instanceof Error) ? model : Object.values(model).join(CSV_SEPARATOR);
-};
-
-/**
- * Parses a csv row from a SurveyJS answer instance
- * example format of a row: "question1:gfdsg:0:0:0:0:0:0:0"
- *
- * @param {string} id question id
- * @param {object} answer answer object where keys are matching a model properites and values is the answer value
- * @returns {{string|Error)}  csv row or Error to be displayed
- */
-const serializeAnswer = function (id, answer) {
-    let model = getModel();
-    let key;
-    let res;
-
-    if(Object.prototype.toString.call(answer) !== '[object Object]') {
-        return new Error('Missing answer');
-    }
-
-    for (key in answer) {
-        if(answer.hasOwnProperty(key)) {
-            model = mergeAnswerValue(model, id, answer[key], key);
-            if(model instanceof Error) {
-                return model;
-            }
-        }
-    }
-
     return Object.values(model).join(CSV_SEPARATOR);
 };
 
-export { serializeAnswer, serializeAnswerValue, mapTypeToField, CSV_SEPARATOR };
+export { serializeAnswer, CSV_SEPARATOR };
