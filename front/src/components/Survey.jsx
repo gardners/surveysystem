@@ -43,7 +43,7 @@ class Survey extends Component {
             alerts: [],
             // TODO tmp
             // TODO if ready, include resetting in handle responses
-            evaluation: null,
+            evaluation: null,  // TODO remove
         };
     }
 
@@ -215,7 +215,7 @@ class Survey extends Component {
             survey,
             answers: {}, // clear previous answers
             alerts: [], // clear previous alerts
-            evaluation,
+            evaluation, // TODO remove
         }))
         .then(() => survey.close())
         .then(() => LocalStorage.delete(CACHE_KEY))
@@ -226,11 +226,11 @@ class Survey extends Component {
 
         const { survey, answers, evaluation } = this.state;
 
-        if (evaluation) {
+        if (survey.isFinished()) { // TODO surveymanager method
             return(
                 <Redirect to={ {
                     pathname: `/evaluation/${survey.surveyID}`,
-                    state: { evaluation }
+                    state: { survey }
                     } }
                 />
             );
@@ -268,7 +268,6 @@ class Survey extends Component {
 
                             switch(question.type) {
                                 case 'MULTICHOICE':
-                                case 'radiogroup': // TODO, legacy
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name }>
                                         <RadioGroup
                                             question={ question }
@@ -287,7 +286,6 @@ class Survey extends Component {
                                     </FormRow>
 
                                 case 'LATLON':
-                                case 'geolocation': // TODO, legacy
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name }>
                                         <GeoLocation
                                             value={ (answer) ? answer.values : '' }
@@ -297,7 +295,6 @@ class Survey extends Component {
                                     </FormRow>
 
                                 case 'TIMERANGE':
-                                case 'date': // TODO, legacy
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name }>
                                         <PeriodRange
                                             value={ (answer) ? answer.values : '' }
@@ -308,7 +305,6 @@ class Survey extends Component {
 
                                 case 'INT':
                                 case 'FIXEDPOINT':
-                                case 'fixedpoint': // TODO, legacy
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name }>
                                         <NumberInput
                                             value={ (answer) ? answer.values[0] : null }
@@ -362,9 +358,9 @@ class Survey extends Component {
 
                 </form>
 
-                <Dev label="survey" data={ survey } open={ true }/>
-                <Dev label="questions" data={ questions } open={ true }/>
-                <Dev label="answers" data={ answers } open={ true }/>
+                <Dev label="survey" data={ survey } open={ false }/>
+                <Dev label="questions" data={ questions } open={ false }/>
+                <Dev label="answers" data={ answers } open={ false }/>
 
             </section>
         );
