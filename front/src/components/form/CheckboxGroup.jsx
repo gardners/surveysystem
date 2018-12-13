@@ -1,23 +1,31 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-class RadioGroup extends Component {
+class CheckboxGroup extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            value: props.question.defaultValue || '',
+            values: [],
         };
     }
 
     handleChange(e) {
-        const { value } = e.target;
+        const { value, checked } = e.target;
         const { question } = this.props;
+        const { type } = question;
+
+        let { values } = this.state;
+
+        values = values.filter(v => v !== value);
+        if(checked) {
+            values.push(value);
+        }
 
         this.setState({
-            value: value
+            values,
         });
 
-        this.props.handleChange(value, question);
+        this.props.handleChange(question, values);
     }
 
     render() {
@@ -31,12 +39,12 @@ class RadioGroup extends Component {
                     return <div key={index} className="radio">
                         <label>
                             <input
-                                type="radio"
+                                type="checkbox"
                                 name={ question.name }
                                 id={ question.id }
                                 value={ value }
                                 onChange={ this.handleChange.bind(this)}
-                                checked={ value === this.state.value }
+                                checked={  this.state.values.indexOf(value) > -1 }
                                 />
                             { value }
                         </label>
@@ -47,11 +55,11 @@ class RadioGroup extends Component {
     }
 }
 
-RadioGroup.defaultProps = {
+CheckboxGroup.defaultProps = {
     placeholder: null,
 };
 
-RadioGroup.propTypes = {
+CheckboxGroup.propTypes = {
     handleChange: PropTypes.func.isRequired,
     question: PropTypes.shape({
         id: PropTypes.string.isRequired,
@@ -65,4 +73,4 @@ RadioGroup.propTypes = {
     placeholder: PropTypes.string,
 };
 
-export default RadioGroup;
+export default CheckboxGroup;

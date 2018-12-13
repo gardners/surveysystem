@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const TextInput = function(props) {
-    const { question, handleChange, placeholder } = props;
+const NumberInput = function(props) {
+    const { question, placeholder, value } = props;
 
     return (
         <div className="form-group">
@@ -10,22 +10,24 @@ const TextInput = function(props) {
             <input
                 id={ question.id }
                 name={ question.name }
-                type="text"
+                type="number"
                 className="form-control"
                 placeholder={ placeholder }
                 autoComplete="off"
-                onChange={ (e) => handleChange(e.target.value, question) }
-                defaultValue={ question.defaultValue || null }
+                onChange={ (e) => {
+                    const { value } = e.target;
+                    props.handleChange(question, value);
+                } }
             />
         </div>
     );
 };
 
-TextInput.defaultProps = {
+NumberInput.defaultProps = {
     placeholder: null,
 };
 
-TextInput.propTypes = {
+NumberInput.propTypes = {
     handleChange: PropTypes.func.isRequired,
     question: PropTypes.shape({
         id: PropTypes.string.isRequired,
@@ -33,10 +35,8 @@ TextInput.propTypes = {
         title: PropTypes.string.isRequired,
         title_text: PropTypes.string.isRequired,
         type: PropTypes.string.isRequired,
-
-        defaultValue: PropTypes.string,
     }).isRequired,
     placeholder: PropTypes.string,
 };
 
-export default TextInput;
+export default NumberInput;

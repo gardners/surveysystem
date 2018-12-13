@@ -75,7 +75,7 @@ const escPattern = new RegExp(`${CSV_SEPARATOR}'"`, 'g');
 
 /**
  * Provides default Model object
- * returns {AnswerModel}
+ * @returns {AnswerModel}
  */
 const getModel = function() {
     return {
@@ -89,6 +89,66 @@ const getModel = function() {
         time_zone_delta : 0,    // type: number (INT)
         dst_delta : 0,          // type: number (INT)
     };
+};
+
+/**
+ * Maps backend question types to corresponding model fields
+ * @property {string} questionType
+ * @returns {string[]}
+ */
+const mapTypeToField = function(questionType) {
+    switch(questionType) {
+
+        case 'TEXT':
+        case 'MULTICHOICE':
+        case 'MULTISELECT':
+        case 'text': // TODO, legacy
+        case 'radiobuttons': // TODO, legacy
+        case 'checkbox': // TODO, legacy
+            return (text) => {
+                if (Object.prototype.toString.call(text) === '[object Array]') {
+                    text = text.map(v => v.replace(',' , '\,')).join(',');
+                }
+
+                return {
+                    text,
+                };
+            };
+
+        case 'INT':
+        case 'FIXEDPOINT':
+        case 'fixedpoint': // TODO, legacy
+            return (value) => ({
+                value,
+            });
+
+        case 'LATLON':
+            return (lat, lon) => ({
+                lat,
+                lon,
+            });
+
+        case 'DATETIME': //TODO fcgimain.c puts it into "text" clarify
+        case 'date': // TODO, legacy
+            return (time_begin, time_zone_delta) => ({
+                time_begin,
+                time_zone_delta,
+            });
+
+        case 'TIMERANGE':
+            return (time_begin, time_end, time_zone_delta = 0) => ({
+                time_begin,
+                time_end,
+                time_zone_delta,
+            });
+
+        // case 'UPLOAD': //TODO
+
+        default:
+         // nothing
+    }
+
+    return new Error(`Unkown question type: ${questionType}`);
 };
 
 ////
@@ -127,6 +187,25 @@ const sanitize = function(val) {
  *
  * @returns {(number|Error)}
  */
+const castInt = function(val) {
+    const value = parseInt(val, 10);
+
+    if(isNaN(value)) {
+        return new Error ('CSV serializer: Invalid value: is not a Number');
+    }
+
+    if(!isFinite(value)) {
+        return new Error ('CSV serializer: Invalid value: is infinite');
+    }
+    return value;
+};
+
+/**
+ * parse and validate string
+ * @param {string} val already sanitized string
+ *
+ * @returns {(number|Error)}
+ */
 const castFloat = function(val) {
     const value = parseFloat(val);
 
@@ -154,34 +233,6 @@ const castString = function(text) {
 };
 
 /**
- * Parse and validate comma separated geolocation string into object ready to be merged in to model
- * @param {string} val already sanitized string
- *
- * @returns {(Array|Error)} Error on invalid value or an array of format [lat, lon]
- */
-const castGeoLocObject = function(val) {
-    if(typeof val !== 'string') {
-        return new Error ('CSV serializer: Invalid geolocation data type');
-    }
-
-    const values = val.split(',');
-    if(values.length !== 2) {
-        return new Error ('CSV serializer: Invalid geolocation data');
-    }
-    const lat = parseFloat(values[0]);
-    const lon = parseFloat(values[1]);
-
-    if(isNaN(lat) || isNaN(lon)) {
-        return new Error ('CSV serializer: Invalid geolocation data, lat or lon is not a Number');
-    }
-
-    return {
-        lat,
-        lon,
-    };
-};
-
-/**
  * parse and validate comma separated geolocation string into object ready to be merged in to model
  * @param {string} val already sanitized string
  *
@@ -204,11 +255,10 @@ const castGeoLocObject = function(val) {
  * @param {string} questionType
  * @returns {{string|Error)}  csv row or Error to be displayed
  */
-const serializeAnswer = function(id, answer, questionType) {
     const model = getModel();
     const sanitized = sanitize(answer);
 
-    let key;
+    let key = '';
     let value;
 
     // assign id
@@ -216,25 +266,50 @@ const serializeAnswer = function(id, answer, questionType) {
 
     // cast values, define keys
     switch (questionType) {
-        case 'number':
+        case 'text':
+            key = questionType;
+            value = castString(sanitized);
+        break;
+
+        case 'value':
             key = 'value';
             value = castFloat(sanitized);
         break;
 
-        // @see customQuestions/*.js
-        case 'geolocation':
-            key = '<geoloc>';
-            value = castGeoLocObject(sanitized);
+        case 'lat':
+            key = questionType;
+            value = castFloat(sanitized);
+        break;
+
+        case 'lon':
+            key = questionType;
+            value = castFloat(sanitized);
+        break;
+
+        case 'time_begin':
+            key = questionType;
+            value = castFloat(sanitized);
+        break;
+
+        case 'time_end':
+            key = questionType;
+            value = castFloat(sanitized);
+        break;
+
+        case 'time_zone_delta':
+            key = questionType;
+            value = castInt(sanitized);
+        break;
+
+        case 'dst_delta':
+            key = questionType;
+            value = castInt(sanitized);
         break;
 
         // @TODO
         // case 'timepicker':
         //     value = castDateTime(sanitized);
         // break;
-
-        default:
-            key = 'text';
-            value = castString(sanitized);
     }
 
     // handle errors
@@ -247,13 +322,7 @@ const serializeAnswer = function(id, answer, questionType) {
     }
 
     // build
-    if(key === '<geoloc>') {
-        // complex
-        Object.assign(model, value);
-    } else {
-        // scalars
-        model[key] = value;
-    }
+    model[key] = value;
 
     return Object.values(model).join(CSV_SEPARATOR);
 };
