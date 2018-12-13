@@ -123,6 +123,6 @@ const Api = {
 
 };
 
-Api.getEvaluation = Api.finishSurvey; //TODO tmp
+Api.getAnalysis = Api.finishSurvey; //TODO tmp
 
 export { Api as default, BaseUri };
