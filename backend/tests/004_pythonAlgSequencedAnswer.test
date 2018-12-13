@@ -45,7 +45,7 @@ endofsession
 request 200 addanswer?sessionid=$SESSION&answer=email:test.email@domain.com:0:0:0:0:0:0:0
 # password1:Password:Password:TEXT:-1:password1:-999:999:2:0:0:
 # Check that we are offered the next question to answer
-match_string {"next_questions": [{"id": "password1", "name": "password1", "title": "Password", "title_text": "Password", "type": "text"}]}
+match_string {"next_questions": [{"id": "password1", "name": "password1", "title": "Password", "title_text": "Password", "type": "TEXT"}]}
 match_string "password1"
 
 # Make sure answer ends up in file
@@ -57,7 +57,7 @@ endofsession
 request 200 addanswer?sessionid=$SESSION&answer=password1:myPaSSw0rD:0:0:0:0:0:0:0
 #
 ## Check that we are offered the next question to answer
-##match_string {"next_questions": [{"id": "password2", "name": "question3", "title": "How boring was question 1?", "title_text": "How boring was question 2?", "type": "text"}]}
+##match_string {"next_questions": [{"id": "password2", "name": "question3", "title": "How boring was question 1?", "title_text": "How boring was question 2?", "type": "TEXT"}]}
 match_string "password2"
 #
 ## Make sure answer ends up in file
@@ -70,7 +70,7 @@ endofsession
 request 200 addanswer?sessionid=$SESSION&answer=password2:myPaSSw0rD:0:0:0:0:0:0:0
 #
 ## Check that we are offered the next question to answer
-##match_string {"next_questions": [{"id": "beforeStartingSurvey", "name": "question3", "title": "How boring was question 1?", "title_text": "How boring was question 2?", "type": "text"}]}
+##match_string {"next_questions": [{"id": "beforeStartingSurvey", "name": "question3", "title": "How boring was question 1?", "title_text": "How boring was question 2?", "type": "TEXT"}]}
 match_string "beforeStartingSurvey"
 #
 ## Make sure answer ends up in file
