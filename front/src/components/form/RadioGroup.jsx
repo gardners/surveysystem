@@ -5,20 +5,19 @@ class RadioGroup extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            value: '',
+            value: props.question.defaultValue || '',
         };
     }
 
     handleChange(e) {
         const { value } = e.target;
         const { question } = this.props;
-        const { type } = question;
 
         this.setState({
             value: value
         });
 
-        this.props.handleChange(question, value);
+        this.props.handleChange(value, question);
     }
 
     render() {

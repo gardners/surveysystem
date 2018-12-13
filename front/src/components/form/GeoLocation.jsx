@@ -59,8 +59,6 @@ class GeoLocation extends Component {
         e && e.preventDefault();
 
         const { question } = this.props;
-        const { type } = question;
-
         fetchLocation()
         .then((coords) => {
 
@@ -68,8 +66,8 @@ class GeoLocation extends Component {
                 value: [coords.latitude, coords.longitude].toString(),
                 error: null,
             });
-
-            this.props.handleChange(question, coords.latitude, coords.longitude);
+            // send immediately to survey
+            this.props.handleChange(this.state.value, question);
         })
         .catch(err => this.setState({
             value: '',
