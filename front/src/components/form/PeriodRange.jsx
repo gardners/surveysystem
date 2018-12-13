@@ -65,7 +65,6 @@ class PeriodRange extends Component {
 
     handleChange(value) {
         const { question } = this.props;
-
         const updated = this.state;
         updated['time_begin'] = value.min;
         updated['time_end'] = value.max;

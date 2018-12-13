@@ -16,6 +16,7 @@ class Select extends Component {
         this.setState({
             value: value
         });
+
         this.props.handleChange(value, question);
     }
 
