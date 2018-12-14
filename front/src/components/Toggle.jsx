@@ -21,12 +21,13 @@ class Toggle extends Component{
 
         const { open } = this.state;
         const [ header, ...contents ] = this.props.children;
+        const cls = (!open) ? `d-print-block d-none` : '';
         return(
             <div className={ this.props.className }>
                 <a className="d-block text-primary" onClick={ this.toggle.bind(this) }>
-                    { (!open) ? <i className="fas fa-plus-square d-inline-block"></i> : <i className="fas fa-minus-square d-inline-block"></i> }<div className="d-inline-block ml-2">{ header }</div>
+                    { (!open) ? <i className="fas fa-caret-down d-inline-block d-print-none"></i> : <i className="fas fa-caret-up d-inline-block  d-print-none"></i> }<div className="d-inline-block ml-2">{ header }</div>
                 </a>
-                { open && contents }
+                <div className={ cls }>{ contents }</div>
             </div>
         );
     }

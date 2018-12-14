@@ -69,7 +69,7 @@ class Question extends Component {
         const { value, question } = this.state;
         const Component = this.props.component;
         return (
-            <FormRow className="list-group-item" legend={ question.name }>
+            <FormRow className="list-group-item mb-1" legend={ question.name }>
                 { this.state.value && <Answer answer={ this.state.value } /> }
                 <Component
                     { ...this.props } question={ question } handleChange={ this.handleChange.bind(this) }

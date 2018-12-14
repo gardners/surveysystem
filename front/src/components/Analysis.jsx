@@ -71,15 +71,19 @@ class Analysis extends Component {
             <section>
                 <LoadingSpinner loading={ loading } message={ loading }/>
                 <h1>{ surveyID } <small>Analysis</small></h1>
-                <div className="card">
-                    <div className="card-body">
-                        <h2 className="card-title">Feedback</h2>
-                        <p className="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+
+                <div className="jumbotron jumbotron-fluid">
+                    <div className="container">
+                        <h2 className="display-4">Feedback</h2>
+                        <Feedback feedback={ evaluation.feedback } />
                     </div>
-                    <Feedback feedback={ evaluation.feedback } />
-                    { Object.keys(evaluations).map((key) => <Evaluation key={ key } name={ key.replace(/([A-Z])/g, ' $1') /* TODO redundant */} evaluation={ evaluations[key] } />) }
                 </div>
-                <Dev label="survey" data={ evaluation } open={ true }/>
+
+                <h2>Evaluation</h2>
+                { Object.keys(evaluations).map((key) => <Evaluation key={ key } name={ key.replace(/([A-Z])/g, ' $1') /* TODO redundant */} evaluation={ evaluations[key] } />) }
+                <hr />
+
+                <Dev label="raw analyis" data={ evaluation } open={ false }/>
             </section>
         );
     }

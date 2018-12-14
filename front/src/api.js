@@ -113,7 +113,6 @@ const Api = {
 
         return fetch(`${url}?sessionid=${sessionID}`)
             .then((response) => {
-                console.log(response);
                 if (!response.ok) {
                     return responseError(response);
                 }
