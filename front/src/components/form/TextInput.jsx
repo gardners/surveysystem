@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 const TextInput = function(props) {
-    const { question, handleChange, placeholder } = props;
+    const { question, placeholder, value } = props;
 
     return (
         <div className="form-group">
@@ -14,8 +14,10 @@ const TextInput = function(props) {
                 className="form-control"
                 placeholder={ placeholder }
                 autoComplete="off"
-                onChange={ (e) => handleChange(e.target.value, question) }
-                defaultValue={ question.defaultValue || null }
+                onChange={ (e) => {
+                    const { value } = e.target;
+                    props.handleChange(question, value);
+                } }
             />
         </div>
     );
@@ -33,8 +35,6 @@ TextInput.propTypes = {
         title: PropTypes.string.isRequired,
         title_text: PropTypes.string.isRequired,
         type: PropTypes.string.isRequired,
-
-        defaultValue: PropTypes.string,
     }).isRequired,
     placeholder: PropTypes.string,
 };

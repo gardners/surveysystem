@@ -113,7 +113,6 @@ const Api = {
 
         return fetch(`${url}?sessionid=${sessionID}`)
             .then((response) => {
-                console.log(response);
                 if (!response.ok) {
                     return responseError(response);
                 }
@@ -123,6 +122,6 @@ const Api = {
 
 };
 
-Api.getEvaluation = Api.finishSurvey; //TODO tmp
+Api.getAnalysis = Api.finishSurvey; //TODO tmp
 
 export { Api as default, BaseUri };

@@ -4,16 +4,19 @@ import { Link } from 'react-router-dom';
 // apis
 import api, { BaseUri } from '../api';
 import Log from '../Log';
+import { DirtyJson } from '../Utils';
 
 // components
-import Feedback from './evaluation/Feedback';
+import Feedback from './analysis/Feedback';
+import Evaluation from './analysis/Evaluation';
+
 import LoadingSpinner from './LoadingSpinner';
 import Alert from './Alert';
 
 // devel
 import Dev from './Dev';
 
-class Evaluation extends Component {
+class Analysis extends Component {
 
     constructor(props) {
         super(props);
@@ -30,7 +33,7 @@ class Evaluation extends Component {
             loading: 'Fetching evaluation...',
         });
 
-        api.getEvaluation(surveyID)
+        api.getAnalysis(surveyID)
         .then(evaluation => this.setState({
             evaluation,
             loading: '',
@@ -41,11 +44,13 @@ class Evaluation extends Component {
         const surveyID = this.props.match.params.id;
         const { evaluation, loading } = this.state;
 
+        const report = DirtyJson.get(evaluation, 'report', {});
+        const evaluations = DirtyJson.get(report, 'evaluations', {});
 
         if(!evaluation && !loading) {
             return (
                 <section>
-                    <h1>{ surveyID }: Evaluation</h1>
+                    <h1>{ surveyID }: Analysis</h1>
                     <div className="text-danger">
                         <p><i className="fas fa-exclamation-circle"></i> This survey is not finished yet!</p>
                         <Link to={ `/survey/${surveyID}` } className="btn bn-lg btn-primary">Continue survey</Link>
@@ -65,21 +70,26 @@ class Evaluation extends Component {
         return (
             <section>
                 <LoadingSpinner loading={ loading } message={ loading }/>
-                <h1>{ surveyID } <small>Evaluation</small></h1>
-                <div className="card">
-                    <div className="card-body">
-                        <h2 className="card-title">Feedback</h2>
-                        <p className="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+                <h1>{ surveyID } <small>Analysis</small></h1>
+
+                <div className="jumbotron jumbotron-fluid">
+                    <div className="container">
+                        <h2 className="display-4">Feedback</h2>
+                        <Feedback feedback={ evaluation.feedback } />
                     </div>
-                    <Feedback feedback={ evaluation.feedback } />
                 </div>
-                <Dev label="survey" data={ evaluation } open={ true }/>
+
+                <h2>Evaluation</h2>
+                { Object.keys(evaluations).map((key) => <Evaluation key={ key } name={ key.replace(/([A-Z])/g, ' $1') /* TODO redundant */} evaluation={ evaluations[key] } />) }
+                <hr />
+
+                <Dev label="raw analyis" data={ evaluation } open={ false }/>
             </section>
         );
     }
 }
 
-Evaluation.propTypes = {
+Analysis.propTypes = {
 };
 
-export default Evaluation;
+export default Analysis;
