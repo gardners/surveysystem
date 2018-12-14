@@ -10,24 +10,26 @@ const Feedback = function(props) {
     const insights = (feedback) ? DirtyJson.coerceArray(feedback.insights) : [];
 
     return (
-        <div className="list-group list-group-flush">
-            <div className="list-group-item">
-                <h4>Thoughts</h4>
-                { !thoughts.length && <i>no entries</i> }
+        <div>
+            <h4>Thoughts</h4>
+            <div className="mb-2">
+                { !thoughts.length && <p><i>no thoughts</i></p> }
                 { thoughts.map((thought, i) =>
                     Object.keys(thought).map((summary, k) =>
-                        <Toggle key={ `${i}-${k}` }>
-                            <strong>{summary}</strong>{ thought[summary] }
-                        </Toggle>)) }
+                        <div key={ `${i}-${k}` }>
+                            <p className="lead" >{ summary }</p>
+                            <p>{ thought[summary] }</p>
+                        </div>)) }
             </div>
-            <div className="list-group-item">
+
             <h4>Insights</h4>
-                { !insights.length && <i>no entries</i> }
+            <div className="list-group mb-2">
+                { !insights.length && <p><i>no insights</i></p> }
                 { insights.map((insight, i) =>
                     Object.keys(insight).map((summary, k) =>
-                        <Toggle key={ `${i}-${k}` }>
-                            <strong>{summary}</strong>{ insight[summary] }
-                        </Toggle>)) }
+                        <p key={ `${i}-${k}` }>
+                            <strong>{ summary }</strong>: { insight[summary] }
+                        </p>)) }
             </div>
         </div>
     );
