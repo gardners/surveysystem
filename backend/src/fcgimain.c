@@ -706,14 +706,17 @@ static void fcgi_nextquestion(struct kreq *r)
             &&q[i]->choices[j+cl]
             &&(q[i]->choices[j+cl]!=',')
             )
-        {
-          if (cl<65535) {
-            choice[cl]=q[i]->choices[j+cl];
-            choice[cl+1]=0;
+          {
+            if (cl<65535) {
+              choice[cl]=q[i]->choices[j+cl];
+              choice[cl+1]=0;
+            }
+            cl++;
+          } 
+          // #74 skip empty values
+          if (q[i]->choices[j]!=',') {
+            kjson_putstring(&req,choice);
           }
-          cl++;
-        }
-          kjson_putstring(&req,choice);
           j+=cl;
           if (q[i]->choices[j+cl]==',') j++;
         }
