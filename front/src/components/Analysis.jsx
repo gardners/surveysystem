@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 
 // apis
-import api, { BaseUri } from '../api';
+import api from '../api';
 import Log from '../Log';
 import { DirtyJson } from '../Utils';
 
@@ -11,7 +11,7 @@ import Feedback from './analysis/Feedback';
 import Evaluation from './analysis/Evaluation';
 
 import LoadingSpinner from './LoadingSpinner';
-import Alert from './Alert';
+// TODO Alert
 
 // devel
 import Dev from './Dev';
@@ -38,6 +38,7 @@ class Analysis extends Component {
             evaluation,
             loading: '',
         }))
+        .catch(err => Log.error(err)); //TODO
     }
 
     render() {

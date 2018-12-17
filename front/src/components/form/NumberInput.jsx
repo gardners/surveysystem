@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 const NumberInput = function(props) {
-    const { question, placeholder, value } = props;
+    const { question, placeholder } = props;
 
     return (
         <div className="form-group">
