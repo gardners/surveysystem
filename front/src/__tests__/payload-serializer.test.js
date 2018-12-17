@@ -39,38 +39,57 @@ describe('serializeAnswer: to CSV row', () => {
         expect(serializeAnswer('textid', { text: Symbol(1) })).toBeInstanceOf(Error);
     });
 
-    test('type: number', () => {
+    test('type: value', () => {
         //positive
-        expect(serializeAnswer('numberid', { number: 0 })).toBe('numberid::0:0:0:0:0:0:0');
-        expect(serializeAnswer('numberid', { number: 1 })).toBe('numberid::1:0:0:0:0:0:0');
-        expect(serializeAnswer('numberid', { number: 0.1 })).toBe('numberid::0.1:0:0:0:0:0:0');
-        expect(serializeAnswer('numberid', { number: '123' })).toBe('numberid::123:0:0:0:0:0:0');
-        expect(serializeAnswer('numberid', { number: new Number(123) })).toBe('numberid::123:0:0:0:0:0:0');
+        expect(serializeAnswer('numberid', { value: 0 })).toBe('numberid::0:0:0:0:0:0:0');
+        expect(serializeAnswer('numberid', { value: 1 })).toBe('numberid::1:0:0:0:0:0:0');
+        expect(serializeAnswer('numberid', { value: 0.1 })).toBe('numberid::0.1:0:0:0:0:0:0');
+        expect(serializeAnswer('numberid', { value: '123' })).toBe('numberid::123:0:0:0:0:0:0');
+        expect(serializeAnswer('numberid', { value: new Number(123) })).toBe('numberid::123:0:0:0:0:0:0');
         // negative
         expect(serializeAnswer('numberid')).toBeInstanceOf(Error);
         expect(serializeAnswer('numberid', null)).toBeInstanceOf(Error);
         expect(serializeAnswer('numberid', 'invalid')).toBeInstanceOf(Error);
 
-        expect(serializeAnswer('numberid', { number: NaN })).toBeInstanceOf(Error);
-        expect(serializeAnswer('numberid', { number: Infinity, })).toBeInstanceOf(Error);
-        expect(serializeAnswer('numberid', { number: null, })).toBeInstanceOf(Error);
-        expect(serializeAnswer('numberid', { number: undefined, })).toBeInstanceOf(Error);
-        expect(serializeAnswer('numberid', { number: Symbol(1), })).toBeInstanceOf(Error);
+        expect(serializeAnswer('numberid', { value: NaN })).toBeInstanceOf(Error);
+        expect(serializeAnswer('numberid', { value: Infinity, })).toBeInstanceOf(Error);
+        expect(serializeAnswer('numberid', { value: null, })).toBeInstanceOf(Error);
+        expect(serializeAnswer('numberid', { value: undefined, })).toBeInstanceOf(Error);
+        expect(serializeAnswer('numberid', { value: Symbol(1), })).toBeInstanceOf(Error);
     });
 
-    test('type: geolocation', () => {
+    test('type: lat', () => {
         // positive
-        expect(serializeAnswer('geolocationid', { geolocation: '0,0' })).toBe('geolocationid::0:0:0:0:0:0:0');
-        expect(serializeAnswer('geolocationid', { geolocation: '1.0,0.1' })).toBe('geolocationid::0:1:0.1:0:0:0:0');
-        expect(serializeAnswer('geolocationid', { geolocation: '  1.0,  0.1  ' })).toBe('geolocationid::0:1:0.1:0:0:0:0');
+        expect(serializeAnswer('latid', { lat: '0' })).toBe('latid::0:0:0:0:0:0:0');
+        expect(serializeAnswer('latid', { lat: '  1.0   ' })).toBe('latid::0:1:0:0:0:0:0');
+        expect(serializeAnswer('latid', { lat: 3.14 })).toBe('latid::0:3.14:0:0:0:0:0');
         // negative
-        expect(serializeAnswer('geolocationid')).toBeInstanceOf(Error);
-        expect(serializeAnswer('geolocationid', null)).toBeInstanceOf(Error);
-        expect(serializeAnswer('geolocationid', 'invalid')).toBeInstanceOf(Error);
+        expect(serializeAnswer('latid')).toBeInstanceOf(Error);
+        expect(serializeAnswer('latid', undefined)).toBeInstanceOf(Error);
+        expect(serializeAnswer('latid', null)).toBeInstanceOf(Error);
+        expect(serializeAnswer('latid', 'invalid')).toBeInstanceOf(Error);
 
-        expect(serializeAnswer('geolocationid', { geolocation: '0.2,string' })).toBeInstanceOf(Error);
-        expect(serializeAnswer('geolocationid', { geolocation: 'string,0.2' })).toBeInstanceOf(Error);
-        expect(serializeAnswer('geolocationid', { geolocation: NaN })).toBeInstanceOf(Error);
+        expect(serializeAnswer('latid', { lat: 'string' })).toBeInstanceOf(Error);
+        expect(serializeAnswer('latid', { lat: undefined })).toBeInstanceOf(Error);
+        expect(serializeAnswer('latid', { lat: null })).toBeInstanceOf(Error);
+        expect(serializeAnswer('latid', { lat: NaN })).toBeInstanceOf(Error);
+    });
+
+    test('type: lon', () => {
+        // positive
+        expect(serializeAnswer('lonid', { lon: '0' })).toBe('lonid::0:0:0:0:0:0:0');
+        expect(serializeAnswer('lonid', { lon: '  1.0   ' })).toBe('lonid::0:0:1:0:0:0:0');
+        expect(serializeAnswer('lonid', { lon: 3.14 })).toBe('lonid::0:0:3.14:0:0:0:0');
+        // negative
+        expect(serializeAnswer('lonid')).toBeInstanceOf(Error);
+        expect(serializeAnswer('lonid', null)).toBeInstanceOf(Error);
+        expect(serializeAnswer('lonid', undefined)).toBeInstanceOf(Error);
+        expect(serializeAnswer('lonid', 'invalid')).toBeInstanceOf(Error);
+
+        expect(serializeAnswer('lonid', { lon: 'string' })).toBeInstanceOf(Error);
+        expect(serializeAnswer('lonid', { lon: undefined })).toBeInstanceOf(Error);
+        expect(serializeAnswer('lonid', { lon: null })).toBeInstanceOf(Error);
+        expect(serializeAnswer('lonid', { lon: NaN })).toBeInstanceOf(Error);
     });
 
     xtest('type: datetime', () => {
@@ -96,30 +115,45 @@ describe('serializeAnswerValue: to CSV row', () => {
         expect(serializeAnswerValue('textid', Symbol(1), 'text')).toBeInstanceOf(Error);
     });
 
-    test('type: number', () => {
+    test('type: value', () => {
         //positive
-        expect(serializeAnswerValue('numberid', 0, 'number')).toBe('numberid::0:0:0:0:0:0:0');
-        expect(serializeAnswerValue('numberid', 1, 'number')).toBe('numberid::1:0:0:0:0:0:0');
-        expect(serializeAnswerValue('numberid', 0.1, 'number')).toBe('numberid::0.1:0:0:0:0:0:0');
-        expect(serializeAnswerValue('numberid', '123', 'number')).toBe('numberid::123:0:0:0:0:0:0');
-        expect(serializeAnswerValue('numberid', new Number(123), 'number')).toBe('numberid::123:0:0:0:0:0:0');
+        expect(serializeAnswerValue('numberid', 0, 'value')).toBe('numberid::0:0:0:0:0:0:0');
+        expect(serializeAnswerValue('numberid', 1, 'value')).toBe('numberid::1:0:0:0:0:0:0');
+        expect(serializeAnswerValue('numberid', 0.1, 'value')).toBe('numberid::0.1:0:0:0:0:0:0');
+        expect(serializeAnswerValue('numberid', '123', 'value')).toBe('numberid::123:0:0:0:0:0:0');
+        expect(serializeAnswerValue('numberid', new Number(123), 'value')).toBe('numberid::123:0:0:0:0:0:0');
         // negative
-        expect(serializeAnswerValue('numberid', NaN, 'number')).toBeInstanceOf(Error);
-        expect(serializeAnswerValue('numberid', Infinity, 'number')).toBeInstanceOf(Error);
-        expect(serializeAnswerValue('numberid', null, 'number')).toBeInstanceOf(Error);
-        expect(serializeAnswerValue('numberid', undefined, 'number')).toBeInstanceOf(Error);
-        expect(serializeAnswerValue('numberid', Symbol(1), 'number')).toBeInstanceOf(Error);
+        expect(serializeAnswerValue('numberid', NaN, 'value')).toBeInstanceOf(Error);
+        expect(serializeAnswerValue('numberid', Infinity, 'value')).toBeInstanceOf(Error);
+        expect(serializeAnswerValue('numberid', null, 'value')).toBeInstanceOf(Error);
+        expect(serializeAnswerValue('numberid', undefined, 'value')).toBeInstanceOf(Error);
+        expect(serializeAnswerValue('numberid', Symbol(1), 'value')).toBeInstanceOf(Error);
     });
 
-    test('type: geolocation', () => {
+    test('type: lat', () => {
         // positive
-        expect(serializeAnswerValue('geolocationid', '0,0', 'geolocation')).toBe('geolocationid::0:0:0:0:0:0:0');
-        expect(serializeAnswerValue('geolocationid', '1.0,0.1', 'geolocation')).toBe('geolocationid::0:1:0.1:0:0:0:0');
-        expect(serializeAnswerValue('geolocationid', '  1.0,  0.1  ', 'geolocation')).toBe('geolocationid::0:1:0.1:0:0:0:0');
+        expect(serializeAnswerValue('latid', '0', 'lat')).toBe('latid::0:0:0:0:0:0:0');
+        expect(serializeAnswerValue('latid', '1.0,', 'lat')).toBe('latid::0:1:0:0:0:0:0');
+        expect(serializeAnswerValue('latid', '  1.0  ', 'lat')).toBe('latid::0:1:0:0:0:0:0');
+        expect(serializeAnswerValue('latid', 3.14, 'lat')).toBe('latid::0:3.14:0:0:0:0:0');
         // negative
-        expect(serializeAnswerValue('numberid', '0.2,string', 'geolocation')).toBeInstanceOf(Error);
-        expect(serializeAnswerValue('numberid', 'string,0.2', 'geolocation')).toBeInstanceOf(Error);
-        expect(serializeAnswerValue('numberid', NaN, 'geolocation')).toBeInstanceOf(Error);
+        expect(serializeAnswerValue('latid', 'string', 'lat')).toBeInstanceOf(Error);
+        expect(serializeAnswerValue('latid', undefined, 'lat')).toBeInstanceOf(Error);
+        expect(serializeAnswerValue('latid', null, 'lat')).toBeInstanceOf(Error);
+        expect(serializeAnswerValue('latid', NaN, 'lat')).toBeInstanceOf(Error);
+    });
+
+    test('type: lon', () => {
+        // positive
+        expect(serializeAnswerValue('lonid', '0', 'lon')).toBe('lonid::0:0:0:0:0:0:0');
+        expect(serializeAnswerValue('lonid', '1.0,', 'lon')).toBe('lonid::0:0:1:0:0:0:0');
+        expect(serializeAnswerValue('lonid', '  1.0  ', 'lon')).toBe('lonid::0:0:1:0:0:0:0');
+        expect(serializeAnswerValue('lonid', 3.14, 'lon')).toBe('lonid::0:0:3.14:0:0:0:0');
+        // negative
+        expect(serializeAnswerValue('lonid', 'string', 'lon')).toBeInstanceOf(Error);
+        expect(serializeAnswerValue('lonid', undefined, 'lon')).toBeInstanceOf(Error);
+        expect(serializeAnswerValue('lonid', null, 'lon')).toBeInstanceOf(Error);
+        expect(serializeAnswerValue('lonid', NaN, 'lon')).toBeInstanceOf(Error);
     });
 
     xtest('type: datetime', () => {
