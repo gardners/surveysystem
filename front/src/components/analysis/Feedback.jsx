@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import { DirtyJson } from '../../Utils';
-import Toggle from '../Toggle';
 
 const Feedback = function(props) {
     const { feedback } = props;

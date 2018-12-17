@@ -68,7 +68,6 @@ class PeriodRange extends Component {
 
     handleChange(value) {
         const { question } = this.props;
-        const { type } = question;
 
         this.setState({
             value
@@ -78,7 +77,6 @@ class PeriodRange extends Component {
     }
 
     render() {
-        const { question } = this.props;
         const { value } = this.state;
 
         return (

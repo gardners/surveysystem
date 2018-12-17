@@ -12,7 +12,6 @@ class Select extends Component {
     handleChange(e) {
         const { value } = e.target;
         const { question } = this.props;
-        const { type } = question;
 
         this.setState({
             value: value

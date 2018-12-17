@@ -66,7 +66,7 @@ class Question extends Component {
     }
 
     render() {
-        const { value, question } = this.state;
+        const { question } = this.state;
         const Component = this.props.component;
         return (
             <FormRow className="list-group-item mb-1" legend={ question.name }>
