@@ -1,6 +1,15 @@
 import Log from './Log';
 
 /**
+ * Builds a colon-separated sorted string of question ids from a questions entry. This allows to shallow compare querstions entries
+ * @param {[object]} questions array of QuestionItem
+ * @returns {string}
+ */
+const questionsID = function(questions) {
+    return questions.map(q => q.id).sort().join(':');
+};
+
+/**
  * @module SurveyManager Simple state controller for survey progess.
  * There is not much to it as the state is controlled remotely by the backendx
  */
@@ -139,6 +148,15 @@ class SurveyManager {
         if(!questions.length) {
             this.finished = true;
         }
+
+        const qid = questionsID(questions);
+        const cqid = questionsID(this.current());
+
+        if(qid === cqid) {
+            Log.warn(`Skipping add questions with qid ${qid}, same as current`);
+            return false;
+        }
+
         this.questions.push(questions);
         this.step += 1;
         return true;
@@ -159,13 +177,14 @@ class SurveyManager {
      */
     back() {
         if(this.closed) {
+            Log.warn('survey is closed, cannot go back');
             return false;
         }
         this.questions.splice(-1, 1);
-        this.step -= 1
+        this.step -= 1;
         this.finished = false;
         return true;
     }
 }
 
-export default SurveyManager;
+export { SurveyManager as default, questionsID };
