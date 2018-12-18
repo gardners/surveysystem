@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 const FormRow = function(props) {
     return(
         <div className={ props.className }>
-            { props.legend && <legend>{ props.legend }</legend> }
+            { props.legend && (typeof props.legend === 'function') ? props.legend() : <legend>{ props.legend }</legend> }
             { props.children }
         </div>
     );
@@ -12,7 +12,10 @@ const FormRow = function(props) {
 
 FormRow.propTypes = {
     className: PropTypes.string,
-    legend:  PropTypes.string,
+    legend:  PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.func,
+    ]),
 };
 
 const FieldError = function(props) {
