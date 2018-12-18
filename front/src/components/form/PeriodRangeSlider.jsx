@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import InputRange from 'react-input-range';
-import './PeriodRange.scss';
+import './PeriodRangeSlider.scss';
 
 const DaySec = 86400; // 24 hours
 
@@ -55,7 +55,7 @@ const prettyHours = function(sec) {
 /**
  * range sliders for defining period secondss (seconds) within 24 hours
  */
-class PeriodRange extends Component {
+class PeriodRangeSlider extends Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -100,13 +100,13 @@ class PeriodRange extends Component {
     }
 }
 
-PeriodRange.defaultProps = {
+PeriodRangeSlider.defaultProps = {
     placeholder: null,
     timeBeginLabel: 'Start',
     timeEndLabel: 'Finished',
 };
 
-PeriodRange.propTypes = {
+PeriodRangeSlider.propTypes = {
     handleChange: PropTypes.func.isRequired,
     question: PropTypes.shape({
         id: PropTypes.string.isRequired,
@@ -121,4 +121,4 @@ PeriodRange.propTypes = {
     placeholder: PropTypes.string,
 };
 
-export default PeriodRange;
+export default PeriodRangeSlider;
