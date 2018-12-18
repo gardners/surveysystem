@@ -91,6 +91,12 @@ const getModel = function() {
     };
 };
 
+//<uid>:<value>:<TYPE>:<UNIT>
+//questionid:value|value1:type:unit
+//questionid:50.00|60.5:float:latlon
+//questionid:value|value1:type:unit
+//questionid:50.00|60.5:float:latlon
+
 /**
  * Maps backend question types to corresponding model fields
  * @property {string} questionType
@@ -104,7 +110,7 @@ const mapTypeToField = function(questionType) {
         case 'MULTISELECT':
             return (text) => {
                 if (Object.prototype.toString.call(text) === '[object Array]') {
-                    text = text.map(v => v.replace(',' , '\,')).join(',');
+                    text = text.map(v => v.replace(',' , '\,')).join(','); // eslint-disable-line no-useless-escape
                 }
 
                 return {
@@ -307,11 +313,14 @@ const mergeAnswerValue = function(model, id, answer, questionType) {
         // case 'timepicker':
         //     value = castDateTime(sanitized);
         // break;
+
+        default:
+            // nothing
     }
 
     // handle errors
     if (!key) {
-        return new Error('CSV serializer: Unknown field key');
+        return new Error('CSV serializer: Unknown field key for questionType ' + questionType);
     }
 
     if (value instanceof Error) {
@@ -349,7 +358,6 @@ const serializeAnswerValue = function(id, answer, questionType) {
 const serializeAnswer = function (id, answer) {
     let model = getModel();
     let key;
-    let res;
 
     if(Object.prototype.toString.call(answer) !== '[object Object]') {
         return new Error('Missing answer');

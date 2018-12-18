@@ -28,7 +28,7 @@ class Dev extends Component {
 
         return (
             <div>
-                <a onClick={ this.toggle.bind(this) }>{ (this.state.open) ? '[-]' : '[+]' } { label }</a>
+                <span role="menuitem" onClick={ this.toggle.bind(this) }>{ (this.state.open) ? '[-]' : '[+]' } { label }</span>
             {
                 this.state.open &&
 

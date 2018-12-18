@@ -59,7 +59,6 @@ class GeoLocation extends Component {
         e && e.preventDefault();
 
         const { question } = this.props;
-        const { type } = question;
 
         fetchLocation()
         .then((coords) => {

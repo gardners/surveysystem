@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { DirtyJson } from '../../Utils';
+import { DirtyJson, camelToNormal } from '../../Utils';
 import Toggle from '../Toggle';
 
 const SleepCondition = function(props) {
@@ -15,7 +15,7 @@ const SleepCondition = function(props) {
 };
 
 SleepCondition.propTypes = {
-    condition: PropTypes.object.isRequired,
+    condition: PropTypes.string.isRequired,
     name: PropTypes.string.isRequired,
 };
 
@@ -44,7 +44,7 @@ const Condition = function(props) {
     const category = DirtyJson.get(condition, 'category');
     const classification = DirtyJson.get(condition, 'classification');
     const recommendation = DirtyJson.get(condition, 'recommendation');
-
+console.log(recommendation);
     const displayResults = DirtyJson.get(condition, 'displayResults', {});
     const additionalInsights = DirtyJson.get(displayResults, 'additionalInsights', []);
     const sleepConditions = DirtyJson.get(displayResults, 'sleepConditions', {});
@@ -75,11 +75,11 @@ const Condition = function(props) {
             </div>
 
             <h4>Recommendation</h4>
-            <p>{ (recommendation) ? { recommendation } : <i>No recommendation</i> }</p>
+            { (recommendation) ? <p>{ recommendation }</p> : <i>No recommendation</i> }
 
             <h4>Sleep Conditions</h4>
             <div className="list-group mb-2">
-                { Object.keys(sleepConditions).map((key) => <SleepCondition key={ key } name={ key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase()) } condition={ sleepConditions[key]  || 'n/a' } />) }
+                { Object.keys(sleepConditions).map((key) => <SleepCondition key={ key } name={ camelToNormal(key) } condition={ sleepConditions[key]  || 'n/a' } />) }
             </div>
 
             <h4>Additional Insights</h4>

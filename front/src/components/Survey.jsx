@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 
 import { Redirect } from 'react-router-dom';
 
@@ -14,14 +13,13 @@ import TextInput from './form/TextInput';
 import RadioGroup from './form/RadioGroup';
 import CheckboxGroup from './form/CheckboxGroup';
 import GeoLocation from './form/GeoLocation';
-import PeriodRange from './form/PeriodRange';
+import PeriodRangeSlider from './form/PeriodRangeSlider';
 import NumberInput from './form/NumberInput';
 
 // components
 import LoadingSpinner from './LoadingSpinner';
 import Alert from './Alert';
 
-import { Card } from './bootstrap/Cards';
 import { FormRow, FieldValidator } from './FormHelpers';
 
 // devel
@@ -97,7 +95,7 @@ class Survey extends Component {
 
         let error = null;
         let answer = (typeof answers[id] !== 'undefined') ? answers[id].answer : null;
-        console.log(values);
+
         // TODO validate
         const fn = mapTypeToField(type);
         if (fn instanceof Error) {
@@ -105,7 +103,7 @@ class Survey extends Component {
         } else {
             answer = fn(...values);
         }
-        console.log(id, type, answer, error);
+
         answers[id] = {
             answer,
             values,
@@ -224,7 +222,7 @@ class Survey extends Component {
 
     render() {
 
-        const { survey, answers, evaluation } = this.state;
+        const { survey, answers } = this.state;
 
         if (survey.isFinished()) { // TODO surveymanager method
             return(
@@ -294,9 +292,11 @@ class Survey extends Component {
                                         <FieldValidator answer={ answer } />
                                     </FormRow>
 
+                                // TODO DAYTIME
+
                                 case 'TIMERANGE':
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name }>
-                                        <PeriodRange
+                                        <PeriodRangeSlider
                                             value={ (answer) ? answer.values : '' }
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) } />

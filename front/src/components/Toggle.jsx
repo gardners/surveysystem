@@ -10,7 +10,6 @@ class Toggle extends Component{
     }
 
     toggle(e) {
-        console.log('toggle');
         e.preventDefault();
         this.setState({
             open: !this.state.open
@@ -24,9 +23,9 @@ class Toggle extends Component{
         const cls = (!open) ? `d-print-block d-none` : '';
         return(
             <div className={ this.props.className }>
-                <a className="d-block text-primary" onClick={ this.toggle.bind(this) }>
+                <div role="menuitem" className="d-block text-primary" onClick={ this.toggle.bind(this) }>
                     { (!open) ? <i className="fas fa-caret-down d-inline-block d-print-none"></i> : <i className="fas fa-caret-up d-inline-block  d-print-none"></i> }<div className="d-inline-block ml-2">{ header }</div>
-                </a>
+                </div>
                 <div className={ cls }>{ contents }</div>
             </div>
         );

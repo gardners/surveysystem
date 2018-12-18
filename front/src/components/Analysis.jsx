@@ -2,16 +2,16 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 
 // apis
-import api, { BaseUri } from '../api';
+import api from '../api';
 import Log from '../Log';
-import { DirtyJson } from '../Utils';
+import { DirtyJson, camelToNormal } from '../Utils';
 
 // components
 import Feedback from './analysis/Feedback';
 import Evaluation from './analysis/Evaluation';
 
 import LoadingSpinner from './LoadingSpinner';
-import Alert from './Alert';
+// TODO Alert
 
 // devel
 import Dev from './Dev';
@@ -38,6 +38,7 @@ class Analysis extends Component {
             evaluation,
             loading: '',
         }))
+        .catch(err => Log.error(err)); //TODO
     }
 
     render() {
@@ -80,7 +81,7 @@ class Analysis extends Component {
                 </div>
 
                 <h2>Evaluation</h2>
-                { Object.keys(evaluations).map((key) => <Evaluation key={ key } name={ key.replace(/([A-Z])/g, ' $1') /* TODO redundant */} evaluation={ evaluations[key] } />) }
+                { Object.keys(evaluations).map((key) => <Evaluation key={ key } name={ camelToNormal(key) /* TODO redundant */} evaluation={ evaluations[key] } />) }
                 <hr />
 
                 <Dev label="raw analyis" data={ evaluation } open={ false }/>

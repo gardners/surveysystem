@@ -12,7 +12,6 @@ class CheckboxGroup extends Component {
     handleChange(e) {
         const { value, checked } = e.target;
         const { question } = this.props;
-        const { type } = question;
 
         let { values } = this.state;
 
