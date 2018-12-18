@@ -66,7 +66,7 @@ CheckboxGroup.propTypes = {
         title: PropTypes.string.isRequired,
         title_text: PropTypes.string.isRequired,
         type: PropTypes.string.isRequired,
-
+        // eunum
         choices: PropTypes.array.isRequired,
     }).isRequired,
     placeholder: PropTypes.string,
