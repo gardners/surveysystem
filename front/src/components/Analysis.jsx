@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 // apis
 import api from '../api';
 import Log from '../Log';
-import { DirtyJson } from '../Utils';
+import { DirtyJson, camelToNormal } from '../Utils';
 
 // components
 import Feedback from './analysis/Feedback';
@@ -81,7 +81,7 @@ class Analysis extends Component {
                 </div>
 
                 <h2>Evaluation</h2>
-                { Object.keys(evaluations).map((key) => <Evaluation key={ key } name={ key.replace(/([A-Z])/g, ' $1') /* TODO redundant */} evaluation={ evaluations[key] } />) }
+                { Object.keys(evaluations).map((key) => <Evaluation key={ key } name={ camelToNormal(key) /* TODO redundant */} evaluation={ evaluations[key] } />) }
                 <hr />
 
                 <Dev label="raw analyis" data={ evaluation } open={ false }/>
