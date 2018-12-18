@@ -292,7 +292,8 @@ class Survey extends Component {
                                         <FieldValidator answer={ answer } />
                                     </FormRow>
 
-                                // TODO DAYTIME
+                                // TODO DAYTIME slider/select
+                                // TODO RadioMatrix number/text
 
                                 case 'TIMERANGE':
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name }>
