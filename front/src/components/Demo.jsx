@@ -13,6 +13,7 @@ import TextInput from './form/TextInput';
 import TextArea from './form/TextArea';
 import Select from './form/Select';
 import TimePicker from './form/TimePicker';
+import RadioMatrix from './form/RadioMatrix';
 
 import { serializeAnswer, mapTypeToField } from '../payload-serializer';
 
@@ -27,7 +28,7 @@ const Pre = function(props) {
     }
 
     return(
-        <pre className={ cls }>{ (typeof data === 'string') ? data : JSON.stringify(data) }</pre>
+        <pre style={ { marginBottom: 0 } }className={ cls }>{ (typeof data === 'string') ? data : JSON.stringify(data) }</pre>
     );
 };
 
@@ -49,11 +50,12 @@ class Question extends Component {
                 defaultValue: props.defaultValue || 'default',
                 choices: props.choices || [],
             },
-            value: '',
+            values: {},
         }
     }
 
     handleChange(question, ...values) {
+
         const fn = mapTypeToField(question.type);
         let answer;
 
@@ -63,18 +65,21 @@ class Question extends Component {
             answer = fn(...values);
         }
 
+        const updated = this.state.values;
+        updated[question.id] = serializeAnswer(question.id, answer);
+
         this.setState({
-            value: serializeAnswer(question.id, answer),
+            values: updated,
         });
     }
 
     render() {
-        const { question } = this.state;
+        const { question, values } = this.state;
         const Component = this.props.component;
+
         return (
             <FormRow className="list-group-item mb-1" legend={ question.name }>
-            { this.state.value && <Pre data={ this.state.value } /> }
-                { this.state.value && <Pre data={ this.state.value } /> }
+                { Object.keys(values).map(key => <Pre key={ values[key].id } data={ values[key] } />) }
                 <Component
                     { ...this.props } question={ question } handleChange={ this.handleChange.bind(this) }
                 />
@@ -101,6 +106,39 @@ class Demo extends Component {
                 <Question type={ 'TEXT' } component={ Select } choices={ ['First', 'Second', 'Third' ] } defaultValue="Second"/>
                 <Question type={ 'TEXT' } component={ TextInput }/>
                 <Question type={ 'TEXT' } component={ TextArea }/>
+                <Question type={ 'FIXEDPOINT' } component={ RadioMatrix }
+                    questionGroup={[
+                        {
+                            id: 'question1',
+                            name: 'question1',
+                            type: 'FIXEDPOINT',
+                            title: 'Question 1',
+                            title_text: 'Question 1 text',
+                            choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
+                        }, {
+                            id: 'question2',
+                            name: 'question2',
+                            type: 'FIXEDPOINT',
+                            title: 'Question 2',
+                            title_text: 'Question 2 text',
+                            choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
+                        },{
+                            id: 'question3',
+                            name: 'question3',
+                            type: 'FIXEDPOINT',
+                            title: 'Question 3',
+                            title_text: 'Question 3 text',
+                            choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
+                        },{
+                            id: 'question4',
+                            name: 'question4',
+                            type: 'FIXEDPOINT',
+                            title: 'Question 4',
+                            title_text: 'Question 4 text',
+                            choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
+                        }
+                    ]}
+                />
             </section>
         );
     }
