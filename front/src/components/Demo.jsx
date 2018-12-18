@@ -5,31 +5,34 @@ import { FormRow } from './FormHelpers';
 
 // form elements
 import GeoLocation from './form/GeoLocation';
-import PeriodRange from './form/PeriodRange';
+import PeriodRangeSlider from './form/PeriodRangeSlider';
+import DayTimeSlider from './form/DayTimeSlider';
 import CheckboxGroup from './form/CheckboxGroup';
 import RadioGroup from './form/RadioGroup';
 import TextInput from './form/TextInput';
+import TextArea from './form/TextArea';
 import Select from './form/Select';
+import TimePicker from './form/TimePicker';
 
 import { serializeAnswer, mapTypeToField } from '../payload-serializer';
 
-const Answer = function(props) {
+const Pre = function(props) {
 
     let cls = null;
-    let { answer } = props;
+    let { data } = props;
 
-    if(props.answer instanceof Error) {
+    if(props.data instanceof Error) {
         cls = 'text-danger';
-        answer = answer.toString();
+        data = data.toString();
     }
 
     return(
-        <pre className={ cls }>{ (typeof answer === 'string') ? answer : JSON.stringify(answer) }</pre>
+        <pre className={ cls }>{ (typeof data === 'string') ? data : JSON.stringify(data) }</pre>
     );
 };
 
-Answer.propTypes = {
-    answer: PropTypes.any
+Pre.propTypes = {
+    data: PropTypes.any
 };
 
 class Question extends Component {
@@ -70,10 +73,12 @@ class Question extends Component {
         const Component = this.props.component;
         return (
             <FormRow className="list-group-item mb-1" legend={ question.name }>
-                { this.state.value && <Answer answer={ this.state.value } /> }
+            { this.state.value && <Pre data={ this.state.value } /> }
+                { this.state.value && <Pre data={ this.state.value } /> }
                 <Component
                     { ...this.props } question={ question } handleChange={ this.handleChange.bind(this) }
                 />
+                <div><span className="badge badge-secondary">question type: { this.props.type }</span></div>
             </FormRow>
         );
     }
@@ -88,11 +93,14 @@ class Demo extends Component {
         return (
             <section className="list-group">
                 <Question type={ 'LATLON' } component={ GeoLocation } withButton={ true } />
-                <Question type={ 'TIMERANGE' } component={ PeriodRange } />
+                <Question type={ 'TIMERANGE' } component={ PeriodRangeSlider } />
+                <Question type={ 'FIXEDPOINT' } component={ DayTimeSlider } />
+                <Question type={ 'FIXEDPOINT' } component={ TimePicker }/>
                 <Question type={ 'MULTICHOICE' } component={ CheckboxGroup } choices={ ['This', 'That', 'Another one' ] } defaultValue="Maybe"/>
                 <Question type={ 'TEXT' } component={ RadioGroup } choices={ ['Yes', 'No', 'Maybe' ] } defaultValue="Maybe"/>
                 <Question type={ 'TEXT' } component={ Select } choices={ ['First', 'Second', 'Third' ] } defaultValue="Second"/>
                 <Question type={ 'TEXT' } component={ TextInput }/>
+                <Question type={ 'TEXT' } component={ TextArea }/>
             </section>
         );
     }

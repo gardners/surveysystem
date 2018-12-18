@@ -13,7 +13,7 @@ import TextInput from './form/TextInput';
 import RadioGroup from './form/RadioGroup';
 import CheckboxGroup from './form/CheckboxGroup';
 import GeoLocation from './form/GeoLocation';
-import PeriodRange from './form/PeriodRange';
+import PeriodRangeSlider from './form/PeriodRangeSlider';
 import NumberInput from './form/NumberInput';
 
 // components
@@ -292,9 +292,11 @@ class Survey extends Component {
                                         <FieldValidator answer={ answer } />
                                     </FormRow>
 
+                                // TODO DAYTIME
+
                                 case 'TIMERANGE':
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name }>
-                                        <PeriodRange
+                                        <PeriodRangeSlider
                                             value={ (answer) ? answer.values : '' }
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) } />
