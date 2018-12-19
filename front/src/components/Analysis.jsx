@@ -84,7 +84,7 @@ class Analysis extends Component {
                 { Object.keys(evaluations).map((key) => <Evaluation key={ key } name={ camelToNormal(key) /* TODO redundant */} evaluation={ evaluations[key] } />) }
                 <hr />
 
-                <Dev label="raw analyis" data={ evaluation } open={ false }/>
+                <Dev.Pretty label="raw analyis" data={ evaluation } open={ false }/>
             </section>
         );
     }

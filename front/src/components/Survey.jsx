@@ -240,7 +240,7 @@ class Survey extends Component {
 
         return (
             <section>
-                <pre>step: { this.state.survey.step }, session: { this.state.survey.sessionID }, env: { process.env.NODE_ENV }</pre>
+                <Dev.SurveyBar survey = { survey } />
                 <h1>{ survey.surveyID } <small>Step { this.state.survey.step }</small></h1>
 
                 <LoadingSpinner loading={ this.state.loading } message={ this.state.loading }/>
@@ -359,9 +359,9 @@ class Survey extends Component {
 
                 </form>
 
-                <Dev label="survey" data={ survey } open={ false }/>
-                <Dev label="questions" data={ questions } open={ false }/>
-                <Dev label="answers" data={ answers } open={ false }/>
+                <Dev.Pretty label="survey" data={ survey } open={ false }/>
+                <Dev.Pretty label="questions" data={ questions } open={ false }/>
+                <Dev.Pretty label="answers" data={ answers } open={ false }/>
 
             </section>
         );
