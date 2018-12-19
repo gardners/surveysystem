@@ -96,5 +96,5 @@
         }
     ],
 
-    "evaluationSrc": "../../../mocks/evaluation.json"
+    "evaluationSrc": "surveys/foo.evaluation.json"
 }
