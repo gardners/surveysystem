@@ -18,7 +18,6 @@ const responseError = function (response) {
         });
 };
 
-
 /**
  * Backend requests
  * @type {object}
