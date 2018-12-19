@@ -43,8 +43,8 @@ class Question extends Component {
             question: {
                 id: props.component.name,
                 name: props.component.name,
-                title: 'title',
-                title_text: 'title text',
+                title: props.title || 'title',
+                title_text: props.title_text || 'title text',
                 type: props.type,
 
                 defaultValue: props.defaultValue || 'default',
