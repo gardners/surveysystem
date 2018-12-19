@@ -72,3 +72,6 @@ backend/lighttpd.conf.tmp
 # lighthttpd document root, both symlink or folder
 www
 www/*
+
+# scratcharea
+_dev/*
