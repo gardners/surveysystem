@@ -10,7 +10,8 @@
     "react-dom": "^16.6.3",
     "react-input-range": "^1.3.0",
     "react-router-dom": "^4.3.1",
-    "react-scripts": "2.1.1"
+    "react-scripts": "2.1.1",
+    "yup": "^0.26.6"
   },
   "scripts": {
     "dev": "xterm -hold -e \"cd ../backend & sudo ./testrun --skip-npm-build\" && react-scripts start",
