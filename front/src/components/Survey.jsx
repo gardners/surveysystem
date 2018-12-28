@@ -15,6 +15,7 @@ import CheckboxGroup from './form/CheckboxGroup';
 import GeoLocation from './form/GeoLocation';
 import PeriodRangeSlider from './form/PeriodRangeSlider';
 import NumberInput from './form/NumberInput';
+import Textarea from './form/Textarea';
 
 // components
 import LoadingSpinner from './LoadingSpinner';
@@ -308,6 +309,15 @@ class Survey extends Component {
                                 case 'FIXEDPOINT':
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name }>
                                         <NumberInput
+                                            value={ (answer) ? answer.values[0] : null }
+                                            question={ question }
+                                            handleChange={ this.handleChange.bind(this) } />
+                                        <FieldValidator answer={ this.state.answers[question.id] || null } />
+                                    </FormRow>
+
+                                case 'TEXTAREA':
+                                    return <FormRow key={ index } className="list-group-item" legend={ question.name }>
+                                        <Textarea
                                             value={ (answer) ? answer.values[0] : null }
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) } />
