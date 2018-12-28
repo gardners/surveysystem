@@ -1,13 +1,13 @@
 {
     "survey": [
         {
-            "next_questions": [{
-                "id": "q1",
-                "name": "q1",
-                "title": "Question 1",
-                "title_text": "Your Hitchhicker name",
-                "type": "TEXT"
-            }]
+           "next_questions": [{
+                 "id": "q1",
+                 "name": "q1",
+                 "title": "Question 1",
+                 "title_text": "<h1>The Hitchhiker's Guide to the Galaxy survey<h1>",
+                 "type": "HIDDEN"
+             }]
         }, {
             "next_questions": [{
                 "id": "q2",
