@@ -82,7 +82,7 @@ class Question extends Component {
 
         return (
             <FormRow className="list-group-item mb-1" legend={ question.name } description={ question.title_text }>
-                { Object.keys(values).map(key => <Pre key={ values[key].id } data={ values[key] } />) }
+                { Object.keys(values).map((key, index) => <Pre key={ index } data={ values[key] } />) }
                 <Component
                     { ...this.props } question={ question } handleChange={ this.handleChange.bind(this) }
                 />
