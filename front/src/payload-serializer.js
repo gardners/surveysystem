@@ -7,23 +7,25 @@ const { isFinite } = Number; //not Math!
 
 /*
  Notes:
-    @see backend/src/question_types.c
+    @see backend/include/survey.h
     @see backend/src/deserialise_parse_field.c
 
-    #include "question_types.h"
-    char *question_type_names[1+NUM_QUESTION_TYPES+1]={
-    "start of list",
-    "INT",
-    "FIXEDPOINT",
-    "MULTICHOICE",
-    "MULTISELECT",
-    "LATLON",
-    "DATETIME",
-    "TIMERANGE",
-    "UPLOAD",
-    "TEXT",
-    "UUID",
-    "end of list"};
+ #define QTYPE_INT         1
+ #define QTYPE_FIXEDPOINT  2
+ #define QTYPE_MULTICHOICE 3
+ #define QTYPE_MULTISELECT 4
+ #define QTYPE_LATLON      5
+ #define QTYPE_DATETIME    6
+ #define QTYPE_TIMERANGE   7
+ #define QTYPE_UPLOAD      8
+ #define QTYPE_TEXT        9
+ #define QTYPE_CHECKBOX    10
+ #define QTYPE_HIDDEN      11
+ #define QTYPE_TEXTAREA    12
+ #define QTYPE_EMAIL       13
+ #define QTYPE_PASSWORD    14
+ #define QTYPE_UUID        15
+
 
     DESERIALISE_STRING(a->uid);
     DESERIALISE_STRING(a->text);
@@ -106,6 +108,15 @@ const mapTypeToField = function(questionType) {
     switch(questionType) {
 
         case 'TEXT':
+        case 'HIDDEN':
+        case 'TEXTAREA':
+        case 'CHECKBOX':
+            return (text) => {
+                return {
+                    text,
+                };
+            };
+
         case 'MULTICHOICE':
         case 'MULTISELECT':
             return (text) => {
@@ -142,6 +153,22 @@ const mapTypeToField = function(questionType) {
                 time_end,
                 time_zone_delta,
             });
+
+        case 'EMAIL':
+            // TODO: validation
+            return (text) => {
+                return {
+                    text,
+                };
+            };
+
+        case 'PASSWORD':
+            // TODO: validation
+            return (text) => {
+                return {
+                    text,
+                };
+            };
 
         // case 'UPLOAD': //TODO
 
@@ -246,7 +273,6 @@ const castString = function(text) {
 ////
 // Serializers
 ////
-
 
 /**
  * Merges (mutates) an answer value in a model

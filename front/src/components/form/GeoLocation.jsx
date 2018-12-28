@@ -81,7 +81,7 @@ class GeoLocation extends Component {
         const { value } = this.state;
         return (
             <div className="form-group">
-                <label htmlFor={ question.id }>{ question.title_text }</label>
+                <label htmlFor={ question.id }>{ question.title }</label>
 
                 <div className="input-group">
                     <input

@@ -1,18 +1,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const TextInput = function(props) {
-    const { question, placeholder } = props;
+const Textarea = function(props) {
+    const { question } = props;
 
     return (
         <div className="form-group">
             <label htmlFor={ question.id }>{ question.title }</label>
-            <input
+            <textarea
                 id={ question.id }
                 name={ question.name }
                 type="text"
                 className="form-control"
-                placeholder={ placeholder }
                 autoComplete="off"
                 onChange={ (e) => {
                     const { value } = e.target;
@@ -23,11 +22,10 @@ const TextInput = function(props) {
     );
 };
 
-TextInput.defaultProps = {
-    placeholder: null,
+Textarea.defaultProps = {
 };
 
-TextInput.propTypes = {
+Textarea.propTypes = {
     handleChange: PropTypes.func.isRequired,
     question: PropTypes.shape({
         id: PropTypes.string.isRequired,
@@ -36,7 +34,6 @@ TextInput.propTypes = {
         title_text: PropTypes.string.isRequired,
         type: PropTypes.string.isRequired,
     }).isRequired,
-    placeholder: PropTypes.string,
 };
 
-export default TextInput;
+export default Textarea;

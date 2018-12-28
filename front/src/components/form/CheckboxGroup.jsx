@@ -33,7 +33,7 @@ class CheckboxGroup extends Component {
 
         return (
             <div className="form-group">
-                <label> { question.title_text }</label>
+                <label> { question.title }</label>
                 { choices.map((value, index) => {
                     return <div key={index} className="radio">
                         <label>
@@ -55,7 +55,6 @@ class CheckboxGroup extends Component {
 }
 
 CheckboxGroup.defaultProps = {
-    placeholder: null,
 };
 
 CheckboxGroup.propTypes = {
@@ -69,7 +68,6 @@ CheckboxGroup.propTypes = {
         // eunum
         choices: PropTypes.array.isRequired,
     }).isRequired,
-    placeholder: PropTypes.string,
 };
 
 export default CheckboxGroup;
