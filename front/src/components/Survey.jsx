@@ -227,7 +227,7 @@ class Survey extends Component {
         if (survey.isFinished()) { // TODO surveymanager method
             return(
                 <Redirect to={ {
-                    pathname: `/evaluation/${survey.surveyID}`,
+                    pathname: `/analyse/${survey.surveyID}`,
                     state: { survey }
                     } }
                 />
