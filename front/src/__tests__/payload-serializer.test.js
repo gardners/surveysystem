@@ -1,4 +1,4 @@
-import { serializeAnswer, serializeAnswerValue } from '../payload-serializer';
+import { serializeAnswer, serializeAnswerValue, mapTypeToField } from '../payload-serializer';
 
 /*
  * @see backend/src/question_types.c
@@ -159,4 +159,138 @@ describe('serializeAnswerValue: to CSV row', () => {
     xtest('type: datetime', () => {
     });
 
+});
+
+describe('mapTypeToField', () => {
+    let fn;
+    test('undefined value', () => {
+        fn = mapTypeToField('TEXT');
+        expect(fn()).toMatchObject({
+            text: undefined,
+        });
+    });
+
+    // types
+
+    test('TEXT', () => {
+        fn = mapTypeToField('TEXT');
+        expect(fn('test')).toMatchObject({
+            text: 'test',
+        });
+    });
+
+    test('TEXT', () => {
+        fn = mapTypeToField('TEXT');
+        expect(fn('test')).toMatchObject({
+            text: 'test',
+        });
+    });
+
+    test('HIDDEN', () => {
+        fn = mapTypeToField('HIDDEN');
+        expect(fn('test')).toMatchObject({
+            text: 'test',
+        });
+    });
+
+    test('TEXTAREA', () => {
+        fn = mapTypeToField('TEXTAREA');
+        expect(fn('test')).toMatchObject({
+            text: 'test',
+        });
+    });
+
+    test('MULTICHOICE <string>', () => {
+        fn = mapTypeToField('MULTICHOICE');
+        expect(fn('test')).toMatchObject({
+            text: 'test',
+        });
+    });
+
+    test('MULTICHOICE <array>', () => {
+        fn = mapTypeToField('MULTICHOICE');
+        expect(fn(['test1', 'test2'])).toMatchObject({
+            text: 'test1,test2',
+        });
+    });
+
+    test('MULTISELECT <string>', () => {
+        fn = mapTypeToField('MULTISELECT');
+        expect(fn('test')).toMatchObject({
+            text: 'test',
+        });
+    });
+
+    test('MULTISELECT <array>', () => {
+        fn = mapTypeToField('MULTISELECT');
+        expect(fn(['test1', 'test2'])).toMatchObject({
+            text: 'test1,test2',
+        });
+    });
+
+    test('INT', () => {
+        fn = mapTypeToField('INT');
+        expect(fn(5)).toMatchObject({
+            value: 5,
+        });
+    });
+
+    test('FIXEDPOINT', () => {
+        fn = mapTypeToField('FIXEDPOINT');
+        expect(fn(1.0)).toMatchObject({
+            value: 1.0,
+        });
+    });
+
+    test('LATLON', () => {
+        fn = mapTypeToField('LATLON');
+        expect(fn(1.0, 1.1)).toMatchObject({
+            lat: 1.0,
+            lon: 1.1,
+        });
+    });
+
+    // TODO 'DATETIME' fcgimain.c puts it into "text" clarify
+    test('DATETIME', () => {
+        fn = mapTypeToField('DATETIME');
+        expect(fn(6800, 3600)).toMatchObject({
+            time_begin: 6800,
+            time_zone_delta: 3600,
+        });
+    });
+
+    // TODO fcgimain.cclarify
+    test('TIMERANGE', () => {
+        fn = mapTypeToField('TIMERANGE');
+        expect(fn(0, 6800)).toMatchObject({
+            time_begin: 0,
+            time_end: 6800,
+            time_zone_delta: 0,
+        });
+
+        fn = mapTypeToField('TIMERANGE');
+        expect(fn(0, 6800, 3600)).toMatchObject({
+            time_begin: 0,
+            time_end: 6800,
+            time_zone_delta: 3600,
+        });
+    });
+
+    test('EMAIL', () => {
+        fn = mapTypeToField('EMAIL');
+        expect(fn('email')).toMatchObject({
+            text: 'email',
+        });
+    });
+
+    test('CHECKBOX', () => {
+        fn = mapTypeToField('CHECKBOX');
+        expect(fn('checked')).toMatchObject({
+            text: 'checked',
+        });
+    });
+
+    xtest('UPLOAD', () => {
+        // TODO
+    });
 });
