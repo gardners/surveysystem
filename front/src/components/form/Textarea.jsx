@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const TextArea = function(props) {
+const Textarea = function(props) {
     const { question } = props;
 
     return (
@@ -22,10 +22,10 @@ const TextArea = function(props) {
     );
 };
 
-TextArea.defaultProps = {
+Textarea.defaultProps = {
 };
 
-TextArea.propTypes = {
+Textarea.propTypes = {
     handleChange: PropTypes.func.isRequired,
     question: PropTypes.shape({
         id: PropTypes.string.isRequired,
@@ -36,4 +36,4 @@ TextArea.propTypes = {
     }).isRequired,
 };
 
-export default TextArea;
+export default Textarea;
