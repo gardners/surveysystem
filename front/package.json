@@ -10,8 +10,7 @@
     "react-dom": "^16.6.3",
     "react-input-range": "^1.3.0",
     "react-router-dom": "^4.3.1",
-    "react-scripts": "2.1.1",
-    "yup": "^0.26.6"
+    "react-scripts": "2.1.1"
   },
   "scripts": {
     "dev": "xterm -hold -e \"cd ../backend & sudo ./testrun --skip-npm-build\" && react-scripts start",
@@ -33,6 +32,7 @@
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^5.5.0",
     "jest-localstorage-mock": "^2.3.0",
-    "node-sass": "^4.10.0"
+    "node-sass": "^4.10.0",
+    "react-test-renderer": "^16.7.0"
   }
 }
