@@ -2,12 +2,32 @@
     "survey": [
         {
            "next_questions": [{
-                 "id": "q1",
-                 "name": "q1",
-                 "title": "Question 1",
-                 "title_text": "<h1>The Hitchhiker's Guide to the Galaxy survey<h1>",
+                 "id": "q0",
+                 "name": "q0",
+                 "title": "Hello Traveller!",
+                 "title_text": "<h1>The Hitchhiker's Guide to the Galaxy survey</h1><quote>And all dared to brave unknown terrors, to do mighty deeds, to boldly split infinitives that no man had split before--and thus was the Empire forged.</quote>",
                  "type": "HIDDEN"
              }]
+        },         {
+            "next_questions": [{
+                "id": "q1a",
+                "name": "q1a",
+                "title": "Question 1a",
+                "title_text": "Your Hitchhicker name",
+                "type": "TEXT"
+            }, {
+                "id": "q1b",
+                "name": "q1b",
+                "title": "Your Hitchhicker's Guide account",
+                "title_text": "Email address",
+                "type": "EMAIL"
+            }, {
+                "id": "q1c",
+                "name": "q1c",
+                "title": "Your Hitchhicker's Guide account",
+                "title_text": "Your Hitchhicker's GUIDE password",
+                "type": "PASSWORD"
+            }]
         }, {
             "next_questions": [{
                 "id": "q2",
