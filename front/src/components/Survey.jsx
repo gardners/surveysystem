@@ -332,6 +332,7 @@ class Survey extends Component {
                                         <HiddenInput
                                             question={ question }
                                             defaultValue={ question.default_value || 'visited' /* TODO confirm with backend */ }
+                                            handleChange={ this.handleChange.bind(this) }
                                         />
                                     </FormRow>
 
