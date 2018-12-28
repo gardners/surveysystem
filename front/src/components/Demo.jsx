@@ -14,6 +14,7 @@ import Textarea from './form/Textarea';
 import Select from './form/Select';
 import TimePicker from './form/TimePicker';
 import RadioMatrix from './form/RadioMatrix';
+import HiddenInput from './form/HiddenInput';
 
 import { serializeAnswer, mapTypeToField } from '../payload-serializer';
 
@@ -78,7 +79,7 @@ class Question extends Component {
         const Component = this.props.component;
 
         return (
-            <FormRow className="list-group-item mb-1" legend={ question.name }>
+            <FormRow className="list-group-item mb-1" legend={ question.name } description={ question.title_text }>
                 { Object.keys(values).map(key => <Pre key={ values[key].id } data={ values[key] } />) }
                 <Component
                     { ...this.props } question={ question } handleChange={ this.handleChange.bind(this) }
@@ -97,6 +98,8 @@ class Demo extends Component {
     render() {
         return (
             <section className="list-group">
+                <Question type={ 'HIDDEN' } component={ HiddenInput }
+                    title_text="text with some <strong>markup</strong> html and an image: <img src='data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7'>" defaultVlaue="visited"/>
                 <Question type={ 'LATLON' } component={ GeoLocation } withButton={ true } />
                 <Question type={ 'TIMERANGE' } component={ PeriodRangeSlider } />
                 <Question type={ 'FIXEDPOINT' } component={ DayTimeSlider } />
