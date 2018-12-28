@@ -25,7 +25,7 @@ class Select extends Component {
         const { choices } = question;
         return (
             <div className="form-group">
-                <p><strong> { question.title_text }</strong></p>
+                <p><strong> { question.title }</strong></p>
                 <select
                     onChange={ this.handleChange.bind(this) }
                     id={ question.id }

@@ -18,7 +18,7 @@ const TimePicker = function(props) {
     const { question, handleChange } = props;
     return (
         <div className="form-group">
-            <label htmlFor={ question.id }>{ question.title_text }</label>
+            <label htmlFor={ question.id }>{ question.title }</label>
 
             <RcTimePicker
                 id={ question.id }
