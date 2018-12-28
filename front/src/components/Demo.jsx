@@ -10,7 +10,7 @@ import DayTimeSlider from './form/DayTimeSlider';
 import CheckboxGroup from './form/CheckboxGroup';
 import RadioGroup from './form/RadioGroup';
 import TextInput from './form/TextInput';
-import TextArea from './form/TextArea';
+import Textarea from './form/Textarea';
 import Select from './form/Select';
 import TimePicker from './form/TimePicker';
 import RadioMatrix from './form/RadioMatrix';
@@ -105,7 +105,7 @@ class Demo extends Component {
                 <Question type={ 'TEXT' } component={ RadioGroup } choices={ ['Yes', 'No', 'Maybe' ] } defaultValue="Maybe"/>
                 <Question type={ 'TEXT' } component={ Select } choices={ ['First', 'Second', 'Third' ] } defaultValue="Second"/>
                 <Question type={ 'TEXT' } component={ TextInput }/>
-                <Question type={ 'TEXT' } component={ TextArea }/>
+                <Question type={ 'TEXT' } component={ Textarea }/>
                 <Question type={ 'FIXEDPOINT' } component={ RadioMatrix }
                     questionGroup={[
                         {
