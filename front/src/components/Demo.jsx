@@ -15,6 +15,7 @@ import Select from './form/Select';
 import TimePicker from './form/TimePicker';
 import RadioMatrix from './form/RadioMatrix';
 import HiddenInput from './form/HiddenInput';
+import EmailInput from './form/EmailInput';
 
 import { serializeAnswer, mapTypeToField } from '../payload-serializer';
 
@@ -142,6 +143,7 @@ class Demo extends Component {
                         }
                     ]}
                 />
+                <Question type={ 'EMAIL' } component={ EmailInput } />
             </section>
         );
     }
