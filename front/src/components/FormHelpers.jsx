@@ -36,7 +36,7 @@ const FieldError = function(props) {
 };
 
 FieldError.propTypes = {
-    error: PropTypes.oneOf([
+    error: PropTypes.oneOfType([
         PropTypes.string,
         PropTypes.instanceOf(Error),
         PropTypes.array,
