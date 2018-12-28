@@ -33,7 +33,7 @@ class CheckboxGroup extends Component {
 
         return (
             <div className="form-group">
-                <label> { question.title_text }</label>
+                <label> { question.title }</label>
                 { choices.map((value, index) => {
                     return <div key={index} className="radio">
                         <label>

@@ -6,7 +6,7 @@ const Textarea = function(props) {
 
     return (
         <div className="form-group">
-            <label htmlFor={ question.id }>{ question.title_text }</label>
+            <label htmlFor={ question.id }>{ question.title }</label>
             <textarea
                 id={ question.id }
                 name={ question.name }
