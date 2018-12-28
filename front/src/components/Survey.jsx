@@ -18,6 +18,7 @@ import NumberInput from './form/NumberInput';
 import Textarea from './form/Textarea';
 import HiddenInput from './form/HiddenInput';
 import EmailInput from './form/EmailInput';
+import PasswordInput from './form/PasswordInput';
 
 // components
 import LoadingSpinner from './LoadingSpinner';
@@ -340,6 +341,15 @@ class Survey extends Component {
                                 case 'EMAIL':
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
                                         <EmailInput
+                                            value={ (answer) ? answer.values[0] : null }
+                                            question={ question }
+                                            handleChange={ this.handleChange.bind(this) } />
+                                        <FieldValidator answer={ this.state.answers[question.id] || null } />
+                                </FormRow>
+
+                                case 'PASSWORD':
+                                    return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
+                                        <PasswordInput
                                             value={ (answer) ? answer.values[0] : null }
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) } />
