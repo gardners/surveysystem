@@ -55,7 +55,6 @@ class CheckboxGroup extends Component {
 }
 
 CheckboxGroup.defaultProps = {
-    placeholder: null,
 };
 
 CheckboxGroup.propTypes = {
@@ -69,7 +68,6 @@ CheckboxGroup.propTypes = {
         // eunum
         choices: PropTypes.array.isRequired,
     }).isRequired,
-    placeholder: PropTypes.string,
 };
 
 export default CheckboxGroup;

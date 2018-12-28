@@ -41,7 +41,6 @@ class Select extends Component {
 }
 
 Select.defaultProps = {
-    placeholder: null,
 };
 
 Select.propTypes = {
@@ -55,7 +54,6 @@ Select.propTypes = {
         // eunum
         choices: PropTypes.array.isRequired,
     }).isRequired,
-    placeholder: PropTypes.string,
 };
 
 export default Select;
