@@ -1,4 +1,4 @@
-import { serializeAnswer, serializeAnswerValue, mapTypeToField } from '../serializer';
+import { serializeAnswer, serializeAnswerValue, mapTypeToField } from '../../serializer';
 
 /*
  * @see backend/src/question_types.c
