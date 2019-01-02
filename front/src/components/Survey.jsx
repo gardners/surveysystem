@@ -4,7 +4,7 @@ import { Redirect } from 'react-router-dom';
 
 // apis
 import api, { BaseUri } from '../api';
-import { serializeAnswer, mapTypeToField } from '../payload-serializer';
+import { serializeAnswer, mapTypeToField } from '../serializer';
 import SurveyManager from '../SurveyManager';
 import LocalStorage from '../storage/LocalStorage';
 import Log from '../Log';
