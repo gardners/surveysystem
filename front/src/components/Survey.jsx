@@ -5,6 +5,7 @@ import { Redirect } from 'react-router-dom';
 // apis
 import api, { BaseUri } from '../api';
 import { serializeAnswer, mapTypeToField } from '../serializer';
+import { validateAnswer } from '../validator';
 import SurveyManager from '../SurveyManager';
 import LocalStorage from '../storage/LocalStorage';
 import Log from '../Log';
@@ -93,15 +94,20 @@ class Survey extends Component {
     // form processing
     ////
 
-    handleChange(question, ...values) {
+    handleChange(element, question, ...values) {
         const { answers } = this.state;
         const { id, type } = question;
 
+        let fn;
         let error = null;
         let answer = (typeof answers[id] !== 'undefined') ? answers[id].answer : null;
 
         // TODO validate
-        const fn = mapTypeToField(type);
+        error = validateAnswer(element, question, ...values);
+        if(!error)  {
+            fn = mapTypeToField(type);
+        }
+
         if (fn instanceof Error) {
             error = fn;
         } else {
