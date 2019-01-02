@@ -24,7 +24,7 @@ class CheckboxGroup extends Component {
             values,
         });
 
-        this.props.handleChange(question, values);
+        this.props.handleChange(e.target, question, values);
     }
 
     render() {

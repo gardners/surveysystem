@@ -68,7 +68,7 @@ class GeoLocation extends Component {
                 error: null,
             });
 
-            this.props.handleChange(question, coords.latitude, coords.longitude);
+            this.props.handleChange(e.target, question, coords.latitude, coords.longitude);
         })
         .catch(err => this.setState({
             value: '',
