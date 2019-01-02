@@ -2,21 +2,21 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import renderer from 'react-test-renderer';
 
-import CheckboxGroup from '../../../components/form/CheckboxGroup';
+import TextInput from '../../../components/form/TextInput';
 
 let component;
 
 beforeAll(() => {
     component = renderer.create(
-        <CheckboxGroup
+        <TextInput
             question={ {
                 id: 'q1',
                 name: 'q1',
                 title: 'q1',
                 title_text: 'q1',
                 type: 'TEXT',
-                choices: [ 'choice1', 'choice2' ],
             } }
+            placeholder="teststring"
             handleChange= { () => {} } />,
     );
 });
@@ -26,11 +26,11 @@ it('renders without crashing', () => {
     expect(tree).toMatchSnapshot();
 });
 
-it('renders inut[type=checkbox] components as children', () => {
+it('renders inut[type=radio] components as children', () => {
     const instance = component.root;
-    const boxes = instance.findAll(node => node.type === 'input' &&  node.props.type === "checkbox");
-    const values = boxes.map(node => node.props.value);
+    const input = instance.findByType('input');
+    const placeholder = input.props.placeholder;
 
-    expect(values.toString()).toEqual('choice1,choice2');
-    expect(boxes.length).toEqual(2);
+    expect(input.type).toEqual('input');
+    expect(placeholder).toEqual('teststring');
 });

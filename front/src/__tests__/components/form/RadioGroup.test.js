@@ -2,13 +2,13 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import renderer from 'react-test-renderer';
 
-import CheckboxGroup from '../../../components/form/CheckboxGroup';
+import RadioGroup from '../../../components/form/RadioGroup';
 
 let component;
 
 beforeAll(() => {
     component = renderer.create(
-        <CheckboxGroup
+        <RadioGroup
             question={ {
                 id: 'q1',
                 name: 'q1',
@@ -26,11 +26,11 @@ it('renders without crashing', () => {
     expect(tree).toMatchSnapshot();
 });
 
-it('renders inut[type=checkbox] components as children', () => {
+it('renders inut[type=radio] components as children', () => {
     const instance = component.root;
-    const boxes = instance.findAll(node => node.type === 'input' &&  node.props.type === "checkbox");
-    const values = boxes.map(node => node.props.value);
+    const radios = instance.findAll(node => node.type === 'input' &&  node.props.type === "radio");
+    const values = radios.map(node => node.props.value);
 
     expect(values.toString()).toEqual('choice1,choice2');
-    expect(boxes.length).toEqual(2);
+    expect(radios.length).toEqual(2);
 });
