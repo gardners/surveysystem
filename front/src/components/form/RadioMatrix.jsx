@@ -105,14 +105,13 @@ class RadioMatrix extends Component {
 
     handleChange(question, event) {
         event.preventDefault();
-console.log(arguments);
         const { values } = this.state;
         values[question.id] = event.target.value;
 
         this.setState({
             values
         });
-console.log('here');
+
         this.props.handleChange.apply(null, Object.values(values));
     }
 
