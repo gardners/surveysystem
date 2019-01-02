@@ -46,7 +46,6 @@ TimePicker.defaultProps = {
 
 TimePicker.propTypes = {
     handleChange: PropTypes.func.isRequired,
-    withButton: PropTypes.bool,
     question: PropTypes.shape({
         id: PropTypes.string.isRequired,
         name: PropTypes.string.isRequired,
