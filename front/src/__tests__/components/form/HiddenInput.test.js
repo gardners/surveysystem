@@ -36,7 +36,7 @@ it('handleChange callback is invoked on mount', () => {
     // is called once
     expect(mockCallback.mock.calls.length).toBe(1);
     // first argument is the question
-    expect(mockCallback.mock.calls[0][0]).toEqual(expect.objectContaining(question));
+    expect(mockCallback.mock.calls[0][1]).toEqual(expect.objectContaining(question));
     // second argument is the defaultValue as value
     expect(mockCallback.mock.calls[0][1]).toBe("teststring");
     // returns defaultValue as value
