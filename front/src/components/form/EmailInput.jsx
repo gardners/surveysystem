@@ -16,7 +16,7 @@ const EmailInput = function(props) {
                 autoComplete="off"
                 onChange={ (e) => {
                     const { value } = e.target;
-                    props.handleChange(question, value);
+                    props.handleChange(e.target, question, value);
                 } }
             />
         </div>

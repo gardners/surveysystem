@@ -73,7 +73,7 @@ class PeriodRangeSlider extends Component {
             value
         });
 
-        this.props.handleChange(question, value.min, value.max, value.max - value.min);
+        this.props.handleChange(null, question, value.min, value.max, value.max - value.min);
     }
 
     render() {
