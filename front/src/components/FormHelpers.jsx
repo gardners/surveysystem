@@ -58,7 +58,11 @@ const FieldValidator = function(props) {
 FieldValidator.propTypes = {
     answer: PropTypes.shape({
         answer: PropTypes.any,
-        error: PropTypes.string,
+        error: PropTypes.oneOfType([
+            PropTypes.string,
+            PropTypes.instanceOf(Error),
+            PropTypes.array,
+        ]),
         question: PropTypes.object,
     }),
 };

@@ -98,19 +98,23 @@ class Survey extends Component {
         const { answers } = this.state;
         const { id, type } = question;
 
-        let fn;
+        let fn = null;
         let error = null;
         let answer = (typeof answers[id] !== 'undefined') ? answers[id].answer : null;
 
-        // TODO validate
+        // validate
         error = validateAnswer(element, question, ...values);
+
+        // get serializer callback
         if(!error)  {
             fn = mapTypeToField(type);
         }
 
-        if (fn instanceof Error) {
+        if (fn && fn instanceof Error) {
             error = fn;
-        } else {
+        }
+
+        if (!error && typeof fn === 'function') {
             answer = fn(...values);
         }
 
@@ -274,7 +278,7 @@ class Survey extends Component {
 
                             const answer = this.state.answers[question.id] || null;
 
-                           switch(question.type) {
+                            switch(question.type) {
                                 case 'MULTICHOICE':
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
                                         <RadioGroup
