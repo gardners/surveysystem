@@ -7,8 +7,14 @@
 //  - payload serializer: Error
 //  - validator: false > Error
 
-const validateAnswer = function() {
+const validateAnswer = function(element, question, ...values) {
     // TODO
+    if(element && typeof element.validity !== 'undefined') {
+        if (!element.validity.valid) {
+            return new Error (element.validationMessage);
+        }
+    }
+
     return null;
 };
 
