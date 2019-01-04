@@ -22,5 +22,5 @@ endofsession
 
 # Ask for next question
 request 200 nextquestion?sessionid=$SESSION
-match_string {"next_questions": [{"id": "multichoice", "name": "multichoice", "title": "Select one of the following", "title_text": "Select one of the following", "type": "MULTICHOICE", "choices": ["Yes", "No", "", "Maybe"], "unit": ""}]}
+match_string {"next_questions": [{"id": "multichoice", "name": "multichoice", "title": "Select one of the following", "title_text": "Select one of the following", "type": "MULTICHOICE", "choices": ["Yes", "No", "Maybe"], "unit": ""}]}
 
