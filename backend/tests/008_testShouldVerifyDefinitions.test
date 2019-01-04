@@ -1,4 +1,4 @@
-description infrastructure shuold check syntax in test file (in this case, defined survey has wrong name)
+description infrastructure should check syntax in test file (in this case, defined survey has wrong name)
 
 # Create a dummy survey
 definesurvey 008_testShouldVerifyDefinitions 
