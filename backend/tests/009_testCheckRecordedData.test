@@ -1,4 +1,4 @@
-description infrastructure should check syntax in test file (in this case, endOfSurvey line is missing)
+description infrastructure should check syntax in test file (in this case, endOfSurvey line is missing) 
 
 # Create a dummy survey
 definesurvey 009_testCheckRecordedData

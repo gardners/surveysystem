@@ -24,8 +24,13 @@ struct question {
 #define QTYPE_TIMERANGE   7
 #define QTYPE_UPLOAD      8
 #define QTYPE_TEXT        9
-#define QTYPE_UUID        10
-  
+#define QTYPE_CHECKBOX    10
+#define QTYPE_HIDDEN      11 // instruction for html hidden input (pure textslide) answer is one of dict default value or "" or frontend default value
+#define QTYPE_TEXTAREA    12 // instruction for html textarea.
+#define QTYPE_EMAIL       13 // instruction for html email input
+#define QTYPE_PASSWORD    14 // instruction for html password input, this type can be used to mask any user input
+#define QTYPE_UUID        15
+
   // Formatting and other flags
   int flags;
   // Format integer input as times for questions like
@@ -54,21 +59,21 @@ struct question {
   // questions, where the current date and time are acquired.
 #define FLAG_Mandatory 128
   // Indicates if it is mandatory to have a (non-null?) answer to the question
-  
+
 
 
 
   // Text rendering of default value.
   // Will be parsed for numeric answer types
-  char *default_value;   
-  
+  char *default_value;
+
   // Sets ranges for integer/fixed point answers
   // and allowed lengths of text answers
   long long min_value;
   long long max_value;
   // Number of decimal places for fixed point answers
   int decimal_places;
-  
+
   // Number of choices for multi-choice/multi-select answers
   // (multi-choice encode as an integer, multi-select as string
   // of Y/N characters, or 0-9/N for "how strongly do you agree/disagree"
@@ -83,14 +88,14 @@ struct question {
 struct answer {
   // ID of question being answered
   char *uid;
-  
+
   // Integer or fixed point response, also used for multi-choice
   long long value;
 
   // Text response, including Y/N or 0-9/N response vectors for
   // multi-select and UUID
   char *text;
-  
+
   // Fixed point latitude/longitude responses.
   long long lat,lon;
 
@@ -123,7 +128,7 @@ struct session {
 
 int generate_path(char *path_in,char *path_out,int max_len);
 int get_next_questions(struct session *s,
-		       struct question *next_questions_out[],int max_next_questions,int *next_question_count_out);
+               struct question *next_questions_out[],int max_next_questions,int *next_question_count_out);
 int get_analysis(struct session *s,const unsigned char **output);
 int create_session(char *survey_id,char *session_id_out);
 int delete_session(char *session_id);
