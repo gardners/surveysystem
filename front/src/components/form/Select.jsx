@@ -17,7 +17,7 @@ class Select extends Component {
             value: value
         });
 
-        this.props.handleChange(question, value);
+        this.props.handleChange(e.target, question, value);
     }
 
     render() {
@@ -25,7 +25,7 @@ class Select extends Component {
         const { choices } = question;
         return (
             <div className="form-group">
-                <p><strong> { question.title_text }</strong></p>
+                <p><strong> { question.title }</strong></p>
                 <select
                     onChange={ this.handleChange.bind(this) }
                     id={ question.id }
@@ -41,7 +41,6 @@ class Select extends Component {
 }
 
 Select.defaultProps = {
-    placeholder: null,
 };
 
 Select.propTypes = {
@@ -55,7 +54,6 @@ Select.propTypes = {
         // eunum
         choices: PropTypes.array.isRequired,
     }).isRequired,
-    placeholder: PropTypes.string,
 };
 
 export default Select;

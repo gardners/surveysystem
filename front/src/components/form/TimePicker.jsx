@@ -18,7 +18,7 @@ const TimePicker = function(props) {
     const { question, handleChange } = props;
     return (
         <div className="form-group">
-            <label htmlFor={ question.id }>{ question.title_text }</label>
+            <label htmlFor={ question.id }>{ question.title }</label>
 
             <RcTimePicker
                 id={ question.id }
@@ -28,7 +28,7 @@ const TimePicker = function(props) {
                 className={ props.className }
                 onChange={ (m) => {
                     const value = seconds(m);
-                    handleChange(question, value);
+                    handleChange(null, question, value);
                 } }
                 format={ format }
                 use12Hours
@@ -40,14 +40,12 @@ const TimePicker = function(props) {
 };
 
 TimePicker.defaultProps = {
-    placeholder: null,
     // rc-time-picker props
     minuteStep: 10,
 };
 
 TimePicker.propTypes = {
     handleChange: PropTypes.func.isRequired,
-    withButton: PropTypes.bool,
     question: PropTypes.shape({
         id: PropTypes.string.isRequired,
         name: PropTypes.string.isRequired,
@@ -55,7 +53,6 @@ TimePicker.propTypes = {
         title_text: PropTypes.string.isRequired,
         type: PropTypes.string.isRequired,
     }).isRequired,
-    placeholder: PropTypes.string,
     className: PropTypes.string,
 
     // rc-time-picker props

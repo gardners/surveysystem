@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const NumberInput = function(props) {
+const EmailInput = function(props) {
     const { question, placeholder } = props;
 
     return (
@@ -10,7 +10,7 @@ const NumberInput = function(props) {
             <input
                 id={ question.id }
                 name={ question.name }
-                type="number"
+                type="email"
                 className="form-control"
                 placeholder={ placeholder }
                 autoComplete="off"
@@ -23,11 +23,11 @@ const NumberInput = function(props) {
     );
 };
 
-NumberInput.defaultProps = {
+EmailInput.defaultProps = {
     placeholder: null,
 };
 
-NumberInput.propTypes = {
+EmailInput.propTypes = {
     handleChange: PropTypes.func.isRequired,
     question: PropTypes.shape({
         id: PropTypes.string.isRequired,
@@ -39,4 +39,4 @@ NumberInput.propTypes = {
     placeholder: PropTypes.string,
 };
 
-export default NumberInput;
+export default EmailInput;

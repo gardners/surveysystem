@@ -47,7 +47,7 @@ class Row  extends Component {
             value: value
         });
 
-        this.props.handleChange(question, value);
+        this.props.handleChange(e.target, question, value);
     }
 
     render() {
@@ -105,15 +105,15 @@ class RadioMatrix extends Component {
 
     handleChange(question, event) {
         event.preventDefault();
-console.log(arguments);
         const { values } = this.state;
         values[question.id] = event.target.value;
 
         this.setState({
             values
         });
-console.log('here');
-        this.props.handleChange.apply(null, Object.values(values));
+
+        const args = [event.target].concat(Object.values(values));
+        this.props.handleChange.apply(null, args);
     }
 
     render() {

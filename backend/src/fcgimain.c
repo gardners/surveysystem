@@ -726,7 +726,9 @@ static void fcgi_nextquestion(struct kreq *r)
     default:
       break;
     }
-      
+      // #72 unit field
+      kjson_putstringp(&req,"unit",q[i]->unit);
+
       kjson_obj_close(&req);
     }
     kjson_array_close(&req); 

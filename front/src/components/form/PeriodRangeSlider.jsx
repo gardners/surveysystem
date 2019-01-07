@@ -73,7 +73,7 @@ class PeriodRangeSlider extends Component {
             value
         });
 
-        this.props.handleChange(question, value.min, value.max, value.max - value.min);
+        this.props.handleChange(null, question, value.min, value.max, value.max - value.min);
     }
 
     render() {
@@ -101,7 +101,6 @@ class PeriodRangeSlider extends Component {
 }
 
 PeriodRangeSlider.defaultProps = {
-    placeholder: null,
     timeBeginLabel: 'Start',
     timeEndLabel: 'Finished',
 };
@@ -118,7 +117,6 @@ PeriodRangeSlider.propTypes = {
         timeBeginLabel: PropTypes.string,
         timeEndLabel: PropTypes.string,
     }).isRequired,
-    placeholder: PropTypes.string,
 };
 
 export default PeriodRangeSlider;

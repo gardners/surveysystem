@@ -17,7 +17,7 @@ class RadioGroup extends Component {
             value: value
         });
 
-        this.props.handleChange(question, value);
+        this.props.handleChange(e.target, question, value);
     }
 
     render() {
@@ -26,7 +26,7 @@ class RadioGroup extends Component {
 
         return (
             <div className="form-group">
-                <label> { question.title_text }</label>
+                <label> { question.title }</label>
                 { choices.map((value, index) => {
                     return <div key={index} className="radio">
                         <label>
@@ -48,7 +48,6 @@ class RadioGroup extends Component {
 }
 
 RadioGroup.defaultProps = {
-    placeholder: null,
 };
 
 RadioGroup.propTypes = {
@@ -62,7 +61,6 @@ RadioGroup.propTypes = {
         // eunum
         choices: PropTypes.array.isRequired,
     }).isRequired,
-    placeholder: PropTypes.string,
 };
 
 export default RadioGroup;

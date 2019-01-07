@@ -6,7 +6,7 @@ const TextInput = function(props) {
 
     return (
         <div className="form-group">
-            <label htmlFor={ question.id }>{ question.title_text }</label>
+            <label htmlFor={ question.id }>{ question.title }</label>
             <input
                 id={ question.id }
                 name={ question.name }
@@ -16,7 +16,7 @@ const TextInput = function(props) {
                 autoComplete="off"
                 onChange={ (e) => {
                     const { value } = e.target;
-                    props.handleChange(question, value);
+                    props.handleChange(e.target, question, value);
                 } }
             />
         </div>

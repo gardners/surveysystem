@@ -60,7 +60,7 @@ class DayTimeSlider extends Component {
             value
         });
 
-        this.props.handleChange(question, value);
+        this.props.handleChange(null, question, value);
     }
 
     render() {
@@ -90,7 +90,6 @@ class DayTimeSlider extends Component {
 }
 
 DayTimeSlider.defaultProps = {
-    placeholder: null,
     timeBeginLabel: null,
     timeEndLabel: null,
 
@@ -110,7 +109,6 @@ DayTimeSlider.propTypes = {
         timeBeginLabel: PropTypes.string,
         timeEndLabel: PropTypes.string,
     }).isRequired,
-    placeholder: PropTypes.string,
 
     // react-input-range props
     step: PropTypes.number,

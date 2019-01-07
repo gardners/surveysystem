@@ -68,7 +68,7 @@ class GeoLocation extends Component {
                 error: null,
             });
 
-            this.props.handleChange(question, coords.latitude, coords.longitude);
+            this.props.handleChange(e.target, question, coords.latitude, coords.longitude);
         })
         .catch(err => this.setState({
             value: '',
@@ -81,7 +81,7 @@ class GeoLocation extends Component {
         const { value } = this.state;
         return (
             <div className="form-group">
-                <label htmlFor={ question.id }>{ question.title_text }</label>
+                <label htmlFor={ question.id }>{ question.title }</label>
 
                 <div className="input-group">
                     <input
