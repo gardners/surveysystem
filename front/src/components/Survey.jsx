@@ -4,7 +4,8 @@ import { Redirect } from 'react-router-dom';
 
 // apis
 import api, { BaseUri } from '../api';
-import { serializeAnswer, mapTypeToField } from '../payload-serializer';
+import { serializeAnswer, mapTypeToField } from '../serializer';
+import { validateAnswer } from '../validator';
 import SurveyManager from '../SurveyManager';
 import LocalStorage from '../storage/LocalStorage';
 import Log from '../Log';
@@ -93,18 +94,27 @@ class Survey extends Component {
     // form processing
     ////
 
-    handleChange(question, ...values) {
+    handleChange(element, question, ...values) {
         const { answers } = this.state;
         const { id, type } = question;
 
+        let fn = null;
         let error = null;
         let answer = (typeof answers[id] !== 'undefined') ? answers[id].answer : null;
 
-        // TODO validate
-        const fn = mapTypeToField(type);
-        if (fn instanceof Error) {
+        // validate
+        error = validateAnswer(element, question, ...values);
+
+        // get serializer callback
+        if(!error)  {
+            fn = mapTypeToField(type);
+        }
+
+        if (fn && fn instanceof Error) {
             error = fn;
-        } else {
+        }
+
+        if (!error && typeof fn === 'function') {
             answer = fn(...values);
         }
 
@@ -268,7 +278,7 @@ class Survey extends Component {
 
                             const answer = this.state.answers[question.id] || null;
 
-                           switch(question.type) {
+                            switch(question.type) {
                                 case 'MULTICHOICE':
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
                                         <RadioGroup

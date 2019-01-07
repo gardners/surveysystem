@@ -6,9 +6,9 @@ description Python implementation of nextquestion can be used
 definesurvey nextquestionpython
 version 1
 Silly test survey updated
-multichoice:Select one of the following:Select one of the following:MULTICHOICE:0::-1:-1:-1:3:Yes,No,Maybe
-question1:What is the answer to question 1?:What is the answer to question 1?:TEXT:0:I don't know:-1:-1:0:0:
-question2:How boring was question 1?:How boring was question 1?:TEXT:0:I don't know:-1:-1:0:0:
+multichoice:Select one of the following:Select one of the following:MULTICHOICE:0::-1:-1:-1:3:Yes,No,Maybe:
+question1:What is the answer to question 1?:What is the answer to question 1?:TEXT:0:I don't know:-1:-1:0:0::
+question2:How boring was question 1?:How boring was question 1?:TEXT:0:I don't know:-1:-1:0:0::
 endofsurvey
 
 # Create python module
@@ -31,5 +31,5 @@ endofsession
 
 # Ask for next question
 request 200 nextquestion?sessionid=$SESSION
-match_string {"next_questions": [{"id": "question2", "name": "question2", "title": "How boring was question 1?", "title_text": "How boring was question 1?", "type": "TEXT"}]}
+match_string {"next_questions": [{"id": "question2", "name": "question2", "title": "How boring was question 1?", "title_text": "How boring was question 1?", "type": "TEXT", "unit": ""}]}
 

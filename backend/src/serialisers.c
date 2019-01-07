@@ -315,7 +315,8 @@ int serialise_question(struct question *q,char *out,int max_len)
     SERIALISE_INT(q->decimal_places);
     SERIALISE_INT(q->num_choices);
     SERIALISE_STRING(q->choices);
-    
+    // #72 unit field
+    SERIALISE_STRING(q->unit);
     // Trim terminal separator character
     SERIALISE_COMPLETE(out,len,max_len);
     
@@ -349,7 +350,8 @@ int dump_question(FILE *f,char *msg,struct question *q)
     fprintf(f,"  max_value=%lld\n",q->max_value);
     fprintf(f,"  decimal_places=%d\n",q->decimal_places);
     fprintf(f,"  num_choices=%d\n",q->num_choices);
-
+    // #72 unit field
+    fprintf(f,"  unit=%s\n",q->unit);
   } while(0);
 
   return retVal;
@@ -379,7 +381,8 @@ int deserialise_question(char *in,struct question *q)
     DESERIALISE_INT(q->decimal_places);
     DESERIALISE_INT(q->num_choices);
     DESERIALISE_STRING(q->choices);
-    
+    // #72 unit field
+    DESERIALISE_STRING(q->unit);
     // Check that we are at the end of the input string
     DESERIALISE_COMPLETE(out,len,max_len);
     
@@ -407,7 +410,8 @@ int serialise_answer(struct answer *a,char *out,int max_len)
     SERIALISE_LONGLONG(a->time_end);
     SERIALISE_INT(a->time_zone_delta);
     SERIALISE_INT(a->dst_delta);
-
+    // #72 unit field
+    SERIALISE_STRING(a->unit);
     // Trim terminal separator character
     SERIALISE_COMPLETE(out,len,max_len);
     
@@ -439,8 +443,8 @@ int deserialise_answer(char *in,struct answer *a)
     DESERIALISE_LONGLONG(a->time_end);
     DESERIALISE_INT(a->time_zone_delta);
     DESERIALISE_INT(a->dst_delta);
-
-
+    // #72 unit field
+    DESERIALISE_STRING(a->unit);
     // Check that we are at the end of the input string
     DESERIALISE_COMPLETE(out,len,max_len);
     
@@ -478,7 +482,8 @@ int compare_questions(struct question *q1, struct question *q2, int mismatchIsEr
     COMPARE_LONGLONG(max_value);
     COMPARE_INT(decimal_places);
     COMPARE_INT(num_choices);
-    
+    // #72 unit field
+    COMPARE_STRING(unit);
   } while(0);
   return retVal;
 }
@@ -502,7 +507,8 @@ int compare_answers(struct answer *q1, struct answer *q2, int mismatchIsError)
     COMPARE_LONGLONG(time_end);
     COMPARE_INT(time_zone_delta);
     COMPARE_INT(dst_delta);
-    
+   // #72 unit field
+    COMPARE_STRING(unit);
   } while(0);
   return retVal;
 }
