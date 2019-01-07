@@ -57,7 +57,7 @@ class Question extends Component {
         }
     }
 
-    handleChange(question, ...values) {
+    handleChange(element, question, ...values) {
 
         const fn = mapTypeToField(question.type);
         let answer;
