@@ -18,7 +18,7 @@ import HiddenInput from './form/HiddenInput';
 import EmailInput from './form/EmailInput';
 import PasswordInput from './form/PasswordInput';
 
-import { serializeAnswer, mapTypeToField } from '../payload-serializer';
+import { serializeAnswer, mapTypeToField } from '../serializer';
 
 const Pre = function(props) {
 
@@ -57,7 +57,7 @@ class Question extends Component {
         }
     }
 
-    handleChange(question, ...values) {
+    handleChange(element, question, ...values) {
 
         const fn = mapTypeToField(question.type);
         let answer;

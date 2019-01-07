@@ -8,17 +8,17 @@ description Python implementation of nextquestion can be used
 definesurvey 001nextquestionpythonActualLogic
 version 1
 Silly test survey updated
-email:What is the answer to question 1?:What is the answer to question 1?:TEXT:0:I don't know:-1:-1:0:0:
-password1:How boring was question 1?:How boring was question 1?:TEXT:0:I don't know:-1:-1:0:0:
+email:What is the answer to question 1?:What is the answer to question 1?:TEXT:0:I don't know:-1:-1:0:0::
+password1:How boring was question 1?:How boring was question 1?:TEXT:0:I don't know:-1:-1:0:0::
 endofsurvey
 
 # Create python module
 python
 def nextquestion_003_outputFromPythonShouldBeSameAsFromC(questions, answers):
-	if len(answers) == 0:
-		return 'email'
-	else:
-		return('password1')
+    if len(answers) == 0:
+        return 'email'
+    else:
+        return('password1')
 endofpython
 
 # Request creation of a  new session
@@ -35,20 +35,20 @@ endofsession
 # Ask for next question
 request 200 nextquestion?sessionid=$SESSION
 # TODO: line 38 is what I think the answer should look like, but the output actually looks like line 39
-#match_string {"next_questions": [{"id": "email", "name": "email", "title": "How boring was question 1?", "title_text": "How boring was question 1?", "type": "TEXT"}]}
+#match_string {"next_questions": [{"id": "email", "name": "email", "title": "How boring was question 1?", "title_text": "How boring was question 1?", "type": "TEXT", "unit": ""}]}
 match_string "email"
 
-request 200 addanswer?sessionid=$SESSION&answer=email:test.email@someDomain.org:0:0:0:0:0:0:0
+request 200 addanswer?sessionid=$SESSION&answer=email:test.email@someDomain.org:0:0:0:0:0:0:0:
 
 # Check that we are offered the next question to answer
 # TODO: line 45 is what I think the answer should look like, but it actually looks like line 46
-#match_string {"next_questions": [{"id": "password1", "name": "question2", "title": "What is the answer to question 1?", "title_text": "What is the answer to question 2?", "type": "TEXT"}]}
+#match_string {"next_questions": [{"id": "password1", "name": "question2", "title": "What is the answer to question 1?", "title_text": "What is the answer to question 2?", "type": "TEXT", "unit": ""}]}
 match_string "password1"
 
 # Make sure answer ends up in file
 verify_session
 foo/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
-email:test.email@someDomain.org:0:0:0:0:0:0:0
+email:test.email@someDomain.org:0:0:0:0:0:0:0:
 endofsession
 
 

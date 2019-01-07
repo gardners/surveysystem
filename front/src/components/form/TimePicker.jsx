@@ -28,7 +28,7 @@ const TimePicker = function(props) {
                 className={ props.className }
                 onChange={ (m) => {
                     const value = seconds(m);
-                    handleChange(question, value);
+                    handleChange(null, question, value);
                 } }
                 format={ format }
                 use12Hours

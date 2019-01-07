@@ -76,6 +76,8 @@ struct question {
   int num_choices;
   // Colon separated list of choices for multiple choice/multiple select questions
   char *choices;
+  // #72 unit field
+  char *unit;
 };
 
 struct answer {
@@ -103,7 +105,8 @@ struct answer {
   // (typically either 0 or 60 minutes, but again, we won't assume so narrow
   // a view, as in some places and times DST has been 2 hours).
   int dst_delta;
-  
+  // #72 unit field
+  char *unit;
 };
 
 #define MAX_QUESTIONS 8192

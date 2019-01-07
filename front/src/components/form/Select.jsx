@@ -17,7 +17,7 @@ class Select extends Component {
             value: value
         });
 
-        this.props.handleChange(question, value);
+        this.props.handleChange(e.target, question, value);
     }
 
     render() {

@@ -60,7 +60,7 @@ class DayTimeSlider extends Component {
             value
         });
 
-        this.props.handleChange(question, value);
+        this.props.handleChange(null, question, value);
     }
 
     render() {
