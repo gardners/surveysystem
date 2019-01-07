@@ -1,10 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import InnerHtml from './InnerHtml';
+
 const FormRow = function(props) {
     return(
         <div className={ props.className }>
             { props.legend && (typeof props.legend === 'function') ? props.legend() : <legend>{ props.legend }</legend> }
+            { props.description && <InnerHtml htmlContent={ props.description } /> }
             { props.children }
         </div>
     );
@@ -16,6 +19,7 @@ FormRow.propTypes = {
         PropTypes.string,
         PropTypes.func,
     ]),
+    description: PropTypes.string,
 };
 
 const FieldError = function(props) {
@@ -32,7 +36,7 @@ const FieldError = function(props) {
 };
 
 FieldError.propTypes = {
-    error: PropTypes.oneOf([
+    error: PropTypes.oneOfType([
         PropTypes.string,
         PropTypes.instanceOf(Error),
         PropTypes.array,
@@ -54,7 +58,11 @@ const FieldValidator = function(props) {
 FieldValidator.propTypes = {
     answer: PropTypes.shape({
         answer: PropTypes.any,
-        error: PropTypes.string,
+        error: PropTypes.oneOfType([
+            PropTypes.string,
+            PropTypes.instanceOf(Error),
+            PropTypes.array,
+        ]),
         question: PropTypes.object,
     }),
 };
