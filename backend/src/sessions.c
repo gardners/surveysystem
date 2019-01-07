@@ -398,6 +398,8 @@ void free_answer(struct answer *a)
 
   freez(a->uid);
   freez(a->text);
+  // #72 unit field
+  freez(a->unit);
 
   free(a);
   return;
