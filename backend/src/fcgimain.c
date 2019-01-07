@@ -706,14 +706,17 @@ static void fcgi_nextquestion(struct kreq *r)
             &&q[i]->choices[j+cl]
             &&(q[i]->choices[j+cl]!=',')
             )
-        {
-          if (cl<65535) {
-            choice[cl]=q[i]->choices[j+cl];
-            choice[cl+1]=0;
+          {
+            if (cl<65535) {
+              choice[cl]=q[i]->choices[j+cl];
+              choice[cl+1]=0;
+            }
+            cl++;
+          } 
+          // #74 skip empty values
+          if (q[i]->choices[j]!=',') {
+            kjson_putstring(&req,choice);
           }
-          cl++;
-        }
-          kjson_putstring(&req,choice);
           j+=cl;
           if (q[i]->choices[j+cl]==',') j++;
         }
@@ -776,7 +779,18 @@ static void fcgi_nextquestion(struct kreq *r)
       break; \
     }
 
-
+#define TEST_REMOVE(X)  snprintf(failmsg,16384,"Could not generate path ${SURVEY_HOME}/%s",X); \
+  if (generate_path(X,test_path,8192)) { \
+      quick_error(req,KHTTP_500,failmsg); \
+      break; \
+    } \
+  if(remove(test_path)) { \
+    if (errno != ENOENT) { \
+      snprintf(failmsg,16384,"Could not remove file for writing path %s, errno=%d (%s)",test_path,errno,strerror(errno)); \
+      quick_error(req,KHTTP_500,failmsg); \
+      break; \
+      } \
+    } \
 
 static void fcgi_accesstest(struct kreq *req)
 {
@@ -792,6 +806,15 @@ static void fcgi_accesstest(struct kreq *req)
 
     TEST_READ("");
     TEST_READ("surveys");
+
+    // #84 cleanup previous tests
+    TEST_REMOVE("surveys/testfile");
+    TEST_REMOVE("surveys/testdir/testfile");
+    TEST_REMOVE("surveys/testdir");
+    TEST_REMOVE("sessions/testfile");
+    TEST_REMOVE("sessions/testdir/testfile");
+    TEST_REMOVE("sessions/testdir");
+
     TEST_WRITE("surveys/testfile");
     TEST_MKDIR("surveys/testdir");
     TEST_READ("surveys/testdir");

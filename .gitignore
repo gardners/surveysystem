@@ -62,8 +62,19 @@ backend/src/question_types.c
 # backend: build, testrun and deployment
 ###
 
+# surveys
 backend/surveys/*
 backend/python/*
+
+# runtime
+backend/logs/*
+backend/sessions/*
+
+# compiled
+backend/surveycli
+backend/surveyfcgi
+backend/test_runner
+backend/test_serialisers
 
 # temp files and local files
 backend/*.conf.local
