@@ -10,6 +10,7 @@ import DayTimeSlider from './form/DayTimeSlider';
 import CheckboxGroup from './form/CheckboxGroup';
 import RadioGroup from './form/RadioGroup';
 import TextInput from './form/TextInput';
+import NumberInput from './form/NumberInput';
 import Textarea from './form/Textarea';
 import Select from './form/Select';
 import TimePicker from './form/TimePicker';
@@ -43,16 +44,7 @@ class Question extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            question: {
-                id: props.component.name,
-                name: props.component.name,
-                title: props.title || 'title',
-                title_text: props.title_text || 'title text',
-                type: props.type,
-
-                defaultValue: props.defaultValue || 'default',
-                choices: props.choices || [],
-            },
+            unit: '',
             values: {},
         }
     }
@@ -77,17 +69,40 @@ class Question extends Component {
     }
 
     render() {
-        const { question, values } = this.state;
-        const Component = this.props.component;
+        const { props } = this;
+        const { values, unit } = this.state;
+        const hasAnswers = Object.keys(values).length > 0;
+
+        const Component = props.component;
+
+        const question =  {
+            id: Component.name,
+            name: Component.name,
+            title: props.title || 'title',
+            title_text: props.title_text || 'title text',
+            type: props.type,
+
+            defaultValue: props.defaultValue || 'default',
+            choices: props.choices || [],
+            unit,
+        };
 
         return (
-            <FormRow className="list-group-item mb-1" legend={ question.name } description={ question.title_text }>
-                { Object.keys(values).map((key, index) => <Pre key={ index } data={ values[key] } />) }
-                <Component
-                    { ...this.props } question={ question } handleChange={ this.handleChange.bind(this) }
-                />
-                <div><span className="badge badge-secondary">question type: { this.props.type }</span></div>
-            </FormRow>
+            <div className="card mb-1" >
+                <FormRow className="card-body" legend={ question.name } description={ question.title_text }>
+
+                    <Component
+                        { ...this.props } question={ question } handleChange={ this.handleChange.bind(this) }
+                    />
+
+                </FormRow>
+
+                <div className="card-footer text-muted">
+                    { hasAnswers && <small className="mr-2 float-left text-info" style={ { fontFamily: 'monospace' } }>{ JSON.stringify(Object.values(values)) }</small> }
+                    <small className="mr-2 float-left">Type: { this.props.type }</small>
+                    <small className="mr-2 float-right"><input type="checkbox" onChange={(e) => this.setState({ unit: (e.target.checked) ? 'example unit': '' })} /> toggle unit</small>
+                </div>
+            </div>
         );
     }
 };
@@ -97,55 +112,80 @@ Question.propTypes = {
 };
 
 class Demo extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            unit: '',
+        };
+    }
+
     render() {
         return (
-            <section className="list-group">
-                <Question type={ 'HIDDEN' } component={ HiddenInput }
-                    title_text="text with some <strong>markup</strong> html and an image: <img src='data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7'>" defaultVlaue="visited"/>
-                <Question type={ 'LATLON' } component={ GeoLocation } withButton={ true } />
-                <Question type={ 'TIMERANGE' } component={ PeriodRangeSlider } />
-                <Question type={ 'FIXEDPOINT' } component={ DayTimeSlider } />
-                <Question type={ 'FIXEDPOINT' } component={ TimePicker }/>
-                <Question type={ 'MULTICHOICE' } component={ CheckboxGroup } choices={ ['This', 'That', 'Another one' ] } defaultValue="Maybe"/>
-                <Question type={ 'TEXT' } component={ RadioGroup } choices={ ['Yes', 'No', 'Maybe' ] } defaultValue="Maybe"/>
-                <Question type={ 'TEXT' } component={ Select } choices={ ['First', 'Second', 'Third' ] } defaultValue="Second"/>
-                <Question type={ 'TEXT' } component={ TextInput }/>
-                <Question type={ 'TEXT' } component={ Textarea }/>
-                <Question type={ 'FIXEDPOINT' } component={ RadioMatrix }
-                    questionGroup={[
-                        {
-                            id: 'question1',
-                            name: 'question1',
-                            type: 'FIXEDPOINT',
-                            title: 'Question 1',
-                            title_text: 'Question 1 text',
-                            choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
-                        }, {
-                            id: 'question2',
-                            name: 'question2',
-                            type: 'FIXEDPOINT',
-                            title: 'Question 2',
-                            title_text: 'Question 2 text',
-                            choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
-                        },{
-                            id: 'question3',
-                            name: 'question3',
-                            type: 'FIXEDPOINT',
-                            title: 'Question 3',
-                            title_text: 'Question 3 text',
-                            choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
-                        },{
-                            id: 'question4',
-                            name: 'question4',
-                            type: 'FIXEDPOINT',
-                            title: 'Question 4',
-                            title_text: 'Question 4 text',
-                            choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
-                        }
-                    ]}
-                />
-                <Question type={ 'EMAIL' } component={ EmailInput } />
-                <Question type={ 'PASSWORD' } component={ PasswordInput } />
+            <section>
+
+                <div className="card">
+                    <div className="card-body">
+                        <input type="text" onChange={ (e) => {
+                            e.preventDefault();
+                            this.setState({
+                                unit: e.target.value,
+                            });
+                        } } />
+                    </div>
+                </div>
+
+                <div>
+                    <Question type={ 'HIDDEN' }      component={ HiddenInput }       unit={ this.state.unit } title_text="text with some <strong>markup</strong> html and an image: <img src='data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7'>" defaultVlaue="visited"/>
+                    <Question type={ 'LATLON' }      component={ GeoLocation }       unit={ this.state.unit } withButton={ true } />
+                    <Question type={ 'TIMERANGE' }   component={ PeriodRangeSlider } unit={ this.state.unit }/>
+                    <Question type={ 'FIXEDPOINT' }  component={ DayTimeSlider }     unit={ this.state.unit }/>
+                    <Question type={ 'FIXEDPOINT' }  component={ TimePicker }        unit={ this.state.unit }/>
+                    <Question type={ 'MULTICHOICE' } component={ CheckboxGroup }     unit={ this.state.unit } choices={ ['This', 'That', 'Another one' ] } defaultValue="Maybe"/>
+                    <Question type={ 'TEXT' }        component={ RadioGroup }        unit={ this.state.unit } choices={ ['Yes', 'No', 'Maybe' ] } defaultValue="Maybe"/>
+                    <Question type={ 'TEXT' }        component={ Select }            unit={ this.state.unit } choices={ ['First', 'Second', 'Third' ] } defaultValue="Second"/>
+                    <Question type={ 'TEXT' }        component={ TextInput }         unit={ this.state.unit }/>
+                    <Question type={ 'INT' }         component={ NumberInput }         unit={ this.state.unit }/>
+                    <Question type={ 'TEXT' }        component={ Textarea }          unit={ this.state.unit }/>
+                    <Question type={ 'FIXEDPOINT' }  component={ RadioMatrix }       unit={ this.state.unit }
+                        questionGroup={[
+                            {
+                                id: 'question1',
+                                name: 'question1',
+                                type: 'FIXEDPOINT',
+                                title: 'Question 1',
+                                title_text: 'Question 1 text',
+                                choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
+                                unit: this.state.unit,
+                            }, {
+                                id: 'question2',
+                                name: 'question2',
+                                type: 'FIXEDPOINT',
+                                title: 'Question 2',
+                                title_text: 'Question 2 text',
+                                choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
+                                unit: this.state.unit,
+                            },{
+                                id: 'question3',
+                                name: 'question3',
+                                type: 'FIXEDPOINT',
+                                title: 'Question 3',
+                                title_text: 'Question 3 text',
+                                choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
+                                unit: this.state.unit,
+                            },{
+                                id: 'question4',
+                                name: 'question4',
+                                type: 'FIXEDPOINT',
+                                title: 'Question 4',
+                                title_text: 'Question 4 text',
+                                choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
+                                unit: this.state.unit,
+                            }
+                        ]}
+                    />
+                    <Question type={ 'EMAIL' }       component={ EmailInput }           unit={ this.state.unit }/>
+                    <Question type={ 'PASSWORD' }    component={ PasswordInput }        unit={ this.state.unit }/>
+                </div>
             </section>
         );
     }

@@ -36,6 +36,7 @@ const { isFinite } = Number; //not Math!
     DESERIALISE_LONGLONG(a->time_end);
     DESERIALISE_INT(a->time_zone_delta);
     DESERIALISE_INT(a->dst_delta);
+    DESERIALISE_STRING(a->unit);
 */
 
 /**
@@ -90,6 +91,7 @@ const getModel = function() {
         time_end : 0,           // type: number (INT)
         time_zone_delta : 0,    // type: number (INT)
         dst_delta : 0,          // type: number (INT)
+        unit: '',               // type: text
     };
 };
 
@@ -283,7 +285,7 @@ const castString = function(text) {
  * @param {string} questionType
  * @returns {AnswerModel}  csv row or Error to be displayed
  */
-const mergeAnswerValue = function(model, id, answer, questionType) {
+const mergeAnswerValue = function(model, id, answer, questionType, unit) {
 
     const sanitized = sanitize(answer);
 
@@ -292,6 +294,7 @@ const mergeAnswerValue = function(model, id, answer, questionType) {
 
     // assign id
     model.uid = id;
+    model.unit = unit;
 
     // cast values, define keys
     switch (questionType) {
@@ -381,7 +384,7 @@ const serializeAnswerValue = function(id, answer, questionType) {
  * @param {object} answer answer object where keys are matching a model properites and values is the answer value
  * @returns {{string|Error)}  csv row or Error to be displayed
  */
-const serializeAnswer = function (id, answer) {
+const serializeAnswer = function (id, answer, type, unit) {
     let model = getModel();
     let key;
 
@@ -391,7 +394,7 @@ const serializeAnswer = function (id, answer) {
 
     for (key in answer) {
         if(answer.hasOwnProperty(key)) {
-            model = mergeAnswerValue(model, id, answer[key], key);
+            model = mergeAnswerValue(model, id, answer[key], key, unit);
             if(model instanceof Error) {
                 return model;
             }

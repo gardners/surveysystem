@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { FieldError } from '../FormHelpers';
+import { FieldError, InputGroup } from '../FormHelpers';
 
 const supports = typeof navigator !== 'undefined' && 'geolocation' in navigator;
 
@@ -83,7 +83,7 @@ class GeoLocation extends Component {
             <div className="form-group">
                 <label htmlFor={ question.id }>{ question.title }</label>
 
-                <div className="input-group">
+                <InputGroup prepend={ question.unit }>
                     <input
                         readOnly
                         id={ question.id }
@@ -99,7 +99,7 @@ class GeoLocation extends Component {
                                 <button className="btn btn-secondary btn-sm" onClick={ this.fetchLocation.bind(this) }>Get Location</button>
                             </div>
                     }
-                </div>
+                </InputGroup>
 
                 { <FieldError error={ this.state.error } /> }
 
@@ -122,6 +122,7 @@ GeoLocation.propTypes = {
         title: PropTypes.string.isRequired,
         title_text: PropTypes.string.isRequired,
         type: PropTypes.string.isRequired,
+        unit: PropTypes.string.isRequired,
     }).isRequired,
     placeholder: PropTypes.string,
 };
