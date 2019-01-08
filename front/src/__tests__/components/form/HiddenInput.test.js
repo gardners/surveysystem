@@ -12,9 +12,10 @@ const question = {
     title: 'q1',
     title_text: 'q1',
     type: 'TEXT',
+    unit: '',
 };
 
-const mockCallback = jest.fn((question, value) => {
+const mockCallback = jest.fn((element, question, value) => {
     return value;
 });
 
@@ -38,7 +39,7 @@ it('handleChange callback is invoked on mount', () => {
     // first argument is the question
     expect(mockCallback.mock.calls[0][1]).toEqual(expect.objectContaining(question));
     // second argument is the defaultValue as value
-    expect(mockCallback.mock.calls[0][1]).toBe("teststring");
+    expect(mockCallback.mock.calls[0][2]).toBe("teststring");
     // returns defaultValue as value
     expect(mockCallback.mock.results[0].value).toBe("teststring");
 });
