@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { InputGroup } from '../FormHelpers';
 import InputRange from 'react-input-range';
 import './PeriodRangeSlider.scss';
 
