@@ -6,6 +6,9 @@ import moment from 'moment';
 import RcTimePicker from 'rc-time-picker';
 import 'rc-time-picker/assets/index.css';
 
+import { InputGroup } from '../FormHelpers';
+import './TimePicker.scss';
+
 const format = 'h:mm a';
 
 const seconds = function(m) {
@@ -19,21 +22,22 @@ const TimePicker = function(props) {
     return (
         <div className="form-group">
             <label htmlFor={ question.id }>{ question.title }</label>
-
-            <RcTimePicker
-                id={ question.id }
-                name={ question.name }
-                showSecond={ false }
-                defaultValue={ moment(0) }
-                className={ props.className }
-                onChange={ (m) => {
-                    const value = seconds(m);
-                    handleChange(null, question, value);
-                } }
-                format={ format }
-                use12Hours
-                inputReadOnly
-            />
+            <InputGroup prepend={ question.unit }>
+                <RcTimePicker
+                    id={ question.id }
+                    name={ question.name }
+                    showSecond={ false }
+                    defaultValue={ moment(0) }
+                    className="form-control"
+                    onChange={ (m) => {
+                        const value = seconds(m);
+                        handleChange(null, question, value);
+                    } }
+                    format={ format }
+                    use12Hours
+                    inputReadOnly
+                />
+            </InputGroup>
         </div>
     );
 
@@ -54,7 +58,6 @@ TimePicker.propTypes = {
         type: PropTypes.string.isRequired,
         unit: PropTypes.string.isRequired,
     }).isRequired,
-    className: PropTypes.string,
 
     // rc-time-picker props
     minuteStep: PropTypes.number,

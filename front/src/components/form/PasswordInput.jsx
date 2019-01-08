@@ -1,12 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import { InputGroup } from '../FormHelpers';
+
 const PasswordInput = function(props) {
     const { question, placeholder } = props;
 
     return (
         <div className="form-group">
             <label htmlFor={ question.id }>{ question.title }</label>
+            <InputGroup prepend={ question.unit }>
             <input
                 id={ question.id }
                 name={ question.name }
@@ -19,6 +22,7 @@ const PasswordInput = function(props) {
                     props.handleChange(e.target, question, value);
                 } }
             />
+            </InputGroup>
         </div>
     );
 };

@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+// no Inputgroup
+
 class HiddenInput extends Component {
 
     // ! immediately invoke answer callback
