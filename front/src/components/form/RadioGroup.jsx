@@ -58,6 +58,7 @@ RadioGroup.propTypes = {
         title: PropTypes.string.isRequired,
         title_text: PropTypes.string.isRequired,
         type: PropTypes.string.isRequired,
+        unit: PropTypes.string.isRequired,
         // eunum
         choices: PropTypes.array.isRequired,
     }).isRequired,

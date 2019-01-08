@@ -113,6 +113,7 @@ PeriodRangeSlider.propTypes = {
         title: PropTypes.string.isRequired,
         title_text: PropTypes.string.isRequired,
         type: PropTypes.string.isRequired,
+        unit: PropTypes.string.isRequired,
 
         timeBeginLabel: PropTypes.string,
         timeEndLabel: PropTypes.string,
