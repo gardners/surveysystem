@@ -15,6 +15,7 @@ beforeAll(() => {
                 title: 'q1',
                 title_text: 'q1',
                 type: 'FIXEDPOINT',
+                unit: '',
             } }
             handleChange= { () => {} } />,
     );
