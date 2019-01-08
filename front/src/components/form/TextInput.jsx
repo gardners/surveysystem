@@ -1,24 +1,29 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import { InputGroup } from '../FormHelpers';
+
 const TextInput = function(props) {
     const { question, placeholder } = props;
 
     return (
         <div className="form-group">
             <label htmlFor={ question.id }>{ question.title }</label>
-            <input
-                id={ question.id }
-                name={ question.name }
-                type="text"
-                className="form-control"
-                placeholder={ placeholder }
-                autoComplete="off"
-                onChange={ (e) => {
-                    const { value } = e.target;
-                    props.handleChange(e.target, question, value);
-                } }
-            />
+            <InputGroup prepend={ question.unit }>
+
+                <input
+                    id={ question.id }
+                    name={ question.name }
+                    type="text"
+                    className="form-control"
+                    placeholder={ placeholder }
+                    autoComplete="off"
+                    onChange={ (e) => {
+                        const { value } = e.target;
+                        props.handleChange(e.target, question, value);
+                    } }
+                />
+            </InputGroup>
         </div>
     );
 };
@@ -35,6 +40,7 @@ TextInput.propTypes = {
         title: PropTypes.string.isRequired,
         title_text: PropTypes.string.isRequired,
         type: PropTypes.string.isRequired,
+        unit: PropTypes.string.isRequired,
     }).isRequired,
     placeholder: PropTypes.string,
 };

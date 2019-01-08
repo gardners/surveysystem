@@ -6,7 +6,8 @@
                  "name": "q0",
                  "title": "Hello Traveller!",
                  "title_text": "<h1>The Hitchhiker's Guide to the Galaxy survey</h1><quote>And all dared to brave unknown terrors, to do mighty deeds, to boldly split infinitives that no man had split before--and thus was the Empire forged.</quote>",
-                 "type": "HIDDEN"
+                 "type": "HIDDEN",
+                 "unit": ""
              }]
         },         {
             "next_questions": [{
@@ -14,19 +15,22 @@
                 "name": "q1a",
                 "title": "Question 1a",
                 "title_text": "Your Hitchhicker name",
-                "type": "TEXT"
+                "type": "TEXT",
+                "unit": ""
             }, {
                 "id": "q1b",
                 "name": "q1b",
                 "title": "Your Hitchhicker's Guide account",
                 "title_text": "Email address",
-                "type": "EMAIL"
+                "type": "EMAIL",
+                "unit": ""
             }, {
                 "id": "q1c",
                 "name": "q1c",
                 "title": "Your Hitchhicker's Guide account",
                 "title_text": "Your Hitchhicker's GUIDE password",
-                "type": "PASSWORD"
+                "type": "PASSWORD",
+                "unit": ""
             }]
         }, {
             "next_questions": [{
@@ -34,7 +38,8 @@
                 "name": "q2",
                 "title": "Question 2",
                 "title_text": "Your Hitchhiker's Guide to the Galaxy password",
-                "type": "TEXT"
+                "type": "TEXT",
+                "unit": ""
             }]
         }, {
             "next_questions": [{
@@ -42,7 +47,8 @@
                 "name": "q3",
                 "title": "Question 3",
                 "title_text": "How many towels are you travelling with?",
-                "type": "INT"
+                "type": "INT",
+                "unit": "towels"
             }]
         }, {
             "next_questions": [{
@@ -50,7 +56,8 @@
                 "name": "q4",
                 "title": "Question 4",
                 "title_text": "What is the size of your current travel party? Use fraction values for any non-organic lifeforms",
-                "type": "FIXEDPOINT"
+                "type": "FIXEDPOINT",
+                "unit": "lifeforms"
             }]
         }, {
             "next_questions": [{
@@ -63,7 +70,8 @@
                     "E = mc^2",
                     "42",
                     "Why are we here?"
-                ]
+                ],
+                "unit": ""
             }]
         },  {
             "next_questions": [{
@@ -77,7 +85,8 @@
                     "Zaphod Breeblebox",
                     "Ford Prefect",
                     "Marvin"
-                ]
+                ],
+                "unit": ""
             }]
         },  {
             "next_questions": [{
@@ -85,7 +94,8 @@
                 "name": "q7",
                 "title": "Question 7",
                 "title_text": "Your current planetary position?",
-                "type": "LATLON"
+                "type": "LATLON",
+                "unit": "spacecoords"
             }]
         }, {
             "next_questions": [{
@@ -93,15 +103,17 @@
                 "name": "q8",
                 "title": "Q8",
                 "title_text": "During an average day, when are you inside an SEP field. (Typically work hours). An SEP is something we can't see, or don't see, or our brain doesn't let us see, because we think that it's somebody else's problem. That’s what SEP means. Somebody Else’s Problem. The brain just edits it out, it's like a blind spot. ",
-                "type": "TIMERANGE"
+                "type": "TIMERANGE",
+                "unit": "hours"
             }]
         }, {
              "next_questions": [{
-                 "id": "q9",
-                 "name": "q9",
-                 "title": "Q9",
-                 "title_text": "Please leave a general comment.",
-                 "type": "TEXTAREA"
+                "id": "q9",
+                "name": "q9",
+                "title": "Q9",
+                "title_text": "Please leave a general comment.",
+                "type": "TEXTAREA",
+                "unit": ""
              }]
          }, {
             "next_questions": []

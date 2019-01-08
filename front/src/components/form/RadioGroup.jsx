@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import { InputGroup } from '../FormHelpers';
+
 class RadioGroup extends Component {
     constructor(props) {
         super(props);
@@ -26,7 +28,7 @@ class RadioGroup extends Component {
 
         return (
             <div className="form-group">
-                <label> { question.title }</label>
+                <label> { question.title } { question.unit && <em>({ question.unit })</em> }</label>
                 { choices.map((value, index) => {
                     return <div key={index} className="radio">
                         <label>
@@ -58,6 +60,7 @@ RadioGroup.propTypes = {
         title: PropTypes.string.isRequired,
         title_text: PropTypes.string.isRequired,
         type: PropTypes.string.isRequired,
+        unit: PropTypes.string.isRequired,
         // eunum
         choices: PropTypes.array.isRequired,
     }).isRequired,

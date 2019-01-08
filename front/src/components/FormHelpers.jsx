@@ -22,6 +22,45 @@ FormRow.propTypes = {
     description: PropTypes.string,
 };
 
+const InputGroup = function(props) {
+    let pre = (typeof props.prepend === 'string') ? [props.prepend] : props.prepend;
+    let app = (typeof props.append === 'string') ? [props.append] : props.append;
+    pre = pre.filter(entry => !entry === false);
+    app = app.filter(entry => !entry === false);
+
+    return(
+        <div className="input-group">
+            { pre.length > 0 &&
+                <div className="input-group-prepend">
+                    { pre.map((entry, index) => <span key={ index } className="input-group-text">{ entry }</span>) }
+                </div>
+            }
+            { props.children }
+            { app.length > 0 &&
+                <div className="input-group-append">
+                    { app.map((entry, index) => <span key={ index } className="input-group-text">{ entry }</span>) }
+                </div>
+            }
+        </div>
+    );
+};
+
+InputGroup.defaultProps = {
+    append: '',
+    prepend: '',
+};
+
+InputGroup.propTypes = {
+    append: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.array,
+    ]),
+    prepend: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.array,
+    ]),
+};
+
 const FieldError = function(props) {
 
     if(!props.error) {
@@ -67,4 +106,4 @@ FieldValidator.propTypes = {
     }),
 };
 
-export { FormRow, FieldError, FieldValidator };
+export { FormRow, InputGroup, FieldError, FieldValidator };

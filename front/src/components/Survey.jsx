@@ -169,7 +169,8 @@ class Survey extends Component {
             const entry = answers[id];
             const { answer, question } = entry;
             const type = question.type;
-            return serializeAnswer(id, answer, type);
+            const unit = question.unit;
+            return serializeAnswer(id, answer, type, unit);
         });
 
         // send current answer(s)
