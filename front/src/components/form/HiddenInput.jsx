@@ -38,6 +38,7 @@ HiddenInput.propTypes = {
         title: PropTypes.string.isRequired,
         title_text: PropTypes.string.isRequired,
         type: PropTypes.string.isRequired,
+        unit: PropTypes.string.isRequired,
     }).isRequired,
 
     // custom
