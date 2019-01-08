@@ -9,7 +9,7 @@ const TextInput = function(props) {
     return (
         <div className="form-group">
             <label htmlFor={ question.id }>{ question.title }</label>
-            <InputGroup prepend={ question.unit } >
+            <InputGroup prepend={ question.unit }>
 
                 <input
                     id={ question.id }

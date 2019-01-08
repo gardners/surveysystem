@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import { InputGroup } from '../FormHelpers';
+
 const Thead = function(props) {
 
     const { question } = props;
@@ -8,7 +10,7 @@ const Thead = function(props) {
 
     return(
         <tr>
-            <th>{ question.title }</th>
+            <th>{ question.unit && <em>({ question.unit })</em> }</th>
             {
                 choices.map((value, index) => <th key={ index }>{ value }</th>)
             }
