@@ -48,6 +48,7 @@ class RadioGroup extends Component {
 }
 
 RadioGroup.defaultProps = {
+    required: true,
 };
 
 RadioGroup.propTypes = {
@@ -62,6 +63,7 @@ RadioGroup.propTypes = {
         // eunum
         choices: PropTypes.array.isRequired,
     }).isRequired,
+    required: PropTypes.bool,
 };
 
 export default RadioGroup;

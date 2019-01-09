@@ -103,6 +103,7 @@ class PeriodRangeSlider extends Component {
 }
 
 PeriodRangeSlider.defaultProps = {
+    required: true,
     timeBeginLabel: 'Start',
     timeEndLabel: 'Finished',
 };
@@ -120,6 +121,7 @@ PeriodRangeSlider.propTypes = {
         timeBeginLabel: PropTypes.string,
         timeEndLabel: PropTypes.string,
     }).isRequired,
+    required: PropTypes.bool,
 };
 
 export default PeriodRangeSlider;

@@ -45,6 +45,7 @@ class Select extends Component {
 }
 
 Select.defaultProps = {
+    required: true,
 };
 
 Select.propTypes = {
@@ -59,6 +60,7 @@ Select.propTypes = {
         // eunum
         choices: PropTypes.array.isRequired,
     }).isRequired,
+    required: PropTypes.bool,
 };
 
 export default Select;

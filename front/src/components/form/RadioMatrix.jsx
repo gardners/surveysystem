@@ -91,6 +91,7 @@ Row.propTypes = {
         choices: PropTypes.array.isRequired,
     }),
     handleChange: PropTypes.func.isRequired,
+    // no "required" prop
 };
 
 
@@ -143,6 +144,7 @@ class RadioMatrix extends Component {
 }
 
 RadioMatrix.defaultProps = {
+    required: true,
 };
 
 RadioMatrix.propTypes = {
@@ -159,6 +161,7 @@ RadioMatrix.propTypes = {
             choices: PropTypes.array.isRequired,
         })
     ),
+    required: PropTypes.bool,
 };
 
 export default RadioMatrix;
