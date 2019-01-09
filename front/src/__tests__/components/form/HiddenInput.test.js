@@ -24,7 +24,7 @@ beforeAll(() => {
         <HiddenInput
             question={ question }
             defaultValue="teststring"
-            handleChange= { mockCallback } />,
+            handleChange={ mockCallback } />,
     );
 });
 
