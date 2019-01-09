@@ -8,6 +8,7 @@ import GeoLocation from './form/GeoLocation';
 import PeriodRangeSlider from './form/PeriodRangeSlider';
 import DayTimeSlider from './form/DayTimeSlider';
 import CheckboxGroup from './form/CheckboxGroup';
+import Checkbox from './form/Checkbox';
 import RadioGroup from './form/RadioGroup';
 import TextInput from './form/TextInput';
 import NumberInput from './form/NumberInput';
@@ -141,10 +142,11 @@ class Demo extends Component {
                     <Question type={ 'FIXEDPOINT' }  component={ DayTimeSlider }     unit={ this.state.unit }/>
                     <Question type={ 'FIXEDPOINT' }  component={ TimePicker }        unit={ this.state.unit }/>
                     <Question type={ 'MULTICHOICE' } component={ CheckboxGroup }     unit={ this.state.unit } choices={ ['This', 'That', 'Another one' ] } defaultValue="Maybe"/>
+                    <Question type={ 'CHECKBOX' }    component={ Checkbox }          unit={ this.state.unit } choices={ [ 'unchecked value', 'checked value'] }/>
                     <Question type={ 'TEXT' }        component={ RadioGroup }        unit={ this.state.unit } choices={ ['Yes', 'No', 'Maybe' ] } defaultValue="Maybe"/>
                     <Question type={ 'TEXT' }        component={ Select }            unit={ this.state.unit } choices={ ['First', 'Second', 'Third' ] } defaultValue="Second"/>
                     <Question type={ 'TEXT' }        component={ TextInput }         unit={ this.state.unit }/>
-                    <Question type={ 'INT' }         component={ NumberInput }         unit={ this.state.unit }/>
+                    <Question type={ 'INT' }         component={ NumberInput }       unit={ this.state.unit }/>
                     <Question type={ 'TEXT' }        component={ Textarea }          unit={ this.state.unit }/>
                     <Question type={ 'FIXEDPOINT' }  component={ RadioMatrix }       unit={ this.state.unit }
                         questionGroup={[
