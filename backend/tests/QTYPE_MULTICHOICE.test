@@ -1,0 +1,30 @@
+description MULTICHOICE question type: Answer a MULTICHOICE question with a comma separated list of choices in a survey
+
+# Create a dummy survey
+definesurvey qtype_multichoice
+version 1
+Silly test survey updated
+multichoice:Select any from the following:Select any from the following:MULTICHOICE:0::-1:-1:-1:5:Zaphod,Marvin,Arthur,Ford,Trillan:
+endofsurvey
+
+# Request creation of a  new session
+request 200 newsession?surveyid=qtype_multichoice
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session
+qtype_multichoice/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+endofsession
+
+# Ask for next question
+request 200 nextquestion?sessionid=$SESSION
+match_string {"next_questions": [{"id": "multichoice", "name": "multichoice", "title": "Select any from the following", "title_text": "Select any from the following", "type": "MULTICHOICE", "choices": ["Zaphod", "Marvin", "Arthur", "Ford", "Trillan"], "unit": ""}]}
+
+request 200 addanswer?sessionid=$SESSION&answer=multichoice:Marvin,Ford:0:0:0:0:0:0:0:
+# Make sure answer ends up in file
+verify_session
+field_unit/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+multichoice:Marvin,Ford:0:0:0:0:0:0:0:
+endofsession
