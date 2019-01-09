@@ -24,7 +24,7 @@ struct question {
 #define QTYPE_TIMERANGE   7
 #define QTYPE_UPLOAD      8
 #define QTYPE_TEXT        9
-#define QTYPE_CHECKBOX    10
+#define QTYPE_CHECKBOX    10 // instruction for single html checkbox, requires two defined choices in the following order: [OFF-value, ON-value]
 #define QTYPE_HIDDEN      11 // instruction for html hidden input (pure textslide) answer is one of dict default value or "" or frontend default value
 #define QTYPE_TEXTAREA    12 // instruction for html textarea.
 #define QTYPE_EMAIL       13 // instruction for html email input
