@@ -13,6 +13,7 @@ import Log from '../Log';
 import TextInput from './form/TextInput';
 import RadioGroup from './form/RadioGroup';
 import CheckboxGroup from './form/CheckboxGroup';
+import Checkbox from './form/Checkbox';
 import GeoLocation from './form/GeoLocation';
 import PeriodRangeSlider from './form/PeriodRangeSlider';
 import NumberInput from './form/NumberInput';
@@ -102,7 +103,10 @@ class Survey extends Component {
         let error = null;
         let answer = (typeof answers[id] !== 'undefined') ? answers[id].answer : null;
 
-        // validate
+        // check if callback returns an error
+        // validate element constraints
+
+        // validate value
         error = validateAnswer(element, question, ...values);
 
         // get serializer callback
@@ -285,7 +289,7 @@ class Survey extends Component {
                                         <RadioGroup
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) }
-                                        />
+                                            required />
                                         <FieldValidator answer={ answer } />
                                     </FormRow>
 
@@ -294,7 +298,7 @@ class Survey extends Component {
                                         <CheckboxGroup
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) }
-                                        />
+                                            required />
                                         <FieldValidator answer={ answer } />
                                     </FormRow>
 
@@ -303,7 +307,8 @@ class Survey extends Component {
                                         <GeoLocation
                                             value={ (answer) ? answer.values : '' }
                                             question={ question }
-                                            handleChange={ this.handleChange.bind(this) } />
+                                            handleChange={ this.handleChange.bind(this) }
+                                            required />
                                         <FieldValidator answer={ answer } />
                                     </FormRow>
 
@@ -315,7 +320,8 @@ class Survey extends Component {
                                         <PeriodRangeSlider
                                             value={ (answer) ? answer.values : '' }
                                             question={ question }
-                                            handleChange={ this.handleChange.bind(this) } />
+                                            handleChange={ this.handleChange.bind(this) }
+                                            required />
                                         <FieldValidator answer={ answer } />
                                     </FormRow>
 
@@ -325,7 +331,8 @@ class Survey extends Component {
                                         <NumberInput
                                             value={ (answer) ? answer.values[0] : null }
                                             question={ question }
-                                            handleChange={ this.handleChange.bind(this) } />
+                                            handleChange={ this.handleChange.bind(this) }
+                                            required />
                                         <FieldValidator answer={ this.state.answers[question.id] || null } />
                                     </FormRow>
 
@@ -334,19 +341,21 @@ class Survey extends Component {
                                         <Textarea
                                             value={ (answer) ? answer.values[0] : null }
                                             question={ question }
-                                            handleChange={ this.handleChange.bind(this) } />
+                                            handleChange={ this.handleChange.bind(this) }
+                                            required />
                                         <FieldValidator answer={ this.state.answers[question.id] || null } />
                                     </FormRow>
 
                                 // html slide
-                                // note: no value and validation!
+                                // no value!
+                                // no validation!
+                                // not required!
                                 case 'HIDDEN':
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
                                         <HiddenInput
                                             question={ question }
                                             defaultValue={ question.default_value || 'visited' /* TODO confirm with backend */ }
-                                            handleChange={ this.handleChange.bind(this) }
-                                        />
+                                            handleChange={ this.handleChange.bind(this) } />
                                     </FormRow>
 
                                 case 'EMAIL':
@@ -354,25 +363,37 @@ class Survey extends Component {
                                         <EmailInput
                                             value={ (answer) ? answer.values[0] : null }
                                             question={ question }
-                                            handleChange={ this.handleChange.bind(this) } />
-                                        <FieldValidator answer={ this.state.answers[question.id] || null } />
-                                </FormRow>
+                                            handleChange={ this.handleChange.bind(this) }
+                                            required />
+                                        <FieldValidator answer={ this.state.answers[question.id] || null }
+                                        />
+                                    </FormRow>
+
+                                // not required!
+                                case 'CHECKBOX':
+                                    return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
+                                        <Checkbox
+                                            question={ question }
+                                            handleChange={ this.handleChange.bind(this) }/>
+                                    </FormRow>
 
                                 case 'PASSWORD':
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
                                         <PasswordInput
                                             value={ (answer) ? answer.values[0] : null }
                                             question={ question }
-                                            handleChange={ this.handleChange.bind(this) } />
+                                            handleChange={ this.handleChange.bind(this) }
+                                            required />
                                         <FieldValidator answer={ this.state.answers[question.id] || null } />
-                                </FormRow>
+                                    </FormRow>
 
                                 default:
                                     return  <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
                                         <TextInput
                                             value={ (answer) ? answer.values[0] : null }
                                             question={ question }
-                                            handleChange={ this.handleChange.bind(this) } />
+                                            handleChange={ this.handleChange.bind(this) }
+                                            required />
                                         <FieldValidator answer={ this.state.answers[question.id] || null } />
                                     </FormRow>
                             }
