@@ -29,6 +29,7 @@ const TextInput = function(props) {
 };
 
 TextInput.defaultProps = {
+    required: true,
     placeholder: null,
 };
 
@@ -42,6 +43,7 @@ TextInput.propTypes = {
         type: PropTypes.string.isRequired,
         unit: PropTypes.string.isRequired,
     }).isRequired,
+    required: PropTypes.bool,
     placeholder: PropTypes.string,
 };
 

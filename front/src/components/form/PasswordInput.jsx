@@ -28,6 +28,7 @@ const PasswordInput = function(props) {
 };
 
 PasswordInput.defaultProps = {
+    required: true,
     placeholder: null,
 };
 
@@ -41,6 +42,7 @@ PasswordInput.propTypes = {
         type: PropTypes.string.isRequired,
         unit: PropTypes.string.isRequired,
     }).isRequired,
+    required: PropTypes.bool,
     placeholder: PropTypes.string,
 };
 

@@ -44,6 +44,7 @@ const TimePicker = function(props) {
 };
 
 TimePicker.defaultProps = {
+    required: true,
     // rc-time-picker props
     minuteStep: 10,
 };
@@ -58,6 +59,7 @@ TimePicker.propTypes = {
         type: PropTypes.string.isRequired,
         unit: PropTypes.string.isRequired,
     }).isRequired,
+    required: PropTypes.bool,
 
     // rc-time-picker props
     minuteStep: PropTypes.number,

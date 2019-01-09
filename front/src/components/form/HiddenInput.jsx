@@ -29,6 +29,7 @@ class HiddenInput extends Component {
 };
 
 HiddenInput.defaultProps = {
+    required: true,
     defaultValue: null,
 };
 
@@ -42,6 +43,7 @@ HiddenInput.propTypes = {
         type: PropTypes.string.isRequired,
         unit: PropTypes.string.isRequired,
     }).isRequired,
+    // no "required"prop
 
     // custom
     defaultValue: PropTypes.string,

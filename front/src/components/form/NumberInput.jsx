@@ -28,6 +28,7 @@ const NumberInput = function(props) {
 };
 
 NumberInput.defaultProps = {
+    required: true,
     placeholder: null,
 };
 
@@ -41,6 +42,7 @@ NumberInput.propTypes = {
         type: PropTypes.string.isRequired,
         unit: PropTypes.string.isRequired,
     }).isRequired,
+    required: PropTypes.bool,
     placeholder: PropTypes.string,
 };
 

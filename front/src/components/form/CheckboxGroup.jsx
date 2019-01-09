@@ -28,25 +28,25 @@ class CheckboxGroup extends Component {
     }
 
     render() {
-        const { question } = this.props;
+        const { question, required } = this.props;
         const { choices } = question;
 
         return (
-            <div className="form-group">
+            <div className="form-group form-check">
                 <label> { question.title } { question.unit && <em>({ question.unit })</em> }</label>
                 { choices.map((value, index) => {
                     return <div key={index} className="radio">
-                        <label>
-                            <input
-                                type="checkbox"
-                                name={ question.name }
-                                id={ question.id }
-                                value={ value }
-                                onChange={ this.handleChange.bind(this)}
-                                checked={  this.state.values.indexOf(value) > -1 }
-                                />
-                            { value }
-                        </label>
+                        <input
+                            type="checkbox"
+                            className="form-check-input"
+                            name={ question.name }
+                            id={ question.id }
+                            value={ value }
+                            onChange={ this.handleChange.bind(this)}
+                            checked={  this.state.values.indexOf(value) > -1 }
+                            required={ required }
+                            />
+                        <label className="form-check-label">{ value }</label>
                     </div>
                 }) }
             </div>
@@ -55,6 +55,7 @@ class CheckboxGroup extends Component {
 }
 
 CheckboxGroup.defaultProps = {
+    required: true,
 };
 
 CheckboxGroup.propTypes = {
@@ -68,6 +69,7 @@ CheckboxGroup.propTypes = {
         // eunum
         choices: PropTypes.array.isRequired,
     }).isRequired,
+    required: PropTypes.bool,
 };
 
 export default CheckboxGroup;

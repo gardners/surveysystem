@@ -28,6 +28,7 @@ const Textarea = function(props) {
 };
 
 Textarea.defaultProps = {
+    required: true,
     placeholder: null,
 };
 
@@ -41,6 +42,7 @@ Textarea.propTypes = {
         type: PropTypes.string.isRequired,
         unit: PropTypes.string.isRequired,
     }).isRequired,
+    required: PropTypes.bool,
     placeholder: PropTypes.string,
 };
 
