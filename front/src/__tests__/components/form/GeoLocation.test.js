@@ -15,6 +15,7 @@ beforeAll(() => {
                 title: 'q1',
                 title_text: 'q1',
                 type: 'FIXEDPOINT',
+                unit: '',
             } }
             handleChange= { () => {} } />
     );
@@ -42,6 +43,7 @@ it('renders button: withButton = true', () => {
                 title: 'q1',
                 title_text: 'q1',
                 type: 'FIXEDPOINT',
+                unit: '',
             } }
             withButton={ true }
             handleChange= { () => {} } />

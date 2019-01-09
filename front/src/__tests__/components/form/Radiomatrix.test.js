@@ -16,6 +16,7 @@ beforeAll(() => {
                 title_text: 'q1',
                 type: 'INT',
                 choices: [ 'choice1', 'choice2' ],
+                unit: '',
             }, {
                 id: 'q2',
                 name: 'q2',
@@ -23,6 +24,7 @@ beforeAll(() => {
                 title_text: 'q2',
                 type: 'INT',
                 choices: [ 'choice1', 'choice2' ],
+                unit: '',
             }] }
             handleChange= { () => {} } />,
     );
