@@ -49,7 +49,7 @@ const CSV_SEPARATOR = ':';
 /**
  * Regex for sanitizing csv string values
  * @const
- * @type {sRegExp}
+ * @type {RegExp}
  */
 const escPattern = new RegExp(`${CSV_SEPARATOR}'"`, 'g');
 // example build: console.log(new RegExp([CSV_SEPARATOR, '\'', '"'].join(''), 'g'));
@@ -71,6 +71,7 @@ const escPattern = new RegExp(`${CSV_SEPARATOR}'"`, 'g');
  * @property {number} time_end - timeperiod answer (end) in seconds, type: number (INT)
  * @property {number} time_zone_delta - timeperiod timzone offset in seconds, type: number (INT)
  * @property {number} dst_delta - distance(?), type: number (INT)
+ * @property {string} unit - answer unit
 
  * @see backend/src/question_types.c
  * @see backend/src/deserialise_parse_field.c
@@ -104,7 +105,7 @@ const getModel = function() {
 /**
  * Maps backend question types to corresponding model fields
  * @property {string} questionType
- * @returns {string[]}
+ * @returns {(string[]|Error} mergable subset of {AnswerModel} or Error
  */
 const mapTypeToField = function(questionType) {
     switch(questionType) {
@@ -255,7 +256,7 @@ const castFloat = function(val) {
  * Parse and validate string
  * @param {string} val already sanitized string
  *
- * @returns {(sting|Error)}
+ * @returns {(string|Error)}
  */
 const castString = function(text) {
     if (!text) {
@@ -384,7 +385,7 @@ const serializeAnswerValue = function(id, answer, questionType) {
  *
  * @param {string} id question id
  * @param {object} answer answer object where keys are matching a model properites and values is the answer value
- * @returns {{string|Error)}  csv row or Error to be displayed
+ * @returns {(string|Error)}  csv row or Error to be displayed
  */
 const serializeAnswer = function (id, answer, type, unit) {
     let model = getModel();
