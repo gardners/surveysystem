@@ -11,7 +11,7 @@ const getValues = function(element) {
             values.push(options[i].value);
         }
     }
-    return values.toString();
+    return values;
 };
 
 const MultiSelect = function(props) {
