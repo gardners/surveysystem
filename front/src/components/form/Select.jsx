@@ -1,47 +1,33 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 
 import { InputGroup } from '../FormHelpers';
 
-class Select extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            value: '',
-        };
-    }
+const Select = function(props) {
+    const { question } = props;
+    const { choices } = question;
 
-    handleChange(e) {
-        const { value } = e.target;
-        const { question } = this.props;
+    return (
+        <div className="form-group">
+            <label htmlFor={ question.id }>{ question.title }</label>
+            <InputGroup prepend={ question.unit }>
+                <select
+                    id={ question.id }
+                    name={ question.name }
+                    className="form-control"
+                    onChange={ (e) => {
+                        const { value } = e.target;
+                        props.handleChange(e.target, question, value);
+                    } }>
 
-        this.setState({
-            value: value
-        });
-
-        this.props.handleChange(e.target, question, value);
-    }
-
-    render() {
-        const { question } = this.props;
-        const { choices } = question;
-        return (
-            <div className="form-group">
-                <label htmlFor={ question.id }>{ question.title }</label>
-                <InputGroup prepend={ question.unit }>
-                    <select
-                        onChange={ this.handleChange.bind(this) }
-                        id={ question.id }
-                        name={ question.name }
-                        className="form-control">
                     { choices.map((value, index) => {
                         return <option key={ index } value={ value }>{ value }</option>
                     }) }
-                    </select>
-                </InputGroup>
-            </div>
-        );
-    }
+
+                </select>
+            </InputGroup>
+        </div>
+    );
 }
 
 Select.defaultProps = {
