@@ -113,6 +113,8 @@ const mapTypeToField = function(questionType) {
         case 'HIDDEN':
         case 'TEXTAREA':
         case 'CHECKBOX':
+        case 'SINGLECHOICE':
+        case 'SINGLESELECT':
             return (text) => {
                 return {
                     text,
