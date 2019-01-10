@@ -21,6 +21,8 @@ import Textarea from './form/Textarea';
 import HiddenInput from './form/HiddenInput';
 import EmailInput from './form/EmailInput';
 import PasswordInput from './form/PasswordInput';
+import Select from './form/Select';
+import MultiSelect from './form/MultiSelect';
 
 // components
 import LoadingSpinner from './LoadingSpinner';
@@ -300,7 +302,7 @@ class Survey extends Component {
 
                                 case 'MULTICHOICE':
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
-                                        <RadioGroup
+                                        <CheckboxGroup
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) }
                                             required />
@@ -309,7 +311,7 @@ class Survey extends Component {
 
                                 case 'MULTISELECT':
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
-                                        <CheckboxGroup
+                                        <MultiSelect
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) }
                                             required />
@@ -392,7 +394,24 @@ class Survey extends Component {
                                     </FormRow>
 
                                 // TODO SINGLECHOICE
-                                // TODO SINGLESELECT
+                                case 'SINGLECHOICE':
+                                    return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
+                                        <RadioGroup
+                                            question={ question }
+                                            handleChange={ this.handleChange.bind(this) }
+                                            required />
+                                        <FieldValidator answer={ answer } />
+                                    </FormRow>
+
+                                case 'SINGLESELECT':
+                                    return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
+                                        <Select
+                                            value={ (answer) ? answer.values[0] : null }
+                                            question={ question }
+                                            handleChange={ this.handleChange.bind(this) }
+                                            required />
+                                        <FieldValidator answer={ this.state.answers[question.id] || null } />
+                                    </FormRow>
 
                                 default:
                                     return  <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
