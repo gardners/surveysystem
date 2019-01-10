@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { InputGroup } from '../FormHelpers';
-
 class RadioGroup extends Component {
     constructor(props) {
         super(props);
@@ -50,6 +48,7 @@ class RadioGroup extends Component {
 }
 
 RadioGroup.defaultProps = {
+    required: true,
 };
 
 RadioGroup.propTypes = {
@@ -64,6 +63,7 @@ RadioGroup.propTypes = {
         // eunum
         choices: PropTypes.array.isRequired,
     }).isRequired,
+    required: PropTypes.bool,
 };
 
 export default RadioGroup;

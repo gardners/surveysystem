@@ -8,11 +8,13 @@ import GeoLocation from './form/GeoLocation';
 import PeriodRangeSlider from './form/PeriodRangeSlider';
 import DayTimeSlider from './form/DayTimeSlider';
 import CheckboxGroup from './form/CheckboxGroup';
+import Checkbox from './form/Checkbox';
 import RadioGroup from './form/RadioGroup';
 import TextInput from './form/TextInput';
 import NumberInput from './form/NumberInput';
 import Textarea from './form/Textarea';
 import Select from './form/Select';
+import MultiSelect from './form/MultiSelect';
 import TimePicker from './form/TimePicker';
 import RadioMatrix from './form/RadioMatrix';
 import HiddenInput from './form/HiddenInput';
@@ -122,31 +124,22 @@ class Demo extends Component {
     render() {
         return (
             <section>
-
-                <div className="card">
-                    <div className="card-body">
-                        <input type="text" onChange={ (e) => {
-                            e.preventDefault();
-                            this.setState({
-                                unit: e.target.value,
-                            });
-                        } } />
-                    </div>
-                </div>
-
                 <div>
-                    <Question type={ 'HIDDEN' }      component={ HiddenInput }       unit={ this.state.unit } title_text="text with some <strong>markup</strong> html and an image: <img src='data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7'>" defaultVlaue="visited"/>
-                    <Question type={ 'LATLON' }      component={ GeoLocation }       unit={ this.state.unit } withButton={ true } />
-                    <Question type={ 'TIMERANGE' }   component={ PeriodRangeSlider } unit={ this.state.unit }/>
-                    <Question type={ 'FIXEDPOINT' }  component={ DayTimeSlider }     unit={ this.state.unit }/>
-                    <Question type={ 'FIXEDPOINT' }  component={ TimePicker }        unit={ this.state.unit }/>
-                    <Question type={ 'MULTICHOICE' } component={ CheckboxGroup }     unit={ this.state.unit } choices={ ['This', 'That', 'Another one' ] } defaultValue="Maybe"/>
-                    <Question type={ 'TEXT' }        component={ RadioGroup }        unit={ this.state.unit } choices={ ['Yes', 'No', 'Maybe' ] } defaultValue="Maybe"/>
-                    <Question type={ 'TEXT' }        component={ Select }            unit={ this.state.unit } choices={ ['First', 'Second', 'Third' ] } defaultValue="Second"/>
-                    <Question type={ 'TEXT' }        component={ TextInput }         unit={ this.state.unit }/>
-                    <Question type={ 'INT' }         component={ NumberInput }         unit={ this.state.unit }/>
-                    <Question type={ 'TEXT' }        component={ Textarea }          unit={ this.state.unit }/>
-                    <Question type={ 'FIXEDPOINT' }  component={ RadioMatrix }       unit={ this.state.unit }
+                    <Question type={ 'HIDDEN' }       component={ HiddenInput }       unit={ this.state.unit } title_text="text with some <strong>markup</strong> html and an image: <img src='data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7'>" defaultVlaue="visited"/>
+                    <Question type={ 'LATLON' }       component={ GeoLocation }       unit={ this.state.unit } withButton={ true } />
+                    <Question type={ 'TIMERANGE' }    component={ PeriodRangeSlider } unit={ this.state.unit }/>
+                    <Question type={ 'FIXEDPOINT' }   component={ DayTimeSlider }     unit={ this.state.unit }/>
+                    <Question type={ 'FIXEDPOINT' }   component={ TimePicker }        unit={ this.state.unit }/>
+                    <Question type={ 'MULTICHOICE' }  component={ CheckboxGroup }     unit={ this.state.unit } choices={ ['This', 'That', 'Another one' ] } defaultValue="Maybe"/>
+                    <Question type={ 'SINGLECHOICE' }  component={ RadioGroup }       unit={ this.state.unit } choices={ ['This', 'That', 'Another one' ] } defaultValue="Maybe"/>
+                    <Question type={ 'CHECKBOX' }     component={ Checkbox }          unit={ this.state.unit } choices={ [ 'unchecked value', 'checked value'] }/>
+                    <Question type={ 'TEXT' }         component={ RadioGroup }        unit={ this.state.unit } choices={ ['Yes', 'No', 'Maybe' ] } defaultValue="Maybe"/>
+                    <Question type={ 'SINGLESELECT' } component={ Select }            unit={ this.state.unit } choices={ ['First', 'Second', 'Third' ] } defaultValue="Second"/>
+                    <Question type={ 'MULTISELECT' }  component={ MultiSelect }       unit={ this.state.unit } choices={ ['First', 'Second', 'Third' ] } defaultValue="Second"/>
+                    <Question type={ 'TEXT' }         component={ TextInput }         unit={ this.state.unit }/>
+                    <Question type={ 'INT' }          component={ NumberInput }       unit={ this.state.unit }/>
+                    <Question type={ 'TEXT' }         component={ Textarea }          unit={ this.state.unit }/>
+                    <Question type={ 'FIXEDPOINT' }   component={ RadioMatrix }       unit={ this.state.unit }
                         questionGroup={[
                             {
                                 id: 'question1',

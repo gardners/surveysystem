@@ -109,6 +109,7 @@ class GeoLocation extends Component {
 }
 
 GeoLocation.defaultProps = {
+    required: true,
     placeholder: null,
     withButton: false,
 };
@@ -124,6 +125,7 @@ GeoLocation.propTypes = {
         type: PropTypes.string.isRequired,
         unit: PropTypes.string.isRequired,
     }).isRequired,
+    required: PropTypes.bool,
     placeholder: PropTypes.string,
 };
 

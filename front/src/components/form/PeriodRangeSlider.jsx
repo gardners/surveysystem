@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { InputGroup } from '../FormHelpers';
 import InputRange from 'react-input-range';
 import './PeriodRangeSlider.scss';
 
@@ -104,6 +103,7 @@ class PeriodRangeSlider extends Component {
 }
 
 PeriodRangeSlider.defaultProps = {
+    required: true,
     timeBeginLabel: 'Start',
     timeEndLabel: 'Finished',
 };
@@ -121,6 +121,7 @@ PeriodRangeSlider.propTypes = {
         timeBeginLabel: PropTypes.string,
         timeEndLabel: PropTypes.string,
     }).isRequired,
+    required: PropTypes.bool,
 };
 
 export default PeriodRangeSlider;
