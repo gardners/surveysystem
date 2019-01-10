@@ -18,7 +18,6 @@ const Checkbox = function(props) {
                     autoComplete="off"
                     required={ required }
                     onChange={ (e) => {
-                        const { value } = e.target;
                         props.handleChange(e.target, question, (e.target.checked) ?  props.choices[1] : props.choices[0]);
                     } }
                 /><label className="form-check-label" htmlFor={ question.id }>{ question.title }</label>
