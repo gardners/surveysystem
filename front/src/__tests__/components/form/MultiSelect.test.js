@@ -2,13 +2,13 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import renderer from 'react-test-renderer';
 
-import Select from '../../../components/form/Select';
+import MultiSelect from '../../../components/form/Select';
 
 let component;
 
 beforeAll(() => {
     component = renderer.create(
-        <Select
+        <MultiSelect
             question={ {
                 id: 'q1',
                 name: 'q1',

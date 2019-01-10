@@ -13,6 +13,7 @@ import Log from '../Log';
 import TextInput from './form/TextInput';
 import RadioGroup from './form/RadioGroup';
 import CheckboxGroup from './form/CheckboxGroup';
+import Checkbox from './form/Checkbox';
 import GeoLocation from './form/GeoLocation';
 import PeriodRangeSlider from './form/PeriodRangeSlider';
 import NumberInput from './form/NumberInput';
@@ -20,6 +21,8 @@ import Textarea from './form/Textarea';
 import HiddenInput from './form/HiddenInput';
 import EmailInput from './form/EmailInput';
 import PasswordInput from './form/PasswordInput';
+import Select from './form/Select';
+import MultiSelect from './form/MultiSelect';
 
 // components
 import LoadingSpinner from './LoadingSpinner';
@@ -102,7 +105,10 @@ class Survey extends Component {
         let error = null;
         let answer = (typeof answers[id] !== 'undefined') ? answers[id].answer : null;
 
-        // validate
+        // check if callback returns an error
+        // validate element constraints
+
+        // validate value
         error = validateAnswer(element, question, ...values);
 
         // get serializer callback
@@ -237,6 +243,8 @@ class Survey extends Component {
 
     render() {
 
+        // @see surveysystem/backend/include/survey.h, struct question
+
         const { survey, answers } = this.state;
 
         if (survey.isFinished()) { // TODO surveymanager method
@@ -280,21 +288,33 @@ class Survey extends Component {
                             const answer = this.state.answers[question.id] || null;
 
                             switch(question.type) {
-                                case 'MULTICHOICE':
+
+                                case 'INT':
+                                case 'FIXEDPOINT':
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
-                                        <RadioGroup
+                                        <NumberInput
+                                            value={ (answer) ? answer.values[0] : null }
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) }
-                                        />
+                                            required />
+                                        <FieldValidator answer={ this.state.answers[question.id] || null } />
+                                    </FormRow>
+
+                                case 'MULTICHOICE':
+                                    return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
+                                        <CheckboxGroup
+                                            question={ question }
+                                            handleChange={ this.handleChange.bind(this) }
+                                            required />
                                         <FieldValidator answer={ answer } />
                                     </FormRow>
 
                                 case 'MULTISELECT':
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
-                                        <CheckboxGroup
+                                        <MultiSelect
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) }
-                                        />
+                                            required />
                                         <FieldValidator answer={ answer } />
                                     </FormRow>
 
@@ -303,30 +323,21 @@ class Survey extends Component {
                                         <GeoLocation
                                             value={ (answer) ? answer.values : '' }
                                             question={ question }
-                                            handleChange={ this.handleChange.bind(this) } />
+                                            handleChange={ this.handleChange.bind(this) }
+                                            required />
                                         <FieldValidator answer={ answer } />
                                     </FormRow>
 
                                 // TODO DAYTIME slider/select
-                                // TODO RadioMatrix number/text
 
                                 case 'TIMERANGE':
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
                                         <PeriodRangeSlider
                                             value={ (answer) ? answer.values : '' }
                                             question={ question }
-                                            handleChange={ this.handleChange.bind(this) } />
+                                            handleChange={ this.handleChange.bind(this) }
+                                            required />
                                         <FieldValidator answer={ answer } />
-                                    </FormRow>
-
-                                case 'INT':
-                                case 'FIXEDPOINT':
-                                    return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
-                                        <NumberInput
-                                            value={ (answer) ? answer.values[0] : null }
-                                            question={ question }
-                                            handleChange={ this.handleChange.bind(this) } />
-                                        <FieldValidator answer={ this.state.answers[question.id] || null } />
                                     </FormRow>
 
                                 case 'TEXTAREA':
@@ -334,19 +345,31 @@ class Survey extends Component {
                                         <Textarea
                                             value={ (answer) ? answer.values[0] : null }
                                             question={ question }
-                                            handleChange={ this.handleChange.bind(this) } />
+                                            handleChange={ this.handleChange.bind(this) }
+                                            required />
                                         <FieldValidator answer={ this.state.answers[question.id] || null } />
                                     </FormRow>
 
+                                // case TEXT > default
+
+                                // not required!
+                                case 'CHECKBOX':
+                                    return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
+                                        <Checkbox
+                                            question={ question }
+                                            handleChange={ this.handleChange.bind(this) }/>
+                                    </FormRow>
+
                                 // html slide
-                                // note: no value and validation!
+                                // no value!
+                                // no validation!
+                                // not required!
                                 case 'HIDDEN':
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
                                         <HiddenInput
                                             question={ question }
                                             defaultValue={ question.default_value || 'visited' /* TODO confirm with backend */ }
-                                            handleChange={ this.handleChange.bind(this) }
-                                        />
+                                            handleChange={ this.handleChange.bind(this) } />
                                     </FormRow>
 
                                 case 'EMAIL':
@@ -354,25 +377,49 @@ class Survey extends Component {
                                         <EmailInput
                                             value={ (answer) ? answer.values[0] : null }
                                             question={ question }
-                                            handleChange={ this.handleChange.bind(this) } />
-                                        <FieldValidator answer={ this.state.answers[question.id] || null } />
-                                </FormRow>
+                                            handleChange={ this.handleChange.bind(this) }
+                                            required />
+                                        <FieldValidator answer={ this.state.answers[question.id] || null }
+                                        />
+                                    </FormRow>
 
                                 case 'PASSWORD':
                                     return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
                                         <PasswordInput
                                             value={ (answer) ? answer.values[0] : null }
                                             question={ question }
-                                            handleChange={ this.handleChange.bind(this) } />
+                                            handleChange={ this.handleChange.bind(this) }
+                                            required />
                                         <FieldValidator answer={ this.state.answers[question.id] || null } />
-                                </FormRow>
+                                    </FormRow>
+
+                                // TODO SINGLECHOICE
+                                case 'SINGLECHOICE':
+                                    return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
+                                        <RadioGroup
+                                            question={ question }
+                                            handleChange={ this.handleChange.bind(this) }
+                                            required />
+                                        <FieldValidator answer={ answer } />
+                                    </FormRow>
+
+                                case 'SINGLESELECT':
+                                    return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
+                                        <Select
+                                            value={ (answer) ? answer.values[0] : null }
+                                            question={ question }
+                                            handleChange={ this.handleChange.bind(this) }
+                                            required />
+                                        <FieldValidator answer={ this.state.answers[question.id] || null } />
+                                    </FormRow>
 
                                 default:
                                     return  <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
                                         <TextInput
                                             value={ (answer) ? answer.values[0] : null }
                                             question={ question }
-                                            handleChange={ this.handleChange.bind(this) } />
+                                            handleChange={ this.handleChange.bind(this) }
+                                            required />
                                         <FieldValidator answer={ this.state.answers[question.id] || null } />
                                     </FormRow>
                             }

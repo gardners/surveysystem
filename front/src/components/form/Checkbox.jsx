@@ -3,37 +3,34 @@ import PropTypes from 'prop-types';
 
 import { InputGroup } from '../FormHelpers';
 
-const TextInput = function(props) {
-    const { question, placeholder } = props;
+const Checkbox = function(props) {
+    const { question, value, required } = props;
 
     return (
-        <div className="form-group">
-            <label htmlFor={ question.id }>{ question.title }</label>
+        <div className="form-group form-check">
             <InputGroup prepend={ question.unit }>
-
                 <input
                     id={ question.id }
                     name={ question.name }
-                    type="text"
-                    className="form-control"
-                    placeholder={ placeholder }
+                    type="checkbox"
+                    className="form-check-input"
+                    value={ value }
                     autoComplete="off"
+                    required={ required }
                     onChange={ (e) => {
-                        const { value } = e.target;
-                        props.handleChange(e.target, question, value);
+                        props.handleChange(e.target, question, (e.target.checked) ?  props.choices[1] : props.choices[0]);
                     } }
-                />
+                /><label className="form-check-label" htmlFor={ question.id }>{ question.title }</label>
             </InputGroup>
         </div>
     );
 };
 
-TextInput.defaultProps = {
-    required: true,
-    placeholder: null,
+Checkbox.defaultProps = {
+    required: false, //! different to other element defaults
 };
 
-TextInput.propTypes = {
+Checkbox.propTypes = {
     handleChange: PropTypes.func.isRequired,
     question: PropTypes.shape({
         id: PropTypes.string.isRequired,
@@ -42,9 +39,11 @@ TextInput.propTypes = {
         title_text: PropTypes.string.isRequired,
         type: PropTypes.string.isRequired,
         unit: PropTypes.string.isRequired,
+
+        // eunum
+        choices: PropTypes.array.isRequired,// TODO custom proptypes, checking for length === 2
     }).isRequired,
     required: PropTypes.bool,
-    placeholder: PropTypes.string,
 };
 
-export default TextInput;
+export default Checkbox;

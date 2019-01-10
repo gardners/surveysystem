@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { InputGroup } from '../FormHelpers';
-
 const Thead = function(props) {
 
     const { question } = props;
@@ -54,7 +52,6 @@ class Row  extends Component {
     }
 
     render() {
-        const { value } = this.state;
         const { question } = this.props;
         const { choices } = question;
 
@@ -94,6 +91,7 @@ Row.propTypes = {
         choices: PropTypes.array.isRequired,
     }),
     handleChange: PropTypes.func.isRequired,
+    // no "required" prop
 };
 
 
@@ -146,6 +144,7 @@ class RadioMatrix extends Component {
 }
 
 RadioMatrix.defaultProps = {
+    required: true,
 };
 
 RadioMatrix.propTypes = {
@@ -162,6 +161,7 @@ RadioMatrix.propTypes = {
             choices: PropTypes.array.isRequired,
         })
     ),
+    required: PropTypes.bool,
 };
 
 export default RadioMatrix;
