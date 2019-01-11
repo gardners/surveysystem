@@ -27,7 +27,7 @@ import MultiSelect from './form/MultiSelect';
 import LoadingSpinner from './LoadingSpinner';
 import Alert from './Alert';
 
-import { FormRow, FieldValidator } from './FormHelpers';
+import { FormRow, FieldError } from './FormHelpers';
 
 // devel
 import Dev from './Dev';
@@ -101,7 +101,12 @@ class Survey extends Component {
         const { id } = question;
 
         // Error or csv
-        answers[id] = serializeQuestionAnswer(element, question, ...values);
+        const serialized = serializeQuestionAnswer(element, question, ...values);
+
+        answers[id] = {
+            values,
+            serialized,
+        };
 
         this.setState({
             answers,
@@ -109,7 +114,7 @@ class Survey extends Component {
     }
 
     getFormErrors() {
-        return Object.keys(this.state.answers).filter(answer => answer instanceof Error)
+        return Object.keys(this.state.answers).filter(answer => typeof answer.error !== 'undefined' && answer.error)
     }
 
     ////
@@ -142,18 +147,17 @@ class Survey extends Component {
         const { survey, answers } = this.state;
         this.setState({ loading: 'Sending answer...' });
 
-        //TODO check if errors returned from serializer
         const errors = this.getFormErrors();
         if(errors.length) {
             Log.error(`handleUpdateAnswers: ${errors.length} errors found`);
             return;
         }
 
-        // send current answer(s)
-        // loading while the questions are sent and the next question is not displayed
+        const csvFragments = Object.keys(answers).map(id => answers[id].serialized);
+
         // each answer is a single request, we are bundling them into Promise.all
         Promise.all(
-            Object.keys(answers).map(id => api.updateAnswer(survey.sessionID, answers[id]))
+            csvFragments.map(fragment => api.updateAnswer(survey.sessionID, fragment))
         )
         .then(responses => responses.pop()) // last
         .then(response => survey.add(response.next_questions))
@@ -256,6 +260,7 @@ class Survey extends Component {
                         !this.state.loading && questions.map((question, index) => {
 
                             const answer = this.state.answers[question.id] || null;
+                            const error = (answer && answer.serialized instanceof Error) ? answer.serialized : null;
 
                             switch(question.type) {
 
@@ -267,7 +272,7 @@ class Survey extends Component {
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) }
                                             required />
-                                        <FieldValidator answer={ this.state.answers[question.id] || null } />
+                                        <FieldError error={ error }/>
                                     </FormRow>
 
                                 case 'MULTICHOICE':
@@ -276,7 +281,7 @@ class Survey extends Component {
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) }
                                             required />
-                                        <FieldValidator answer={ answer } />
+                                        <FieldError error={ error }/>
                                     </FormRow>
 
                                 case 'MULTISELECT':
@@ -285,7 +290,7 @@ class Survey extends Component {
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) }
                                             required />
-                                        <FieldValidator answer={ answer } />
+                                        <FieldError error={ error }/>
                                     </FormRow>
 
                                 case 'LATLON':
@@ -295,9 +300,10 @@ class Survey extends Component {
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) }
                                             required />
-                                        <FieldValidator answer={ answer } />
+                                        <FieldError error={ error }/>
                                     </FormRow>
 
+                                // TODO DATETIME
                                 // TODO DAYTIME slider/select
 
                                 case 'TIMERANGE':
@@ -307,7 +313,7 @@ class Survey extends Component {
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) }
                                             required />
-                                        <FieldValidator answer={ answer } />
+                                        <FieldError error={ error }/>
                                     </FormRow>
 
                                 case 'TEXTAREA':
@@ -317,7 +323,7 @@ class Survey extends Component {
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) }
                                             required />
-                                        <FieldValidator answer={ this.state.answers[question.id] || null } />
+                                       <FieldError error={ error }/>
                                     </FormRow>
 
                                 // case TEXT > default
@@ -349,8 +355,7 @@ class Survey extends Component {
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) }
                                             required />
-                                        <FieldValidator answer={ this.state.answers[question.id] || null }
-                                        />
+                                        <FieldError error={ error }/>
                                     </FormRow>
 
                                 case 'PASSWORD':
@@ -360,7 +365,7 @@ class Survey extends Component {
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) }
                                             required />
-                                        <FieldValidator answer={ this.state.answers[question.id] || null } />
+                                        <FieldError error={ error }/>
                                     </FormRow>
 
                                 // TODO SINGLECHOICE
@@ -370,7 +375,7 @@ class Survey extends Component {
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) }
                                             required />
-                                        <FieldValidator answer={ answer } />
+                                        <FieldError error={ error }/>
                                     </FormRow>
 
                                 case 'SINGLESELECT':
@@ -380,7 +385,7 @@ class Survey extends Component {
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) }
                                             required />
-                                        <FieldValidator answer={ this.state.answers[question.id] || null } />
+                                        <FieldError error={ error }/>
                                     </FormRow>
 
                                 default:
@@ -390,7 +395,7 @@ class Survey extends Component {
                                             question={ question }
                                             handleChange={ this.handleChange.bind(this) }
                                             required />
-                                        <FieldValidator answer={ this.state.answers[question.id] || null } />
+                                        <FieldError error={ error }/>
                                     </FormRow>
                             }
 
@@ -431,6 +436,7 @@ class Survey extends Component {
                 <Dev.Pretty label="survey" data={ survey } open={ false }/>
                 <Dev.Pretty label="questions" data={ questions } open={ false }/>
                 <Dev.Pretty label="answers" data={ answers } open={ false }/>
+                <Dev.Pretty label="errors" data={ errors } open={ false }/>
 
             </section>
         );
