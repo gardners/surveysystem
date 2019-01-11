@@ -5,7 +5,7 @@ import { InputGroup } from '../FormHelpers';
 
 const Checkbox = function(props) {
     const { question, value, required } = props;
-
+    const { choices } = question;
     return (
         <div className="form-group form-check">
             <InputGroup prepend={ question.unit }>
@@ -18,7 +18,7 @@ const Checkbox = function(props) {
                     autoComplete="off"
                     required={ required }
                     onChange={ (e) => {
-                        props.handleChange(e.target, question, (e.target.checked) ?  props.choices[1] : props.choices[0]);
+                        props.handleChange(e.target, question, (e.target.checked) ?  choices[1] : choices[0]);
                     } }
                 /><label className="form-check-label" htmlFor={ question.id }>{ question.title }</label>
             </InputGroup>
