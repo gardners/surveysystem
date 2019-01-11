@@ -131,7 +131,7 @@ class Demo extends Component {
                     <Question type={ 'FIXEDPOINT' }   component={ DayTimeSlider }     unit={ this.state.unit }/>
                     <Question type={ 'FIXEDPOINT' }   component={ TimePicker }        unit={ this.state.unit }/>
                     <Question type={ 'MULTICHOICE' }  component={ CheckboxGroup }     unit={ this.state.unit } choices={ ['This', 'That', 'Another one' ] } defaultValue="Maybe"/>
-                    <Question type={ 'SINGLECHOICE' }  component={ RadioGroup }       unit={ this.state.unit } choices={ ['This', 'That', 'Another one' ] } defaultValue="Maybe"/>
+                    <Question type={ 'SINGLECHOICE' } component={ RadioGroup }        unit={ this.state.unit } choices={ ['This', 'That', 'Another one' ] } defaultValue="Maybe"/>
                     <Question type={ 'CHECKBOX' }     component={ Checkbox }          unit={ this.state.unit } choices={ [ 'unchecked value', 'checked value'] }/>
                     <Question type={ 'TEXT' }         component={ RadioGroup }        unit={ this.state.unit } choices={ ['Yes', 'No', 'Maybe' ] } defaultValue="Maybe"/>
                     <Question type={ 'SINGLESELECT' } component={ Select }            unit={ this.state.unit } choices={ ['First', 'Second', 'Third' ] } defaultValue="Second"/>

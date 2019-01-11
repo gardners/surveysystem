@@ -4,8 +4,7 @@ import { Redirect } from 'react-router-dom';
 
 // apis
 import api, { BaseUri } from '../api';
-import { serializeAnswer, mapTypeToField } from '../serializer';
-import { validateAnswer } from '../validator';
+import { serializeQuestionAnswer } from '../serializer';
 import SurveyManager from '../SurveyManager';
 import LocalStorage from '../storage/LocalStorage';
 import Log from '../Log';
@@ -99,37 +98,10 @@ class Survey extends Component {
 
     handleChange(element, question, ...values) {
         const { answers } = this.state;
-        const { id, type } = question;
+        const { id } = question;
 
-        let fn = null;
-        let error = null;
-        let answer = (typeof answers[id] !== 'undefined') ? answers[id].answer : null;
-
-        // check if callback returns an error
-        // validate element constraints
-
-        // validate value
-        error = validateAnswer(element, question, ...values);
-
-        // get serializer callback
-        if(!error)  {
-            fn = mapTypeToField(type);
-        }
-
-        if (fn && fn instanceof Error) {
-            error = fn;
-        }
-
-        if (!error && typeof fn === 'function') {
-            answer = fn(...values);
-        }
-
-        answers[id] = {
-            answer,
-            values,
-            error,
-            question,
-        };
+        // Error or csv
+        answers[id] = serializeQuestionAnswer(element, question, ...values);
 
         this.setState({
             answers,
@@ -137,7 +109,7 @@ class Survey extends Component {
     }
 
     getFormErrors() {
-        return Object.keys(this.state.answers).filter(answer => typeof answer.error !== 'undefined' && answer.error)
+        return Object.keys(this.state.answers).filter(answer => answer instanceof Error)
     }
 
     ////
@@ -171,19 +143,17 @@ class Survey extends Component {
         this.setState({ loading: 'Sending answer...' });
 
         //TODO check if errors returned from serializer
-        const csvFragments = Object.keys(answers).map((id) => {
-            const entry = answers[id];
-            const { answer, question } = entry;
-            const type = question.type;
-            const unit = question.unit;
-            return serializeAnswer(id, answer, type, unit);
-        });
+        const errors = this.getFormErrors();
+        if(errors.length) {
+            Log.error(`handleUpdateAnswers: ${errors.length} errors found`);
+            return;
+        }
 
         // send current answer(s)
         // loading while the questions are sent and the next question is not displayed
         // each answer is a single request, we are bundling them into Promise.all
         Promise.all(
-            Object.keys(csvFragments).map(id => api.updateAnswer(survey.sessionID, csvFragments[id]))
+            Object.keys(answers).map(id => api.updateAnswer(survey.sessionID, answers[id]))
         )
         .then(responses => responses.pop()) // last
         .then(response => survey.add(response.next_questions))
