@@ -78,6 +78,17 @@ const escPattern = new RegExp(`${CSV_SEPARATOR}'"`, 'g');
  */
 
 /**
+ * @typedef QuestionModel
+ * @type {object}
+ * @property {string} id
+ * @property {string} name
+ * @property {string} title
+ * @property {string} title_text
+ * @property {string} type
+ * @property {string} unit
+ */
+
+/**
  * Provides default Model object
  * @returns {AnswerModel}
  */
@@ -366,8 +377,9 @@ const mergeAnswerValue = function(model, id, answer, questionType, unit) {
 };
 
 /**
- * Parses a csv row from a SurveyJS answer instance
+ * Parses a csv row from an answer
  * example format of a row: "question1:gfdsg:0:0:0:0:0:0:0"
+ * TODO: this function is now obsolete
  *
  * @param {string} id question id
  * @param {*} answer answer value to submit
@@ -380,7 +392,7 @@ const serializeAnswerValue = function(id, answer, questionType) {
 };
 
 /**
- * Parses a csv row from a SurveyJS answer instance
+ * Parses a csv row from an mapped answer object
  * example format of a row: "question1:gfdsg:0:0:0:0:0:0:0"
  *
  * @param {string} id question id
@@ -407,4 +419,37 @@ const serializeAnswer = function (id, answer, type, unit) {
     return Object.values(model).join(CSV_SEPARATOR);
 };
 
-export { serializeAnswer, serializeAnswerValue, mapTypeToField, CSV_SEPARATOR };
+/**
+ * Parses a csv row from a SurveyJS answer instance
+ * example format of a row: "question1:gfdsg:0:0:0:0:0:0:0"
+ *
+ * @param {QuestionModel} question
+ * @param {object} answer answer object where keys are matching a model properites and values is the answer value
+ * @returns {(string|Error)}  csv row or Error to be displayed
+ */
+const serializeQuestionAnswer = function (element, question, ...values) {
+
+    const { id, type, unit} = question;
+
+    if(element && typeof element.validity !== 'undefined') {
+        if (!element.validity.valid) {
+            return new Error (element.validationMessage);
+        }
+    }
+
+    const fn = mapTypeToField(type);
+
+    if (fn instanceof Error) {
+       return fn;
+    }
+
+    const answer = fn(...values);
+
+    if (answer instanceof Error) {
+       return answer;
+    }
+
+    return serializeAnswer(id, answer, type, unit);
+};
+
+export { serializeAnswer, serializeAnswerValue, mapTypeToField, serializeQuestionAnswer, CSV_SEPARATOR };
