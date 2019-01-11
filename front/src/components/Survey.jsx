@@ -9,25 +9,15 @@ import SurveyManager from '../SurveyManager';
 import LocalStorage from '../storage/LocalStorage';
 import Log from '../Log';
 
-import TextInput from './form/TextInput';
-import RadioGroup from './form/RadioGroup';
-import CheckboxGroup from './form/CheckboxGroup';
-import Checkbox from './form/Checkbox';
-import GeoLocation from './form/GeoLocation';
-import PeriodRangeSlider from './form/PeriodRangeSlider';
-import NumberInput from './form/NumberInput';
-import Textarea from './form/Textarea';
-import HiddenInput from './form/HiddenInput';
-import EmailInput from './form/EmailInput';
-import PasswordInput from './form/PasswordInput';
-import Select from './form/Select';
-import MultiSelect from './form/MultiSelect';
+import Question from './survey/Question';
+import SurveyButtons from './survey/SurveyButtons';
 
 // components
 import LoadingSpinner from './LoadingSpinner';
 import Alert from './Alert';
-
 import { FormRow, FieldError } from './FormHelpers';
+
+import { Fade } from './Transitions';
 
 // devel
 import Dev from './Dev';
@@ -114,7 +104,8 @@ class Survey extends Component {
     }
 
     getFormErrors() {
-        return Object.keys(this.state.answers).filter(answer => typeof answer.error !== 'undefined' && answer.error)
+        const { answers } = this.state;
+        return Object.keys(answers).filter(key => answers[key] && typeof answers[key].serialized !== 'undefined' && answers[key].serialized instanceof Error)
     }
 
     ////
@@ -233,7 +224,6 @@ class Survey extends Component {
 
         const questions = survey.current();
         const errors = this.getFormErrors();
-        const countAnswers = Object.keys(answers).length;
 
         return (
             <section>
@@ -249,10 +239,10 @@ class Survey extends Component {
                     {
                         /* show if survey is finished but not closed yet */
                         (survey.finished && !survey.closed) ?
-                        <FormRow className="list-group-item text-white bg-success">
-                            <h2> <i className="fas fa-check-circle"></i> Survey completed.</h2>
-                            Thank you for your time!
-                        </FormRow>
+                            <FormRow className="list-group-item text-white bg-success">
+                                <h2> <i className="fas fa-check-circle"></i> Survey completed.</h2>
+                                Thank you for your time!
+                            </FormRow>
                         : null
                     }
 
@@ -262,175 +252,41 @@ class Survey extends Component {
                             const answer = this.state.answers[question.id] || null;
                             const error = (answer && answer.serialized instanceof Error) ? answer.serialized : null;
 
-                            switch(question.type) {
-
-                                case 'INT':
-                                case 'FIXEDPOINT':
-                                    return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
-                                        <NumberInput
-                                            value={ (answer) ? answer.values[0] : null }
-                                            question={ question }
+                            return (
+                                <Fade>
+                                    <FormRow
+                                        key={ index }
+                                        className="list-group-item"
+                                        legend={ question.name }
+                                        description={ question.title_text }
+                                    >
+                                        <Question
                                             handleChange={ this.handleChange.bind(this) }
-                                            required />
-                                        <FieldError error={ error }/>
-                                    </FormRow>
-
-                                case 'MULTICHOICE':
-                                    return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
-                                        <CheckboxGroup
                                             question={ question }
-                                            handleChange={ this.handleChange.bind(this) }
-                                            required />
-                                        <FieldError error={ error }/>
+                                            answer= { answer }
+                                        />
+                                        { (question.type !== 'HIDDEN') ? <FieldError error={ error }/> : null }
                                     </FormRow>
-
-                                case 'MULTISELECT':
-                                    return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
-                                        <MultiSelect
-                                            question={ question }
-                                            handleChange={ this.handleChange.bind(this) }
-                                            required />
-                                        <FieldError error={ error }/>
-                                    </FormRow>
-
-                                case 'LATLON':
-                                    return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
-                                        <GeoLocation
-                                            value={ (answer) ? answer.values : '' }
-                                            question={ question }
-                                            handleChange={ this.handleChange.bind(this) }
-                                            required />
-                                        <FieldError error={ error }/>
-                                    </FormRow>
-
-                                // TODO DATETIME
-                                // TODO DAYTIME slider/select
-
-                                case 'TIMERANGE':
-                                    return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
-                                        <PeriodRangeSlider
-                                            value={ (answer) ? answer.values : '' }
-                                            question={ question }
-                                            handleChange={ this.handleChange.bind(this) }
-                                            required />
-                                        <FieldError error={ error }/>
-                                    </FormRow>
-
-                                case 'TEXTAREA':
-                                    return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
-                                        <Textarea
-                                            value={ (answer) ? answer.values[0] : null }
-                                            question={ question }
-                                            handleChange={ this.handleChange.bind(this) }
-                                            required />
-                                       <FieldError error={ error }/>
-                                    </FormRow>
-
-                                // case TEXT > default
-
-                                // not required!
-                                case 'CHECKBOX':
-                                    return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
-                                        <Checkbox
-                                            question={ question }
-                                            handleChange={ this.handleChange.bind(this) }/>
-                                    </FormRow>
-
-                                // html slide
-                                // no value!
-                                // no validation!
-                                // not required!
-                                case 'HIDDEN':
-                                    return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
-                                        <HiddenInput
-                                            question={ question }
-                                            defaultValue={ question.default_value || 'visited' /* TODO confirm with backend */ }
-                                            handleChange={ this.handleChange.bind(this) } />
-                                    </FormRow>
-
-                                case 'EMAIL':
-                                    return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
-                                        <EmailInput
-                                            value={ (answer) ? answer.values[0] : null }
-                                            question={ question }
-                                            handleChange={ this.handleChange.bind(this) }
-                                            required />
-                                        <FieldError error={ error }/>
-                                    </FormRow>
-
-                                case 'PASSWORD':
-                                    return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
-                                        <PasswordInput
-                                            value={ (answer) ? answer.values[0] : null }
-                                            question={ question }
-                                            handleChange={ this.handleChange.bind(this) }
-                                            required />
-                                        <FieldError error={ error }/>
-                                    </FormRow>
-
-                                // TODO SINGLECHOICE
-                                case 'SINGLECHOICE':
-                                    return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
-                                        <RadioGroup
-                                            question={ question }
-                                            handleChange={ this.handleChange.bind(this) }
-                                            required />
-                                        <FieldError error={ error }/>
-                                    </FormRow>
-
-                                case 'SINGLESELECT':
-                                    return <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
-                                        <Select
-                                            value={ (answer) ? answer.values[0] : null }
-                                            question={ question }
-                                            handleChange={ this.handleChange.bind(this) }
-                                            required />
-                                        <FieldError error={ error }/>
-                                    </FormRow>
-
-                                default:
-                                    return  <FormRow key={ index } className="list-group-item" legend={ question.name } description={ question.title_text }>
-                                        <TextInput
-                                            value={ (answer) ? answer.values[0] : null }
-                                            question={ question }
-                                            handleChange={ this.handleChange.bind(this) }
-                                            required />
-                                        <FieldError error={ error }/>
-                                    </FormRow>
-                            }
-
+                                </Fade>
+                            );
                         })
+
                     }
 
-                    <FormRow className="list-group-item bg-light">
-                        {
-                            (survey.step <= 0 && questions.length) ?
-                                <button type="submit" className="app--btn-arrow btn btn-default btn-primary"
-                                    disabled={ errors.length || !countAnswers }
-                                    onClick={ this.handleUpdateAnswers.bind(this) }>Next Question <i className="fas fa-arrow-circle-right"></i></button>
-                            : null
-                        }
+                    { !this.state.loading && <Fade>
+                            <FormRow className="list-group-item bg-light">
+                                <SurveyButtons
+                                    handlePrev={ this.handleDelAnswer.bind(this)  }
+                                    handleNext={ this.handleUpdateAnswers.bind(this) }
+                                    handleFinish={ this.handleFinishSurvey.bind(this) }
 
-                        {
-                            (!survey.finished && survey.step > 0 && questions.length) ?
-                            <div>
-                                <button type="submit" className="app--btn-arrow btn btn-default"
-                                    onClick={ this.handleDelAnswer.bind(this) }><i className="fas fa-arrow-circle-left"></i> Previous Question</button>
-                                <button type="submit" className="app--btn-arrow btn btn-default btn-primary"
-                                    disabled={ errors.length || !countAnswers }
-                                    onClick={ this.handleUpdateAnswers.bind(this) }>Next Question <i className="fas fa-arrow-circle-right"></i></button>
-                            </div>
-                            : null
-                        }
-
-                        {
-                            (survey.finished) ?
-                            <button type="submit" className="btn btn-default btn-primary"
-                                onClick={ this.handleFinishSurvey.bind(this) }>Finish Survey</button>
-                            : null
-                        }
-                    </FormRow>
-
+                                    isFirst={ survey.step <= 0 }
+                                    isFinished={ survey.finished }
+                                    hasErrors={ errors.length > 0 }
+                                />
+                            </FormRow>
+                        </Fade>
+                     }
                 </form>
 
                 <Dev.Pretty label="survey" data={ survey } open={ false }/>
