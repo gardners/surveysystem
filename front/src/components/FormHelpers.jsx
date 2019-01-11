@@ -74,36 +74,15 @@ const FieldError = function(props) {
     );
 };
 
+FieldError.defaultProps = {
+    error: null,
+};
+
 FieldError.propTypes = {
     error: PropTypes.oneOfType([
         PropTypes.string,
         PropTypes.instanceOf(Error),
-        PropTypes.array,
     ]),
 };
 
-const FieldValidator = function(props) {
-    const error = (props.answer) ? props.answer.error : '';
-
-    if(!error) {
-        return (null);
-    }
-
-    return(
-        <FieldError error={error}/ >
-    );
-};
-
-FieldValidator.propTypes = {
-    answer: PropTypes.shape({
-        answer: PropTypes.any,
-        error: PropTypes.oneOfType([
-            PropTypes.string,
-            PropTypes.instanceOf(Error),
-            PropTypes.array,
-        ]),
-        question: PropTypes.object,
-    }),
-};
-
-export { FormRow, InputGroup, FieldError, FieldValidator };
+export { FormRow, InputGroup, FieldError };

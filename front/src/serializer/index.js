@@ -49,7 +49,7 @@ const CSV_SEPARATOR = ':';
 /**
  * Regex for sanitizing csv string values
  * @const
- * @type {sRegExp}
+ * @type {RegExp}
  */
 const escPattern = new RegExp(`${CSV_SEPARATOR}'"`, 'g');
 // example build: console.log(new RegExp([CSV_SEPARATOR, '\'', '"'].join(''), 'g'));
@@ -71,9 +71,21 @@ const escPattern = new RegExp(`${CSV_SEPARATOR}'"`, 'g');
  * @property {number} time_end - timeperiod answer (end) in seconds, type: number (INT)
  * @property {number} time_zone_delta - timeperiod timzone offset in seconds, type: number (INT)
  * @property {number} dst_delta - distance(?), type: number (INT)
+ * @property {string} unit - answer unit
 
  * @see backend/src/question_types.c
  * @see backend/src/deserialise_parse_field.c
+ */
+
+/**
+ * @typedef QuestionModel
+ * @type {object}
+ * @property {string} id
+ * @property {string} name
+ * @property {string} title
+ * @property {string} title_text
+ * @property {string} type
+ * @property {string} unit
  */
 
 /**
@@ -104,7 +116,7 @@ const getModel = function() {
 /**
  * Maps backend question types to corresponding model fields
  * @property {string} questionType
- * @returns {string[]}
+ * @returns {(string[]|Error} mergable subset of {AnswerModel} or Error
  */
 const mapTypeToField = function(questionType) {
     switch(questionType) {
@@ -255,7 +267,7 @@ const castFloat = function(val) {
  * Parse and validate string
  * @param {string} val already sanitized string
  *
- * @returns {(sting|Error)}
+ * @returns {(string|Error)}
  */
 const castString = function(text) {
     if (!text) {
@@ -365,8 +377,9 @@ const mergeAnswerValue = function(model, id, answer, questionType, unit) {
 };
 
 /**
- * Parses a csv row from a SurveyJS answer instance
+ * Parses a csv row from an answer
  * example format of a row: "question1:gfdsg:0:0:0:0:0:0:0"
+ * TODO: this function is now obsolete
  *
  * @param {string} id question id
  * @param {*} answer answer value to submit
@@ -379,12 +392,12 @@ const serializeAnswerValue = function(id, answer, questionType) {
 };
 
 /**
- * Parses a csv row from a SurveyJS answer instance
+ * Parses a csv row from an mapped answer object
  * example format of a row: "question1:gfdsg:0:0:0:0:0:0:0"
  *
  * @param {string} id question id
  * @param {object} answer answer object where keys are matching a model properites and values is the answer value
- * @returns {{string|Error)}  csv row or Error to be displayed
+ * @returns {(string|Error)}  csv row or Error to be displayed
  */
 const serializeAnswer = function (id, answer, type, unit) {
     let model = getModel();
@@ -406,4 +419,37 @@ const serializeAnswer = function (id, answer, type, unit) {
     return Object.values(model).join(CSV_SEPARATOR);
 };
 
-export { serializeAnswer, serializeAnswerValue, mapTypeToField, CSV_SEPARATOR };
+/**
+ * Parses a csv row from a SurveyJS answer instance
+ * example format of a row: "question1:gfdsg:0:0:0:0:0:0:0"
+ *
+ * @param {QuestionModel} question
+ * @param {object} answer answer object where keys are matching a model properites and values is the answer value
+ * @returns {(string|Error)}  csv row or Error to be displayed
+ */
+const serializeQuestionAnswer = function (element, question, ...values) {
+
+    const { id, type, unit} = question;
+
+    if(element && typeof element.validity !== 'undefined') {
+        if (!element.validity.valid) {
+            return new Error (element.validationMessage);
+        }
+    }
+
+    const fn = mapTypeToField(type);
+
+    if (fn instanceof Error) {
+       return fn;
+    }
+
+    const answer = fn(...values);
+
+    if (answer instanceof Error) {
+       return answer;
+    }
+
+    return serializeAnswer(id, answer, type, unit);
+};
+
+export { serializeAnswer, serializeAnswerValue, mapTypeToField, serializeQuestionAnswer, CSV_SEPARATOR };
