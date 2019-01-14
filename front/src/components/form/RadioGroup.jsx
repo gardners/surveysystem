@@ -26,9 +26,9 @@ class RadioGroup extends Component {
 
         return (
             <div className="form-group">
-                <label> { question.title } { question.unit && <em>({ question.unit })</em> }</label>
+                <label> { question.title } { question.unit && <em>({ question.unit })</em> }</label><br />
                 { choices.map((value, index) => {
-                    return <div key={index} className="radio">
+                    return <div key={index} className="radio form-check form-check-inline">
                         <label>
                             <input
                                 type="radio"
