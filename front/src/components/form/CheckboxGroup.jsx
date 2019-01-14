@@ -32,10 +32,10 @@ class CheckboxGroup extends Component {
         const { choices } = question;
 
         return (
-            <div className="form-group form-check">
-                <label> { question.title } { question.unit && <em>({ question.unit })</em> }</label>
+            <div className="form-group">
+                <label> { question.title } { question.unit && <em>({ question.unit })</em> }</label><br />
                 { choices.map((value, index) => {
-                    return <div key={index} className="radio">
+                    return <div key={index} className="radio form-check form-check-inline">
                         <input
                             type="checkbox"
                             className="form-check-input"
@@ -44,7 +44,6 @@ class CheckboxGroup extends Component {
                             value={ value }
                             onChange={ this.handleChange.bind(this)}
                             checked={  this.state.values.indexOf(value) > -1 }
-                            required={ required }
                             />
                         <label className="form-check-label">{ value }</label>
                     </div>
