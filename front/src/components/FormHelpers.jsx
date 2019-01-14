@@ -69,7 +69,7 @@ const FieldError = function(props) {
 
     return(
         <div className="text-danger">
-            { (typeof error === 'string') ? props.error : props.error.toString() }
+            <small>{ (typeof error === 'string') ? props.error : props.error.toString() }</small>
         </div>
     );
 };
