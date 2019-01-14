@@ -24,8 +24,17 @@ const SurveyButtons = function(props) {
     const nextIconClass = (props.hasErrors) ? 'fas fa-ban' : 'fas fa-arrow-circle-right';
     const prevIconClass = (props.hasErrors) ? 'fas fa-ban' : 'fas fa-arrow-circle-left';
 
-    if (props.isFirst) {
+    if (!props.hasAnswers) {
+        return (
+            <React.Fragment>
+                <button type="submit" className="app--btn-arrow btn btn-default btn-primary"
+                    disabled={ true }
+                    onClick={ props.handleNext }>Next Question <i className={ nextIconClass }></i></button>
+            </React.Fragment>
+        );
+    }
 
+    if (props.isFirst) {
         return (
             <React.Fragment>
                 <HasErrors has={ props.hasErrors } />
@@ -72,6 +81,7 @@ SurveyButtons.propTypes = {
     isFirst: PropTypes.bool.isRequired,
     isFinished: PropTypes.bool.isRequired,
     hasErrors: PropTypes.bool.isRequired,
+    hasAnswers: PropTypes.bool.isRequired,
 };
 
 export default SurveyButtons;
