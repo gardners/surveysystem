@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { FormRow } from './FormHelpers';
+import { FormRow, FieldError } from './FormHelpers';
 
 // form elements
 import GeoLocation from './form/GeoLocation';
@@ -21,7 +21,7 @@ import HiddenInput from './form/HiddenInput';
 import EmailInput from './form/EmailInput';
 import PasswordInput from './form/PasswordInput';
 
-import { serializeAnswer, mapTypeToField } from '../serializer';
+import { serializeQuestionAnswer } from '../serializer';
 
 const Pre = function(props) {
 
@@ -52,18 +52,8 @@ class Question extends Component {
     }
 
     handleChange(element, question, ...values) {
-
-        const fn = mapTypeToField(question.type);
-        let answer;
-
-        if (fn instanceof Error) {
-            answer = fn;
-        } else {
-            answer = fn(...values);
-        }
-
         const updated = this.state.values;
-        updated[question.id] = serializeAnswer(question.id, answer);
+        updated[question.id] = serializeQuestionAnswer(element, question, ...values);
 
         this.setState({
             values: updated,
@@ -73,9 +63,11 @@ class Question extends Component {
     render() {
         const { props } = this;
         const { values, unit } = this.state;
+
         const hasAnswers = Object.keys(values).length > 0;
 
         const Component = props.component;
+        const value = values[Component.name] || '';
 
         const question =  {
             id: Component.name,
@@ -92,11 +84,10 @@ class Question extends Component {
         return (
             <div className="card mb-1" >
                 <FormRow className="card-body" legend={ question.name } description={ question.title_text }>
-
                     <Component
                         { ...this.props } question={ question } handleChange={ this.handleChange.bind(this) }
                     />
-
+                    <FieldError error={ (value instanceof Error) ? value : null }/>
                 </FormRow>
 
                 <div className="card-footer text-muted">
