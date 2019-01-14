@@ -253,9 +253,8 @@ class Survey extends Component {
                             const error = (answer && answer.serialized instanceof Error) ? answer.serialized : null;
 
                             return (
-                                <Fade>
+                                <Fade key={ index }>
                                     <FormRow
-                                        key={ index }
                                         className="list-group-item"
                                         legend={ question.name }
                                         description={ question.title_text }
@@ -283,6 +282,7 @@ class Survey extends Component {
                                     isFirst={ survey.step <= 0 }
                                     isFinished={ survey.finished }
                                     hasErrors={ errors.length > 0 }
+                                    hasAnswers={ Object.keys(answers).length > 0 }
                                 />
                             </FormRow>
                         </Fade>
