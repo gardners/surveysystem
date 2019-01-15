@@ -1,4 +1,4 @@
-import DisplayGroups, { getGroupId } from '../DisplayGroups';
+import { makeDisplayGroups, getGroupId } from '../DisplayGroups';
 
 const makeQuestion = function(id) {
     return {
@@ -56,41 +56,40 @@ describe('getGroupId', () => {
 
 });
 
-describe('DisplayGroups', () => {
+describe('makeDisplayGroups', () => {
 
-    test('constructor', () => {
-        let qq;
+    test('make', () => {
+        let groups;
 
-        qq = new DisplayGroups([
+        groups = makeDisplayGroups([
             makeQuestion('test1'),
             makeQuestion('test2'),
         ]);
         // console.log(JSON.stringify(qq, null, 2));
 
-        expect(qq.groups[0].length).toBe(1);
-        expect(qq.groups[0][0].id).toBe('test1');
+        expect(groups[0].length).toBe(1);
+        expect(groups[0][0].id).toBe('test1');
 
-        expect(qq.groups[1].length).toBe(1);
-        expect(qq.groups[1][0].id).toBe('test2');
+        expect(groups[1].length).toBe(1);
+        expect(groups[1][0].id).toBe('test2');
 
-        qq = new DisplayGroups([
+        groups = makeDisplayGroups([
             makeQuestion('test_0'),
             makeQuestion('test__1'),
             makeQuestion('test__2'),
             makeQuestion('test_1'),
         ]);
 
-        expect(qq.groups[0].length).toBe(1);
-        expect(qq.groups[0][0].id).toBe('test_0');
+        expect(groups[0].length).toBe(1);
+        expect(groups[0][0].id).toBe('test_0');
 
         //grouped
-        expect(qq.groups[1].length).toBe(2);
-        expect(qq.groups[1][0].id).toBe('test__1');
-        expect(qq.groups[1][1].id).toBe('test__2');
+        expect(groups[1].length).toBe(2);
+        expect(groups[1][0].id).toBe('test__1');
+        expect(groups[1][1].id).toBe('test__2');
 
-        expect(qq.groups[2].length).toBe(1);
-        expect(qq.groups[2][0].id).toBe('test_1');
+        expect(groups[2].length).toBe(1);
+        expect(groups[2][0].id).toBe('test_1');
     });
-
 
 });
