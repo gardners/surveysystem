@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import Question from '../../Question';
+
 const Thead = function(props) {
 
     const { question } = props;
@@ -17,16 +19,7 @@ const Thead = function(props) {
 };
 
 Thead.propTypes = {
-    question: PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        name: PropTypes.string.isRequired,
-        title: PropTypes.string.isRequired,
-        title_text: PropTypes.string.isRequired,
-        type: PropTypes.string.isRequired,
-        unit: PropTypes.string.isRequired,
-        // eunum
-        choices: PropTypes.array.isRequired,
-    }),
+    question: Question.propTypes(true).isRequired,
 };
 
 
@@ -80,16 +73,7 @@ Row.defaultProps = {
 
 
 Row.propTypes = {
-    question: PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        name: PropTypes.string.isRequired,
-        title: PropTypes.string.isRequired,
-        title_text: PropTypes.string.isRequired,
-        type: PropTypes.string.isRequired,
-        unit: PropTypes.string.isRequired,
-        // eunum
-        choices: PropTypes.array.isRequired,
-    }),
+    question: Question.propTypes(true).isRequired,
     handleChange: PropTypes.func.isRequired,
     // no "required" prop
 };
@@ -150,16 +134,7 @@ RadioMatrix.defaultProps = {
 RadioMatrix.propTypes = {
     handleChange: PropTypes.func.isRequired,
     questionGroup: PropTypes.arrayOf(
-        PropTypes.shape({
-            id: PropTypes.string.isRequired,
-            name: PropTypes.string.isRequired,
-            title: PropTypes.string.isRequired,
-            title_text: PropTypes.string.isRequired,
-            type: PropTypes.string.isRequired,
-            unit: PropTypes.string.isRequired,
-            // eunum
-            choices: PropTypes.array.isRequired,
-        })
+        Question.propTypes(true)
     ),
     required: PropTypes.bool,
 };

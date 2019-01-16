@@ -4,6 +4,8 @@ import PropTypes from 'prop-types';
 import InputRange from 'react-input-range';
 import './PeriodRangeSlider.scss';
 
+import Question from '../../Question';
+
 const DaySec = 86400; // 24 hours
 
 // bg gradient
@@ -110,18 +112,11 @@ PeriodRangeSlider.defaultProps = {
 
 PeriodRangeSlider.propTypes = {
     handleChange: PropTypes.func.isRequired,
-    question: PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        name: PropTypes.string.isRequired,
-        title: PropTypes.string.isRequired,
-        title_text: PropTypes.string.isRequired,
-        type: PropTypes.string.isRequired,
-        unit: PropTypes.string.isRequired,
+    question: Question.propTypes().isRequired,
 
-        timeBeginLabel: PropTypes.string,
-        timeEndLabel: PropTypes.string,
-    }).isRequired,
     required: PropTypes.bool,
+    timeBeginLabel: PropTypes.string,
+    timeEndLabel: PropTypes.string,
 };
 
 export default PeriodRangeSlider;

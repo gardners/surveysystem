@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import { InputGroup } from '../FormHelpers';
+import Question from '../../Question';
 
 const Select = function(props) {
     const { question } = props;
@@ -36,16 +37,7 @@ Select.defaultProps = {
 
 Select.propTypes = {
     handleChange: PropTypes.func.isRequired,
-    question: PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        name: PropTypes.string.isRequired,
-        title: PropTypes.string.isRequired,
-        title_text: PropTypes.string.isRequired,
-        type: PropTypes.string.isRequired,
-        unit: PropTypes.string.isRequired,
-        // eunum
-        choices: PropTypes.array.isRequired,
-    }).isRequired,
+    question: Question.propTypes(true).isRequired,
     required: PropTypes.bool,
 };
 
