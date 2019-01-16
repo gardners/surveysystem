@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import Question from '../../Question';
+
 class CheckboxGroup extends Component {
     constructor(props) {
         super(props);
@@ -28,7 +30,7 @@ class CheckboxGroup extends Component {
     }
 
     render() {
-        const { question, required } = this.props;
+        const { question } = this.props;
         const { choices } = question;
 
         return (
@@ -59,15 +61,7 @@ CheckboxGroup.defaultProps = {
 
 CheckboxGroup.propTypes = {
     handleChange: PropTypes.func.isRequired,
-    question: PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        name: PropTypes.string.isRequired,
-        title: PropTypes.string.isRequired,
-        title_text: PropTypes.string.isRequired,
-        type: PropTypes.string.isRequired,
-        // eunum
-        choices: PropTypes.array.isRequired,
-    }).isRequired,
+    question: Question.propTypes(true).isRequired,
     required: PropTypes.bool,
 };
 
