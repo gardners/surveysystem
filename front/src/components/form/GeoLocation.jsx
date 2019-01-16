@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { FieldError, InputGroup } from '../FormHelpers';
+import Question from '../../Question';
 
 const supports = typeof navigator !== 'undefined' && 'geolocation' in navigator;
 
@@ -117,14 +118,7 @@ GeoLocation.defaultProps = {
 GeoLocation.propTypes = {
     handleChange: PropTypes.func.isRequired,
     withButton: PropTypes.bool,
-    question: PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        name: PropTypes.string.isRequired,
-        title: PropTypes.string.isRequired,
-        title_text: PropTypes.string.isRequired,
-        type: PropTypes.string.isRequired,
-        unit: PropTypes.string.isRequired,
-    }).isRequired,
+    question: Question.propTypes().isRequired,
     required: PropTypes.bool,
     placeholder: PropTypes.string,
 };

@@ -9,6 +9,8 @@ import 'rc-time-picker/assets/index.css';
 import { InputGroup } from '../FormHelpers';
 import './TimePicker.scss';
 
+import Question from '../../Question';
+
 const format = 'h:mm a';
 
 const seconds = function(m) {
@@ -51,14 +53,7 @@ TimePicker.defaultProps = {
 
 TimePicker.propTypes = {
     handleChange: PropTypes.func.isRequired,
-    question: PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        name: PropTypes.string.isRequired,
-        title: PropTypes.string.isRequired,
-        title_text: PropTypes.string.isRequired,
-        type: PropTypes.string.isRequired,
-        unit: PropTypes.string.isRequired,
-    }).isRequired,
+    question: Question.propTypes().isRequired,
     required: PropTypes.bool,
 
     // rc-time-picker props
