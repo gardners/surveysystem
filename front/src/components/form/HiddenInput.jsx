@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import Question from '../../Question';
+
 // no Inputgroup
 
 class HiddenInput extends Component {
@@ -35,14 +37,7 @@ HiddenInput.defaultProps = {
 
 HiddenInput.propTypes = {
     handleChange: PropTypes.func.isRequired,
-    question: PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        name: PropTypes.string.isRequired,
-        title: PropTypes.string.isRequired,
-        title_text: PropTypes.string.isRequired,
-        type: PropTypes.string.isRequired,
-        unit: PropTypes.string.isRequired,
-    }).isRequired,
+    question: Question.propTypes().isRequired,
     // no "required"prop
 
     // custom
