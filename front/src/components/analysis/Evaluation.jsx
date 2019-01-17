@@ -44,7 +44,7 @@ const Condition = function(props) {
     const category = DirtyJson.get(condition, 'category');
     const classification = DirtyJson.get(condition, 'classification');
     const recommendation = DirtyJson.get(condition, 'recommendation');
-console.log(recommendation);
+
     const displayResults = DirtyJson.get(condition, 'displayResults', {});
     const additionalInsights = DirtyJson.get(displayResults, 'additionalInsights', []);
     const sleepConditions = DirtyJson.get(displayResults, 'sleepConditions', {});
