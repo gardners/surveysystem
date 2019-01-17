@@ -16,6 +16,7 @@ beforeAll(() => {
                 title_text: 'q1',
                 type: 'TEXT',
                 choices: [ 'choice1', 'choice2' ],
+                unit: '',
             } }
             handleChange= { () => {} } />,
     );

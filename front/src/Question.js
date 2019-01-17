@@ -2,6 +2,10 @@ import PropTypes from 'prop-types';
 
 export default {
 
+    /**
+    * Get Proptypes schema
+    * @returns {PropTypes}
+    */
     propTypes: function (withChoices = false) {
         return PropTypes.shape({
             id: PropTypes.string.isRequired,

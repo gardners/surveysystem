@@ -9,7 +9,7 @@ import SurveyManager from '../SurveyManager';
 import LocalStorage from '../storage/LocalStorage';
 import Log from '../Log';
 
-import  { createDisplayGroups } from '../DisplayGroups';
+import  { createQuestionGroups } from '../QuestionGroup';
 
 import SurveyForm from './survey/SurveyForm';
 import QuestionGroup from './survey/QuestionGroup';
@@ -224,7 +224,7 @@ class Survey extends Component {
 
         const questions = survey.current();
         const errors = this.getFormErrors();
-        const groups = createDisplayGroups(questions);
+        const groups = createQuestionGroups(questions);
 
         return (
             <section>

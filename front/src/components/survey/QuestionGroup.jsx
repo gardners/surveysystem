@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import QuestionModel from '../../Question';
+import { matrixState, propTypes } from '../../QuestionGroup';
 import Question from './Question';
 
 import { FormRow, FieldError } from '../FormHelpers';
@@ -12,22 +12,25 @@ import { FormRow, FieldError } from '../FormHelpers';
 
 const QuestionGroup = function(props) {
     const { questionGroup, handleChange, answers } = props;
+
     return (
         <React.Fragment>
             {
-                questionGroup.map((question) => {
-
+                questionGroup.map((question, index) => {
                     const answer = answers[question.id] || null;
                     const error = (answer && answer.serialized instanceof Error) ? answer.serialized : null;
 
+                    const mState = matrixState(index, questionGroup);
+
                     return (
                         <FormRow
-                            key={ question.id }
+                            key={ index }
                             className="list-group-item"
                             legend={ question.name }
                             description={ question.title_text }
                         >
                             <Question
+                                matrix={ mState }
                                 handleChange={ handleChange }
                                 question={ question }
                                 answer= { answer }
@@ -46,9 +49,7 @@ QuestionGroup.defaultProps = {
 
 QuestionGroup.propTypes = {
     handleChange: PropTypes.func.isRequired,
-    questionGroup: PropTypes.arrayOf(
-        QuestionModel.propTypes(),
-    ).isRequired,
+    questionGroup: propTypes().isRequired,
 };
 
 export default QuestionGroup;
