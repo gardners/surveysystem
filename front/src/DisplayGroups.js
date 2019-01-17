@@ -19,7 +19,7 @@ const getGroupId = function(id) {
  * @returns {array[]} two dimensional arraus of groups and containing question objects
  */
 
-const makeDisplayGroups = function(questions) {
+const createDisplayGroups = function(questions) {
     const groups = [];
 
     let lastid = '';
@@ -50,4 +50,4 @@ const makeDisplayGroups = function(questions) {
     return groups;
 };
 
-export { makeDisplayGroups, getGroupId };
+export { createDisplayGroups, getGroupId };

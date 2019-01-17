@@ -24,4 +24,4 @@ Card.propTypes = {
     icon:  PropTypes.object, //component
 };
 
-export { Card };
+export default Card;
