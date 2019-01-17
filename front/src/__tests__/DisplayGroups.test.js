@@ -1,4 +1,4 @@
-import { makeDisplayGroups, getGroupId } from '../DisplayGroups';
+import { createDisplayGroups, getGroupId } from '../DisplayGroups';
 
 const makeQuestion = function(id) {
     return {
@@ -56,12 +56,12 @@ describe('getGroupId', () => {
 
 });
 
-describe('makeDisplayGroups', () => {
+describe('createDisplayGroups', () => {
 
     test('make', () => {
         let groups;
 
-        groups = makeDisplayGroups([
+        groups = createDisplayGroups([
             makeQuestion('test1'),
             makeQuestion('test2'),
         ]);
@@ -73,7 +73,7 @@ describe('makeDisplayGroups', () => {
         expect(groups[1].length).toBe(1);
         expect(groups[1][0].id).toBe('test2');
 
-        groups = makeDisplayGroups([
+        groups = createDisplayGroups([
             makeQuestion('test_0'),
             makeQuestion('test__1'),
             makeQuestion('test__2'),
