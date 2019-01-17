@@ -10,6 +10,7 @@ import DayTimeSlider from './form/DayTimeSlider';
 import CheckboxGroup from './form/CheckboxGroup';
 import Checkbox from './form/Checkbox';
 import RadioGroup from './form/RadioGroup';
+import RadioMatrixRow from './form/RadioMatrixRow';
 import TextInput from './form/TextInput';
 import NumberInput from './form/NumberInput';
 import Textarea from './form/Textarea';
@@ -167,8 +168,12 @@ class Demo extends Component {
                             }
                         ]}
                     />
-                    <Question type={ 'EMAIL' }       component={ EmailInput }           unit={ this.state.unit }/>
-                    <Question type={ 'PASSWORD' }    component={ PasswordInput }        unit={ this.state.unit }/>
+                    <Question type={ 'SINGLECHOICE' } id='Group1__1' component={ RadioMatrixRow } matrixState={ [false, true] } unit={ this.state.unit } choices={ '123456789'.split('') } defaultValue="3"/>
+                    <Question type={ 'SINGLECHOICE' } id='Group2__1' component={ RadioMatrixRow } matrixState={ [true, true] } unit={ this.state.unit } choices={ '123456789'.split('') } defaultValue="3"/>
+                    <Question type={ 'SINGLECHOICE' } id='Group3__1' component={ RadioMatrixRow } matrixState={ [true, false] } unit={ this.state.unit } choices={ '123456789'.split('') } defaultValue="3"/>
+
+                    <Question type={ 'EMAIL' }        component={ EmailInput }           unit={ this.state.unit }/>
+                    <Question type={ 'PASSWORD' }     component={ PasswordInput }        unit={ this.state.unit }/>
                 </div>
             </section>
         );
