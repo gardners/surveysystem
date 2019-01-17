@@ -1,6 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import { FormRow } from '../FormHelpers';
+
 const HasErrors = function(props) {
     if (!props.has) {
         return (null);
@@ -26,36 +28,36 @@ const SurveyButtons = function(props) {
 
     if (!props.hasAnswers) {
         return (
-            <React.Fragment>
+            <FormRow>
                 <button type="submit" className="app--btn-arrow btn btn-default btn-primary"
                     disabled={ true }
                     onClick={ props.handleNext }>Next Question <i className={ nextIconClass }></i></button>
-            </React.Fragment>
+            </FormRow>
         );
     }
 
     if (props.isFirst) {
         return (
-            <React.Fragment>
+            <FormRow>
                 <HasErrors has={ props.hasErrors } />
                 <button type="submit" className="app--btn-arrow btn btn-default btn-primary"
                     disabled={ props.hasErrors }
                     onClick={ props.handleNext }>Next Question <i className={ nextIconClass }></i></button>
-            </React.Fragment>
+            </FormRow>
         );
     }
 
     if (props.isFinished) {
         return (
-            <React.Fragment>
+            <FormRow>
                 <button type="submit" className="btn btn-default btn-primary"
                     onClick={ props.handleFinish }>Finish Survey</button>
-            </React.Fragment>
+            </FormRow>
         );
     }
 
     return (
-        <React.Fragment>
+        <FormRow>
             <HasErrors has={ props.hasErrors} />
             <button type="submit" className="app--btn-arrow btn btn-default"
                 onClick={ props.handlePrev }>
@@ -66,7 +68,7 @@ const SurveyButtons = function(props) {
                 onClick={ props.handleNext }>
                 Next Question <i className={ nextIconClass } />
             </button>
-        </React.Fragment>
+        </FormRow>
     );
 };
 

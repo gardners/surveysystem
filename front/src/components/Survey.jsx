@@ -9,15 +9,15 @@ import SurveyManager from '../SurveyManager';
 import LocalStorage from '../storage/LocalStorage';
 import Log from '../Log';
 
-import Question from './survey/Question';
-import SurveyButtons from './survey/SurveyButtons';
+import  { createDisplayGroups } from '../DisplayGroups';
+
+import SurveyForm from './survey/SurveyForm';
+import QuestionGroup from './survey/QuestionGroup';
 
 // components
 import LoadingSpinner from './LoadingSpinner';
+import Card from './bootstrap/Card';
 import Alert from './Alert';
-import { FormRow, FieldError } from './FormHelpers';
-
-import { Fade } from './Transitions';
 
 // devel
 import Dev from './Dev';
@@ -224,6 +224,7 @@ class Survey extends Component {
 
         const questions = survey.current();
         const errors = this.getFormErrors();
+        const groups = createDisplayGroups(questions);
 
         return (
             <section>
@@ -233,61 +234,48 @@ class Survey extends Component {
                 <LoadingSpinner loading={ this.state.loading } message={ this.state.loading }/>
                 { this.state.alerts.map((entry, index) => <Alert key={ index } severity={ entry.severity } message={ entry.message } />) }
 
-                <form id={ Date.now() /*trickout autofill*/ } className="list-group">
-                    <input type="hidden" value={ Date.now() /*trick autofill*/ } />
+                {
+                    /* show if survey is finished but not closed yet */
+                    (survey.finished && !survey.closed) ?
+                        <Card>
+                            <h2> <i className="fas fa-check-circle"></i> Survey completed.</h2>
+                            Thank you for your time!
+                        </Card>
+                    : null
+                }
 
+                {
+                    /* show if survey is finished but not closed yet */
+                    (survey.finished && !survey.closed) ?
+                        <Card className="text-white bg-success">
+                            <h2> <i className="fas fa-check-circle"></i> Survey completed.</h2>
+                            Thank you for your time!
+                        </Card>
+                    : null
+                }
+
+                <SurveyForm
+                    show={ !this.state.loading }
+                    handlePrev={ this.handleDelAnswer.bind(this) }
+                    handleNext={ this.handleUpdateAnswers.bind(this) }
+                    handleFinish={ this.handleFinishSurvey.bind(this) }
+
+                    isFirst={ survey.step <= 0 }
+                    isFinished={ survey.finished }
+                    hasErrors={ errors.length > 0 }
+                    hasAnswers={ Object.keys(answers).length > 0 }
+                >
                     {
-                        /* show if survey is finished but not closed yet */
-                        (survey.finished && !survey.closed) ?
-                            <FormRow className="list-group-item text-white bg-success">
-                                <h2> <i className="fas fa-check-circle"></i> Survey completed.</h2>
-                                Thank you for your time!
-                            </FormRow>
-                        : null
-                    }
-
-                    {
-                        !this.state.loading && questions.map((question, index) => {
-
-                            const answer = this.state.answers[question.id] || null;
-                            const error = (answer && answer.serialized instanceof Error) ? answer.serialized : null;
-
-                            return (
-                                <Fade key={ index }>
-                                    <FormRow
-                                        className="list-group-item"
-                                        legend={ question.name }
-                                        description={ question.title_text }
-                                    >
-                                        <Question
-                                            handleChange={ this.handleChange.bind(this) }
-                                            question={ question }
-                                            answer= { answer }
-                                        />
-                                        { (question.type !== 'HIDDEN') ? <FieldError error={ error }/> : null }
-                                    </FormRow>
-                                </Fade>
-                            );
+                        groups.map((questionGroup, index) => {
+                            return <QuestionGroup
+                                key={ index }
+                                handleChange={ this.handleChange.bind(this) }
+                                questionGroup={ questionGroup }
+                                answers={ answers }
+                            />
                         })
-
                     }
-
-                    { !this.state.loading && <Fade>
-                            <FormRow className="list-group-item bg-light">
-                                <SurveyButtons
-                                    handlePrev={ this.handleDelAnswer.bind(this)  }
-                                    handleNext={ this.handleUpdateAnswers.bind(this) }
-                                    handleFinish={ this.handleFinishSurvey.bind(this) }
-
-                                    isFirst={ survey.step <= 0 }
-                                    isFinished={ survey.finished }
-                                    hasErrors={ errors.length > 0 }
-                                    hasAnswers={ Object.keys(answers).length > 0 }
-                                />
-                            </FormRow>
-                        </Fade>
-                     }
-                </form>
+                </SurveyForm>
 
                 <Dev.Pretty label="survey" data={ survey } open={ false }/>
                 <Dev.Pretty label="questions" data={ questions } open={ false }/>
