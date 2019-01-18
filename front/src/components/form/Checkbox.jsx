@@ -21,7 +21,8 @@ const Checkbox = function(props) {
                     onChange={ (e) => {
                         props.handleChange(e.target, question, (e.target.checked) ?  choices[1] : choices[0]);
                     } }
-                /><label className="form-check-label" htmlFor={ question.id }>{ question.title }</label>
+                />
+                <label className="form-check-label" htmlFor={ question.id }>{ question.title }</label>
             </InputGroup>
         </div>
     );
