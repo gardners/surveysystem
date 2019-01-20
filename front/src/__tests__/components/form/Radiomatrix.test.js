@@ -9,7 +9,7 @@ let component;
 beforeAll(() => {
     component = renderer.create(
         <RadioMatrix
-            questionGroup={ [{
+            questions={ [{
                 id: 'q1',
                 name: 'q1',
                 title: 'q1',
