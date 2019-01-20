@@ -1,4 +1,4 @@
-import { createQuestionGroups, getGroupId } from '../QuestionGroup';
+import { createQuestionGroups, getGroupId } from '../Questions';
 
 const makeQuestion = function(id) {
     return {
