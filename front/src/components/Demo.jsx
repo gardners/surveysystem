@@ -10,7 +10,6 @@ import DayTimeSlider from './form/DayTimeSlider';
 import CheckboxGroup from './form/CheckboxGroup';
 import Checkbox from './form/Checkbox';
 import RadioGroup from './form/RadioGroup';
-import RadioMatrixRow from './form/RadioMatrixRow';
 import TextInput from './form/TextInput';
 import NumberInput from './form/NumberInput';
 import Textarea from './form/Textarea';
@@ -132,12 +131,12 @@ class Demo extends Component {
                     <Question type={ 'INT' }          component={ NumberInput }       unit={ this.state.unit }/>
                     <Question type={ 'TEXT' }         component={ Textarea }          unit={ this.state.unit }/>
                     <Question type={ 'FIXEDPOINT' }   component={ RadioMatrix }       unit={ this.state.unit }
-                        questionGroup={[
+                        questions={ [
                             {
                                 id: 'question1',
                                 name: 'question1',
                                 type: 'FIXEDPOINT',
-                                title: 'Question 1',
+                                title: '1',
                                 title_text: 'Question 1 text',
                                 choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
                                 unit: this.state.unit,
@@ -145,7 +144,7 @@ class Demo extends Component {
                                 id: 'question2',
                                 name: 'question2',
                                 type: 'FIXEDPOINT',
-                                title: 'Question 2',
+                                title: 'Questionfghhd 2',
                                 title_text: 'Question 2 text',
                                 choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
                                 unit: this.state.unit,
@@ -166,12 +165,8 @@ class Demo extends Component {
                                 choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
                                 unit: this.state.unit,
                             }
-                        ]}
+                        ] }
                     />
-                    <Question type={ 'SINGLECHOICE' } id='Group1__1' component={ RadioMatrixRow } matrixState={ [false, true] } unit={ this.state.unit } choices={ '123456789'.split('') } defaultValue="3"/>
-                    <Question type={ 'SINGLECHOICE' } id='Group2__1' component={ RadioMatrixRow } matrixState={ [true, true] } unit={ this.state.unit } choices={ '123456789'.split('') } defaultValue="3"/>
-                    <Question type={ 'SINGLECHOICE' } id='Group3__1' component={ RadioMatrixRow } matrixState={ [true, false] } unit={ this.state.unit } choices={ '123456789'.split('') } defaultValue="3"/>
-
                     <Question type={ 'EMAIL' }        component={ EmailInput }           unit={ this.state.unit }/>
                     <Question type={ 'PASSWORD' }     component={ PasswordInput }        unit={ this.state.unit }/>
                 </div>
