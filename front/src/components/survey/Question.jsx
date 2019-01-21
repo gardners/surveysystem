@@ -1,6 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import QuestionModel from '../../Question';
+
 import TextInput from '../form/TextInput';
 import RadioGroup from '../form/RadioGroup';
 import CheckboxGroup from '../form/CheckboxGroup';
@@ -19,9 +21,7 @@ import MultiSelect from '../form/MultiSelect';
  * Render Previous/Next/Finish buttos
  * The component should not contain survey logic or handle complex data. It merely recieves a number of flags from the parent component
  */
-const Question = function(props) {
-
-    const { question, answer, handleChange } = props;
+const Question = function({ question, answer, handleChange }) {
 
     switch (question.type) {
 
@@ -182,22 +182,14 @@ Question.defaultProps = {
 
 Question.propTypes = {
     handleChange: PropTypes.func.isRequired,
-    question: PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        name: PropTypes.string.isRequired,
-        title: PropTypes.string.isRequired,
-        title_text: PropTypes.string.isRequired,
-        type: PropTypes.string.isRequired,
-        unit: PropTypes.string.isRequired,
-    }).isRequired,
-
+    question: QuestionModel.propTypes().isRequired,
     answer: PropTypes.shape({
         values: PropTypes.any,
         serialized: PropTypes.oneOfType([
             PropTypes.string,
             PropTypes.instanceOf(Error),
         ])
-     }),
+    }),
 };
 
 export default Question;

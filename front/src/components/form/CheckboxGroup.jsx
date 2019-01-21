@@ -46,7 +46,7 @@ class CheckboxGroup extends Component {
                             value={ value }
                             onChange={ this.handleChange.bind(this)}
                             checked={  this.state.values.indexOf(value) > -1 }
-                            />
+                        />
                         <label className="form-check-label">{ value }</label>
                     </div>
                 }) }

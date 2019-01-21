@@ -31,17 +31,16 @@ class RadioGroup extends Component {
                 <label> { question.title } { question.unit && <em>({ question.unit })</em> }</label><br />
                 { choices.map((value, index) => {
                     return <div key={index} className="radio form-check form-check-inline">
-                        <label>
                             <input
                                 type="radio"
                                 name={ question.name }
+                                className="form-check-input"
                                 id={ question.id }
                                 value={ value }
                                 onChange={ this.handleChange.bind(this)}
                                 checked={ value === this.state.value }
-                                />
-                            { value }
-                        </label>
+                            />
+                            <label className="form-check-label">{ value }</label>
                     </div>
                 }) }
             </div>
