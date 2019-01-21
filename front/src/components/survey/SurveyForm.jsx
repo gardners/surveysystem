@@ -10,25 +10,25 @@ const SurveyForm = function(props) {
     }
 
     return (
-        <form id={ Date.now() /*trickout autofill*/ } className="list-group">
-            <input type="hidden" value={ Date.now() /*trick autofill*/ } />
+        <Fade>
+            <form id={ Date.now() /*trickout autofill*/ } className="list-group">
+                <input type="hidden" value={ Date.now() /*trick autofill*/ } />
+                {
+                    /* inputs */
+                    props.children
+                }
+                <SurveyButtons
+                    handlePrev={ props.handlePrev }
+                    handleNext={ props.handleNext }
+                    handleFinish={ props.handleFinish }
 
-            {
-                /* question groups */
-                props.children.map((component, index) =>  <Fade key={ index }>{ component }</Fade>)
-            }
-
-            <SurveyButtons
-                handlePrev={ props.handlePrev }
-                handleNext={ props.handleNext }
-                handleFinish={ props.handleFinish }
-
-                isFirst={ props.isFirst }
-                isFinished={ props.isFinished }
-                hasErrors={ props.hasErrors }
-                hasAnswers={ props.hasAnswers }
-            />
-        </form>
+                    isFirst={ props.isFirst }
+                    isFinished={ props.isFinished }
+                    hasErrors={ props.hasErrors }
+                    hasAnswers={ props.hasAnswers }
+                />
+            </form>
+        </Fade>
     );
 };
 

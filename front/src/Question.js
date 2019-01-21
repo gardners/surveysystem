@@ -1,7 +1,6 @@
 import PropTypes from 'prop-types';
 
 export default {
-
     /**
     * Get Proptypes schema
     * @returns {PropTypes}
