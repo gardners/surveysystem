@@ -5,7 +5,6 @@ import QuestionModel from '../../Question';
 
 import TextInput from '../form/TextInput';
 import RadioGroup from '../form/RadioGroup';
-import RadioMatrixRow from '../form/RadioMatrixRow';
 import CheckboxGroup from '../form/CheckboxGroup';
 import Checkbox from '../form/Checkbox';
 import GeoLocation from '../form/GeoLocation';
@@ -22,7 +21,7 @@ import MultiSelect from '../form/MultiSelect';
  * Render Previous/Next/Finish buttos
  * The component should not contain survey logic or handle complex data. It merely recieves a number of flags from the parent component
  */
-const Question = function({ question, answer, handleChange, matrixState }) {
+const Question = function({ question, answer, handleChange }) {
 
     switch (question.type) {
 
@@ -145,18 +144,6 @@ const Question = function({ question, answer, handleChange, matrixState }) {
         // TODO SINGLECHOICE
         case 'SINGLECHOICE':
 
-            if(matrixState[0] || matrixState[1]) {
-                return (
-                    <RadioMatrixRow
-                        isFirst={ matrixState[0] }
-                        isLast={ matrixState[1] }
-                        question={ question }
-                        handleChange={ handleChange }
-                        required
-                    />
-                );
-            }
-
             return (
                 <RadioGroup
                     question={ question }
@@ -191,7 +178,6 @@ const Question = function({ question, answer, handleChange, matrixState }) {
 
 Question.defaultProps = {
     answer: null,
-    matrixState: [false, false],
 };
 
 Question.propTypes = {
@@ -204,10 +190,6 @@ Question.propTypes = {
             PropTypes.instanceOf(Error),
         ])
     }),
-    matrixState: PropTypes.arrayOf([
-        PropTypes.bool.isRequired,
-        PropTypes.bool.isRequired,
-    ]),
 };
 
 export default Question;
