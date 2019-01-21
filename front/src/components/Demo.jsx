@@ -131,12 +131,12 @@ class Demo extends Component {
                     <Question type={ 'INT' }          component={ NumberInput }       unit={ this.state.unit }/>
                     <Question type={ 'TEXT' }         component={ Textarea }          unit={ this.state.unit }/>
                     <Question type={ 'FIXEDPOINT' }   component={ RadioMatrix }       unit={ this.state.unit }
-                        questionGroup={[
+                        questions={ [
                             {
                                 id: 'question1',
                                 name: 'question1',
                                 type: 'FIXEDPOINT',
-                                title: 'Question 1',
+                                title: '1',
                                 title_text: 'Question 1 text',
                                 choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
                                 unit: this.state.unit,
@@ -144,7 +144,7 @@ class Demo extends Component {
                                 id: 'question2',
                                 name: 'question2',
                                 type: 'FIXEDPOINT',
-                                title: 'Question 2',
+                                title: 'Questionfghhd 2',
                                 title_text: 'Question 2 text',
                                 choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
                                 unit: this.state.unit,
@@ -165,10 +165,10 @@ class Demo extends Component {
                                 choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
                                 unit: this.state.unit,
                             }
-                        ]}
+                        ] }
                     />
-                    <Question type={ 'EMAIL' }       component={ EmailInput }           unit={ this.state.unit }/>
-                    <Question type={ 'PASSWORD' }    component={ PasswordInput }        unit={ this.state.unit }/>
+                    <Question type={ 'EMAIL' }        component={ EmailInput }           unit={ this.state.unit }/>
+                    <Question type={ 'PASSWORD' }     component={ PasswordInput }        unit={ this.state.unit }/>
                 </div>
             </section>
         );

@@ -9,10 +9,8 @@ import SurveyManager from '../SurveyManager';
 import LocalStorage from '../storage/LocalStorage';
 import Log from '../Log';
 
-import  { createDisplayGroups } from '../DisplayGroups';
-
 import SurveyForm from './survey/SurveyForm';
-import QuestionGroup from './survey/QuestionGroup';
+import Questions from './survey/Questions';
 
 // components
 import LoadingSpinner from './LoadingSpinner';
@@ -224,7 +222,6 @@ class Survey extends Component {
 
         const questions = survey.current();
         const errors = this.getFormErrors();
-        const groups = createDisplayGroups(questions);
 
         return (
             <section>
@@ -255,7 +252,7 @@ class Survey extends Component {
                 }
 
                 <SurveyForm
-                    show={ !this.state.loading }
+                    show={ questions.length > 0 && !this.state.loading }
                     handlePrev={ this.handleDelAnswer.bind(this) }
                     handleNext={ this.handleUpdateAnswers.bind(this) }
                     handleFinish={ this.handleFinishSurvey.bind(this) }
@@ -265,16 +262,11 @@ class Survey extends Component {
                     hasErrors={ errors.length > 0 }
                     hasAnswers={ Object.keys(answers).length > 0 }
                 >
-                    {
-                        groups.map((questionGroup, index) => {
-                            return <QuestionGroup
-                                key={ index }
-                                handleChange={ this.handleChange.bind(this) }
-                                questionGroup={ questionGroup }
-                                answers={ answers }
-                            />
-                        })
-                    }
+                    <Questions
+                        handleChange={ this.handleChange.bind(this) }
+                        questions={ questions }
+                        answers={ answers }
+                    />
                 </SurveyForm>
 
                 <Dev.Pretty label="survey" data={ survey } open={ false }/>

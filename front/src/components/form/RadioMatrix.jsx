@@ -103,8 +103,8 @@ class RadioMatrix extends Component {
     }
 
     render() {
-        const { questionGroup } =  this.props;
-        const first = questionGroup[0] || null;
+        const { questions, handleChange } = this.props;
+        const first = questions[0] || null;
 
         return (
             <div className="form-group">
@@ -114,10 +114,10 @@ class RadioMatrix extends Component {
                         <Thead question={ first } />
                     </thead>
                     <tbody>
-                        { questionGroup.map(question => <Row
+                        { questions.map(question => <Row
                                 key={ question.id }
                                 question={ question }
-                                handleChange={ this.props.handleChange }
+                                handleChange={ handleChange }
                         />) }
                     </tbody>
                 </table>
@@ -133,7 +133,7 @@ RadioMatrix.defaultProps = {
 
 RadioMatrix.propTypes = {
     handleChange: PropTypes.func.isRequired,
-    questionGroup: PropTypes.arrayOf(
+    questions: PropTypes.arrayOf(
         Question.propTypes(true)
     ),
     required: PropTypes.bool,
