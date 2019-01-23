@@ -97,4 +97,5 @@ export {
     isScalar,
     DirtyJson,
     camelToNormal,
+    isArray,
 };

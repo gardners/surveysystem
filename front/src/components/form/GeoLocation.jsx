@@ -69,7 +69,7 @@ class GeoLocation extends Component {
                 error: null,
             });
 
-            this.props.handleChange(e.target, question, coords.latitude, coords.longitude);
+            this.props.handleChange((e) ? e.target : null, question, coords.latitude, coords.longitude);
         })
         .catch(err => this.setState({
             value: '',
@@ -81,9 +81,7 @@ class GeoLocation extends Component {
         const { question } = this.props;
         const { value } = this.state;
         return (
-            <div className="form-group">
-                <label htmlFor={ question.id }>{ question.title }</label>
-
+            <React.Fragment>
                 <InputGroup prepend={ question.unit }>
                     <input
                         readOnly
@@ -101,10 +99,8 @@ class GeoLocation extends Component {
                             </div>
                     }
                 </InputGroup>
-
                 { <FieldError error={ this.state.error } /> }
-
-            </div>
+            </React.Fragment>
         );
     }
 }

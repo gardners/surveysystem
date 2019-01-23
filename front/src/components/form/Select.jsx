@@ -9,25 +9,22 @@ const Select = function(props) {
     const { choices } = question;
 
     return (
-        <div className="form-group">
-            <label htmlFor={ question.id }>{ question.title }</label>
-            <InputGroup prepend={ question.unit }>
-                <select
-                    id={ question.id }
-                    name={ question.name }
-                    className="form-control"
-                    onChange={ (e) => {
-                        const { value } = e.target;
-                        props.handleChange(e.target, question, value);
-                    } }>
+        <InputGroup prepend={ question.unit }>
+            <select
+                id={ question.id }
+                name={ question.name }
+                className="form-control"
+                onChange={ (e) => {
+                    const { value } = e.target;
+                    props.handleChange(e.target, question, value);
+                } }>
 
-                    { choices.map((value, index) => {
-                        return <option key={ index } value={ value }>{ value }</option>
-                    }) }
+                { choices.map((value, index) => {
+                    return <option key={ index } value={ value }>{ value }</option>
+                }) }
 
-                </select>
-            </InputGroup>
-        </div>
+            </select>
+        </InputGroup>
     );
 }
 

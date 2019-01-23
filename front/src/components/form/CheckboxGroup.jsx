@@ -34,23 +34,24 @@ class CheckboxGroup extends Component {
         const { choices } = question;
 
         return (
-            <div className="form-group">
-                <label> { question.title } { question.unit && <em>({ question.unit })</em> }</label><br />
-                { choices.map((value, index) => {
-                    return <div key={index} className="radio form-check form-check-inline">
-                        <input
-                            type="checkbox"
-                            className="form-check-input"
-                            name={ question.name }
-                            id={ question.id }
-                            value={ value }
-                            onChange={ this.handleChange.bind(this)}
-                            checked={  this.state.values.indexOf(value) > -1 }
-                        />
-                        <label className="form-check-label">{ value }</label>
-                    </div>
-                }) }
-            </div>
+            <React.Fragment>
+                {
+                    choices.map((value, index) => {
+                        return <div key={index} className="radio form-check form-check-inline">
+                            <input
+                                type="checkbox"
+                                className="form-check-input"
+                                name={ question.name }
+                                id={ question.id }
+                                value={ value }
+                                onChange={ this.handleChange.bind(this)}
+                                checked={  this.state.values.indexOf(value) > -1 }
+                            />
+                            <label className="form-check-label">{ value }</label>
+                        </div>
+                    })
+                }
+            </React.Fragment>
         );
     }
 }

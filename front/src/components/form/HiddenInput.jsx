@@ -17,15 +17,13 @@ class HiddenInput extends Component {
     render() {
         const { question, defaultValue } = this.props;
         return (
-            <div className="form-group">
-                <input
-                    id={ question.id }
-                    name={ question.name }
-                    type="hidden"
-                    autoComplete="off"
-                    defaultValue={ defaultValue }
-                />
-            </div>
+            <input
+                id={ question.id }
+                name={ question.name }
+                type="hidden"
+                autoComplete="off"
+                defaultValue={ defaultValue }
+            />
         );
     }
 };
