@@ -20,12 +20,11 @@ const SurveyForm = function(props) {
                 <SurveyButtons
                     handlePrev={ props.handlePrev }
                     handleNext={ props.handleNext }
-                    handleFinish={ props.handleFinish }
 
                     isFirst={ props.isFirst }
-                    isFinished={ props.isFinished }
                     hasErrors={ props.hasErrors }
                     hasAnswers={ props.hasAnswers }
+                    hasAllAnswers={ props.hasAllAnswers }
                 />
             </form>
         </Fade>
@@ -38,12 +37,11 @@ SurveyForm.propTypes = {
     show: PropTypes.bool.isRequired,
     handleNext: PropTypes.func.isRequired,
     handlePrev: PropTypes.func.isRequired,
-    handleFinish: PropTypes.func.isRequired,
 
     isFirst: PropTypes.bool.isRequired,
-    isFinished: PropTypes.bool.isRequired,
     hasErrors: PropTypes.bool.isRequired,
     hasAnswers: PropTypes.bool.isRequired,
+    hasAllAnswers: PropTypes.bool.isRequired,
 };
 
 export default SurveyForm;

@@ -27,8 +27,7 @@ class RadioGroup extends Component {
         const { choices } = question;
 
         return (
-            <div className="form-group">
-                <label> { question.title } { question.unit && <em>({ question.unit })</em> }</label><br />
+            <React.Fragment>
                 { choices.map((value, index) => {
                     return <div key={index} className="radio form-check form-check-inline">
                             <input
@@ -43,7 +42,7 @@ class RadioGroup extends Component {
                             <label className="form-check-label">{ value }</label>
                     </div>
                 }) }
-            </div>
+            </React.Fragment>
         );
     }
 }

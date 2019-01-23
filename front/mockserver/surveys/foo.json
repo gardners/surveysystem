@@ -34,15 +34,6 @@
             }]
         }, {
             "next_questions": [{
-                "id": "q2",
-                "name": "q2",
-                "title": "Question 2",
-                "title_text": "Your Hitchhiker's Guide to the Galaxy password",
-                "type": "TEXT",
-                "unit": ""
-            }]
-        }, {
-            "next_questions": [{
                 "id": "q3",
                 "name": "q3",
                 "title": "Question 3",

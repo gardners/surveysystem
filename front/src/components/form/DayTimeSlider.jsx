@@ -66,28 +66,24 @@ class DayTimeSlider extends Component {
     }
 
     render() {
-        const { question } = this.props;
         const { value } = this.state;
 
         return (
-            <div className="form-group daytime-range">
-                <label> { question.title } { question.unit && <em>({ question.unit })</em> }</label>
-                <div style={ wrapperStyle }>
-                    <div className={ this.props.className } style={ tableStyle }>
-                        <div style={ cellStyle(0) }><i className="fas fa-moon"></i></div>
-                        <div style={ cellStyle(50) }><i className="fas fa-sun"></i></div>
-                        <div style={ cellStyle(100) }><i className="fas fa-moon"></i></div>
-                    </div>
-                    <InputRange
-                        className=""
-                        minValue={ 0 }
-                        maxValue={ DaySec }
-                        value={ value }
-                        onChange={ this.handleChange.bind(this) }
-                        formatLabel={ val => prettyHours(val) }
-                        step= { this.props.step }
-                    />
+            <div style={ wrapperStyle }>
+                <div className={ this.props.className } style={ tableStyle }>
+                    <div style={ cellStyle(0) }><i className="fas fa-moon"></i></div>
+                    <div style={ cellStyle(50) }><i className="fas fa-sun"></i></div>
+                    <div style={ cellStyle(100) }><i className="fas fa-moon"></i></div>
                 </div>
+                <InputRange
+                    className=""
+                    minValue={ 0 }
+                    maxValue={ DaySec }
+                    value={ value }
+                    onChange={ this.handleChange.bind(this) }
+                    formatLabel={ val => prettyHours(val) }
+                    step= { this.props.step }
+                />
             </div>
         );
     }
