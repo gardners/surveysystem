@@ -2,6 +2,7 @@
  * @module surveyJS answer object to backend csv row parser
  *
  */
+import { isArray, isScalar } from '../Utils';
 
 const { isFinite } = Number; //not Math!
 
@@ -136,7 +137,7 @@ const mapTypeToField = function(questionType) {
         case 'MULTICHOICE':
         case 'MULTISELECT':
             return (text) => {
-                if (Object.prototype.toString.call(text) === '[object Array]') {
+                if (isArray(text)) {
                     text = text.map(v => v.replace(',' , '\,')).join(','); // eslint-disable-line no-useless-escape
                 }
 
@@ -403,7 +404,12 @@ const serializeAnswer = function (id, answer, type, unit) {
     let model = getModel();
     let key;
 
-    if(Object.prototype.toString.call(answer) !== '[object Object]') {
+    if(isArray(answer)) {
+        return new Error('Missing answer');
+    }
+
+    const empties = ['', null, undefined, NaN, Infinity];
+    if(empties.indexOf(answer) > -1) {
         return new Error('Missing answer');
     }
 
