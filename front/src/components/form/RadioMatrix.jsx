@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import Question from '../../Question';
-
+//TODO, required, error
 const Thead = function(props) {
 
     const { question } = props;
@@ -107,8 +107,7 @@ class RadioMatrix extends Component {
         const first = questions[0] || null;
 
         return (
-            <div className="form-group">
-                <div className="table-responsive">
+            <div className="table-responsive">
                 <table className="table table-sm table-hover">
                     <thead>
                         <Thead question={ first } />
@@ -121,7 +120,6 @@ class RadioMatrix extends Component {
                         />) }
                     </tbody>
                 </table>
-                </div>
             </div>
         );
     }

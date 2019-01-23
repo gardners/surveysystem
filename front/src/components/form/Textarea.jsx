@@ -8,23 +8,20 @@ const Textarea = function(props) {
     const { question, placeholder } = props;
 
     return (
-        <div className="form-group">
-            <label htmlFor={ question.id }>{ question.title }</label>
-            <InputGroup prepend={ question.unit }>
-                <textarea
-                    id={ question.id }
-                    name={ question.name }
-                    type="text"
-                    className="form-control"
-                    placeholder={ placeholder }
-                    autoComplete="off"
-                    onChange={ (e) => {
-                        const { value } = e.target;
-                        props.handleChange(e.target, question, value);
-                    } }
-                />
-            </InputGroup>
-        </div>
+        <InputGroup prepend={ question.unit }>
+            <textarea
+                id={ question.id }
+                name={ question.name }
+                type="text"
+                className="form-control"
+                placeholder={ placeholder }
+                autoComplete="off"
+                onChange={ (e) => {
+                    const { value } = e.target;
+                    props.handleChange(e.target, question, value);
+                } }
+            />
+        </InputGroup>
     );
 };
 

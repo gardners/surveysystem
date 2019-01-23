@@ -22,25 +22,22 @@ const TimePicker = function(props) {
 
     const { question, handleChange } = props;
     return (
-        <div className="form-group">
-            <label htmlFor={ question.id }>{ question.title }</label>
-            <InputGroup prepend={ question.unit }>
-                <RcTimePicker
-                    id={ question.id }
-                    name={ question.name }
-                    showSecond={ false }
-                    defaultValue={ moment(0) }
-                    className="form-control"
-                    onChange={ (m) => {
-                        const value = seconds(m);
-                        handleChange(null, question, value);
-                    } }
-                    format={ format }
-                    use12Hours
-                    inputReadOnly
-                />
-            </InputGroup>
-        </div>
+        <InputGroup prepend={ question.unit }>
+            <RcTimePicker
+                id={ question.id }
+                name={ question.name }
+                showSecond={ false }
+                defaultValue={ moment(0) }
+                className="form-control"
+                onChange={ (m) => {
+                    const value = seconds(m);
+                    handleChange(null, question, value);
+                } }
+                format={ format }
+                use12Hours
+                inputReadOnly
+            />
+        </InputGroup>
     );
 
 };
