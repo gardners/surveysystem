@@ -19,6 +19,12 @@ import MultiSelect from '../form/MultiSelect';
 
 import { FormGroup, FormLabel, FormControl, FieldError } from '../FormHelpers';
 
+/**
+ * Fetches form component for a given question type
+ * @param {string} questionType
+ *
+ * @returns {function} React Component
+ */
 const getComponentByType = function(questionType = 'TEXT') {
 
     switch (questionType) {
@@ -77,11 +83,24 @@ const getComponentByType = function(questionType = 'TEXT') {
 
 };
 
+/**
+ * Extracts potential Error from answer object
+ * @param {object} answer object, consisting of 'value' and 'serialized' properties
+ *
+ * @returns {null|Error}
+ */
 const getError = function(answer) {
     return (answer && answer.serialized instanceof Error) ? answer.serialized : null;
 };
 
+/**
+ * compiles an object of bootstrap class names for wrappers
+ * @param {string} questionType
+ *
+ * @returns {object}
+ */
 const getApperanceClasses = function(appearance) {
+
 
     const classNames = {
         formGroup: 'row',
@@ -106,12 +125,12 @@ const getApperanceClasses = function(appearance) {
  */
 const Question = function({ question, answer, handleChange, component, appearance, ...componentProps } ) {
 
+    // fetch form control component and handle special cases
+    const Component = (component && typeof component === 'function') ? component : getComponentByType(question.type);
+
     // appearance classes
     // @see https://getbootstrap.com/docs/4.2/components/forms/#layout
     const classes = getApperanceClasses(appearance);
-
-    // fetch form control component and handle special cases
-    const Component = (component && typeof component === 'function') ? component : getComponentByType(question.type);
 
     if(Component.name === 'HiddenInput') {
         return (
