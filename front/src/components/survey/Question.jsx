@@ -17,167 +17,140 @@ import PasswordInput from '../form/PasswordInput';
 import Select from '../form/Select';
 import MultiSelect from '../form/MultiSelect';
 
-/**
- * Render Previous/Next/Finish buttos
- * The component should not contain survey logic or handle complex data. It merely recieves a number of flags from the parent component
- */
-const Question = function({ question, answer, handleChange }) {
+import { FormGroup, FormLabel, FormControl, FieldError } from '../FormHelpers';
 
-    switch (question.type) {
+const getComponentByType = function(questionType = 'TEXT') {
+
+    switch (questionType) {
 
         case 'INT':
         case 'FIXEDPOINT':
-
-            return (
-                <NumberInput
-                    value={ (answer) ? answer.values[0] : null }
-                    question={ question }
-                    handleChange={ handleChange }
-                    required
-                />
-            );
+            return NumberInput;
 
         case 'MULTICHOICE':
-
-            return (
-                <CheckboxGroup
-                    question={ question }
-                    handleChange={ handleChange }
-                    required
-                />
-            );
+            return CheckboxGroup;
 
         case 'MULTISELECT':
-
-            return (
-                <MultiSelect
-                    question={ question }
-                    handleChange={ handleChange }
-                    required
-                />
-            );
+            return MultiSelect;
 
         case 'LATLON':
-
-            return (
-                <GeoLocation
-                    value={ (answer) ? answer.values : '' }
-                    question={ question }
-                    handleChange={ handleChange }
-                    required
-                />
-            );
+            return GeoLocation;
 
         // TODO DATETIME
         // TODO DAYTIME slider/select
 
         case 'TIMERANGE':
-
-            return (
-                <PeriodRangeSlider
-                    value={ (answer) ? answer.values : '' }
-                    question={ question }
-                    handleChange={ handleChange }
-                    required
-                />
-            );
+            return PeriodRangeSlider;
 
         case 'TEXTAREA':
-
-            return (
-                <Textarea
-                    value={ (answer) ? answer.values[0] : null }
-                    question={ question }
-                    handleChange={ handleChange }
-                    required
-                />
-            );
+            return Textarea;
 
         // case TEXT > default
 
         // not required!
         case 'CHECKBOX':
-
-            return (
-                <Checkbox
-                    question={ question }
-                    handleChange={ handleChange }
-                />
-            );
+            return Checkbox;
 
         // html slide
         // no value!
         // no validation!
         // not required!
         case 'HIDDEN':
-
-            return (
-                <HiddenInput
-                    question={ question }
-                    defaultValue={ question.default_value || 'visited' /* TODO confirm with backend */ }
-                    handleChange={ handleChange }
-                />
-            );
+            return HiddenInput;
 
         case 'EMAIL':
-
-            return (
-                <EmailInput
-                    value={ (answer) ? answer.values[0] : null }
-                    question={ question }
-                    handleChange={ handleChange }
-                    required
-                />
-            );
+            return EmailInput;
 
         case 'PASSWORD':
-
-            return (
-                <PasswordInput
-                    value={ (answer) ? answer.values[0] : null }
-                    question={ question }
-                    handleChange={ handleChange }
-                    required
-                />
-            );
+            return PasswordInput;
 
         // TODO SINGLECHOICE
         case 'SINGLECHOICE':
-
-            return (
-                <RadioGroup
-                    question={ question }
-                    handleChange={ handleChange }
-                    required
-                />
-            );
+            return RadioGroup;
 
         case 'SINGLESELECT':
-
-            return (
-                <Select
-                    value={ (answer) ? answer.values[0] : null }
-                    question={ question }
-                    handleChange={ handleChange }
-                    required
-                />
-            );
+            return Select;
 
         default:
+            return TextInput;
+    }
 
-            return  (
-                <TextInput
+};
+
+const getError = function(answer) {
+    return (answer && answer.serialized instanceof Error) ? answer.serialized : null;
+};
+
+const getApperanceClasses = function(appearance) {
+
+    const classNames = {
+        formGroup: 'row',
+        label: 'col-sm-3 col-form-label',
+        control: 'col-sm-9',
+    };
+
+    switch(appearance) {
+        case 'matrix':
+            classNames.formGroup += ' border';
+        break;
+
+        default:
+            // nothing
+    }
+
+    return classNames;
+};
+/**
+ * Render Previous/Next/Finish buttos
+ * The component should not contain survey logic or handle complex data. It merely recieves a number of flags from the parent component
+ */
+const Question = function({ question, answer, handleChange, component, appearance, ...componentProps } ) {
+
+    // appearance classes
+    // @see https://getbootstrap.com/docs/4.2/components/forms/#layout
+    const classes = getApperanceClasses(appearance);
+
+    // fetch form control component and handle special cases
+    const Component = (component && typeof component === 'function') ? component : getComponentByType(question.type);
+
+    if(Component.name === 'HiddenInput') {
+        return (
+            <Component
+                { ...componentProps }
+                value={ (answer) ? answer.values[0] : null }
+                question={ question }
+                handleChange={ handleChange }
+                defaultValue={ question.default_value || 'visited' /* TODO confirm with backend */ }
+                required
+            />
+        );
+    }
+
+    return (
+        <FormGroup className={ classes.group }>
+            <FormLabel className={ classes.label }>{ question.title }</FormLabel>
+            <FormControl className={ classes.control }>
+
+                <Component
+                    { ...componentProps }
                     value={ (answer) ? answer.values[0] : null }
                     question={ question }
                     handleChange={ handleChange }
                     required
                 />
-            );
-    }
+
+            </FormControl>
+            <FieldError error={ getError(answer) } />
+        </FormGroup>
+    );
+
 };
 
 Question.defaultProps = {
     answer: null,
+    appearance: 'default',
+    component: null,
+    classNames: {},
 };
 
 Question.propTypes = {
@@ -190,6 +163,15 @@ Question.propTypes = {
             PropTypes.instanceOf(Error),
         ])
     }),
+
+    component: PropTypes.func,
+    appearance: PropTypes.oneOf([
+        'default',
+        'inline',
+        'matrix'
+    ]),
+    classNames: PropTypes.object,
+    // ...and component specific props
 };
 
-export default Question;
+export { Question as default, getComponentByType };
