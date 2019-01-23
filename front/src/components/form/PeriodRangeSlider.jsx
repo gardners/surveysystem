@@ -83,7 +83,6 @@ class PeriodRangeSlider extends Component {
         const { question } = this.props;
 
         return (
-            <div className="form-group">
             <div style={ wrapperStyle }>
                 <div className={ this.props.className } style={ tableStyle }>
                     <div style={ cellStyle(0)}><i className="fas fa-moon text-white"></i></div>
@@ -98,7 +97,6 @@ class PeriodRangeSlider extends Component {
                     onChange={ this.handleChange.bind(this) }
                     formatLabel={ val => prettyHours(val) }
                 />
-            </div>
             </div>
         );
     }
