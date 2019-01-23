@@ -6,16 +6,23 @@ import { Redirect } from 'react-router-dom';
 import api, { BaseUri } from '../api';
 import { serializeQuestionAnswer } from '../serializer';
 import SurveyManager from '../SurveyManager';
+import  { mapQuestionGroups } from '../Question';
+import  { isArray } from '../Utils';
+
 import LocalStorage from '../storage/LocalStorage';
 import Log from '../Log';
 
+// form components
 import SurveyForm from './survey/SurveyForm';
-import Questions from './survey/Questions';
+import Question from './survey/Question';
+import QuestionGroup from './survey/QuestionGroup';
+import { FormRow } from './FormHelpers';
 
-// components
+// misc components
 import LoadingSpinner from './LoadingSpinner';
 import Card from './bootstrap/Card';
 import Alert from './Alert';
+
 
 // devel
 import Dev from './Dev';
@@ -154,6 +161,7 @@ class Survey extends Component {
             loading: '',
             survey,
             alerts: [], // clear previous alerts
+            answers: {}, // clear previous alerts
         }))
         .then(() => LocalStorage.set(CACHE_KEY, survey))
         .catch(err => this.alert(err));
@@ -192,14 +200,17 @@ class Survey extends Component {
         this.setState({ loading: 'Fetching results...' });
 
         api.finishSurvey(survey.sessionID)
-        .then(evaluation => this.setState({
-            loading: '',
-            survey,
-            answers: {}, // clear previous answers
-            alerts: [], // clear previous alerts
-            evaluation, // TODO remove
-        }))
-        .then(() => survey.close())
+        .then((evaluation) => {
+            survey.close();
+            this.setState({
+                loading: '',
+                survey,
+                answers: {}, // clear previous answers
+                alerts: [], // clear previous alerts
+                evaluation, // TODO remove
+            });
+            return true;
+        })
         .then(() => LocalStorage.delete(CACHE_KEY))
         .catch(err => this.alert(err));
     }
@@ -221,6 +232,8 @@ class Survey extends Component {
         }
 
         const questions = survey.current();
+        const withGroups = mapQuestionGroups(questions);
+
         const errors = this.getFormErrors();
 
         return (
@@ -236,17 +249,9 @@ class Survey extends Component {
                     (survey.finished && !survey.closed) ?
                         <Card>
                             <h2> <i className="fas fa-check-circle"></i> Survey completed.</h2>
-                            Thank you for your time!
-                        </Card>
-                    : null
-                }
-
-                {
-                    /* show if survey is finished but not closed yet */
-                    (survey.finished && !survey.closed) ?
-                        <Card className="text-white bg-success">
-                            <h2> <i className="fas fa-check-circle"></i> Survey completed.</h2>
-                            Thank you for your time!
+                            <p>Thank you for your time!</p>
+                            <button type="submit" className="btn btn-default btn-primary"
+                                onClick={ this.handleFinishSurvey.bind(this) }>Finish Survey</button>
                         </Card>
                     : null
                 }
@@ -255,18 +260,47 @@ class Survey extends Component {
                     show={ questions.length > 0 && !this.state.loading }
                     handlePrev={ this.handleDelAnswer.bind(this) }
                     handleNext={ this.handleUpdateAnswers.bind(this) }
-                    handleFinish={ this.handleFinishSurvey.bind(this) }
 
                     isFirst={ survey.step <= 0 }
-                    isFinished={ survey.finished }
                     hasErrors={ errors.length > 0 }
+
                     hasAnswers={ Object.keys(answers).length > 0 }
+                    hasAllAnswers={ Object.keys(answers).length - errors.length === questions.length }
                 >
-                    <Questions
-                        handleChange={ this.handleChange.bind(this) }
-                        questions={ questions }
-                        answers={ answers }
-                    />
+                {
+                    withGroups.map((entry, index) => {
+
+                        if(isArray(entry)) {
+                            return (
+                                <FormRow
+                                    key={ index}
+                                >
+                                    <QuestionGroup
+                                        handleChange={ this.handleChange.bind(this) }
+                                        questions={ entry }
+                                        answers={ this.state.answers }
+                                    />
+                                </FormRow>
+                            );
+                        }
+
+                        return (
+                            <FormRow
+                                key={ index }
+                                className="list-group-item"
+                                legend={ entry.name }
+                                description={ entry.title_text }
+                            >
+                                <Question
+                                    handleChange={ this.handleChange.bind(this) }
+                                    question={ entry }
+                                    answer={ this.state.answers[entry.id] || null }
+                                />
+                            </FormRow>
+                        );
+
+                    })
+                }
                 </SurveyForm>
 
                 <Dev.Pretty label="survey" data={ survey } open={ false }/>
