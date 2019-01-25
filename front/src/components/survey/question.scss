@@ -1,0 +1,13 @@
+@import "node_modules/bootstrap/scss/bootstrap";
+
+.question .row:nth-of-type(odd) {
+    background-color: $table-accent-bg;
+}
+
+.row.question--horizontal {
+    padding: $table-cell-padding;
+}
+
+.row.question--horizontal:hover {
+    background-color: $table-hover-bg;
+}

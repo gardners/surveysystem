@@ -52,8 +52,8 @@ const mapQuestionGroups = function(questions) {
     let lastGid = '';
 
     questions.forEach(function(question, index) {
-        const { id, type } = question;
-        const gid = getGroupId(question.id);
+        const { id } = question;
+        const gid = getGroupId(id);
 
         if (!gid) {
             mapped.push(question);

@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { FormRow } from './FormHelpers';
-
 // form elements
 import GeoLocation from './form/GeoLocation';
 import PeriodRangeSlider from './form/PeriodRangeSlider';
@@ -85,19 +83,18 @@ class Row extends Component {
 
         return (
             <div className="card mb-1" >
-                <FormRow className="card-body" legend={ question.name } description={ question.title_text }>
-                    <Question
-                        { ...props }
-                        question={ question }
-                        handleChange={ this.handleChange.bind(this) }
-                        appearance= { appearance }
-                    />
-                </FormRow>
+                <Question
+                    { ...props }
+                    appearance={ appearance }
+                    question={ question }
+                    handleChange={ this.handleChange.bind(this) }
+                    className="card-body"
+                />
 
                 <div className="card-footer text-muted">
                     { hasAnswers && <small className="mr-2 float-left text-info" style={ { fontFamily: 'monospace' } }>{ JSON.stringify(Object.values(values)) }</small> }
                     <small className="mr-2 float-left">Type: { this.props.type }</small>
-                    <small className="mr-2 float-right"><input type="checkbox" onChange={(e) => this.setState({ appearance: (e.target.checked) ? 'inline' : 'default' })} /> horizontal display</small>
+                    <small className="mr-2 float-right"><input type="checkbox" onChange={(e) => this.setState({ appearance: (e.target.checked) ? 'horizontal' : 'default' })} /> horizontal display</small>
                     <small className="mr-2 float-right"><input type="checkbox" onChange={(e) => this.setState({ unit: (e.target.checked) ? 'example unit': '' })} /> toggle unit</small>
                 </div>
             </div>
