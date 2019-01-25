@@ -94,10 +94,13 @@ const camelToNormal = function(str) {
 };
 
 /**
- * incoherent window.classList support across IE
+ * Build dom element className string from chunks
+ * due to coherent window.classList support across IE
+ * @param {...string} classNames class names
+ *
+ * @returns {string}
  */
 const addClassNames = function(...classNames) {
-    console.log(classNames.toString());
     return classNames.reduce((acc, value) => {
         return (typeof value === 'string' && value) ? `${acc} ${value}`.trim() : acc;
     }, '');
