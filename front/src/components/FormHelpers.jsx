@@ -1,93 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import InnerHtml from './InnerHtml';
-
-const FormRow = function(props) {
-    return(
-        <div className={ props.className }>
-            { props.legend && (typeof props.legend === 'function') ? props.legend() : <legend>{ props.legend }</legend> }
-            { props.description && <InnerHtml htmlContent={ props.description } /> }
-            { props.children }
-        </div>
-    );
-};
-
-FormRow.propTypes = {
-    className: PropTypes.string,
-    legend:  PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.func,
-    ]),
-    description: PropTypes.string,
-};
-
-/**
- * form-control wrapper
- * @see https://getbootstrap.com/docs/4.2/components/forms/
- */
-const FormGroup = function({ className, children }) {
-    const cls = `form-group ${className}`.trim();
-
-    return(
-        <div className={ cls }>
-            { children }
-        </div>
-    );
-};
-
-FormGroup.defaultProps = {
-    className: '',
-};
-
-FormGroup.propTypes = {
-    className: PropTypes.string,
-};
-
-/**
- * form-control wrapper
- * @see https://getbootstrap.com/docs/4.2/components/forms/
- */
-const FormControl = function({ className, children }) {
-    const cls = `form-control ${className}`.trim();
-
-    return(
-        <div className={ cls}>
-            { children }
-        </div>
-    );
-};
-
-FormControl.defaultProps = {
-    className: '',
-};
-
-FormControl.propTypes = {
-    className: PropTypes.string,
-};
-
-/**
- * form-label wrapper
- * @see https://getbootstrap.com/docs/4.2/components/forms/
- */
-const FormLabel = function({ className, children }) {
-    const cls = `form-control ${className}`.trim();
-
-    return(
-        <label className={ cls}>
-            { children }
-        </label>
-    );
-};
-
-FormLabel.defaultProps = {
-    className: '',
-};
-
-FormLabel.propTypes = {
-    className: PropTypes.string,
-};
-
 const InputGroup = function(props) {
     let pre = (typeof props.prepend === 'string') ? [props.prepend] : props.prepend;
     let app = (typeof props.append === 'string') ? [props.append] : props.append;
@@ -151,4 +64,4 @@ FieldError.propTypes = {
     ]),
 };
 
-export { FormRow, FormGroup, FormControl, FormLabel, InputGroup, FieldError };
+export { InputGroup, FieldError };
