@@ -16,7 +16,6 @@ import Log from '../Log';
 import SurveyForm from './survey/SurveyForm';
 import Question from './survey/Question';
 import QuestionGroup from './survey/QuestionGroup';
-import { FormRow } from './FormHelpers';
 
 // misc components
 import LoadingSpinner from './LoadingSpinner';
@@ -266,37 +265,32 @@ class Survey extends Component {
 
                     hasAnswers={ Object.keys(answers).length > 0 }
                     hasAllAnswers={ Object.keys(answers).length - errors.length === questions.length }
+                    className="list-group"
+                    rowClassName="list-group-item"
                 >
                 {
                     withGroups.map((entry, index) => {
 
                         if(isArray(entry)) {
                             return (
-                                <FormRow
-                                    key={ index}
-                                >
+                                <div className="list-group-item">
                                     <QuestionGroup
                                         handleChange={ this.handleChange.bind(this) }
                                         questions={ entry }
                                         answers={ this.state.answers }
                                     />
-                                </FormRow>
+                                </div>
                             );
                         }
 
                         return (
-                            <FormRow
-                                key={ index }
-                                className="list-group-item"
-                                legend={ entry.name }
-                                description={ entry.title_text }
-                            >
+                            <div className="list-group-item">
                                 <Question
                                     handleChange={ this.handleChange.bind(this) }
                                     question={ entry }
                                     answer={ this.state.answers[entry.id] || null }
                                 />
-                            </FormRow>
+                            </div>
                         );
 
                     })

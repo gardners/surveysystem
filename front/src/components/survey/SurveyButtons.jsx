@@ -1,8 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { FormRow } from '../FormHelpers';
-
 const HasErrors = function({ hasErrors }) {
     if (!hasErrors) {
         return (null);
@@ -29,27 +27,27 @@ const SurveyButtons = function(props) {
 
     if (!props.hasAnswers) {
         return (
-            <FormRow>
+            <div className={ props.className }>
                 <button type="submit" className="app--btn-arrow btn btn-default btn-primary"
                     disabled={ true }
                     onClick={ props.handleNext }>Next Question <i className={ nextIconClass }></i></button>
-            </FormRow>
+            </div>
         );
     }
 
     if (props.isFirst) {
         return (
-            <FormRow>
+            <div className={ props.className }>
                 <HasErrors hasErrors={ props.hasErrors } />
                 <button type="submit" className="app--btn-arrow btn btn-default btn-primary"
                     disabled={ props.hasErrors }
                     onClick={ props.handleNext }>Next Question <i className={ nextIconClass }></i></button>
-            </FormRow>
+            </div>
         );
     }
 
     return (
-        <FormRow>
+        <div className={ props.className }>
             <HasErrors
                 hasErrors={ props.hasErrors }
             />
@@ -62,7 +60,7 @@ const SurveyButtons = function(props) {
                 onClick={ props.handleNext }>
                 Next Question <i className={ nextIconClass } />
             </button>
-        </FormRow>
+        </div>
     );
 };
 

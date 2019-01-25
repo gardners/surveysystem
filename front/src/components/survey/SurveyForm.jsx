@@ -11,13 +11,14 @@ const SurveyForm = function(props) {
 
     return (
         <Fade>
-            <form id={ Date.now() /*trickout autofill*/ } className="list-group">
+            <form id={ Date.now() /*trickout autofill*/ } className={ props.className }>
                 <input type="hidden" value={ Date.now() /*trick autofill*/ } />
                 {
                     /* inputs */
                     props.children
                 }
                 <SurveyButtons
+                    className={ props.rowClassName }
                     handlePrev={ props.handlePrev }
                     handleNext={ props.handleNext }
 
@@ -42,6 +43,9 @@ SurveyForm.propTypes = {
     hasErrors: PropTypes.bool.isRequired,
     hasAnswers: PropTypes.bool.isRequired,
     hasAllAnswers: PropTypes.bool.isRequired,
+
+    className: PropTypes.string,
+    rowClassName:  PropTypes.string,
 };
 
 export default SurveyForm;

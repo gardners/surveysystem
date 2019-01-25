@@ -93,9 +93,20 @@ const camelToNormal = function(str) {
     return str.replace(/([A-Z])/g, ' $1');
 };
 
+/**
+ * incoherent window.classList support across IE
+ */
+const addClassNames = function(...classNames) {
+    console.log(classNames.toString());
+    return classNames.reduce((acc, value) => {
+        return (typeof value === 'string' && value) ? `${acc} ${value}`.trim() : acc;
+    }, '');
+};
+
 export {
     isScalar,
     DirtyJson,
     camelToNormal,
     isArray,
+    addClassNames,
 };

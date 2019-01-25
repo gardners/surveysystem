@@ -17,8 +17,15 @@ import PasswordInput from '../form/PasswordInput';
 import Select from '../form/Select';
 import MultiSelect from '../form/MultiSelect';
 
-import { FormGroup, FormLabel, FormControl, FieldError } from '../FormHelpers';
+import { FieldError } from '../FormHelpers';
+import QuestionRow from './QuestionRow';
 
+/**
+ * Fetches form component for a given question type
+ * @param {string} questionType
+ *
+ * @returns {function} React Component
+ */
 const getComponentByType = function(questionType = 'TEXT') {
 
     switch (questionType) {
@@ -77,71 +84,36 @@ const getComponentByType = function(questionType = 'TEXT') {
 
 };
 
+/**
+ * Extracts potential Error from answer object
+ * @param {object} answer object, consisting of 'value' and 'serialized' properties
+ *
+ * @returns {null|Error}
+ */
 const getError = function(answer) {
     return (answer && answer.serialized instanceof Error) ? answer.serialized : null;
 };
 
-const getApperanceClasses = function(appearance) {
-
-    const classNames = {
-        formGroup: 'row',
-        label: 'col-sm-3 col-form-label',
-        control: 'col-sm-9',
-    };
-
-    switch(appearance) {
-        case 'matrix':
-            classNames.formGroup += ' border';
-        break;
-
-        default:
-            // nothing
-    }
-
-    return classNames;
-};
 /**
  * Render Previous/Next/Finish buttos
  * The component should not contain survey logic or handle complex data. It merely recieves a number of flags from the parent component
  */
-const Question = function({ question, answer, handleChange, component, appearance, ...componentProps } ) {
-
-    // appearance classes
-    // @see https://getbootstrap.com/docs/4.2/components/forms/#layout
-    const classes = getApperanceClasses(appearance);
+const Question = function({ question, answer, handleChange, component, appearance, grouped, className, ...componentProps } ) {
 
     // fetch form control component and handle special cases
     const Component = (component && typeof component === 'function') ? component : getComponentByType(question.type);
 
-    if(Component.name === 'HiddenInput') {
-        return (
+    return (
+        <QuestionRow className={ className } question={ question } appearance={ appearance } grouped={ grouped }>
             <Component
                 { ...componentProps }
                 value={ (answer) ? answer.values[0] : null }
                 question={ question }
                 handleChange={ handleChange }
-                defaultValue={ question.default_value || 'visited' /* TODO confirm with backend */ }
                 required
             />
-        );
-    }
-
-    return (
-        <FormGroup className={ classes.group }>
-            <FormLabel className={ classes.label }>{ question.title }</FormLabel>
-            <FormControl className={ classes.control }>
-
-                <Component
-                    { ...componentProps }
-                    value={ (answer) ? answer.values[0] : null }
-                    question={ question }
-                    handleChange={ handleChange }
-                    required
-                />
-
-            </FormControl>
             <FieldError error={ getError(answer) } />
-        </FormGroup>
+        </QuestionRow>
     );
 
 };
@@ -151,6 +123,7 @@ Question.defaultProps = {
     appearance: 'default',
     component: null,
     classNames: {},
+    grouped: false,
 };
 
 Question.propTypes = {
@@ -165,12 +138,14 @@ Question.propTypes = {
     }),
 
     component: PropTypes.func,
+    className: PropTypes.string,
     appearance: PropTypes.oneOf([
         'default',
+        'horizontal',
         'inline',
         'matrix'
     ]),
-    classNames: PropTypes.object,
+    grouped: PropTypes.bool,
     // ...and component specific props
 };
 

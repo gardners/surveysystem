@@ -2,7 +2,7 @@
  * @module surveyJS answer object to backend csv row parser
  *
  */
-import { isArray, isScalar } from '../Utils';
+import { isArray } from '../Utils';
 
 const { isFinite } = Number; //not Math!
 
