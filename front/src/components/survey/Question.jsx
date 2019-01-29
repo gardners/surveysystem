@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import QuestionModel from '../../Question';
@@ -98,23 +98,64 @@ const getError = function(answer) {
  * Render Previous/Next/Finish buttos
  * The component should not contain survey logic or handle complex data. It merely recieves a number of flags from the parent component
  */
-const Question = function({ question, answer, handleChange, component, appearance, grouped, className, ...componentProps } ) {
+// const Question = function({ question, answer, handleChange, component, appearance, grouped, className, ...componentProps } ) {
+//
+//     // fetch form control component and handle special cases
+//     const Component = (component && typeof component === 'function') ? component : getComponentByType(question.type);
+//
+//     return (
+//         <QuestionRow className={ className } question={ question } appearance={ appearance } grouped={ grouped }>
+//             <Component
+//                 { ...componentProps }
+//                 value={ (answer) ? answer.values[0] : null }
+//                 question={ question }
+//                 handleChange={ handleChange }
+//                 required
+//             />
+//             <FieldError error={ getError(answer) } />
+//         </QuestionRow>
+//     );
+//
+// };
+
+class Question extends Component {
+
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            component: this.getComponent(),
+        }
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('resize', this.updateBreakpoint);
+    }
 
     // fetch form control component and handle special cases
-    const Component = (component && typeof component === 'function') ? component : getComponentByType(question.type);
+    getComponent() {
+        const { question, component } = this.props;
 
-    return (
-        <QuestionRow className={ className } question={ question } appearance={ appearance } grouped={ grouped }>
-            <Component
-                { ...componentProps }
-                value={ (answer) ? answer.values[0] : null }
-                question={ question }
-                handleChange={ handleChange }
-                required
-            />
-            <FieldError error={ getError(answer) } />
-        </QuestionRow>
-    );
+        return (component && typeof component === 'function') ? component : getComponentByType(question.type);
+    }
+
+    render() {
+        const { question, answer, handleChange, appearance, grouped, className, ...componentProps } = this.props;
+        const Component = this.state.component;
+
+        return (
+            <QuestionRow className={ className } question={ question } appearance={ appearance } grouped={ grouped }>
+                <Component
+                    { ...componentProps }
+                    value={ (answer) ? answer.values[0] : null }
+                    question={ question }
+                    handleChange={ handleChange }
+                    required
+                />
+                <FieldError error={ getError(answer) } />
+            </QuestionRow>
+        );
+    }
 
 };
 
@@ -143,7 +184,7 @@ Question.propTypes = {
         'default',
         'horizontal',
         'inline',
-        'matrix'
+        'matrix',
     ]),
     grouped: PropTypes.bool,
     // ...and component specific props
