@@ -27,7 +27,7 @@ import Alert from './Alert';
 import Dev from './Dev';
 
 // config
-const CACHE_KEY = process.env.REACT_APP_SURVEYCACHEKEY;
+const CACHE_KEY = process.env.SURVEY_CACHEKEY;
 
 class Survey extends Component {
     constructor(props) {
