@@ -15,7 +15,7 @@
   },
   "scripts": {
     "dev": "xterm -hold -e \"cd ../backend & sudo ./testrun --skip-npm-build\" && react-scripts start",
-    "dev-mock": "xterm -hold -e \"./mockserver/start\"& react-scripts start",
+    "dev-mock": "xterm -hold -e \"./mockserver/start\" & REACT_APP_API_ENDPOINT=http://localhost:3098 react-scripts start",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
