@@ -14,7 +14,7 @@ import '@fortawesome/fontawesome-free/css/fontawesome.min.css';
 const urlParams = new URLSearchParams(window.location.search);
 const themeParam = urlParams.get('theme');
 
-const theme = (themeParam) ? themeParam : (process.env.REACT_APP_THEME) ? process.env.REACT_APP_THEME : 'default';
+const theme = (themeParam) ? themeParam : (process.env.REACT_APP_SITE_THEME) ? process.env.REACT_APP_SITE_THEME : 'default';
 
 import(`./styles/${theme}/index.scss`).then(() => {
     /* ... */
