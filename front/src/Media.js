@@ -26,6 +26,28 @@ const BreakPoints = [
  * @returns {bool}
  */
 
+const getMediaBreakPoint = function() {
+    const { length } = BreakPoints;
+    let last = 'xs';
+    let point;
+
+    for (let i = 0; i < length; i += 1) {
+        point = BreakPoints[i][0];
+        if (!matchesBreakpoint(point) ) {
+            return last;
+        }
+        last = point;
+    }
+
+    return last;
+};
+
+/**
+ * Checks if a given bootstrap media-query breakpoint applies and returns it.
+ *
+ * @returns {bool}
+ */
+
 const matchesBreakpoint = function(bp) {
     const hits = BreakPoints.filter(point => point[0] === bp);
 

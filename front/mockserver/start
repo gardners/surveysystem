@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 const server = require('./mock-server');
 
-const PORT = 3099;
+const PORT = 3098;
 server.listen(PORT);
