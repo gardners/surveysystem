@@ -19,6 +19,7 @@ const Select = function(props) {
                     props.handleChange(e.target, question, value);
                 } }>
 
+                <option value="">choose...</option>
                 { choices.map((value, index) => {
                     return <option key={ index } value={ value }>{ value }</option>
                 }) }
