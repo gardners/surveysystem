@@ -33,14 +33,16 @@ const QuestionGroup = function({ questions, answers, handleChange }) {
     return (
         <React.Fragment>
         {
-            questions.map((question) => {
+            questions.map((question, index) => {
                 const answer = answers[question.id] || null;
                 return(
                     <Question
+                        key={ index }
                         handleChange={ handleChange }
                         question={ question }
                         answer= { answer }
                         appearance={ appearance }
+                        grouped={ true }
                     />
                 );
             })
