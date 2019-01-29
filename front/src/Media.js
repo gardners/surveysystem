@@ -12,39 +12,31 @@
   *     --breakpoint-xl: 1200px;
   */
 
-const BreakPoints = Object.freeze({
-    xs: 0,
-    sm: 576,
-    md: 768,
-    lg: 992,
-    xl: 1200,
-});
+const BreakPoints = [
+    ['xs', 0],
+    ['sm', 576],
+    ['md', 768],
+    ['lg', 992],
+    ['xl', 1200],
+];
 
 /**
  * Checks if a given bootstrap media-query breakpoint applies and returns it.
  *
- * @returns {string}
+ * @returns {bool}
  */
-const getMediaBreakPoint = function() {
 
-    let breakpoint = 'xl';
-    let last = 'xs';
+const matchesBreakpoint = function(bp) {
+    const hits = BreakPoints.filter(point => point[0] === bp);
 
-    for (let flag in BreakPoints) {
-        if (!BreakPoints.hasOwnProperty(flag)) {
-            continue;
-        }
-        const { matches } = matchMedia(`(min-width: ${BreakPoints[flag]}px`);
-
-        if (!matches) {
-            return flag;
-        }
-
-        last = flag;
+    if (!hits.length) {
+        return false;
     }
-    return 'xl';
+
+    return matchMedia(`(min-width: ${hits[0][1]}px`).matches;
 };
 
 export {
     getMediaBreakPoint,
+    matchesBreakpoint,
 };

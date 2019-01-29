@@ -1,129 +1,123 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 
 import Question from '../../Question';
+import { matchesBreakpoint } from '../../Media';
+
+import Select from './Select';
 //TODO, required, error
-const Thead = function(props) {
 
-    const { question } = props;
-    const { choices } = question;
+/**
+ * @var {string} MEDIA_BREAKPOINT bootstrap media query breaKpoint who triggers a d=single <Select> column instead separate columns of radio buttons
+ */
+const MEDIA_BREAKPOINT = 'md';
 
-    return(
+const TheadRow = function({ question }) {
+
+    if(!matchesBreakpoint(MEDIA_BREAKPOINT)) {
+        return(null);
+    }
+    const labels = question.choices || [];
+
+    return (
         <tr>
-            <th>{ question.unit && <em>({ question.unit })</em> }</th>
+            <th></th>
             {
-                choices.map((value, index) => <th key={ index }>{ value }</th>)
+                labels.map((label, index) => <th key={ index }>{ label }</th>)
             }
         </tr>
     );
 };
 
-Thead.propTypes = {
+TheadRow.defaultProps = {
+};
+
+TheadRow.propTypes = {
     question: Question.propTypes(true).isRequired,
 };
 
+const Row = function({ question, handleChange, required }) {
 
-class Row  extends Component {
-
-   constructor(props) {
-        super(props);
-
-        this.state = {
-            values: {},
-        };
-    }
-
-    handleChange(e) {
-        const { value } = e.target;
-        const { question } = this.props;
-
-        this.setState({
-            value: value
-        });
-
-        this.props.handleChange(e.target, question, value);
-    }
-
-    render() {
-        const { question } = this.props;
-        const { choices } = question;
-
-        return(
+    if(!matchesBreakpoint(MEDIA_BREAKPOINT)) {
+        return (
             <tr>
-                <td>{ question.title }</td>
-                {
-                    choices.map((val, index) => <td key={ index }>
-                        <input
-                            type="radio"
-                            name={ question.name }
-                            id={ question.id }
-                            value={ val }
-                            onChange={ this.handleChange.bind(this) }
-                        />
-                    </td>)
-                }
+                <th>{ question.title }</th>
+                <td>
+                    <Select
+                        key={ question.id }
+                        question={ question }
+                        handleChange={ handleChange}
+                    />
+                </td>
             </tr>
         );
     }
-}
 
-Row.defaultProps = {
-    checked: false,
+    const choices = question.choices || [];
+
+    return (
+        <tr>
+            <th>{ question.title }</th>
+            {
+                choices.map((choice, index) => {
+                    return (
+                        <td key={ index }>
+                            <input
+                                type="radio"
+                                id={ question.id }
+                                name={ question.name }
+                                value={ choice }
+                                onChange={ (e) => handleChange(e.target, question, choice) }
+                                required={ required }
+                            />
+                        </td>
+                    );
+                })
+            }
+        </tr>
+    );
 };
 
+Row.defaultProps = {
+    required: false,
+};
 
 Row.propTypes = {
     question: Question.propTypes(true).isRequired,
     handleChange: PropTypes.func.isRequired,
-    // no "required" prop
+    required: PropTypes.bool,
 };
 
-
-class RadioMatrix extends Component {
-
-    constructor(props) {
-        super(props);
-
-        this.state = {
-            values: {},
-        };
+const RadioMatrix = function({ questions, handleChange, required }) {
+    //TODO
+    if(!questions.length) {
+        return (null);
     }
 
-    handleChange(question, event) {
-        event.preventDefault();
-        const { values } = this.state;
-        values[question.id] = event.target.value;
+    const first = questions[0];
 
-        this.setState({
-            values
-        });
-
-        const args = [event.target].concat(Object.values(values));
-        this.props.handleChange.apply(null, args);
-    }
-
-    render() {
-        const { questions, handleChange } = this.props;
-        const first = questions[0] || null;
-
-        return (
-            <div className="table-responsive">
-                <table className="table table-sm table-hover">
-                    <thead>
-                        <Thead question={ first } />
-                    </thead>
-                    <tbody>
-                        { questions.map(question => <Row
-                                key={ question.id }
-                                question={ question }
-                                handleChange={ handleChange }
-                        />) }
-                    </tbody>
-                </table>
-            </div>
-        );
-    }
-}
+    return (
+        <div className="table-responsive">
+            <table className="table table-sm table-hover">
+                <thead>
+                    <TheadRow
+                        question={ first }
+                    />
+                </thead>
+                <tbody>
+                    {
+                        questions.map((question, index) => <Row
+                            key={ index }
+                            question={ question }
+                            handleChange={ handleChange }
+                            required={ required }
+                        />)
+                    }
+                </tbody>
+            </table>
+        </div>
+    );
+};
 
 RadioMatrix.defaultProps = {
     required: true,
