@@ -3,7 +3,7 @@
  */
 
 // config
-const BaseUri = process.env.REACT_APP_API_ENDPOINT;
+const BaseUri = process.env.REACT_APP_SURVEY_ENDPOINT;
 
 /**
  * handles and ormats response errors in a promise context
