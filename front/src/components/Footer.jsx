@@ -1,16 +1,18 @@
 import React from 'react';
-import { Configuration } from '../conf/config';
+import PropTypes from 'prop-types';
 
-const Footer = function() {
+const Footer = function({ surveyProvider }) {
     return (
         <footer>
             <div className="text-center">
-            { `© ${ Configuration.surveyProvider } ${new Date().getFullYear()}` }
+            { `© ${surveyProvider} ${new Date().getFullYear()}` }
             </div>
         </footer>
     );
 }
 
-Footer.propTypes = {};
+Footer.propTypes = {
+    surveyProvider: PropTypes.string.isRequired,
+};
 
 export default Footer;
