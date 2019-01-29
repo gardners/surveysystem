@@ -273,7 +273,7 @@ class Survey extends Component {
 
                         if(isArray(entry)) {
                             return (
-                                <div className="list-group-item">
+                                <div key={ index } className="list-group-item">
                                     <QuestionGroup
                                         handleChange={ this.handleChange.bind(this) }
                                         questions={ entry }
@@ -284,7 +284,7 @@ class Survey extends Component {
                         }
 
                         return (
-                            <div className="list-group-item">
+                            <div key={ index } className="list-group-item">
                                 <Question
                                     handleChange={ this.handleChange.bind(this) }
                                     question={ entry }
