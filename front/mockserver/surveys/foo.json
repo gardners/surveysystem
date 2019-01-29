@@ -34,21 +34,13 @@
             }]
         }, {
             "next_questions": [{
-                "id": "q3",
-                "name": "q3",
-                "title": "Question 3",
-                "title_text": "How many towels are you travelling with?",
-                "type": "INT",
-                "unit": "towels"
-            }]
-        }, {
-            "next_questions": [{
                 "id": "q4",
                 "name": "q4",
                 "title": "Question 4",
-                "title_text": "What is the size of your current travel party? Use fraction values for any non-organic lifeforms",
-                "type": "FIXEDPOINT",
-                "unit": "lifeforms"
+                "title_text": "How long can a <strong>Somebody Else's Problem field</strong> be run for on a single torch battery",
+                "type": "SINGLESELECT",
+                "unit": "years",
+                "choices": [1, 20, 50, "over a hundred"]
             }]
         }, {
             "next_questions": [{
