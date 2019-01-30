@@ -5,6 +5,7 @@ import QuestionModel from '../../Question';
 import { addClassNames } from '../../Utils';
 
 import InnerHtml from '../InnerHtml';
+import { sanitizeKcgiJsonString } from '../../Utils';
 
 import './question.scss';
 
@@ -13,10 +14,10 @@ const QuestionRow = function({ question, appearance, className, grouped, childre
     const { type } = question;
 
     let legend = '';
-    let description = question.title_text;
+    let description = sanitizeKcgiJsonString(question.title_text);
 
     let groupClass = 'form-group';
-    let descClass = '';
+    let descClass = 'form-text';
     let labelClass = '';
     let controlClass = '';
 
