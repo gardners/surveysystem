@@ -1,4 +1,4 @@
-import { isScalar } from '../Utils';
+import { isScalar, sanitizeKcgiJsonString } from '../Utils';
 
 describe('isScalar', () => {
 
@@ -32,6 +32,13 @@ describe('isScalar', () => {
         expect(isScalar(Symbol())).toBe(false);
         expect(isScalar(Date)).toBe(false);
         expect(isScalar(() => 42)).toBe(false);
+    });
+
+});
+
+describe('sanitizeKcgiJsonString', () => {
+    test('sanitize', () => {
+        expect(sanitizeKcgiJsonString('description <p><strong>with HTML<\/strong><\/p>')).toBe('description <p><strong>with HTML</strong></p>');
     });
 
 });

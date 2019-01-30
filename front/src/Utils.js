@@ -81,7 +81,6 @@ const DirtyJson = {
     get(v, key, r = null) {
         return (v && typeof v[key] !== 'undefined') ? v[key] : r;
     },
-
 };
 
 /**
@@ -106,10 +105,24 @@ const addClassNames = function(...classNames) {
     }, '');
 };
 
+/**
+ * Removes theescaping of forward slashes in an kcgi generated string
+ * @TODO !Note: this can be removed should afromentioned issue be resolved in the backend
+ * @see https://kristaps.bsd.lv/kcgi/kcgijson.3.html, kjson_putstringp()
+ * @see https://github.com/gardners/surveysystem/issues/119
+ * @param {string} str
+ *
+ * @returns {string}
+ */
+const sanitizeKcgiJsonString = function(str) {
+    return str.replace('\\/', '/');
+};
+
 export {
     isScalar,
     DirtyJson,
     camelToNormal,
     isArray,
     addClassNames,
+    sanitizeKcgiJsonString,
 };
