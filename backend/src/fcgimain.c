@@ -686,8 +686,8 @@ static void fcgi_nextquestion(struct kreq *r)
       kjson_obj_open(&req);
       kjson_putstringp(&req,"id",q[i]->uid);
       kjson_putstringp(&req,"name",q[i]->uid);
-      kjson_putstringp(&req,"title",q[i]->question_html);
-      kjson_putstringp(&req,"title_text",q[i]->question_text);
+      kjson_putstringp(&req,"title",q[i]->question_text);
+      kjson_putstringp(&req,"description",q[i]->question_html);
       kjson_putstringp(&req,"type",question_type_names[q[i]->type]);
 
       switch (q[i]->type)
