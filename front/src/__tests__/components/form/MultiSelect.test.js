@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import renderer from 'react-test-renderer';
 
-import MultiSelect from '../../../components/form/Select';
+import MultiSelect from '../../../components/form/MultiSelect';
 
 let component;
 
@@ -13,7 +13,7 @@ beforeAll(() => {
                 id: 'q1',
                 name: 'q1',
                 title: 'q1',
-                title_text: 'q1',
+                description: 'q1',
                 type: 'TEXT',
                 choices: [ 'choice1', 'choice2' ],
                 unit: '',

@@ -10,7 +10,7 @@ const question = {
     id: 'q1',
     name: 'q1',
     title: 'q1',
-    title_text: 'q1',
+    description: 'q1',
     type: 'CHECKBOX',
     choices: [ 'uncheckedVal', 'checkedVal' ],
     unit: '',
