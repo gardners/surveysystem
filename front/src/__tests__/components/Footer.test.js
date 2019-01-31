@@ -4,6 +4,8 @@ import Footer from '../../components/Footer';
 
 it('renders without crashing', () => {
     const div = document.createElement('div');
-    ReactDOM.render(<Footer />, div);
+    ReactDOM.render(<Footer
+        surveyProvider={ 'test' }
+    />, div);
     ReactDOM.unmountComponentAtNode(div);
 });

@@ -6,7 +6,7 @@ const makeQuestion = function(id) {
         name: id,
         type: 'TEXT',
         tile: 'title',
-        title_text: 'title-text',
+        description: 'title-text',
     };
 };
 
