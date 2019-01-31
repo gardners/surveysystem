@@ -104,7 +104,6 @@ SurveyBar.propTypes = {
     })
 };
 
-
 export default {
     Pretty,
     SurveyBar,

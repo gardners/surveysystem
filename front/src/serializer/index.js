@@ -84,7 +84,7 @@ const escPattern = new RegExp(`${CSV_SEPARATOR}'"`, 'g');
  * @property {string} id
  * @property {string} name
  * @property {string} title
- * @property {string} title_text
+ * @property {string} description
  * @property {string} type
  * @property {string} unit
  */
@@ -276,16 +276,6 @@ const castString = function(text) {
     }
     return text;
 };
-
-/**
- * parse and validate comma separated geolocation string into object ready to be merged in to model
- * @param {string} val already sanitized string
- *
- * @returns {(number|Error)} UNIX timestamp or error
- */
-// const castDateTime = function(val) {
-//     return new Error ('TODO, CSV serializer: not implemented');
-// };
 
 ////
 // Serializers

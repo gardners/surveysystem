@@ -2,7 +2,7 @@ import React from 'react';
 
 const Page404 = function(){
     return (
-        <div> Sorry, this page doesn't exist !</div>
+        <div>Sorry, this page doesn't exist !</div>
     );
 };
 

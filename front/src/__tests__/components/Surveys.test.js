@@ -8,7 +8,10 @@ it('renders without crashing', () => {
     const div = document.createElement('div');
     ReactDOM.render(
         <MemoryRouter>
-            <Surveys />
+            <Surveys
+                surveys={ ['test'] }
+                surveyProvider={ 'test' }
+            />
         </MemoryRouter>, div);
     ReactDOM.unmountComponentAtNode(div);
 });
