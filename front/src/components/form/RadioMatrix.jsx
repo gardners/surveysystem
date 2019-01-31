@@ -12,11 +12,12 @@ import Select from './Select';
  */
 const MEDIA_BREAKPOINT = 'md';
 
-const TheadRow = function({ question }) {
+const TheadRow = function({ question, expanded }) {
 
-    if(!matchesBreakpoint(MEDIA_BREAKPOINT)) {
+    if(!expanded) {
         return(null);
     }
+
     const labels = question.choices || [];
 
     return (
@@ -34,11 +35,12 @@ TheadRow.defaultProps = {
 
 TheadRow.propTypes = {
     question: Question.propTypes(true).isRequired,
+    expanded: PropTypes.bool.isRequired,
 };
 
-const Row = function({ question, handleChange, required }) {
+const Row = function({ question, handleChange, expanded, required }) {
 
-    if(!matchesBreakpoint(MEDIA_BREAKPOINT)) {
+    if(!expanded) {
         return (
             <tr>
                 <th>{ question.title }</th>
@@ -85,15 +87,17 @@ Row.defaultProps = {
 Row.propTypes = {
     question: Question.propTypes(true).isRequired,
     handleChange: PropTypes.func.isRequired,
+    expanded: PropTypes.bool.isRequired,
     required: PropTypes.bool,
 };
 
-const RadioMatrix = function({ questions, handleChange, required }) {
+const RadioMatrix = function({ questions, handleChange, required, expand }) {
     //TODO
     if(!questions.length) {
         return (null);
     }
 
+    const expanded = (expand === null) ? matchesBreakpoint(MEDIA_BREAKPOINT) : expand;
     const first = questions[0];
 
     return (
@@ -102,6 +106,7 @@ const RadioMatrix = function({ questions, handleChange, required }) {
                 <thead>
                     <TheadRow
                         question={ first }
+                        expanded={ expanded }
                     />
                 </thead>
                 <tbody>
@@ -111,6 +116,7 @@ const RadioMatrix = function({ questions, handleChange, required }) {
                             question={ question }
                             handleChange={ handleChange }
                             required={ required }
+                            expanded={ expanded }
                         />)
                     }
                 </tbody>
@@ -121,6 +127,7 @@ const RadioMatrix = function({ questions, handleChange, required }) {
 
 RadioMatrix.defaultProps = {
     required: true,
+    expand: null,
 };
 
 RadioMatrix.propTypes = {
@@ -129,6 +136,7 @@ RadioMatrix.propTypes = {
         Question.propTypes(true)
     ),
     required: PropTypes.bool,
+    expand: PropTypes.bool, // force contracted or expanded display
 };
 
 export default RadioMatrix;
