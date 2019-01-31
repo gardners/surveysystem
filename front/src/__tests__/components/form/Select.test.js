@@ -13,7 +13,7 @@ beforeAll(() => {
                 id: 'q1',
                 name: 'q1',
                 title: 'q1',
-                title_text: 'q1',
+                description: 'q1',
                 type: 'TEXT',
                 choices: [ 'choice1', 'choice2' ],
                 unit: '',
@@ -32,6 +32,7 @@ it('renders options from question.choices', () => {
     const options = instance.findAllByType('option');
     const values = options.map(node => node.props.value);
 
-    expect(values.toString()).toEqual('choice1,choice2');
-    expect(options.length).toEqual(2);
+    // #114, with empty start option
+    expect(values.toString()).toEqual(',choice1,choice2');
+    expect(options.length).toEqual(3);
 });

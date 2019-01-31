@@ -73,7 +73,7 @@ class Row extends Component {
             id: Component.name,
             name: Component.name,
             title: props.title || 'title',
-            title_text: props.title_text || 'title text',
+            description: props.description || 'title text',
             type: props.type,
 
             defaultValue: props.defaultValue || 'default',
@@ -118,7 +118,7 @@ class Demo extends Component {
         return (
             <section>
                 <div>
-                    <Row type={ 'HIDDEN' }       component={ HiddenInput }       unit={ this.state.unit } title_text="text with some <strong>markup</strong> html and an image: <img src='data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7'>" defaultVlaue="visited"/>
+                    <Row type={ 'HIDDEN' }       component={ HiddenInput }       unit={ this.state.unit } description="text with some <strong>markup</strong> html and an image: <img src='data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7'>" defaultVlaue="visited"/>
                     <Row type={ 'LATLON' }       component={ GeoLocation }       unit={ this.state.unit } withButton={ true } />
                     <Row type={ 'TIMERANGE' }    component={ PeriodRangeSlider } unit={ this.state.unit }/>
                     <Row type={ 'FIXEDPOINT' }   component={ DayTimeSlider }     unit={ this.state.unit }/>
@@ -139,7 +139,7 @@ class Demo extends Component {
                                 name: 'question1',
                                 type: 'FIXEDPOINT',
                                 title: '1',
-                                title_text: 'Row 1 text',
+                                description: 'Row 1 text',
                                 choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
                                 unit: this.state.unit,
                             }, {
@@ -147,7 +147,7 @@ class Demo extends Component {
                                 name: 'question2',
                                 type: 'FIXEDPOINT',
                                 title: 'Rowfghhd 2',
-                                title_text: 'Row 2 text',
+                                description: 'Row 2 text',
                                 choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
                                 unit: this.state.unit,
                             },{
@@ -155,7 +155,7 @@ class Demo extends Component {
                                 name: 'question3',
                                 type: 'FIXEDPOINT',
                                 title: 'Row 3',
-                                title_text: 'Row 3 text',
+                                description: 'Row 3 text',
                                 choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
                                 unit: this.state.unit,
                             },{
@@ -163,7 +163,7 @@ class Demo extends Component {
                                 name: 'question4',
                                 type: 'FIXEDPOINT',
                                 title: 'Row 4',
-                                title_text: 'Row 4 text',
+                                description: 'Row 4 text',
                                 choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
                                 unit: this.state.unit,
                             }

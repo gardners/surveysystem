@@ -6,7 +6,7 @@
 const BaseUri = process.env.REACT_APP_SURVEY_ENDPOINT;
 
 /**
- * handles and ormats response errors in a promise context
+ * Handles and formats response errors in a promise context
  * @param {Response} fetch response object @see https://developer.mozilla.org/en-US/docs/Web/API/Response
  * @returns {Promise} Promise object throwing an exception (being catched in flow)
  */

@@ -5,18 +5,19 @@ import QuestionModel from '../../Question';
 import { addClassNames } from '../../Utils';
 
 import InnerHtml from '../InnerHtml';
+import { sanitizeKcgiJsonString } from '../../Utils';
 
 import './question.scss';
 
 const QuestionRow = function({ question, appearance, className, grouped, children }) {
 
-    const { type } = question;
+    const { title, type, description } = question;
 
-    let legend = '';
-    let description = question.title_text;
+    const legend = ''; // TODO not used currently du to no matching question field: remove?
+    const sanitizedDescription = sanitizeKcgiJsonString(description);
 
     let groupClass = 'form-group';
-    let descClass = '';
+    let descriptionClass = 'form-text';
     let labelClass = '';
     let controlClass = '';
 
@@ -43,9 +44,9 @@ const QuestionRow = function({ question, appearance, className, grouped, childre
     return (
         <div className={ addClassNames(className, 'question') }>
             { legend && (typeof legend === 'function') ? legend() : <legend>{ legend }</legend> }
-            { description && <InnerHtml className={ descClass } htmlContent={ description } /> }
+            { sanitizedDescription && <InnerHtml className={ descriptionClass } htmlContent={ sanitizedDescription } /> }
             <div className={ groupClass }>
-                { (type !== 'HIDDEN') ? <label className={ labelClass }>{ question.title }</label> : null }
+                { (type !== 'HIDDEN') ? <label className={ labelClass }>{ title }</label> : null }
                 <div className={ controlClass }>{ children }</div>
             </div>
         </div>
