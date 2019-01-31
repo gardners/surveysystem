@@ -10,7 +10,7 @@ const Question = {
             id: PropTypes.string.isRequired,
             name: PropTypes.string.isRequired,
             title: PropTypes.string.isRequired,
-            title_text: PropTypes.string.isRequired,
+            description: PropTypes.string.isRequired,
             type: PropTypes.string.isRequired,
             choices: (!withChoices) ? PropTypes.array : PropTypes.array.isRequired,
             unit: PropTypes.string.isRequired,
