@@ -26,7 +26,7 @@ const BreakPoints = [
  * @returns {bool}
  */
 
-const getMediaBreakPoint = function() {
+const getMediaBreakpoint = function() {
     const { length } = BreakPoints;
     let last = 'xs';
     let point;
@@ -55,10 +55,37 @@ const matchesBreakpoint = function(bp) {
         return false;
     }
 
-    return matchMedia(`(min-width: ${hits[0][1]}px`).matches;
+    // IE < 9, react test renderer
+    if (typeof matchMedia !== 'function') {
+        return false;
+    }
+
+    return window.matchMedia(`(min-width: ${hits[0][1]}px`).matches;
+};
+
+
+/**
+ * Checks if a given bootstrap media-query breakpoint applies and returns it.
+ *
+ * @returns {bool}
+ */
+
+const distanceOfBreakpoints = function(src, targ) {
+    const breakpoints = BreakPoints.map(point => point[0]);
+
+    const si = breakpoints.indexOf(src);
+    const ti = breakpoints.indexOf(targ);
+
+    // one of the args is an invalid breakpoint
+    if(si === -1 || ti ===  -1) {
+        return 0;
+    }
+
+    return si - ti;
 };
 
 export {
-    getMediaBreakPoint,
+    getMediaBreakpoint,
     matchesBreakpoint,
+    distanceOfBreakpoints,
 };
