@@ -60,6 +60,7 @@ class GeoLocation extends Component {
         e && e.preventDefault();
 
         const { question } = this.props;
+        const target = (e) ? e.target : null;
 
         fetchLocation()
         .then((coords) => {
@@ -69,7 +70,7 @@ class GeoLocation extends Component {
                 error: null,
             });
 
-            this.props.handleChange((e) ? e.target : null, question, coords.latitude, coords.longitude);
+            this.props.handleChange(target, question, coords.latitude, coords.longitude);
         })
         .catch(err => this.setState({
             value: '',
