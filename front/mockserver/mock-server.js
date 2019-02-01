@@ -67,7 +67,7 @@ const server = (() => {
 
             // console.log('current (before update)', CURRENT);
 
-            switch (name) {
+            switch (name.toLowerCase()) {
 
                 // api
                 // todo check session id
