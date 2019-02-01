@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const SessionDelimiter = '://';
+const SessionDelimiter = '|';
 
 const loadSurveyFile = function(surveyid) {
     const file = path.resolve(__dirname) + '/surveys/' + surveyid + '.json';
