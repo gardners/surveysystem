@@ -820,6 +820,7 @@ static void fcgi_accesstest(struct kreq *req)
     TEST_REMOVE("sessions/testdir/testfile");
     TEST_REMOVE("sessions/testdir");
 
+    // Then try to actually create the various files to test file system permissions and access
     TEST_WRITE("surveys/testfile");
     TEST_MKDIR("surveys/testdir");
     TEST_READ("surveys/testdir");
