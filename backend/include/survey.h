@@ -11,25 +11,27 @@ struct question {
   // Type of question
   int type;
   // Answer is an integer, bounded by min_value and max_value
-#define QTYPE_INT         1
+#define QTYPE_INT          1
   // Answer is a fixed point value encoded as a 64-bit integer
   // and with decimal_places places after the decimal.
   // (we don't allow true floating point, as encoding differences can be a
   // pain, especially when compressing)
-#define QTYPE_FIXEDPOINT  2
-#define QTYPE_MULTICHOICE 3
-#define QTYPE_MULTISELECT 4
-#define QTYPE_LATLON      5
-#define QTYPE_DATETIME    6
-#define QTYPE_TIMERANGE   7
-#define QTYPE_UPLOAD      8
-#define QTYPE_TEXT        9
-#define QTYPE_CHECKBOX    10
-#define QTYPE_HIDDEN      11 // instruction for html hidden input (pure textslide) answer is one of dict default value or "" or frontend default value
-#define QTYPE_TEXTAREA    12 // instruction for html textarea.
-#define QTYPE_EMAIL       13 // instruction for html email input
-#define QTYPE_PASSWORD    14 // instruction for html password input, this type can be used to mask any user input
-#define QTYPE_UUID        15
+#define QTYPE_FIXEDPOINT   2
+#define QTYPE_MULTICHOICE  3 // instruction for multi choice inputs (select), answer is a single choice or comma separated list
+#define QTYPE_MULTISELECT  4 // instruction for multi choice inputs (select), answer is a single choice or comma separated list
+#define QTYPE_LATLON       5
+#define QTYPE_DATETIME     6
+#define QTYPE_TIMERANGE    7
+#define QTYPE_UPLOAD       8
+#define QTYPE_TEXT         9
+#define QTYPE_CHECKBOX     10 // instruction for single html checkbox, requires two defined choices in the following order: [OFF-value, ON-value]
+#define QTYPE_HIDDEN       11 // instruction for hidden input (pure textslide) answer is default value or default value
+#define QTYPE_TEXTAREA     12 // instruction for textarea.
+#define QTYPE_EMAIL        13 // instruction for email input
+#define QTYPE_PASSWORD     14 // instruction for (html) password input, this type can be used to mask any user input
+#define QTYPE_SINGLECHOICE 15 // instruction for single choice inputs (checkbox, radios), answer is a single choice
+#define QTYPE_SINGLESELECT 16 // instruction for single choice inputs (select), answer is a single choice
+#define QTYPE_UUID         17
 
   // Formatting and other flags
   int flags;

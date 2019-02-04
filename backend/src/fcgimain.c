@@ -694,6 +694,11 @@ static void fcgi_nextquestion(struct kreq *r)
     {
     case QTYPE_MULTICHOICE:
     case QTYPE_MULTISELECT:
+    //#98 add single checkbox choices
+    case QTYPE_SINGLESELECT:
+    case QTYPE_SINGLECHOICE:
+    case QTYPE_CHECKBOX: 
+    
       kjson_arrayp_open(&req,"choices");
       int len=strlen(q[i]->choices);
       if (len) {
