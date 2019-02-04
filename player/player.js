@@ -200,8 +200,6 @@ const answerQuestions = function(questions) {
 Fetch.raw('/surveyapi/newsession')
     .then((sessid) => {
         SESSIONID = sessid;
-        console.log(Config.Api.surveyid);
-        console.log(`${Config.Api.surveyid}.${sessid}.log.csv`);
         return Log.note(`SessionId: ${SESSIONID}`, sessid);
     })
 // initialize log file
@@ -219,7 +217,7 @@ Fetch.raw('/surveyapi/newsession')
 // start question/answer loop
     .then(res => answerQuestions(res.next_questions))
 // finalise
-    .then(res => Log.success(`\nSurvey finished in ${COUNT} steps\n`))
-    .then(res => CSV.finish())
+    .then(res => Log.success(`\nSurvey finished in ${COUNT} steps\n`, res))
+    .then(() => CSV.finish())
     .then(logfile => Log.log(`   ${Log.colors.yellow('*')} Log file: ${logfile}\n`))
     .catch(err => Log.error(`REQUEST ERROR ${err}`, err));
