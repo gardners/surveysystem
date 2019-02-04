@@ -611,12 +611,13 @@ int save_session(struct session *s)
     if (validate_session_id(s->session_id)) LOG_ERRORV("validate_session_id('%s') failed",s->session_id);
 
     char session_path[1024];
+    char session_path_final[1024];
     char session_path_suffix[1024];
     char session_prefix[5];
     for(int i=0;i<4;i++) session_prefix[i]=s->session_id[i];
     session_prefix[4]=0;
-
-    snprintf(session_path_suffix,1024,"sessions/%s/%s",session_prefix,s->session_id);
+    
+    snprintf(session_path_suffix,1024,"sessions/%s/write.%s",session_prefix,s->session_id);
     if (generate_path(session_path_suffix,session_path,1024))
       LOG_ERRORV("generate_path('%s') failed to build path for loading session '%s'",session_path_suffix,s->session_id);
 
@@ -632,7 +633,14 @@ int save_session(struct session *s)
     }
     fclose(o); o=NULL;
 
-    LOG_INFOV("Updated session file '%s'.",session_path);
+    snprintf(session_path_suffix,1024,"sessions/%s/%s",session_prefix,s->session_id);
+    if (generate_path(session_path_suffix,session_path_final,1024))
+      LOG_ERRORV("generate_path('%s') failed to build path for loading session '%s'",session_path_suffix,s->session_id);
+    if (rename(session_path,session_path_final))
+      LOG_ERRORV("rename('%s','%s') failed when updating file for session '%s' (errno=%d)",
+		 session_path,session_path_final,s->session_id,errno);
+    
+    LOG_INFOV("Updated session file '%s'.",session_path_final);
 
 
   }  while(0);
