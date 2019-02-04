@@ -1,8 +1,7 @@
 # Survey content player
 
 Command line tool for progressing through a survey with generic or custom answers.
-The s
-urvey progress is displayed to the cli and logged into a csv file for inspection.
+The survey progress is displayed to the cli and logged into a csv file for inspection.
 
 **Install:**
 
@@ -23,4 +22,13 @@ copy `template.config.js` to `config.js` and
 $ ./player
 ```
 
+CSV log rows
 
+ * `step`:  survey progess number
+ * `question id`:  question.id
+ * `question type`:  question.type
+ * `question title`:  question.type
+ * `answer type`:  'generic' for an automatted answer ,'custom' for a custom answer provided by config
+ * `submitted answer`:  the serialized answer sent to the api (csv fragment)
+ * `stored answer`:  the stored answer in the backend session file, not applicable when using player on mock server
+ * `next questions`  next question ids provided by the api response
