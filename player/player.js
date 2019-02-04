@@ -138,9 +138,13 @@ const nextQuestions = function() {
  * @returns {Promise} http request response
  */
 const handleAnswer = function(response, question, answer, answerType, count) {
+    const nextIds = response.next_questions.map(q => q.id).toString();
+
     return getlastSessionEntry(SESSIONID)
+        // workaround for mockserver, TODO
+        .catch(err => (err.code === 'ENOENT') ? 'no entry' : err)
         .then((line) => {
-            const nextIds = response.next_questions.map(q => q.id).toString();
+
             CSV.append(count, question.id, question.type, question.title, answerType, answer, line, nextIds);
             return response;
         });
