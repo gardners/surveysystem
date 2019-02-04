@@ -1,0 +1,30 @@
+description character encoding question and answer (title, description and choices)
+
+# Create a dummy survey
+definesurvey characterencoding
+version 1
+Silly test survey updated
+characterencoding:Select one from the ‘following’:Description for ‘following’:SINGLECHOICE:0::-1:-1:-1:5:`31`,`42`:
+endofsurvey
+
+# Request creation of a  new session
+request 200 newsession?surveyid=characterencoding
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session
+characterencoding/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+endofsession
+
+# Ask for next question
+request 200 nextquestion?sessionid=$SESSION
+match_string {"next_questions": [{"id": "characterencoding", "name": "characterencoding", "title": "Select one from the ‘following’", "description": "Description for ‘following’", "type": "SINGLECHOICE", "choices": ["`31`", "`42`"], "unit": ""}]}
+
+request 200 addanswer?sessionid=$SESSION&answer=characterencoding:Ford:0:0:0:0:0:0:0:
+# Make sure answer ends up in file
+verify_session
+field_unit/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+characterencoding:`42`:0:0:0:0:0:0:0:
+endofsession
