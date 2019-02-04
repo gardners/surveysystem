@@ -33,7 +33,7 @@ endofsession
 request 200 addanswer?sessionid=$SESSION&answer=email:test.email@domain.com:0:0:0:0:0:0:0:
 
 # Check that we are offered the next question to answer
-#match_string {"next_questions": [{"id": "password1", "name": "question2", "title": "What is the answer to question 1?", "title_text": "What is the answer to question 2?", "type": "TEXT", "unit": ""}]}
+#match_string {"next_questions": [{"id": "password1", "name": "question2", "title": "What is the answer to question 1?", "description": "What is the answer to question 2?", "type": "TEXT", "unit": ""}]}
 match_string "password1"
 
 # Make sure answer ends up in file

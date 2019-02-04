@@ -20,7 +20,7 @@ endofsession
 
 # Ask for next question
 request 200 nextquestion?sessionid=$SESSION
-match_string {"next_questions": [{"id": "singleselect", "name": "singleselect", "title": "Select one from the following", "title_text": "Select one from the following", "type": "SINGLESELECT", "choices": ["Zaphod", "Marvin", "Arthur", "Ford", "Trillan"], "unit": ""}]}
+match_string {"next_questions": [{"id": "singleselect", "name": "singleselect", "title": "Select one from the following", "description": "Select one from the following", "type": "SINGLESELECT", "choices": ["Zaphod", "Marvin", "Arthur", "Ford", "Trillan"], "unit": ""}]}
 
 request 200 addanswer?sessionid=$SESSION&answer=singleselect:Ford:0:0:0:0:0:0:0:
 # Make sure answer ends up in file
