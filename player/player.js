@@ -3,6 +3,7 @@ const path = require('path');
 
 const CSV = require('./csv');
 const Log = require('./log');
+const { getlastSessionEntry } = require('./session');
 
 // frontend serializer
 const AppSrcDir = path.resolve(path.join(__dirname, '../front/src'));
@@ -128,6 +129,24 @@ const nextQuestions = function() {
 };
 
 /**
+ * Handles received answer response and fetches Answer from backend session. Logs to lofileg
+ * @param {object} question object
+ * @param {string} answer Serialized answer
+ * @param {string} answerType ("generic" or "custom")
+ * @param {number} count sequence counter
+ *
+ * @returns {Promise} http request response
+ */
+const handleAnswer = function(response, question, answer, answerType, count) {
+    return getlastSessionEntry(SESSIONID)
+        .then((line) => {
+            const nextIds = response.next_questions.map(q => q.id).toString();
+            CSV.append(count, question.id, question.type, question.title, answerType, answer, line, nextIds);
+            return response;
+        });
+};
+
+/**
  * Send answer to a given question object
  * @param {object} question object
  * @param {string} answer Serialized answer
@@ -141,11 +160,8 @@ const answerQuestion = function(question, answer, answerType, count) {
         sessionid: SESSIONID,
         answer,
     })
-        .then((response) => {
-            const nextIds = response.next_questions.map(q => q.id).toString();
-            CSV.append(count, question.id, question.type, question.title, answerType, answer, nextIds);
-            return response;
-        });
+        .then(response => handleAnswer(response, question, answer, answerType, count))
+        .then(response => response);
 };
 
 /**
@@ -211,7 +227,7 @@ Fetch.raw('/surveyapi/newsession')
 // csv comment
     .then(() => CSV.append(`# Log for survey ${Config.Api.surveyid} session: ${SESSIONID} executed on: ${now.toLocaleString()}`))
 // csv header row
-    .then(() => CSV.append('step', 'question id', 'question type', 'question title', 'answer type', 'answer', 'next questions'))
+    .then(() => CSV.append('step', 'question id', 'question type', 'question title', 'answer type', 'submitted answer', 'stored answer', 'next questions'))
 // fetch first questions
     .then(() => nextQuestions())
 // start question/answer loop
