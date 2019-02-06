@@ -12,7 +12,7 @@ const Surveys = function({ surveyProvider, surveys }) {
     const cachedTime = (cache) ? cache.time : '';
 
     return (
-        <section>
+        <React.Fragment>
             <h1>{ surveyProvider }</h1>
             <strong>Our Surveys</strong>
 
@@ -36,9 +36,7 @@ const Surveys = function({ surveyProvider, surveys }) {
                     </div>
                 ) }
             </div>
-
-        </section>
-
+        </React.Fragment>
     );
 
 };

@@ -9,52 +9,47 @@ import { sanitizeKcgiJsonString } from '../../Utils';
 
 import './question.scss';
 
-const QuestionRow = function({ question, appearance, className, grouped, children }) {
+const QuestionRow = function({ question, className, grouped, componentName, children }) {
 
     const { title, type, description } = question;
 
     const legend = ''; // TODO not used currently du to no matching question field: remove?
     const sanitizedDescription = sanitizeKcgiJsonString(description);
 
-    let groupClass = 'form-group';
-    let descriptionClass = 'form-text';
+    let colClass = '';
     let labelClass = '';
-    let controlClass = '';
 
-    switch (appearance) {
-
-        case 'horizontal':
-            if(type !== 'HIDDEN') {
-                groupClass = addClassNames(groupClass, 'row');
-                labelClass = 'col-sm-3 col-form-label'
-                controlClass = 'col-sm-9'
-            }
-        break;
-
-        case 'default':
+    switch (componentName) {
+        case 'HiddenInput':
+        case 'PeriodRangeSlider':
+        case 'DayTimeSlider':
+        case 'RadioMatrix':
+            colClass = 'col';
         break;
 
         default:
-            //nothing
+            colClass = 'col-md-6';
     }
 
-    groupClass = addClassNames(groupClass, `question--${appearance}`);
     // TODO grouped
 
     return (
-        <div className={ addClassNames(className, 'question') }>
+        <section className={ addClassNames(className, 'question') }>
             { legend && (typeof legend === 'function') ? legend() : <legend>{ legend }</legend> }
-            { sanitizedDescription && <InnerHtml className={ descriptionClass } htmlContent={ sanitizedDescription } /> }
-            <div className={ groupClass }>
-                { (type !== 'HIDDEN') ? <label className={ labelClass }>{ title }</label> : null }
-                <div className={ controlClass }>{ children }</div>
+            { (type === 'HIDDEN') ? <label className="d-block">{ title }</label> : null }
+            { sanitizedDescription && <InnerHtml className="form-text" htmlContent={ sanitizedDescription } /> }
+
+            <div className="row justify-content-center align-items-center">
+                <div className={ addClassNames(colClass, 'form-group') }>
+                    { (type !== 'HIDDEN') ? <label className="d-block">{ title }</label> : null }
+                    { children }
+                </div>
             </div>
-        </div>
+        </section>
     );
 };
 
 QuestionRow.defaultProps = {
-    appearance: 'default',
     grouped: false,
     className: '',
 };
@@ -62,12 +57,7 @@ QuestionRow.defaultProps = {
 QuestionRow.propTypes = {
     className: PropTypes.string,
     question: QuestionModel.propTypes().isRequired,
-    appearance: PropTypes.oneOf([
-        'default',
-        'horizontal',
-        'inline',
-        'matrix'
-    ]),
+    componentName: PropTypes.string.isRequired, // form input component name
     grouped: PropTypes.bool,
 };
 

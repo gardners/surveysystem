@@ -25,7 +25,7 @@ const App = function(props) {
         <Router>
             <div>
                 <Navigation surveys={ surveys } siteName={ siteName } surveyProvider={ surveyProvider }/>
-                <main className="container-fluid" style={{ marginTop: '60px' /*fixed header*/ }}>
+                <main className="container" style={{ marginTop: '60px' /*fixed header*/ }}>
                     <Switch>
                         <Route exact path="/" render={ props => (surveys.length) ? <Redirect to={ `/survey/${surveys[0]}` } /> : <Surveys /> } />
                         {
