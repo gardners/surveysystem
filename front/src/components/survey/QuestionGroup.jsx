@@ -9,7 +9,6 @@ import RadioMatrix from '../form/RadioMatrix';
 const QuestionGroup = function({ questions, answers, handleChange }) {
 
     const commons = findQuestionGroupCommons(questions);
-    let appearance = 'default';
 
     switch (commons) {
 
@@ -21,10 +20,6 @@ const QuestionGroup = function({ questions, answers, handleChange }) {
                     answers={ answers }
                 />
             );
-
-        case 'TYPE':
-            appearance = 'matrix';
-        break;
 
         default:
             // nothing
@@ -41,7 +36,6 @@ const QuestionGroup = function({ questions, answers, handleChange }) {
                         handleChange={ handleChange }
                         question={ question }
                         answer= { answer }
-                        appearance={ appearance }
                         grouped={ true }
                     />
                 );

@@ -47,7 +47,6 @@ class Row extends Component {
         super(props);
         this.state = {
             unit: '',
-            appearance: 'default',
             values: {},
         }
     }
@@ -63,7 +62,7 @@ class Row extends Component {
 
     render() {
         const { props } = this;
-        const { values, unit, appearance } = this.state;
+        const { values, unit } = this.state;
 
         const hasAnswers = Object.keys(values).length > 0;
 
@@ -85,7 +84,6 @@ class Row extends Component {
             <div className="card mb-1" >
                 <Question
                     { ...props }
-                    appearance={ appearance }
                     question={ question }
                     handleChange={ this.handleChange.bind(this) }
                     className="card-body"
@@ -94,7 +92,6 @@ class Row extends Component {
                 <div className="card-footer text-muted">
                     { hasAnswers && <small className="mr-2 float-left text-info" style={ { fontFamily: 'monospace' } }>{ JSON.stringify(Object.values(values)) }</small> }
                     <small className="mr-2 float-left">Type: { this.props.type }</small>
-                    <small className="mr-2 float-right"><input type="checkbox" onChange={(e) => this.setState({ appearance: (e.target.checked) ? 'horizontal' : 'default' })} /> horizontal display</small>
                     <small className="mr-2 float-right"><input type="checkbox" onChange={(e) => this.setState({ unit: (e.target.checked) ? 'example unit': '' })} /> toggle unit</small>
                 </div>
             </div>
