@@ -1,7 +1,7 @@
 @import "node_modules/bootstrap/scss/bootstrap";
 
 // zebra
-.question .row:nth-of-type(odd) {
+.question .row:nth-of-type(even) {
     background-color: $table-accent-bg;
 }
 
