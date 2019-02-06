@@ -94,30 +94,6 @@ const getError = function(answer) {
     return (answer && answer.serialized instanceof Error) ? answer.serialized : null;
 };
 
-/**
- * Render Previous/Next/Finish buttos
- * The component should not contain survey logic or handle complex data. It merely recieves a number of flags from the parent component
- */
-// const Question = function({ question, answer, handleChange, component, appearance, grouped, className, ...componentProps } ) {
-//
-//     // fetch form control component and handle special cases
-//     const Component = (component && typeof component === 'function') ? component : getComponentByType(question.type);
-//
-//     return (
-//         <QuestionRow className={ className } question={ question } appearance={ appearance } grouped={ grouped }>
-//             <Component
-//                 { ...componentProps }
-//                 value={ (answer) ? answer.values[0] : null }
-//                 question={ question }
-//                 handleChange={ handleChange }
-//                 required
-//             />
-//             <FieldError error={ getError(answer) } />
-//         </QuestionRow>
-//     );
-//
-// };
-
 class Question extends Component {
 
     constructor(props) {
@@ -140,11 +116,16 @@ class Question extends Component {
     }
 
     render() {
-        const { question, answer, handleChange, appearance, grouped, className, ...componentProps } = this.props;
+        const { question, answer, handleChange, grouped, className, ...componentProps } = this.props;
         const Component = this.state.component;
 
         return (
-            <QuestionRow className={ className } question={ question } appearance={ appearance } grouped={ grouped }>
+            <QuestionRow
+                className={ className }
+                question={ question }
+                componentName={ Component.name }
+                grouped={ grouped }
+            >
                 <Component
                     { ...componentProps }
                     value={ (answer) ? answer.values[0] : null }
@@ -161,7 +142,6 @@ class Question extends Component {
 
 Question.defaultProps = {
     answer: null,
-    appearance: 'default',
     component: null,
     classNames: {},
     grouped: false,
@@ -180,12 +160,6 @@ Question.propTypes = {
 
     component: PropTypes.func,
     className: PropTypes.string,
-    appearance: PropTypes.oneOf([
-        'default',
-        'horizontal',
-        'inline',
-        'matrix',
-    ]),
     grouped: PropTypes.bool,
     // ...and component specific props
 };
