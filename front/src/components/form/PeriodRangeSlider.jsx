@@ -89,7 +89,6 @@ class PeriodRangeSlider extends Component {
                     <div style={ cellStyle(50) }><i className="fas fa-sun text-white"></i></div>
                     <div style={ cellStyle(100) }><i className="fas fa-moon text-white"></i></div>
                 </div>
-                <label> { question.title } { question.unit && <em>({ question.unit })</em> }</label>
                 <InputRange
                     minValue={ 0 }
                     maxValue={ DaySec }
