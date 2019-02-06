@@ -44,10 +44,15 @@ const QuestionRow = function({ question, appearance, className, grouped, childre
     return (
         <div className={ addClassNames(className, 'question') }>
             { legend && (typeof legend === 'function') ? legend() : <legend>{ legend }</legend> }
+            { (type === 'HIDDEN') ? <label className={ labelClass }>{ title }</label> : null }
             { sanitizedDescription && <InnerHtml className={ descriptionClass } htmlContent={ sanitizedDescription } /> }
             <div className={ groupClass }>
+                <div className="row justify-content-center align-items-center">
+                <div className="col-md-6">
                 { (type !== 'HIDDEN') ? <label className={ labelClass }>{ title }</label> : null }
                 <div className={ controlClass }>{ children }</div>
+                </div>
+                </div>
             </div>
         </div>
     );
