@@ -118,7 +118,7 @@ class Log {
      * @returns {void}
      */
     debug(message) {
-        this.add(message, 'debug');
+        return this.add(message, 'debug');
     }
 
 
