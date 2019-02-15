@@ -64,28 +64,7 @@ const matchesBreakpoint = function(bp) {
 };
 
 
-/**
- * Checks if a given bootstrap media-query breakpoint applies and returns it.
- *
- * @returns {bool}
- */
-
-const distanceOfBreakpoints = function(src, targ) {
-    const breakpoints = BreakPoints.map(point => point[0]);
-
-    const si = breakpoints.indexOf(src);
-    const ti = breakpoints.indexOf(targ);
-
-    // one of the args is an invalid breakpoint
-    if(si === -1 || ti ===  -1) {
-        return 0;
-    }
-
-    return si - ti;
-};
-
 export {
     getMediaBreakpoint,
     matchesBreakpoint,
-    distanceOfBreakpoints,
 };
