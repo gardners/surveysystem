@@ -17,7 +17,6 @@ const QuestionRow = function({ question, className, grouped, componentName, chil
     const sanitizedDescription = sanitizeKcgiJsonString(description);
 
     let colClass = '';
-    let labelClass = '';
 
     switch (componentName) {
         case 'HiddenInput':
