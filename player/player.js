@@ -231,7 +231,7 @@ Fetch.raw('/surveyapi/newsession')
 // csv comment
     .then(() => CSV.append(`# Log for survey ${Config.Api.surveyid} session: ${SESSIONID} executed on: ${now.toLocaleString()}`))
 // csv header row
-    .then(() => CSV.append('step', 'question id', 'question type', 'question title', 'answer type', 'submitted answer', 'stored answer', 'next questions'))
+    .then(() => CSV.append('step', 'question id', 'question type', 'question title', 'answer type', 'submitted answer', 'stored answer', 'next questions ids'))
 // fetch first questions
     .then(() => nextQuestions())
 // start question/answer loop
