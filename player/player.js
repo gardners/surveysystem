@@ -20,9 +20,7 @@ const Config = require('./config');
 
 const CustomAnswers = Config.answers || {};
 
-Fetch.SURVEYID = Config.Api.surveyid;
-Fetch.HIST = Config.Api.host;
-Fetch.PORT = Config.Api.port;
+Object.assign(Fetch, Config.Api);
 
 let SESSIONID;
 let COUNT = 0;
@@ -142,9 +140,10 @@ const handleAnswer = function(response, question, answer, answerType, count) {
 
     return getlastSessionEntry(SESSIONID)
         // workaround for mockserver, TODO
-        .catch(err => (err.code === 'ENOENT') ? 'no entry' : err)
+        .catch((err) => {
+            return (err.code === 'ENOENT') ? 'no entry' : err;
+        })
         .then((line) => {
-
             CSV.append(count, question.id, question.type, question.title, answerType, answer, line, nextIds);
             return response;
         });

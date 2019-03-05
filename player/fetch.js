@@ -1,69 +1,51 @@
-const http = require('http');
+const request = require('request');
 
 const Fetch = {
     SURVEYID: null,
-    HOST: null,
+    PROTOCOL: null,
+    DOMAIN: null,
     PORT: null,
 
-    raw: function(path, params = {}, headers = {}) {
+    raw: function(path, params = {}, headers = {}, options = {}) {
 
-        const q = Object.assign({
+        const qs = Object.assign({
             surveyid: Fetch.SURVEYID,
         }, params);
 
-        let query = Object.keys(q).reduce((acc, key) => {
-            const part = encodeURIComponent(key) + '=' + encodeURIComponent(q[key]);
-            const r = acc + ((acc) ? '&' + part : part);
-            return r;
-        }, '');
+        //let query = Object.keys(qs).reduce((acc, key) => {
+        //    const part = encodeURIComponent(key) + '=' + encodeURIComponent(q[key]);
+        //    const r = acc + ((acc) ? '&' + part : part);
+        //    return r;
+        //}, '');
 
-        if (query) {
-            query = `?${query}`;
-        }
+        //if (query) {
+        //    query = `?${query}`;
+        //}
 
-        const options = {
-            host: Fetch.HOST,
-            port: Fetch.PORT,
-            path: `${path}${query}`,
+        const uri = Fetch.PROTOCOL + '://' + ((Fetch.PORT) ? `${Fetch.DOMAIN}:${Fetch.PORT}` : Fetch.DOMAIN) + ((path) ? `/${path}` : '');
+
+        const opts = Object.assign({
+            method: 'GET',
+            uri,
+            qs,
             headers,
-        };
+        }, options);
 
         return new Promise(((resolve, reject) => {
-
-            http.get(options, (res) => {
-                // Continuously update stream with data
-                let body = '';
-
-                res.on('data', (chunk) => {
-                    body += chunk;
-                });
-
-                res.on('end', () => {
-                    const { statusCode, statusMessage } = res;
-
-                    if (statusCode >= 299) {
-                        reject(new Error(`[${statusCode}] ${statusMessage}: ${body}`));
-                        return;
-                    }
-                    resolve(body);
-                });
-
-                res.on('error', (error) => {
-                    reject(error);
-                });
-
+            request(opts, (err, response, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
+                console.log('body:', body); // Print the HTML for the Google homepage.
+                resolve(body);
             });
-
         }));
     },
 
     json: function(path, params = {}, headers = {}) {
-        const jsonHeaders = Object.assign(headers, {
-            'Content-Type': 'application/json',
-        });
-
-        return Fetch.raw(path, params, jsonHeaders)
-            .then(body => JSON.parse(body));
+        return Fetch.raw(path, params, headers, { json: true });
     },
 };
 
