@@ -80,7 +80,6 @@ class PeriodRangeSlider extends Component {
 
     render() {
         const { value } = this.state;
-        const { question } = this.props;
 
         return (
             <div style={ wrapperStyle }>
