@@ -1,69 +1,57 @@
-const http = require('http');
+const request = require('request');
 
 const Fetch = {
     SURVEYID: null,
-    HOST: null,
+    PROTOCOL: null,
+    DOMAIN: null,
     PORT: null,
+    AUTH: null,
+    USE_DIGEST: false,
 
-    raw: function(path, params = {}, headers = {}) {
+    raw: function(path, params = {}, headers = {}, options = {}) {
 
-        const q = Object.assign({
+        const qs = Object.assign({
             surveyid: Fetch.SURVEYID,
         }, params);
 
-        let query = Object.keys(q).reduce((acc, key) => {
-            const part = encodeURIComponent(key) + '=' + encodeURIComponent(q[key]);
-            const r = acc + ((acc) ? '&' + part : part);
-            return r;
-        }, '');
+        const uri = Fetch.PROTOCOL + '://' + ((Fetch.PORT) ? `${Fetch.DOMAIN}:${Fetch.PORT}` : Fetch.DOMAIN) + path;
 
-        if (query) {
-            query = `?${query}`;
+        if (Fetch.AUTH) {
+            const auth = Fetch.AUTH.split(':');
+            options.auth = {
+                user: auth[0],
+                pass: auth[1],
+                sendImmediately: !Fetch.USE_DIGEST, // digest auth
+            };
         }
 
-        const options = {
-            host: Fetch.HOST,
-            port: Fetch.PORT,
-            path: `${path}${query}`,
+        const opts = Object.assign({
+            method: 'GET',
+            uri,
+            qs,
             headers,
-        };
+        }, options);
 
+        console.log(opts);
         return new Promise(((resolve, reject) => {
+            request(opts, (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
 
-            http.get(options, (res) => {
-                // Continuously update stream with data
-                let body = '';
+                if (res.statusCode >= 299) {
+                    reject(new Error(`[${res.statusCode}] ${res.statusMessage}: ${body}`));
+                    return;
+                }
 
-                res.on('data', (chunk) => {
-                    body += chunk;
-                });
-
-                res.on('end', () => {
-                    const { statusCode, statusMessage } = res;
-
-                    if (statusCode >= 299) {
-                        reject(new Error(`[${statusCode}] ${statusMessage}: ${body}`));
-                        return;
-                    }
-                    resolve(body);
-                });
-
-                res.on('error', (error) => {
-                    reject(error);
-                });
-
+                resolve(body);
             });
-
         }));
     },
 
     json: function(path, params = {}, headers = {}) {
-        const jsonHeaders = Object.assign(headers, {
-            'Content-Type': 'application/json',
-        });
-
-        return Fetch.raw(path, params, jsonHeaders)
-            .then(body => JSON.parse(body));
+        return Fetch.raw(path, params, headers, { json: true });
     },
 };
 

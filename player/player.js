@@ -20,9 +20,7 @@ const Config = require('./config');
 
 const CustomAnswers = Config.answers || {};
 
-Fetch.SURVEYID = Config.Api.surveyid;
-Fetch.HIST = Config.Api.host;
-Fetch.PORT = Config.Api.port;
+Object.assign(Fetch, Config.Api);
 
 let SESSIONID;
 let COUNT = 0;
@@ -142,9 +140,10 @@ const handleAnswer = function(response, question, answer, answerType, count) {
 
     return getlastSessionEntry(SESSIONID)
         // workaround for mockserver, TODO
-        .catch(err => (err.code === 'ENOENT') ? 'no entry' : err)
+        .catch((err) => {
+            return (err.code === 'ENOENT') ? 'no entry' : err;
+        })
         .then((line) => {
-
             CSV.append(count, question.id, question.type, question.title, answerType, answer, line, nextIds);
             return response;
         });
@@ -231,7 +230,7 @@ Fetch.raw('/surveyapi/newsession')
 // csv comment
     .then(() => CSV.append(`# Log for survey ${Config.Api.surveyid} session: ${SESSIONID} executed on: ${now.toLocaleString()}`))
 // csv header row
-    .then(() => CSV.append('step', 'question id', 'question type', 'question title', 'answer type', 'submitted answer', 'stored answer', 'next questions'))
+    .then(() => CSV.append('step', 'question id', 'question type', 'question title', 'answer type', 'submitted answer', 'stored answer', 'next questions ids'))
 // fetch first questions
     .then(() => nextQuestions())
 // start question/answer loop
