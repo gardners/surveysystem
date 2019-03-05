@@ -68,9 +68,11 @@ backend/python/*
 
 # runtime
 backend/logs/*
+backend/testlog/*
 backend/sessions/*
 
 # compiled
+backend/kcgi/*
 backend/surveycli
 backend/surveyfcgi
 backend/test_runner
