@@ -9,6 +9,10 @@ module.exports = {
         PROTOCOL: 'http',
         DOMAIN: 'localhost',
         PORT: 3098,
+
+        // authentication: http basic or digest
+        AUTH: null, // format: 'myuser:mypassword'
+        USE_DIGEST: false,
     },
 
     //// provide custom answers fo given question ids, overwrites the generic question for that question

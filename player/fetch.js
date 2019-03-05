@@ -5,6 +5,8 @@ const Fetch = {
     PROTOCOL: null,
     DOMAIN: null,
     PORT: null,
+    AUTH: null,
+    USE_DIGEST: false,
 
     raw: function(path, params = {}, headers = {}, options = {}) {
 
@@ -12,17 +14,16 @@ const Fetch = {
             surveyid: Fetch.SURVEYID,
         }, params);
 
-        //let query = Object.keys(qs).reduce((acc, key) => {
-        //    const part = encodeURIComponent(key) + '=' + encodeURIComponent(q[key]);
-        //    const r = acc + ((acc) ? '&' + part : part);
-        //    return r;
-        //}, '');
+        const uri = Fetch.PROTOCOL + '://' + ((Fetch.PORT) ? `${Fetch.DOMAIN}:${Fetch.PORT}` : Fetch.DOMAIN) + path;
 
-        //if (query) {
-        //    query = `?${query}`;
-        //}
-
-        const uri = Fetch.PROTOCOL + '://' + ((Fetch.PORT) ? `${Fetch.DOMAIN}:${Fetch.PORT}` : Fetch.DOMAIN) + ((path) ? `/${path}` : '');
+        if (Fetch.AUTH) {
+            const auth = Fetch.AUTH.split(':');
+            options.auth = {
+                user: auth[0],
+                pass: auth[1],
+                sendImmediately: !Fetch.USE_DIGEST, // digest auth
+            };
+        }
 
         const opts = Object.assign({
             method: 'GET',
@@ -31,14 +32,19 @@ const Fetch = {
             headers,
         }, options);
 
+        console.log(opts);
         return new Promise(((resolve, reject) => {
-            request(opts, (err, response, body) => {
+            request(opts, (err, res, body) => {
                 if (err) {
                     reject(err);
                     return;
                 }
-                console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
-                console.log('body:', body); // Print the HTML for the Google homepage.
+
+                if (res.statusCode >= 299) {
+                    reject(new Error(`[${res.statusCode}] ${res.statusMessage}: ${body}`));
+                    return;
+                }
+
                 resolve(body);
             });
         }));
