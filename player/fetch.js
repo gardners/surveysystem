@@ -32,7 +32,7 @@ const Fetch = {
             headers,
         }, options);
 
-        console.log(opts);
+        // console.log(opts);
         return new Promise(((resolve, reject) => {
             request(opts, (err, res, body) => {
                 if (err) {
