@@ -1,0 +1,45 @@
+description Python implementation serve multiple questions in one request
+
+
+# Create a dummy survey
+version 1
+Silly test survey updated
+q1:Question 1?:Question 1!:TEXT:0::-1:-1:0:0::
+q2:Question 2?:Question 2!:TEXT:0::-1:-1:0:0::
+q3:Question 3?:Question 3!:TEXT:0::-1:-1:0:0::
+
+endofsurvey
+
+# Create python module
+python
+def nextquestion(questions,answers):
+    with open('/tmp/pythoninputs-next_questions_multiple.txt', 'w') as f:
+        f.write("QNs: %s\n" % questions)
+        f.write("Qn len: %d\n" % len(questions))
+        f.write("ans: %s\n" % answers)
+        f.write("ans len: %d\n" % len(answers))
+        f.write("nextID: %s\n" % nextID)
+    return ['q1','q2'];
+endofpython
+
+# Request creation of a  new session
+request 200 newsession?surveyid=next_questions_multiple
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session
+next_questions_multiple/11b0c147a2e1e1dc1840ab719a031fccaa4014ab
+endofsession
+
+# Ask for next question
+request 200 nextquestion?sessionid=$SESSION
+# TODO: this is what I think the answer should look like, but it actually looks like the next uncommented line
+match_string {"next_questions": [{"id": "q1", "name": "q1", "title": "Question 1?", "description": "Question 1!", "type": "TEXT", "unit": ""}, {"id": "q2", "name": "q2", "title": "Question 2?", "description": "Question 2!", "type": "TEXT", "unit": ""}]}
+
+verify_session
+next_questions_multiple/11b0c147a2e1e1dc1840ab719a031fccaa4014ab
+endofsession
+
+
