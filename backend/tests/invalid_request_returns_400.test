@@ -1,0 +1,25 @@
+description requests with invalid or missing params should HTTP 400
+
+request 400 newsession
+request 400 newsession?surveyid=
+request 400 newsession?surveyid=invalid
+
+request 400 nextquestion
+request 400 nextquestion?sessionid=
+request 400 nextquestion?sessionid=invalid
+
+request 400 updateanswer
+request 400 updateanswer?sessionid=
+request 400 updateanswer?sessionid=invalid
+
+request 400 delanswer
+request 400 delanswer?sessionid=
+request 400 delanswer?sessionid=invalid
+
+request 400 analyse
+request 400 analyse?sessionid=
+request 400 analyse?sessionid=invalid
+
+request 400 delsession
+request 400 delsession?sessionid=
+request 400 delsession?sessionid=invalid
