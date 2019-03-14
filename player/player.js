@@ -222,13 +222,13 @@ Fetch.raw('/surveyapi/newsession')
         return Log.note(`SessionId: ${SESSIONID}`, sessid);
     })
 // initialize log file
-    .then(sessid => CSV.init(`${Config.Api.surveyid}.${sessid}.log.csv`))
+    .then(sessid => CSV.init(`${Config.Api.SURVEYID}.${sessid}.log.csv`))
     .then((logfile) => {
         LOGFILE = logfile;
         return Log.note(`Logging into: ${LOGFILE}`, LOGFILE);
     })
 // csv comment
-    .then(() => CSV.append(`# Log for survey ${Config.Api.surveyid} session: ${SESSIONID} executed on: ${now.toLocaleString()}`))
+    .then(() => CSV.append(`# Log for survey ${Config.Api.SURVEYID} session: ${SESSIONID} executed on: ${now.toLocaleString()}`))
 // csv header row
     .then(() => CSV.append('step', 'question id', 'question type', 'question title', 'answer type', 'submitted answer', 'stored answer', 'next questions ids'))
 // fetch first questions
