@@ -602,7 +602,7 @@ int run_test(char *dir, char *test_file)
 
   	// adds extended request options (request method and request data)
     	char data[65536] = { '\0' };
-    	char method[10] = "GET";
+    	char method[65536] = "GET";
    	sscanf(line,"request %d %s %s %s", &expected_result, url, method, data);
 
 	int o=0;
