@@ -434,7 +434,10 @@ int get_next_questions(struct session *s,
     int r=call_python_nextquestion(s,next_questions,max_next_questions,next_question_count);
     if (r==-99) { retVal=-1; break; }
     if (!r) { retVal=0; break; }
-    retVal=get_next_questions_generic(s,next_questions,max_next_questions,next_question_count);
+    // PGS: Disabled generic implementation of nextquestion, since if you have a python version and it can't be loaded
+    // for some reason we should NOT fall back, because it may expose questions and IP in a survey that should not be revealed. 
+    // retVal=get_next_questions_generic(s,next_questions,max_next_questions,next_question_count);
+    LOG_ERROR("Could not call python nextquestion function.");
   } while (0);
 
   return retVal;
