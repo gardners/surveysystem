@@ -231,6 +231,24 @@ int mark_next_question(struct session *s,struct question *next_questions[],
   return retVal;
 }
 
+void log_python_object(char *msg,PyObject *result)
+{
+  char fname[1024];
+  snprintf(fname,1024,"/tmp/pyobj.%d.txt",getpid());
+  FILE *f=fopen(fname,"w");
+  if (f) {
+    PyObject_Print(result, f, 0);
+    fclose(f);
+    f=fopen(fname,"r");	
+    char buffer[8192]="";
+    if (f) {
+      int bytes=fread(buffer,1,8192,f);
+      fclose(f);
+    }
+    if (buffer[0]) LOG_INFOV("%s = %s",msg,buffer);
+  }
+}
+
 int call_python_nextquestion(struct session *s,
 			     struct question *next_questions[],int max_next_questions,int *next_question_count)
 {
@@ -337,6 +355,8 @@ int call_python_nextquestion(struct session *s,
 	LOG_ERRORV("Error inserting question name '%s' into Python list",s->questions[i]->uid); 
       }
     }
+
+    //    log_python_object("Answers",answers);
     
     PyObject* args = PyTuple_Pack(2,questions,answers);
     
@@ -386,20 +406,8 @@ int call_python_nextquestion(struct session *s,
 	}
       }
     } else {
-      char fname[1024];
-      snprintf(fname,1024,"/tmp/pyobj.%d.txt",getpid());
-      FILE *f=fopen(fname,"w");
-      if (f) {
-	PyObject_Print(result, f, 0);
-	fclose(f);
-	f=fopen(fname,"r");	
-	char buffer[8192]="";
-	if (f) {
-	  int bytes=fread(buffer,1,8192,f);
-	  fclose(f);
-	}
-	if (buffer[0]) LOG_INFOV("Return value = %s",buffer);
-      }
+      log_python_object("Return value",result);
+
       Py_DECREF(result);
       LOG_ERRORV("Return value from Python function '%s' is neither string nor list.  Empty return should be an empty list.",function_name);
     }
