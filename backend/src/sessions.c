@@ -476,9 +476,10 @@ int load_survey_questions(struct session *ses)
     if (!line[0]) LOG_ERRORV("Failed to read survey file format version in survey specification file '%s'",survey_path);
     int format_version=0;
     int offset=0;
-    if (sscanf(line,"version %d%n",&format_version)!=1)
+    trim_crlf(line);
+    if (sscanf(line,"version %d%n",&format_version,&offset)!=1)
       LOG_ERRORV("Error parsing file format version in survey file '%s'",survey_path);
-    if (offset<strlen(line)) LOG_ERRORV("Junk at end of version string in survey file '%s'",survey_path);
+    if (offset<strlen(line)) LOG_ERRORV("Junk at end of version string in survey file '%s'. Line was '%s'",survey_path,line);
     if (format_version<1||format_version>2) LOG_ERRORV("Unknown survey file format version in survey file '%s'",survey_path);
 
     // Get survey file description
