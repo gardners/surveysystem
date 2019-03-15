@@ -386,7 +386,21 @@ int call_python_nextquestion(struct session *s,
 	}
       }
     } else {
-      Py_DECREF(result);    
+      char fname[1024];
+      snprintf(fname,1024,"/tmp/pyobj.%d.txt",getpid());
+      FILE *f=fopen(fname,"w");
+      if (f) {
+	PyObject_Print(result, f, 0);
+	fclose(f);
+	f=fopen(fname,"r");	
+	char buffer[8192]="";
+	if (f) {
+	  int bytes=fread(buffer,1,8192,f);
+	  fclose(f);
+	}
+	if (buffer[0]) LOG_INFOV("Return value = %s",buffer);
+      }
+      Py_DECREF(result);
       LOG_ERRORV("Return value from Python function '%s' is neither string nor list.  Empty return should be an empty list.",function_name);
     }
 
