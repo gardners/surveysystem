@@ -5,9 +5,10 @@ description Python implementation of nextquestion can be used
 # Create a dummy survey
 # XXX - In any test where we use python, we need to make sure we don't reuse any survey name
 # that appears in any othe test, else our python functions will be hanging around and will get used.
-definesurvey 001nextquestionpythonActualLogic
-version 1
+definesurvey 003_outputFromPythonShouldBeSameAsFromC
+version 2
 Silly test survey updated
+pythondir=.
 email:What is the answer to question 1?:What is the answer to question 1?:TEXT:0:I don't know:-1:-1:0:0::
 password1:How boring was question 1?:How boring was question 1?:TEXT:0:I don't know:-1:-1:0:0::
 endofsurvey
@@ -22,14 +23,14 @@ def nextquestion_003_outputFromPythonShouldBeSameAsFromC(questions, answers):
 endofpython
 
 # Request creation of a  new session
-request 200 newsession?surveyid=001nextquestionpythonActualLogic
+request 200 newsession?surveyid=003_outputFromPythonShouldBeSameAsFromC
 
 # Get the session ID that newsession should have returned
 extract_sessionid
 
 # Check that we have an empty session file created
 verify_session
-001nextquestionpythonActualLogic/11b0c147a2e1e1dc1840ab719a031fccaa4014ab
+003_outputFromPythonShouldBeSameAsFromC/11b0c147a2e1e1dc1840ab719a031fccaa4014ab
 endofsession
 
 # Ask for next question
