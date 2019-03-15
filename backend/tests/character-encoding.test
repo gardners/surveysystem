@@ -1,10 +1,11 @@
 description character encoding question and answer (title, description and choices)
 
 # Create a dummy survey
+# The back quotes around 31 and 42 in the definition line below are upper-half ascii characters
 definesurvey characterencoding
 version 1
 Silly test survey updated
-characterencoding:Select one from the ‘following’:Description for ‘following’:SINGLECHOICE:0::-1:-1:-1:5:`31`,`42`:
+characterencoding:Select one from the ‘following’:Description for ‘following’:SINGLECHOICE:0::-1:-1:-1:5:`31`,`42`,ümlaut:
 endofsurvey
 
 # Request creation of a  new session
@@ -20,7 +21,7 @@ endofsession
 
 # Ask for next question
 request 200 nextquestion?sessionid=$SESSION
-match_string {"next_questions": [{"id": "characterencoding", "name": "characterencoding", "title": "Select one from the ‘following’", "description": "Description for ‘following’", "type": "SINGLECHOICE", "choices": ["`31`", "`42`"], "unit": ""}]}
+match_string {"next_questions": [{"id": "characterencoding", "name": "characterencoding", "title": "Select one from the ‘following’", "description": "Description for ‘following’", "type": "SINGLECHOICE", "choices": ["`31`", "`42`", "ümlaut"], "unit": ""}]}
 
 request 200 addanswer?sessionid=$SESSION&answer=characterencoding:Ford:0:0:0:0:0:0:0:
 # Make sure answer ends up in file
