@@ -121,6 +121,8 @@ struct session {
   char *survey_id;   // <survey name>/<hash>
   char *survey_description;
   char *session_id;
+  char pythondir[8192];
+  unsigned int allow_generic;
   struct question *questions[MAX_QUESTIONS];
   struct answer *answers[MAX_QUESTIONS];
   int answer_count;

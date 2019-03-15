@@ -475,9 +475,11 @@ int load_survey_questions(struct session *ses)
     line[0]=0;fgets(line,8192,f);
     if (!line[0]) LOG_ERRORV("Failed to read survey file format version in survey specification file '%s'",survey_path);
     int format_version=0;
-    if (sscanf(line,"version %d",&format_version)!=1)
+    int offset=0;
+    if (sscanf(line,"version %d%n",&format_version)!=1)
       LOG_ERRORV("Error parsing file format version in survey file '%s'",survey_path);
-    if (format_version!=1) LOG_ERRORV("Unknown survey file format version in survey file '%s'",survey_path);
+    if (offset<strlen(line)) LOG_ERRORV("Junk at end of version string in survey file '%s'",survey_path);
+    if (format_version<1||format_version>2) LOG_ERRORV("Unknown survey file format version in survey file '%s'",survey_path);
 
     // Get survey file description
     line[0]=0;fgets(line,8192,f);
@@ -486,6 +488,25 @@ int load_survey_questions(struct session *ses)
     trim_crlf(line);
     ses->survey_description=strdup(line);
     if (!ses->survey_description) LOG_ERRORV("strdup('%s') failed when loading survey file '%s'",line,survey_path);
+
+    // Only allow generic implementation of next question picker if explicitly allowed
+    ses->allow_generic=0;
+    if (format_version>1) {
+      // Check for pythondir and without python directives
+      line[0]=0;fgets(line,8192,f);
+      if (!line[0]) LOG_ERRORV("Failed to read survey description in survey specification file '%s'",survey_path);
+      // Trim CR and LF chars from description
+      trim_crlf(line);
+      if (!strcasecmp(line,"without python")) {
+        ses->allow_generic=1;
+        ses->pythondir[0]=0;
+      } else if (sscanf(line,"pythondir=%[^\n]",ses->pythondir)==1) {
+	 // We are using python, and have recorded a python library directory to add to the search path.
+      } else {
+	LOG_ERRORV("Missing <without python|pythondir=...> directive in survey specification file '%s'",survey_path);
+      }
+      
+    }
 
     // Now read questions
     do {
