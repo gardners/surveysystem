@@ -13,9 +13,9 @@ python
 def nextquestion_007_testShouldVerifyDefinitions(questions,answers):
     if len(answers) == 0:
         return 'email'
-    elif answers[-1] == 'email':
+    elif answers[-1]['uid'] == 'email':
         return 'password1'
-    elif answers[-1] == 'password1':
+    elif answers[-1]['uid'] == 'password1':
         return 'password2'
 endofpython
 
@@ -27,7 +27,7 @@ extract_sessionid
 
 # Check that we have an empty session file created
 verify_session
-007_testShouldVerifyDefinitions/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+007_testShouldVerifyDefinitions/12cbb5159aed5fb074c26660a02ab4eefc620219
 endofsession
 
 request 200 addanswer?sessionid=$SESSION&answer=email:test.email@domain.com:0:0:0:0:0:0:0:
@@ -38,7 +38,7 @@ match_string "password1"
 
 # Make sure answer ends up in file
 verify_session
-007_testShouldVerifyDefinitions/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+007_testShouldVerifyDefinitions/12cbb5159aed5fb074c26660a02ab4eefc620219
 email:test2.email@domain.com:0:0:0:0:0:0:0:
 endofsession
 
