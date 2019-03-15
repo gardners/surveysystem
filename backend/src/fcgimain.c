@@ -354,9 +354,8 @@ static void fcgi_newsession(struct kreq *req)
     struct kpair *survey = req->fieldmap[KEY_SURVEYID];
     if (!survey) {
       // No survey ID, so return 400
-      LOG_ERROR("surveyid missing from query string");
       quick_error(req,KHTTP_400,"surveyid missing");
-      break;
+      LOG_ERROR("surveyid missing from query string");
     }
 
     char session_id[1024];
@@ -391,29 +390,25 @@ static void fcgi_addanswer(struct kreq *req)
     struct kpair *session = req->fieldmap[KEY_SESSIONID];
     if (!session) {
       // No session ID, so return 400
-      LOG_ERROR("sessionid missing from query string");
       quick_error(req,KHTTP_400,"sessionid missing");
-      break;
+      LOG_ERROR("sessionid missing from query string");
     }
     if (!session->val) {
-      LOG_ERROR("sessionid is blank");
       quick_error(req,KHTTP_400,"sessionid is blank");
-      break;
+      LOG_ERROR("sessionid is blank");
     }
     char *session_id=session->val;
     struct session *s=load_session(session_id);
     if (!s) {
-      LOG_ERRORV("Could not load session '%s'",session_id);
       quick_error(req,KHTTP_400,"Could not load specified session. Does it exist?");
-      break;
+      LOG_ERRORV("Could not load session '%s'",session_id);
     }
 
     struct kpair *answer = req->fieldmap[KEY_ANSWER];
     if (!answer) {
       // No answer, so return 400
-      LOG_ERROR("answer is missing");
       quick_error(req,KHTTP_400,"answer missing");
-      break;
+      LOG_ERROR("answer is missing");
     }
     if (!answer->val) {
       quick_error(req,KHTTP_400,"answer is blank");
@@ -497,8 +492,8 @@ static void fcgi_updateanswer(struct kreq *req)
       break;
     }
     if (save_session(s)) {
-      LOG_ERRORV("save_session('%s') failed",session_id);
       quick_error(req,KHTTP_400,"save_session() failed");
+      LOG_ERRORV("save_session('%s') failed",session_id);
     }
     
     // All ok, so tell the caller the next question to be answered
@@ -583,8 +578,8 @@ static void fcgi_delanswer(struct kreq *req)
       break;
     }
     if (save_session(s)) {
-      LOG_ERRORV("save_session('%s') failed",session_id);
       quick_error(req,KHTTP_400,"save_session() failed");
+      LOG_ERRORV("save_session('%s') failed",session_id);
     }
     
     // All ok, so tell the caller the next question to be answered
@@ -625,9 +620,8 @@ static void fcgi_delsession(struct kreq *r)
     }
     free(s);
     if (delete_session(session_id)) {
-      LOG_ERRORV("delete_session('%s') failed",session_id);
       quick_error(r,KHTTP_400,"Could not delete session. Does it exist?");
-      break;
+      LOG_ERRORV("delete_session('%s') failed",session_id);
     }
 
     quick_error(r,KHTTP_200,"Session deleted.");
