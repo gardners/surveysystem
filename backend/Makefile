@@ -84,13 +84,18 @@ test_serialisers:	$(TESTOBJS)
 surveycli:	$(CLIOBJS)
 	$(CC) $(COPT) -o $@ $^ $(LOPT)
 
-$(KCGIARS):	
+kcgi/kcgijson.c:
 	git submodule init
 	git submodule update
-	( cd kcgi ; ./configure && make )
+
+$(KCGIARS):	/usr/bin/bmake kcgi/kcgijson.c
+	( cd kcgi ; ./configure && bmake )
 
 surveyfcgi:	$(FCGIOBJS) $(KCGIARS)
 	$(CC) $(COPT) -o $@ $^ $(LOPT) $(KCGIARS) -lz
 
 clean:
-	rm $(SRCDIR)/*.o $(GENERATEDHEADERS) $(GENERATEDSRCS)
+	rm $(SRCDIR)/*.o $(GENERATEDHEADERS) $(GENERATEDSRCS) $(KCGIARS)
+
+/usr/bin/bmake:
+	echo "Run sudo apt-get install bmake"
