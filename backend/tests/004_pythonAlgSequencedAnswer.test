@@ -2,8 +2,9 @@ description Answer questions, and obtain a sensible next question each time
 
 # Create a dummy survey
 definesurvey 004_pythonAlgSequencedAnswer
-version 1
+version 2
 Silly test survey updated
+pythondir=.
 email:Email Address:Email Address:TEXT:-1:email:-999:999:2:0:0::
 password1:Password:Password:TEXT:-1:password1:-999:999:2:0:0::
 password2:Confirm Password:Confirm Password:TEXT:-1:password2:-999:999:2:0:0::
@@ -39,7 +40,7 @@ extract_sessionid
 
 # Check that we have an empty session file created
 verify_session
-004_pythonAlgSequencedAnswer/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+004_pythonAlgSequencedAnswer/55749022f51835a243df2308fc1046616630155a
 endofsession
 
 request 200 addanswer?sessionid=$SESSION&answer=email:test.email@domain.com:0:0:0:0:0:0:0:
@@ -50,7 +51,7 @@ match_string "password1"
 
 # Make sure answer ends up in file
 verify_session
-004_pythonAlgSequencedAnswer/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+004_pythonAlgSequencedAnswer/55749022f51835a243df2308fc1046616630155a
 email:test.email@domain.com:0:0:0:0:0:0:0:
 endofsession
 
@@ -62,7 +63,7 @@ match_string "password2"
 #
 ## Make sure answer ends up in file
 verify_session
-004_pythonAlgSequencedAnswer/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+004_pythonAlgSequencedAnswer/55749022f51835a243df2308fc1046616630155a
 email:test.email@domain.com:0:0:0:0:0:0:0:
 password1:myPaSSw0rD:0:0:0:0:0:0:0:
 endofsession
@@ -75,7 +76,7 @@ match_string "beforeStartingSurvey"
 #
 ## Make sure answer ends up in file
 verify_session
-004_pythonAlgSequencedAnswer/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+004_pythonAlgSequencedAnswer/55749022f51835a243df2308fc1046616630155a
 email:test.email@domain.com:0:0:0:0:0:0:0:
 password1:myPaSSw0rD:0:0:0:0:0:0:0:
 password2:myPaSSw0rD:0:0:0:0:0:0:0:
