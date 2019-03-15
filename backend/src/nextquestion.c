@@ -53,7 +53,7 @@ void log_python_error(void)
 
 int is_python_started=0;
 PyObject *nq_python_module=NULL;
-int setup_python(void)
+int setup_python(char *search_path)
 {
   int retVal=0;
   do {
@@ -61,7 +61,7 @@ int setup_python(void)
     // Check if the python source has changed. If so, destroy the current python
     // instance, and start again.
     
-    if (is_python_started) break;
+    if (!is_python_started) { 
 
     if (!getenv("SURVEY_HOME")) LOG_ERROR("SURVEY_HOME environment variable not set");
     
@@ -71,10 +71,13 @@ int setup_python(void)
     Py_SetProgramName(name);
     Py_Initialize();
 
+    }
+
     PyObject *syspath_o=PySys_GetObject("path");
     PyObject* rep = PyObject_Repr(syspath_o);
     const char *syspath = PyUnicode_AsUTF8(rep);
 
+    if (!is_python_started) {
     char append_cmd[1024];
     snprintf(append_cmd,1024,"%s/python/", getenv("SURVEY_HOME"));
     if (!strstr(syspath,append_cmd)) {
@@ -89,7 +92,26 @@ int setup_python(void)
     } else {
       LOG_WARNV("Python sys.path already contains '%s'",append_cmd);
     }
-    
+    }
+  
+    // Add python dir, if it exists 
+    if (search_path&&search_path[0]) {
+      char append_cmd[1024];
+      snprintf(append_cmd,1024,"%s", search_path);
+      if (!strstr(syspath,append_cmd)) {
+      // Add python directory to python's search path
+
+      PyObject *sys_path = PySys_GetObject("path");
+      if (PyList_Append(sys_path, PyUnicode_FromString(append_cmd)))
+        {
+          log_python_error();
+          LOG_ERRORV("Failed to setup python search path using \"%s\"",append_cmd);
+        }
+    } else {
+      LOG_WARNV("Python sys.path already contains '%s'",append_cmd);
+    } 
+    }
+ 
     //    else
     //      LOG_WARNV("Set up python search path using \"%s\"",append_cmd);
 
@@ -113,6 +135,7 @@ int setup_python(void)
     }
 
     if (!nq_python_module) {      
+      char append_cmd[1024];
       // So now try to get the module a different way
       snprintf(append_cmd,1024,"import nextquestion");
       int res=PyRun_SimpleString(append_cmd);
@@ -220,7 +243,7 @@ int call_python_nextquestion(struct session *s,
     if ((*next_question_count)>=MAX_QUESTIONS) LOG_ERROR("Too many questions in list.");
 
     // Setup python
-    if (setup_python()) {
+    if (setup_python(s->pythondir)) {
       LOG_ERROR("Failed to initialise python.\n");
     }
     if (!nq_python_module) LOG_ERROR("Python module 'nextquestion' not loaded. Does it have an error?");
@@ -436,8 +459,11 @@ int get_next_questions(struct session *s,
     if (!r) { retVal=0; break; }
     // PGS: Disabled generic implementation of nextquestion, since if you have a python version and it can't be loaded
     // for some reason we should NOT fall back, because it may expose questions and IP in a survey that should not be revealed. 
-    // retVal=get_next_questions_generic(s,next_questions,max_next_questions,next_question_count);
-    LOG_ERROR("Could not call python nextquestion function.");
+    if (s->allow_generic) {
+      retVal=get_next_questions_generic(s,next_questions,max_next_questions,next_question_count); 
+    } else {
+      LOG_ERROR("Could not call python nextquestion function.");
+    }
   } while (0);
 
   return retVal;
@@ -452,7 +478,7 @@ int get_analysis(struct session *s,const unsigned char **output)
     if (!output) LOG_ERROR("output is NULL");
 
     // Setup python
-    if (setup_python()) {
+    if (setup_python(s->pythondir)) {
       LOG_ERROR("Failed to initialise python.\n");
     }
     if (!nq_python_module) LOG_ERROR("Python module 'nextquestion' not loaded. Does it have an error?");
