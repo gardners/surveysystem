@@ -3,9 +3,10 @@ description character encoding question and answer (title, description and choic
 # Create a dummy survey
 # The back quotes around 31 and 42 in the definition line below are upper-half ascii characters
 definesurvey characterencoding
-version 1
+version 2
 Silly test survey updated
-characterencoding:Select one from the ‘following’:Description for ‘following’:SINGLECHOICE:0::-1:-1:-1:5:`31`,`42`,ümlaut:
+without python
+characterencoding:Select one from the ‘following’:Description for ‘following’:SINGLECHOICE:0::-1:-1:-1:5:`31`,`42ö`,ümlaut:
 endofsurvey
 
 # Request creation of a  new session
@@ -16,16 +17,16 @@ extract_sessionid
 
 # Check that we have an empty session file created
 verify_session
-characterencoding/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+characterencoding/ee0a452e61f1a1a6f11084f9af7cbf2ac69cb728
 endofsession
 
 # Ask for next question
 request 200 nextquestion?sessionid=$SESSION
-match_string {"next_questions": [{"id": "characterencoding", "name": "characterencoding", "title": "Select one from the ‘following’", "description": "Description for ‘following’", "type": "SINGLECHOICE", "choices": ["`31`", "`42`", "ümlaut"], "unit": ""}]}
+match_string {"next_questions": [{"id": "characterencoding", "name": "characterencoding", "title": "Select one from the ‘following’", "description": "Description for ‘following’", "type": "SINGLECHOICE", "choices": ["`31`", "`42ö`", "ümlaut"], "unit": ""}]}
 
 request 200 addanswer?sessionid=$SESSION&answer=characterencoding:Ford:0:0:0:0:0:0:0:
 # Make sure answer ends up in file
 verify_session
-field_unit/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
-characterencoding:`42`:0:0:0:0:0:0:0:
+field_unit/ee0a452e61f1a1a6f11084f9af7cbf2ac69cb728
+characterencoding:`42ö`:0:0:0:0:0:0:0:
 endofsession

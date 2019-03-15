@@ -2,8 +2,9 @@ description Answer questions, and obtain a sensible next question each time
 
 # Create a dummy survey
 definesurvey foo
-version 1
+version 2
 Silly test survey updated
+without python
 question1:Select one of the following:Select one of the following:MULTICHOICE:0::-1:-1:-1:3:Yes,No,Maybe:
 question2:What is the answer to question 1?:What is the answer to question 1?:TEXT:0:I don't know:-1:-1:0:0::
 question3:How boring was question 2?:How boring was question 2?:TEXT:0:I don't know:-1:-1:0:0::
