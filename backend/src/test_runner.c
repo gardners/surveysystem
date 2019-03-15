@@ -600,6 +600,11 @@ int run_test(char *dir, char *test_file)
 	char cmd[65536];
 	char url_sub[65536];
 
+  	// adds extended request options (request method and request data)
+    	char data[65536] = { '\0' };
+    	char method[65536] = "GET";
+   	sscanf(line,"request %d %s %s %s", &expected_result, url, method, data);
+
 	int o=0;
 	for(int i=0;url[i];i++) {
 	  if (url[i]!='$') url_sub[o++]=url[i];
@@ -637,8 +642,10 @@ int run_test(char *dir, char *test_file)
 	  goto fatal;	      
 	}
 	
-	snprintf(cmd,65536,"curl -s -w \"HTTPRESULT=%%{http_code}\" -o %s/request.out \"http://localhost/surveyapi/%s\" > %s/request.code",
-		 dir,url_sub,dir);
+        snprintf(cmd, 65536,
+            "curl -X %s -s -w \"HTTPRESULT=%%{http_code}\" %s%s -o %s/request.out \"http://localhost/surveyapi/%s\" > %s/request.code",
+            method, ((data[0] == '\0') ? "" : "-d "), data, dir, url_sub, dir);
+
 	tdelta=gettime_us()-start_time; tdelta/=1000;
 	fprintf(log,"T+%4.3fms : HTTP API request command: '%s'\n",tdelta,cmd);
 	int shell_result=system(cmd);
