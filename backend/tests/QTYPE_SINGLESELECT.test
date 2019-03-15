@@ -2,8 +2,9 @@ description SINGLESELECT question type: Answer a SINGLESELECT question with a si
 
 # Create a dummy survey
 definesurvey qtype_singleselect
-version 1
+version 2
 Silly test survey updated
+without python
 singleselect:Select one from the following:Select one from the following:SINGLESELECT:0::-1:-1:-1:5:Zaphod,Marvin,Arthur,Ford,Trillan:
 endofsurvey
 

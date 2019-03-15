@@ -2,8 +2,9 @@ description MULTICHOICE question type: Answer a MULTICHOICE question with a comm
 
 # Create a dummy survey
 definesurvey qtype_multichoice
-version 1
+version 2
 Silly test survey updated
+without python
 multichoice:Select any from the following:Select any from the following:MULTICHOICE:0::-1:-1:-1:5:Zaphod,Marvin,Arthur,Ford,Trillan:
 endofsurvey
 

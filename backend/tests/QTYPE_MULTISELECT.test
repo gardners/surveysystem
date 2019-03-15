@@ -2,8 +2,9 @@ description MULTISELECT question type: Answer a MULTISELECT question with a comm
 
 # Create a dummy survey
 definesurvey qtype_multiselect
-version 1
+version 2
 Silly test survey updated
+without python
 multiselect:Select any from the following:Select any from the following:MULTISELECT:0::-1:-1:-1:5:Zaphod,Marvin,Arthur,Ford,Trillan:
 endofsurvey
 

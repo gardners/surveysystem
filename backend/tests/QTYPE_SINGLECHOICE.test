@@ -2,8 +2,9 @@ description SINGLECHOICE question type: Answer a SINGLECHOICE question with a si
 
 # Create a dummy survey
 definesurvey qtype_singlechoice
-version 1
+version 2
 Silly test survey updated
+without python
 singlechoice:Select one from the following:Select one from the following:SINGLECHOICE:0::-1:-1:-1:5:Zaphod,Marvin,Arthur,Ford,Trillan:
 endofsurvey
 

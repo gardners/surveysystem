@@ -2,8 +2,9 @@ description HTML description field: Answer a question in a survey
 
 # Create a dummy survey
 definesurvey field_description
-version 1
+version 2
 Silly test survey updated
+without python
 question1:This is the first title:This is the first description:INT:0::-1:-1:0:0::
 question2:This is the second title:This is the <strong>second HTML description</strong>:INT:0::-1:-1:0:0::
 
@@ -26,7 +27,7 @@ match_string {"next_questions": [{"id": "question1", "name": "question1", "title
 
 # answer question
 request 200 addanswer?sessionid=$SESSION&answer=question1::5:0:0:0:0:0:0:
-match_string {"next_questions": [{"id": "question2", "name": "question2", "title": "This is the second title", "description": "This is the <strong>second HTML description</strong>", "type": "INT", "unit": ""}]}
+match_string {"next_questions": [{"id": "question2", "name": "question2", "title": "This is the second title", "description": "This is the <strong>second HTML description<\/strong>", "type": "INT", "unit": ""}]}
 request 200 addanswer?sessionid=$SESSION&answer=question2::-5:0:0:0:0:0:0:
 
 # Make sure answer ends up in file

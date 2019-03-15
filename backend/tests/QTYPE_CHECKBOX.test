@@ -2,8 +2,9 @@ description CHECKBOX question type: Answer a CHECKBOX question in a survey
 
 # Create a dummy survey
 definesurvey qtype_checkbox
-version 1
+version 2
 Silly test survey updated
+without python
 AreYouAwake:Are you awake?:Are you awake?:CHECKBOX:0::-1:-1:0:0:Unchecked,Checked:
 endofsurvey
 

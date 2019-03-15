@@ -2,8 +2,9 @@ description Unit field: Answer a question in a survey
 
 # Create a dummy survey
 definesurvey field_unit
-version 1
+version 2
 Silly test survey updated
+without python
 question1:How many days are in February?:How many days are in February?:INT:0::-1:-1:0:0::days
 endofsurvey
 

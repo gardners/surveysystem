@@ -2,6 +2,7 @@ description Python implementation serve multiple questions in one request
 
 
 # Create a dummy survey
+survey next_questions_multiple
 version 1
 Silly test survey updated
 q1:Question 1?:Question 1!:TEXT:0::-1:-1:0:0::

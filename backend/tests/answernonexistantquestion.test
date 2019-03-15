@@ -17,7 +17,7 @@ extract_sessionid
 
 # Check that we have an empty session file created
 verify_session
-foo/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+foo/d7ab1e207abe98dad5985a1ec18c96da8bed01a4
 endofsession
 
 request 400 addanswer?sessionid=$SESSION&answer=nosuchquestion:Hello+World:0:0:0:0:0:0:0:
@@ -26,5 +26,5 @@ request 400 addanswer?sessionid=$SESSION&answer=nosuchquestion:Hello+World:0:0:0
 
 # Make sure answer ends up in file
 verify_session
-foo/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+foo/d7ab1e207abe98dad5985a1ec18c96da8bed01a4
 endofsession
