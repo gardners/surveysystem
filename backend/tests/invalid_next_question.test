@@ -1,0 +1,41 @@
+description Invalid implementation of python def nextquestion() should return 500 and not fall back to flat sequencing
+
+# Create a dummy survey
+# XXX - In any test where we use python, we need to make sure we don't reuse any survey name
+# that appears in any othe test, else our python functions will be hanging around and will get used.
+definesurvey invalid_next_question_python
+version 1
+Silly test survey updated
+multichoice:Select one of the following:Select one of the following:MULTICHOICE:0::-1:-1:-1:3:Yes,No,Maybe:
+question1:What is the answer to question 1?:What is the answer to question 1?:TEXT:0:I don't know:-1:-1:0:0::
+question2:How boring was question 1?:How boring was question 1?:TEXT:0:I don't know:-1:-1:0:0::
+endofsurvey
+
+# Create python module
+# nexquestion is commented out
+python
+"""
+def nextquestion(questions, answers):
+        print (questions, answers)
+        return ["question2"]
+"""
+endofpython
+
+# Request creation of a  new session
+request 200 newsession?surveyid=invalid_next_question_python
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session
+invalid_next_question_python/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+endofsession
+
+# Ask for next question
+request 500 nextquestion?sessionid=$SESSION
+
+# Check that we have not changed the session file
+verify_session
+invalid_next_question_python/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+endofsession
