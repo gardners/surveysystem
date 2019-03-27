@@ -21,6 +21,22 @@ import { FieldError } from '../FormHelpers';
 import QuestionRow from './QuestionRow';
 
 /**
+ * Provides data for "debug-data" HTML attribute
+ * @param {object} question
+ * @param {object} component
+ * (Google Pupeteer)
+ * @returns {string} a colon separated string with debug information
+ */
+const debugData = function(question, component) {
+    // don't display in production mode
+    if (process.env.NODE_ENV === 'production') {
+        return '';
+    }
+
+    return `${question.id}:${question.type}:${component.name}`;
+};
+
+/**
  * Fetches form component for a given question type
  * @param {string} questionType
  *
@@ -125,6 +141,7 @@ class Question extends Component {
                 question={ question }
                 componentName={ Component.name }
                 grouped={ grouped }
+                debugData= { debugData(question, Component ) }
             >
                 <Component
                     { ...componentProps }
@@ -164,4 +181,4 @@ Question.propTypes = {
     // ...and component specific props
 };
 
-export { Question as default, getComponentByType };
+export { Question as default, getComponentByType, debugData };
