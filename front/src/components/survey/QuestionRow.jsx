@@ -9,7 +9,7 @@ import { sanitizeKcgiJsonString } from '../../Utils';
 
 import './question.scss';
 
-const QuestionRow = function({ question, className, grouped, componentName, children }) {
+const QuestionRow = function({ question, className, grouped, componentName, children, debugData }) {
 
     const { title, type, description } = question;
 
@@ -33,7 +33,10 @@ const QuestionRow = function({ question, className, grouped, componentName, chil
     // TODO grouped
 
     return (
-        <section className={ addClassNames(className, 'question') }>
+        <section
+            className={ addClassNames(className, 'question') }
+            data-debug={ debugData }
+        >
             { legend && (typeof legend === 'function') ? legend() : <legend>{ legend }</legend> }
             { (type === 'HIDDEN') ? <label className="d-block">{ title }</label> : null }
             { sanitizedDescription && <InnerHtml className="form-text" htmlContent={ sanitizedDescription } /> }
@@ -51,6 +54,7 @@ const QuestionRow = function({ question, className, grouped, componentName, chil
 QuestionRow.defaultProps = {
     grouped: false,
     className: '',
+    debugData: '',
 };
 
 QuestionRow.propTypes = {
@@ -58,6 +62,7 @@ QuestionRow.propTypes = {
     question: QuestionModel.propTypes().isRequired,
     componentName: PropTypes.string.isRequired, // form input component name
     grouped: PropTypes.bool,
+    debuData: PropTypes.string,
 };
 
 export default QuestionRow;
