@@ -1,2 +1,46 @@
 #!/bin/bash
-node ./player.js
+
+FILES=()
+
+run () {
+    node ./run "$1"
+}
+
+select_config () {
+    echo "====Player Config===="
+
+    for index in "${!FILES[@]}"; do
+        echo -e "\e[32m  ${index}\e[0m: ${FILES[$index]}"
+    done
+
+    read -p 'Select config: ' SELECTED
+
+    if ! [[ "$SELECTED" =~ ^[0-9]+$ ]]; then
+        echo -e "\e[31mError:\e[0m Not a number: ${SELECTED}!"
+        select_config
+    fi
+
+    if [ ! -f "${FILES[$SELECTED]}" ]; then
+        echo -e "\e[31mError:\e[0m File not found: ${SELECTED}!"
+        select_config
+    fi
+
+    echo ""
+
+    run "${FILES[$SELECTED]}"
+}
+
+for file in *config.js; do
+    if [[ $file != template* ]] ; then
+        FILES=("${FILES[@]}" "$file")
+    fi
+done
+
+if [[ "${#FILES[@]}" == "0" ]]; then
+        echo -e "\e[31mError:\e[0m No config files found: ${SELECTED}!"
+        exit 1
+elif [[ "${#FILES[@]}" == "1" ]]; then
+    run "$FILES[0]"
+else
+    select_config
+fi
