@@ -15,11 +15,17 @@ copy `template.config.js` to `config.js` and
     -  fill in valid survey server configuration.
     - add custom answers for specified question ids in order to to overwrite the default answers.
 
+It is possible to have multiple configs by simply prefixing them, ie.e `<yourprefix>.config.js`.
+The `./player` command will pick them up and ask you to select one.
+
 **Usage:**
 
 ```
 # run sequence
 $ ./player
+
+# alternatively
+$ node run <yourprefix>.config.js
 ```
 
 CSV log rows
