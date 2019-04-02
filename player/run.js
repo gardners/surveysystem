@@ -1,8 +1,11 @@
 const imports = require('esm')(module);
 const path = require('path');
+const fs = require('fs');
 
 const CSV = require('./csv');
+const JSONF = require('./jsonf');
 const Log = require('./log');
+
 const { getlastSessionEntry } = require('./session');
 
 // frontend serializer
@@ -16,7 +19,23 @@ const Fetch = require('./fetch');
 // Config
 ////
 
-const Config = require('./config');
+// print process.argv
+const configFile = process.argv[2] || null;
+
+if (!configFile) {
+    Log.error('Command line error:');
+    Log.log(' * Config file required! Exiting player ...');
+    process.exit(1);
+}
+
+if (!fs.existsSync(configFile)) {
+    Log.error('Command line error: ');
+    Log.log(' * Config file does not exist! Exiting player ...');
+    process.exit(1);
+}
+
+// eslint-disable-next-line import/no-dynamic-require
+const Config = require(path.resolve(configFile));
 
 const CustomAnswers = Config.answers || {};
 
@@ -25,6 +44,7 @@ Object.assign(Fetch, Config.Api);
 let SESSIONID;
 let COUNT = 0;
 let LOGFILE;
+let JSONFILE;
 
 // misc
 const now = new Date();
@@ -113,6 +133,18 @@ const provideSerializedAnswer = function(question, customAnswer = null) {
 ////
 // Questions
 ////
+
+/**
+ * Fetch next questions (initial request)
+ * @param {object} question object
+ *
+ * @returns {Promise} http request response
+ */
+const analyse = function() {
+    return Fetch.json('/surveyapi/analyse', {
+        sessionid: SESSIONID,
+    });
+};
 
 /**
  * Fetch next questions (initial request)
@@ -219,13 +251,19 @@ const answerQuestions = function(questions) {
 Fetch.raw('/surveyapi/newsession')
     .then((sessid) => {
         SESSIONID = sessid;
-        return Log.note(`SessionId: ${SESSIONID}`, sessid);
+        return Log.note(`SessionId: ${SESSIONID}`);
     })
-// initialize log file
-    .then(sessid => CSV.init(`${Config.Api.SURVEYID}.${sessid}.log.csv`))
+// initialize CSV log file
+    .then(() => CSV.init(`${Config.Api.SURVEYID}.${SESSIONID}.log.csv`))
     .then((logfile) => {
         LOGFILE = logfile;
         return Log.note(`Logging into: ${LOGFILE}`, LOGFILE);
+    })
+// initialize Analysis file
+    .then(() => JSONF.init(`${Config.Api.SURVEYID}.${SESSIONID}.analyse.json`))
+    .then((jsonfile) => {
+        JSONFILE = jsonfile;
+        return Log.note(`Logging analysis into: ${JSONFILE}`, JSONFILE);
     })
 // csv comment
     .then(() => CSV.append(`# Log for survey ${Config.Api.SURVEYID} session: ${SESSIONID} executed on: ${now.toLocaleString()}`))
@@ -236,7 +274,14 @@ Fetch.raw('/surveyapi/newsession')
 // start question/answer loop
     .then(res => answerQuestions(res.next_questions))
 // finalise
-    .then(res => Log.success(`\nSurvey finished in ${COUNT} steps\n`, res))
     .then(() => CSV.finish())
+    .then(res => Log.success(`\nSurvey questions finished in ${COUNT} steps\n`, res))
     .then(logfile => Log.log(`   ${Log.colors.yellow('*')} Log file: ${logfile}\n`))
+// analyse
+// initialize log file
+    .then(() => analyse())
+    .then(res => JSONF.save(res))
+    .then(() => JSONF.finish())
+    .then(jsonfile => Log.success('\nSurvey analysis retrieved\n', jsonfile))
+    .then(jsonfile => Log.log(`   ${Log.colors.yellow('*')} File: ${jsonfile}\n`))
     .catch(err => Log.error(`REQUEST ERROR ${err}`, err));

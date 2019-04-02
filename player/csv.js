@@ -22,17 +22,17 @@ const sanitize = function(val) {
     return '"' + val.replace('"', '\'') + '"';
 };
 
-const append = function(...args) {
-    const line = args.map(val => sanitize(val)).join(SEPARATOR) + '\n';
-    return appendFileAsync(LOGFILE, line);
-};
-
 const init = function(filename = '') {
     if (filename) {
         LOGFILE = path.resolve(path.join('log', filename));
     }
     return appendFileAsync(LOGFILE, '')
         .then(() => LOGFILE);
+};
+
+const append = function(...args) {
+    const line = args.map(val => sanitize(val)).join(SEPARATOR) + '\n';
+    return appendFileAsync(LOGFILE, line);
 };
 
 const finish = function() {
