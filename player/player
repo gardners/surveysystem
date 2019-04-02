@@ -40,7 +40,7 @@ if [[ "${#FILES[@]}" == "0" ]]; then
         echo -e "\e[31mError:\e[0m No config files found: ${SELECTED}!"
         exit 1
 elif [[ "${#FILES[@]}" == "1" ]]; then
-    run "$FILES[0]"
+    run "$FILES"
 else
     select_config
 fi
