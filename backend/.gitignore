@@ -1,0 +1,14 @@
+# docker env
+.env
+
+logs/*
+!logs/.gitkeep
+
+testlog/*
+!testlog/.gitkeep
+
+sessions/*
+!sessions/.gitkeep
+
+surveys/*
+!surveys/.gitkeep
