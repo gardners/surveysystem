@@ -1,7 +1,9 @@
 node_modules/*
 log/*
 !log/example.log.csv
+!log/example.analysis.json
 
-config.js
+*config.js
+!*template.config.js
 
 .~lock.*

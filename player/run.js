@@ -37,6 +37,8 @@ if (!fs.existsSync(configFile)) {
 // eslint-disable-next-line import/no-dynamic-require
 const Config = require(path.resolve(configFile));
 
+Log.log(`\n    * ${Log.colors.yellow('using config: ')}${configFile}\n`);
+
 const CustomAnswers = Config.answers || {};
 
 Object.assign(Fetch, Config.Api);
