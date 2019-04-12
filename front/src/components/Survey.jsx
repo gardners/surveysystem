@@ -238,7 +238,7 @@ class Survey extends Component {
         return (
             <section>
                 <Dev.SurveyBar survey = { survey } />
-                <h1>{ survey.surveyID } <small>Step { this.state.survey.step }</small></h1>
+                <h1>{ survey.surveyID } { (this.state.survey.step > 0) && <small>Step { this.state.survey.step }</small> }</h1>
 
                 <LoadingSpinner loading={ this.state.loading } message={ this.state.loading }/>
                 { this.state.alerts.map((entry, index) => <Alert key={ index } severity={ entry.severity } message={ entry.message } />) }
