@@ -8,7 +8,7 @@ const Survey = require('./survey-model');
 
 // survey
 
-const SURVEY_DIR = './survey';
+const SURVEY_DIR = './surveys';
 let CURRENT = -1; // current survey index
 let SURVEY_ID = '';
 
