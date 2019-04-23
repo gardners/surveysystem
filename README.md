@@ -21,6 +21,8 @@ Stale sessions can simply be deleted via the file system, and surveys added or u
 
 All data lives in $SURVEY_HOME. The SURVEY_HOME environment variable must be defined.
 
+# Installation (backend)
+
 This system requires python 3.7 and clang. To install on ubuntu:
 
 ```bash
@@ -46,15 +48,19 @@ mkdir surveysystem/backend/testlog
 sudo chmod 777 surveysystem/backend/testlog
 ```
 
-# REST
+# Overview
+
+![](docs/architecture.png)
+
+## REST Api
 
 Note that the following section reflects the *current state* of development and will be subject to future changes.
 
-## Endpoint
+### Endpoint
 
  * `GET /surveyapi/<path>?<query>`
 
-## Paths and queries
+### Paths and queries
 
 | Path           | Action                                        | Method | Format           | Query params            | Returns |
 | ---            | ---                                           | ---    | ---              | ---                     |  ---       |
