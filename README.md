@@ -10,12 +10,12 @@ and perform analysis on the data it collects.
 
 The structure is relatively simple:
 
-surveys/survey_name/current - The current definition of a survey called "survey_name".
-surveys/survey_name/<SHA1 hash> - Older definitions of a survey, named after the SHA1 hash of the survey definition
-python/nextquestion.py - Python functions to select next question.  Functions should be named nextquestion_<survey_name>_<SHA1 hash>.  If no such function exists, then nextquestion_<survey_name> is tried, and failing that nextquestion.
-sessions/<session uuid prefix>/<session uuid> - Files containing each live session.  The prefix subdirectories are used to
+* **surveys/survey_name/current** - The current definition of a survey called "survey_name".
+* **surveys/survey_name/<SHA1 hash>** - Older definitions of a survey, named after the SHA1 hash of the survey definition
+* **python/nextquestion.py** - Python functions to select next question.  Functions should be named `nextquestion_<survey_name>_<SHA1 hash>`.  If no such function exists, then `nextquestion_<survey_name>` is tried, and failing that `nextquestion`.
+* **sessions/<session uuid prefix>/<session uuid>** - Files containing each live session.  The prefix subdirectories are used to
 prevent any given directory becoming too long, and slowing down the retrieval of a given survey.
-logs/YYYY/MM/DD/YYYY-MM-DD-HH.log - Log files of all activity
+* **logs/YYYY/MM/DD/YYYY-MM-DD-HH.log** - Log files of all activity
 
 Stale sessions can simply be deleted via the file system, and surveys added or updated or deleted similarly easily.
 
@@ -23,13 +23,13 @@ All data lives in $SURVEY_HOME. The SURVEY_HOME environment variable must be def
 
 This system requires python 3.7 and clang. To install on ubuntu:
 
-```
+```bash
 sudo apt-get install python3.7-dev python3.7 clang
 ```
 
 Then make sure to build and install kcgi:
 
-```
+```bash
 git submodule init
 git submodule update
 cd backend/kcgi
@@ -39,7 +39,7 @@ sudo make install
 
 Then create a folder for logs:
 
-```
+```bash
 mkdir surveysystem/backend/logs
 sudo chmod 777 surveysystem/backend/logs
 mkdir surveysystem/backend/testlog
@@ -62,11 +62,11 @@ Note that the following section reflects the *current state* of development and 
 | `newsession`   | create a new survey session                   | GET    | application/text | `?surveyid`             | session id |
 | `delsession`   | delete current session                        | GET    | application/text | `?sessionid`            | -       |
 | **Survey**     |                                               |        |                  |                         |         |
-| `nextquestion` | get next questions                            | GET    | application/json | `?sessionid`            | `{ next_questions }`: array of question objects |
-| `addanswer`    | provide answer and get next questions         | GET(!) | application/json | `?sessionid&answer`     | `{ next_questions }`: array of question objects |
-| `updateanswer` | (alias) for addanswer                         | GET(!) | application/json | `?sessionid&answer`     | `{ next_questions }`: array of question objects |
-| `delanswer`    | remove last answer from record and repeat     | GET    | application/json | `?sessionid&questionid` | `{ next_questions }`: array of *updated* question objects |
-| `analyse`      | fetch analysis of a completed survey          | GET    | application/json | `?sessionid`            | `{ feedback, report}`: survey analysis |
+| `nextquestion` | get next questions                            | GET    | application/json | `?sessionid`            | `{ next_questions }`<br> array of question objects |
+| `addanswer`    | provide answer and get next questions         | GET(!) | application/json | `?sessionid&answer`     | `{ next_questions }`<br> array of question objects |
+| `updateanswer` | alias for addanswer                           | GET(!) | application/json | `?sessionid&answer`     | `{ next_questions }`<br> array of question objects |
+| `delanswer`    | remove last answer from record and repeat     | GET    | application/json | `?sessionid&questionid` | `{ next_questions }`<br> array of *updated* question objects |
+| `analyse`      | fetch analysis of a completed survey          | GET    | application/json | `?sessionid`            | `{ feedback, report}`<br> survey analysis |
 | **System**     |                                               |        |                  |                         |         |
 | `accesstest`   | check system health (filesystem)              | GET    | application/text | -                       | - |
 | `fastcgitest`  | check survey access (fastcgi)                 | GET    | application/text | -                       | - |
