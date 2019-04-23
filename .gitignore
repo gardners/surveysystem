@@ -51,10 +51,14 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+#editors
+*.geany
+*.vscode/
 *~
 
 backend/include/question_types.h
 backend/src/question_types.c
+
 .cache
 .idea
 
