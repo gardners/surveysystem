@@ -45,3 +45,28 @@ sudo chmod 777 surveysystem/backend/logs
 mkdir surveysystem/backend/testlog
 sudo chmod 777 surveysystem/backend/testlog
 ```
+
+# REST
+
+Note that the following section reflects the *current state* of development and will be subject to future changes.
+
+## Endpoint
+
+ * `GET /surveyapi/<path>?<query>`
+
+## Paths and queries
+
+| Path           | Action                                        | Method | Format           | Query params            | Returns |
+| ---            | ---                                           | ---    | ---              | ---                     |  ---       |
+| **Session**    |                                               |        |                  |                         |         |
+| `newsession`   | create a new survey session                   | GET    | application/text | `?surveyid`             | session id |
+| `delsession`   | delete current session                        | GET    | application/text | `?sessionid`            | -       |
+| **Survey**     |                                               |        |                  |                         |         |
+| `nextquestion` | get next questions                            | GET    | application/json | `?sessionid`            | `{ next_questions }`: array of question objects |
+| `addanswer`    | provide answer and get next questions         | GET(!) | application/json | `?sessionid&answer`     | `{ next_questions }`: array of question objects |
+| `updateanswer` | (alias) for addanswer                         | GET(!) | application/json | `?sessionid&answer`     | `{ next_questions }`: array of question objects |
+| `delanswer`    | remove last answer from record and repeat     | GET    | application/json | `?sessionid&questionid` | `{ next_questions }`: array of *updated* question objects |
+| `analyse`      | fetch analysis of a completed survey          | GET    | application/json | `?sessionid`            | `{ feedback, report}`: survey analysis |
+| **System**     |                                               |        |                  |                         |         |
+| `accesstest`   | check system health (filesystem)              | GET    | application/text | -                       | - |
+| `fastcgitest`  | check survey access (fastcgi)                 | GET    | application/text | -                       | - |
