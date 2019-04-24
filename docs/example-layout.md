@@ -47,6 +47,10 @@ Example layout for a more complex surveysystem with linked python controller lib
 
 a simplified configuration without authentication and ssl
 
+ * [extensively commented default.conf](https://redmine.lighttpd.net/projects/lighttpd/repository/revisions/master/entry/doc/config/lighttpd.conf)
+ * [tutorial](https://redmine.lighttpd.net/projects/lighttpd/wiki/TutorialConfiguration)
+ * [Reference](https://redmine.lighttpd.net/projects/lighttpd/wiki/WikiStart#Reference-Documentation)
+
 ```bash
 server.modules = (
      "mod_access",
@@ -64,12 +68,10 @@ server.username             = "www-data"
 server.groupname            = "www-data"
 server.port                 = 80
 
-
 index-file.names            = ( "index.php", "index.html", "index.lighttpd.html" )
 url.access-deny             = ( "~", ".inc" )
 static-file.exclude-extensions = ( ".php", ".pl", ".fcgi" )
 server.error-handler-404   = "/index.html"
-
 
 compress.cache-dir          = "/var/cache/lighttpd/compress/"
 compress.filetype           = ( "application/javascript", "text/css", "text/html", "text/plain" )
