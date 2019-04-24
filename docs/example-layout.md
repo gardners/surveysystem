@@ -25,9 +25,9 @@ Example layout for a more complex surveysystem with linked python controller lib
 ├── auth                         # optional: auth scripts/databases
 ├── install                      # optional: install scripts
 ├── surveys                      # python controllers
-│   └── mysurvey                 # a single Python controller example
-│       └── engine
-│           └── current          # Survey questions manifest - to be linked into backend (see below)
+│   ├── mysurvey                 # a single Python controller example
+│   |   └── engine
+│   |       └── current          # Survey questions manifest - to be linked into backend (see below)
 |   └── nextquestion.py          # python entry script - to be linked into backend (see below)
 └── surveysystem                 # suveysystem home folder (git clone)
     ├── backend                  # fastcgi.server: location for environment var SURVEY_HOME
@@ -60,6 +60,10 @@ server.modules = (
      "mod_redirect",
 )
 
+###
+# frontend
+###
+
 server.document-root        = "/var/surveyproject/surveysystem/backend/front/build"
 server.upload-dirs          = ( "/var/cache/lighttpd/uploads" )
 server.errorlog             = "/var/log/lighttpd/error.log"
@@ -68,6 +72,16 @@ server.username             = "www-data"
 server.groupname            = "www-data"
 server.port                 = 80
 
+# Enable CORS (remove or comment out if not required)
+setenv.add-response-header = (
+    "Access-Control-Allow-Origin" => "*",
+    "Access-Control-Allow-Methods" => "HEAD, GET, OPTIONS",
+    "Access-Control-Expose-Headers" => "Content-Range, Date, Etag, Cache-Control, Last-Modified",
+    "Access-Control-Allow-Headers" => "Content-Type, Origin, Accept, Range, Cache-Control",
+    "Access-Control-Max-Age" => "600",
+    "Timing-Allow-Origin" => "*"
+)
+
 index-file.names            = ( "index.php", "index.html", "index.lighttpd.html" )
 url.access-deny             = ( "~", ".inc" )
 static-file.exclude-extensions = ( ".php", ".pl", ".fcgi" )
@@ -75,6 +89,10 @@ server.error-handler-404   = "/index.html"
 
 compress.cache-dir          = "/var/cache/lighttpd/compress/"
 compress.filetype           = ( "application/javascript", "text/css", "text/html", "text/plain" )
+
+###
+# backend
+###
 
 fastcgi.debug = 1
 
