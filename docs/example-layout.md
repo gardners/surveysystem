@@ -8,7 +8,7 @@ Example for a simple surveysystem layout
     ├── backend                  # fastcgi.server: location for environment var SURVEY_HOME
     │   ├── logs                 # backend logs
     │   ├── python               # location for Python controller scripts
-    |   |   └── nextquestion.py  # optoinal: Python controller script
+    |   |   └── nextquestion.py  # optional: Python controller script
     │   ├── sessions             # session files with answer data!
     │   ├── surveys
     |   |   └── mysurvey
@@ -43,7 +43,9 @@ Example layout for a more complex surveysystem with linked python controller lib
         └── build                # frontend entry dir (server.document-root)
 ```
 
-# Lightttpd config
+# Lighttpd configs
+
+a simplified configuration without authentication and ssl
 
 ```bash
 server.modules = (
