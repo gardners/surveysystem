@@ -89,7 +89,7 @@ const DirtyJson = {
  * @returns {string}
  */
 const camelToNormal = function(str) {
-    return str.replace(/([A-Z])/g, ' $1');
+    return str.replace(/([A-Z])/g, ' $1').trim();
 };
 
 /**
@@ -123,6 +123,7 @@ export {
     DirtyJson,
     camelToNormal,
     isArray,
+    isObject,
     addClassNames,
     sanitizeKcgiJsonString,
 };
