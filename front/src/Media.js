@@ -60,7 +60,7 @@ const matchesBreakpoint = function(bp) {
         return false;
     }
 
-    return window.matchMedia(`(min-width: ${hits[0][1]}px`).matches;
+    return window.matchMedia(`min-width: ${hits[0][1]}px`).matches;
 };
 
 
