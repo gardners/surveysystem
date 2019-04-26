@@ -100,4 +100,12 @@ describe('window media API utils', () => {
         deviceWidth = 0;
         expect(matchesBreakpoint('xs')).toBe(true);
     });
+
+    test('No media Api support', () => {
+        window.matchMedia = null;
+        deviceWidth = 992; // exact match 'lg'
+        expect(matchesBreakpoint('invalid')).toBe(false);
+        expect(matchesBreakpoint('lg')).toBe(false);
+        expect(matchesBreakpoint('xs')).toBe(false);
+    });
 });
