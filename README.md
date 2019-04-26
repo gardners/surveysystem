@@ -23,7 +23,7 @@ All data lives in $SURVEY_HOME. The SURVEY_HOME environment variable must be def
 
 # Installation (backend)
 
-This system requires python 3.7 and clang. To install on ubuntu:
+This system requires python 3.7 and clang. Additionally, bmake is required for compiling [kcgi](https://kristaps.bsd.lv/kcgi/index.html). To install on ubuntu:
 
 ```bash
 sudo apt-get install python3.7-dev python3.7 clang
