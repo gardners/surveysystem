@@ -77,7 +77,7 @@ const mapQuestionGroups = function(questions) {
  * Finds common qualities within in a question group
  *  - "NONE": no common type or choices, inline display
  *  - "TYPE": same question types inline display, TODO
- *  - "CHOICES"; same question ypes AND same choices: checkbox matrix
+ *  - "CHOICES"; same question types AND same choices: checkbox matrix
  * @param {object[]}  of questionsgroup
  * @returns {string} commons flag
  */
