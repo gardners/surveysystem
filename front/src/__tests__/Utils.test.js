@@ -1,4 +1,4 @@
-import { isScalar, sanitizeKcgiJsonString } from '../Utils';
+import { isScalar, sanitizeKcgiJsonString, isArray, isObject, camelToNormal } from '../Utils';
 
 describe('isScalar', () => {
 
@@ -36,9 +36,31 @@ describe('isScalar', () => {
 
 });
 
+describe('Misc', () => {
+    test('isArray', () => {
+        expect(isArray()).toBe(false);
+        expect(isArray([])).toBe(true);
+        expect(isArray({})).toBe(false);
+    });
+
+    test('isObject', () => {
+        expect(isObject()).toBe(false);
+        expect(isObject([])).toBe(false);
+        expect(isObject({})).toBe(true);
+        expect(isObject(new Object())).toBe(true);
+        expect(isObject(Symbol())).toBe(false);
+    });
+
+    test('camelToNormal', () => {
+        expect(camelToNormal('testTest')).toBe('test Test');
+        expect(camelToNormal('TestTest')).toBe('Test Test');
+        expect(camelToNormal(' TestTest ')).toBe('Test Test');
+        expect(camelToNormal('TesttesT ')).toBe('Testtes T');
+    });
+});
+
 describe('sanitizeKcgiJsonString', () => {
     test('sanitize', () => {
         expect(sanitizeKcgiJsonString('description <p><strong>with HTML<\/strong><\/p>')).toBe('description <p><strong>with HTML</strong></p>');
     });
-
 });
