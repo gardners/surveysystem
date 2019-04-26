@@ -1,10 +1,10 @@
-import { mapQuestionGroups, getGroupId } from '../Question';
+import { mapQuestionGroups, getGroupId, findQuestionGroupCommons } from '../Question';
 
-const makeQuestion = function(id) {
+const makeQuestion = function(id, type = 'TEXT') {
     return {
         id,
         name: id,
-        type: 'TEXT',
+        type,
         tile: 'title',
         description: 'title-text',
     };
@@ -116,5 +116,71 @@ describe('mapQuestionGroups', () => {
 
         expect(qq[3].id).toBe('test_1');
     });
+
+});
+
+describe('findQuestionGroupCommons', () => {
+
+    test('no groups', () => {
+        let qc;
+        let group;
+
+        qc = findQuestionGroupCommons([]);
+        expect(qc).toBe('NONE');
+
+        qc = findQuestionGroupCommons([
+            makeQuestion('test1', 'TEXT'),
+            makeQuestion('test2', 'NUMBER'),
+        ]);
+        expect(qc).toBe('NONE');
+
+        qc = findQuestionGroupCommons([
+            makeQuestion('test1', 'TEXT'),
+            makeQuestion('test2', 'TEXT'),
+        ]);
+        expect(qc).toBe('TYPE');
+
+        //// choices
+
+        // different type, different choices
+        group = [
+            makeQuestion('test__1', 'TEXT'),
+            makeQuestion('test__2', 'NUMBER'),
+        ];
+        group[0].choices = ['yes', 'no'];
+        group[1].choices = ['yes', 'no'];
+        qc = findQuestionGroupCommons(group);
+        expect(qc).toBe('NONE');
+
+        // same type, different choices
+        group = [
+            makeQuestion('test__1', 'TEXT'),
+            makeQuestion('test__2', 'TEXT'),
+        ];
+        group[0].choices = ['yes', 'no'];
+        qc = findQuestionGroupCommons(group);
+        expect(qc).toBe('TYPE');
+
+        // same type, differnet choices
+        group = [
+            makeQuestion('test__1', 'TEXT'),
+            makeQuestion('test__2', 'TEXT'),
+        ];
+        group[0].choices = ['yes', 'no'];
+        group[1].choices = ['no', 'yes'];
+        qc = findQuestionGroupCommons(group);
+        expect(qc).toBe('TYPE');
+
+        // same type and choices
+        group = [
+            makeQuestion('test__1', 'TEXT'),
+            makeQuestion('test__2', 'TEXT'),
+        ];
+        group[0].choices = ['yes', 'no'];
+        group[1].choices = ['yes', 'no'];
+        qc = findQuestionGroupCommons(group);
+        expect(qc).toBe('CHOICES');
+    });
+
 
 });
