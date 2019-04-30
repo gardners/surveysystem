@@ -62,6 +62,7 @@ class Survey extends Component {
             survey,
             answers: {},
         });
+        this.initNextQuestion();
     }
 
     /**
@@ -133,6 +134,23 @@ class Survey extends Component {
             alerts: [], // clear previous alerts
         }))
         .then(() => LocalStorage.set(CACHE_KEY, survey))
+        .catch(err => this.alert(err));
+    }
+
+    initNextQuestion(e) {
+        e && e.preventDefault();
+
+        const { survey } = this.state;
+        this.setState({ loading: 'Initializing survey...' });
+
+        api.nextQuestion(survey.sessionID)
+        .then(response => survey.add(response.next_questions))
+        .then(() => this.setState({
+            loading: '',
+            survey,
+            answers: {}, // clear answers
+            alerts: [], // clear previous alerts
+        }))
         .catch(err => this.alert(err));
     }
 
