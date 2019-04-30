@@ -121,7 +121,32 @@ describe('mapQuestionGroups', () => {
 
 describe('findQuestionGroupCommons', () => {
 
-    test('no groups', () => {
+    test('min length', () => {
+        let qc;
+        let group;
+
+        qc = findQuestionGroupCommons([]);
+        expect(qc).toBe('NONE');
+
+        qc = findQuestionGroupCommons([
+            makeQuestion('test1', 'TEXT'),
+        ]);
+        expect(qc).toBe('NONE');
+
+        qc = findQuestionGroupCommons([
+            makeQuestion('test1', 'TEXT'),
+            makeQuestion('test2', 'NUMBER'),
+        ]);
+        expect(qc).toBe('NONE');
+
+        qc = findQuestionGroupCommons([
+            makeQuestion('test1', 'TEXT'),
+            makeQuestion('test2', 'TEXT'),
+        ]);
+        expect(qc).toBe('TYPE');
+    });
+
+    test('TYPE', () => {
         let qc;
         let group;
 
@@ -139,8 +164,11 @@ describe('findQuestionGroupCommons', () => {
             makeQuestion('test2', 'TEXT'),
         ]);
         expect(qc).toBe('TYPE');
+    });
 
-        //// choices
+    test('CHOICES', () => {
+        let qc;
+        let group;
 
         // different type, different choices
         group = [
@@ -167,7 +195,7 @@ describe('findQuestionGroupCommons', () => {
             makeQuestion('test__2', 'TEXT'),
         ];
         group[0].choices = ['yes', 'no'];
-        group[1].choices = ['no', 'yes'];
+        group[1].choices = ['no', 'yes', 'maybe'];
         qc = findQuestionGroupCommons(group);
         expect(qc).toBe('TYPE');
 
@@ -182,5 +210,42 @@ describe('findQuestionGroupCommons', () => {
         expect(qc).toBe('CHOICES');
     });
 
+    test('TYPE, CHOICES: the first element can be HIDDEN', () => {
+        let qc;
+        let group;
+
+        qc = findQuestionGroupCommons([]);
+        expect(qc).toBe('NONE');
+
+        // no choices
+        qc = findQuestionGroupCommons([
+            makeQuestion('test1__1', 'HIDDEN'),
+            makeQuestion('test2__1', 'NUMBER'),
+            makeQuestion('test3__1', 'NUMBER'),
+        ]);
+        expect(qc).toBe('TYPE');
+
+        // same choices
+        group = [
+            makeQuestion('test1__1', 'HIDDEN'),
+            makeQuestion('test2__1', 'CHOICES'),
+            makeQuestion('test3__1', 'CHOICES'),
+        ];
+        group[1].choices = ['yes', 'no'];
+        group[2].choices = ['yes', 'no'];
+        qc = findQuestionGroupCommons(group);
+        expect(qc).toBe('CHOICES');
+
+        // different choices
+        group = [
+            makeQuestion('test1__1', 'HIDDEN'),
+            makeQuestion('test2__1', 'CHOICES'),
+            makeQuestion('test3__1', 'CHOICES'),
+        ];
+        qc = findQuestionGroupCommons(group);
+        group[1].choices = ['yes', 'no'];
+        group[2].choices = ['yes', 'no', 'maybe'];
+        expect(qc).toBe('TYPE');
+    });
 
 });
