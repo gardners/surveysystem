@@ -51,6 +51,8 @@ let JSONFILE;
 // misc
 const now = new Date();
 
+const sleep = millisec => new Promise(resolve => setTimeout(resolve, millisec));
+
 ////
 // Answers
 ////
@@ -221,7 +223,7 @@ const answerQuestions = function(questions) {
         const answer = provideSerializedAnswer(question, customAnswer);
 
         const logType = (answerType === 'custom') ? Log.colors.green(answerType) : answerType;
-        Log.log(`${curr} => ${Log.colors.yellow('title')}: ${question.id}: ${Log.colors.yellow('title:')} ${question.title}, ${Log.colors.yellow('answer type:')} ${logType}, ${Log.colors.yellow('answer:')} ${answer}`);
+        Log.log(`  ${Log.colors.yellow('title')}: ${question.id}: ${Log.colors.yellow('title:')} ${question.title}, ${Log.colors.yellow('answer type:')} ${logType}, ${Log.colors.yellow('answer:')} ${answer}`);
 
         return {
             question,
@@ -230,12 +232,15 @@ const answerQuestions = function(questions) {
         };
     });
 
-    return Promise.all(data.map(entry => answerQuestion(entry.question, entry.answer, entry.answerType, curr)))
+    Log.log(`    ├── Sending ${Log.colors.green(data.length)} answers`);
+
+    return sleep(50)
+        .then(() => Promise.all(data.map(entry => answerQuestion(entry.question, entry.answer, entry.answerType, curr))))
         .then((responses) => {
             const last = responses[responses.length - 1];
             const newQuestions = last.next_questions;
-
-            Log.log(`${curr}: ${Log.colors.green(newQuestions.length)} new questions received..`);
+            const qids = newQuestions.map(q => q.id).toString();
+            Log.log(`    └── ${Log.colors.green(newQuestions.length)} new questions received.. (${qids})`);
 
             if (newQuestions.length) {
                 return answerQuestions(newQuestions);
