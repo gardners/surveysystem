@@ -10,15 +10,26 @@ const QuestionGroup = function({ questions, answers, handleChange }) {
 
     const commons = findQuestionGroupCommons(questions);
 
+    const header = (commons !== 'NONE' && questions[0].type === 'HIDDEN') ? questions[0] : null;
+    const items = questions.filter((question, index) => {
+        if(!header) {
+            return true;
+        }
+        return question.id !== header.id;
+    });
+
     switch (commons) {
 
         case 'CHOICES':
             return (
-                <RadioMatrix
-                    handleChange={ handleChange }
-                    questions={ questions }
-                    answers={ answers }
-                />
+                <React.Fragment>
+                    { header && <Question question={ header } handleChange={ handleChange } answer= { null } /> }
+                    <RadioMatrix
+                        handleChange={ handleChange }
+                        questions={ items }
+                        answers={ answers }
+                    />
+                </React.Fragment>
             );
 
         default:
@@ -27,8 +38,10 @@ const QuestionGroup = function({ questions, answers, handleChange }) {
 
     return (
         <React.Fragment>
+
+        { header && <Question question={ header } handleChange={ handleChange } answer= { null } /> }
         {
-            questions.map((question, index) => {
+            items.map((question, index) => {
                 const answer = answers[question.id] || null;
                 return(
                     <Question
