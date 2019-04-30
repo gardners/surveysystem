@@ -84,14 +84,15 @@ const mapQuestionGroups = function(questions) {
 const findQuestionGroupCommons = function(group) {
     const { length } = group;
 
-    if(!length) {
+    if(length < 2) {
         return 'NONE';
     }
 
-    let type = group[0].type;
-    let choices = (typeof group[0].choices !== 'undefined') ? group[0].choices.toString() : '';
+    let start = (group[0].type === 'HIDDEN') ? 1 : 0;
+    let type = group[start].type;
+    let choices = (typeof group[start].choices !== 'undefined') ? group[start].choices.toString() : '';
 
-    for (let i = 1; i < length; i += 1) {
+    for (let i =  start; i < length; i += 1) {
         // different question types
         if (group[i].type !== type) {
             return 'NONE';

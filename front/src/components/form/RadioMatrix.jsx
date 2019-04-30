@@ -5,6 +5,8 @@ import Question from '../../Question';
 import { matchesBreakpoint } from '../../Media';
 
 import Select from './Select';
+
+import './RadioMatrix.scss';
 //TODO, required, error
 
 /**
@@ -22,7 +24,7 @@ const TheadRow = function({ question, expanded }) {
 
     return (
         <tr>
-            <th></th>
+            <th className="radiomatrix--firstcol"></th>
             {
                 labels.map((label, index) => <th key={ index }>{ label }</th>)
             }
@@ -43,7 +45,7 @@ const Row = function({ question, handleChange, expanded, required }) {
     if(!expanded) {
         return (
             <tr>
-                <th>{ question.title }</th>
+                <td className="radiomatrix--firstcol">{ question.title }</td>
                 <td>
                     <Select
                         key={ question.id }
@@ -59,7 +61,7 @@ const Row = function({ question, handleChange, expanded, required }) {
 
     return (
         <tr>
-            <th>{ question.title }</th>
+            <td className="radiomatrix--firstcol">{ question.title }</td>
             {
                 choices.map((choice, index) => {
                     return (
@@ -102,7 +104,7 @@ const RadioMatrix = function({ questions, handleChange, required, expand }) {
 
     return (
         <div className="table-responsive">
-            <table className="table table-sm table-hover">
+            <table className="table table-sm table-hover radiomatrix--table">
                 <thead>
                     <TheadRow
                         question={ first }
