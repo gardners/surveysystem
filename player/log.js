@@ -56,7 +56,7 @@ const Log = {
     },
 
     step: function(message, ret) {
-        log('notice', `\n${colors.blue('==>')} ${message}`);
+        log('notice', `\n${colors.blue('◆')} ${message}`);
         return ret;
     },
 
