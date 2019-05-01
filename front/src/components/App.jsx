@@ -33,7 +33,7 @@ const App = function(props) {
                                 <Route path="/surveys" render={ () => <Surveys surveys={ surveys } surveyProvider={ surveyProvider } /> } />
                         }
                         <Route path="/demo" component={ Demo } />
-                        <Route path="/analyse/:id/" component={ Analysis } />
+                        <Route path="/analyse/:id/:sessionID" component={ Analysis } />
                         <Route path="/survey/:id/:sessionID?" component={ Survey } />
                         <Route path="*" component={ Page404 } />
                     </Switch>

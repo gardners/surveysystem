@@ -22,7 +22,7 @@ const SurveyForm = function(props) {
                     handlePrev={ props.handlePrev }
                     handleNext={ props.handleNext }
 
-                    isFirst={ props.isFirst }
+                    hasQuestions={ props.hasQuestions }
                     hasErrors={ props.hasErrors }
                     hasAnswers={ props.hasAnswers }
                     hasAllAnswers={ props.hasAllAnswers }
@@ -39,7 +39,7 @@ SurveyForm.propTypes = {
     handleNext: PropTypes.func.isRequired,
     handlePrev: PropTypes.func.isRequired,
 
-    isFirst: PropTypes.bool.isRequired,
+    hasQuestions: PropTypes.bool.isRequired,
     hasErrors: PropTypes.bool.isRequired,
     hasAnswers: PropTypes.bool.isRequired,
     hasAllAnswers: PropTypes.bool.isRequired,
