@@ -1,20 +1,22 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const HasErrors = function({ hasErrors }) {
-    if (!hasErrors) {
-        return (null);
+const HasErrors = function({ hasErrors, hasAllAnswers }) {
+    if (!hasErrors && hasAllAnswers) {
+        return null;
     }
 
     return (
-        <p className="text-danger">
-            Please fix errors above
-        </p>
+        <ul className="list-group mb-1">
+            { hasErrors && <li className="list-group-item list-group-item-danger">Please fix errors above</li> }
+            { !hasAllAnswers && <li className="list-group-item list-group-item-warning">Please answer all questions</li> }
+        </ul>
     );
 };
 
 HasErrors.propTypes = {
     hasErrors: PropTypes.bool.isRequired,
+    hasAllAnswers: PropTypes.bool.isRequired,
 };
 
 const canNext = function ({ hasErrors, hasAnswers, hasAllAnswers }) {
@@ -28,14 +30,19 @@ const canNext = function ({ hasErrors, hasAnswers, hasAllAnswers }) {
 const SurveyButtons = function(props) {
     const nextIconClass = (props.hasErrors || !props.hasAllAnswers) ? 'fas fa-ban' : 'fas fa-arrow-circle-right';
     const prevIconClass = (props.hasErrors || !props.hasAllAnswers) ? 'fas fa-ban' : 'fas fa-arrow-circle-left';
-
+console.log(
+    props.hasQuestions,
+    props.hasErrors,
+    props.hasAnswers,
+    props.hasAllAnswers);
     return (
         <div className={ props.className }>
             <HasErrors
                 hasErrors={ props.hasErrors }
+                hasAllAnswers={ props.hasAllAnswers }
             />
            {
-                !props.isFirst &&
+                !props.hasQuestions &&
                     <button type="submit" className="app--btn-arrow btn btn-default"
                         onClick={ props.handlePrev }>
                         <i className={ prevIconClass } /> Previous Question
@@ -57,7 +64,7 @@ SurveyButtons.propTypes = {
     handleNext: PropTypes.func.isRequired,
     handlePrev: PropTypes.func.isRequired,
 
-    isFirst: PropTypes.bool.isRequired,
+    hasQuestions: PropTypes.bool.isRequired,
     hasErrors: PropTypes.bool.isRequired,
     hasAnswers: PropTypes.bool.isRequired,
     hasAllAnswers: PropTypes.bool.isRequired,
