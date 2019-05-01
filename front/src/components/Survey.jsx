@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-import { Redirect } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 // apis
 import api, { BaseUri } from '../api';
@@ -40,9 +40,6 @@ class Survey extends Component {
 
             loading: '',
             alerts: [],
-            // TODO tmp
-            // TODO if ready, include resetting in handle responses
-            evaluation: null,  // TODO remove
         };
     }
 
@@ -178,7 +175,7 @@ class Survey extends Component {
             loading: '',
             survey,
             alerts: [], // clear previous alerts
-            answers: {}, // clear previous alerts
+            answers: {}, // clear previous answers
         }))
         .then(() => LocalStorage.set(CACHE_KEY, survey))
         .catch(err => this.alert(err));
@@ -188,10 +185,14 @@ class Survey extends Component {
         e && e.preventDefault();
 
         const { survey } = this.state;
+        if(survey.isClosed()) {
+            Log.warn('Trying to delete answer on a finished survey');
+            return;
+        }
         this.setState({ loading: 'Fetching previous question...' });
 
         // FIRST go back to previous (does not render) and then get questionIds
-        survey.back();
+
         const questionIds = survey.current().map(question => question.id);
 
         // delete current answer(s)
@@ -210,79 +211,54 @@ class Survey extends Component {
         .catch(err => this.alert(err));
     }
 
-    handleFinishSurvey(e) {
-        e && e.preventDefault();
-
-        const { survey } = this.state;
-        this.setState({ loading: 'Fetching results...' });
-
-        api.finishSurvey(survey.sessionID)
-        .then((evaluation) => {
-            survey.close();
-            this.setState({
-                loading: '',
-                survey,
-                answers: {}, // clear previous answers
-                alerts: [], // clear previous alerts
-                evaluation, // TODO remove
-            });
-            return true;
-        })
-        .then(() => LocalStorage.delete(CACHE_KEY))
-        .catch(err => this.alert(err));
-    }
-
     render() {
 
         // @see surveysystem/backend/include/survey.h, struct question
 
         const { survey, answers } = this.state;
 
-        if (survey.isFinished()) { // TODO surveymanager method
-            return(
-                <Redirect to={ {
-                    pathname: `/analyse/${survey.surveyID}`,
-                    state: { survey }
-                    } }
-                />
-            );
-        }
-
         const questions = survey.current();
         const withGroups = mapQuestionGroups(questions);
-
         const errors = this.getFormErrors();
+
+        const questionCount = Object.keys(questions).length;
+        const answerCount = Object.keys(answers).length;
+        const errorCount = Object.keys(errors).length;
+
+        const hasQuestions = questionCount > 0;
+        const hasErrors = errorCount > 0;
+        const hasAnswers = answerCount > 0 ;
+        const hasAllAnswers = answerCount === questions.length;
 
         return (
             <section>
                 <Dev.SurveyBar survey = { survey } />
-                <h1>{ survey.surveyID } { (this.state.survey.step > 0) && <small>Step { this.state.survey.step }</small> }</h1>
+                <h1>{ survey.surveyID }</h1>
 
                 <LoadingSpinner loading={ this.state.loading } message={ this.state.loading }/>
                 { this.state.alerts.map((entry, index) => <Alert key={ index } severity={ entry.severity } message={ entry.message } />) }
 
                 {
                     /* show if survey is finished but not closed yet */
-                    (survey.finished && !survey.closed) ?
+                    (survey.isClosed()) ?
                         <Card>
                             <h2> <i className="fas fa-check-circle"></i> Survey completed.</h2>
                             <p>Thank you for your time!</p>
-                            <button type="submit" className="btn btn-default btn-primary"
-                                onClick={ this.handleFinishSurvey.bind(this) }>Finish Survey</button>
+                            <Link className="btn btn-default btn-primary" to={ `/analyse/${survey.surveyID}/${survey.sessionID}` }>Finish Survey</Link>
                         </Card>
                     : null
                 }
 
                 <SurveyForm
-                    show={ questions.length > 0 && !this.state.loading }
+                    show={ questionCount > 0 && !this.state.loading }
                     handlePrev={ this.handleDelAnswer.bind(this) }
                     handleNext={ this.handleUpdateAnswers.bind(this) }
 
-                    isFirst={ survey.step <= 0 }
-                    hasErrors={ errors.length > 0 }
+                    hasQuestions={ hasQuestions }
+                    hasErrors={ hasErrors }
+                    hasAnswers={ hasAnswers }
+                    hasAllAnswers={ hasAllAnswers }
 
-                    hasAnswers={ Object.keys(answers).length > 0 }
-                    hasAllAnswers={ Object.keys(answers).length - errors.length === questions.length }
                     className="list-group"
                     rowClassName="list-group-item"
                 >

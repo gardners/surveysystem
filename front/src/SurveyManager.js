@@ -27,9 +27,6 @@ class SurveyManager {
         this.sessionID = null;
         this.endpoint = endpoint;
 
-        // progress
-        this.step = -1;
-        this.finished = false; // all questions are answered
         this.closed = false; // all questions are answered && survey is closed
 
         // questions
@@ -50,7 +47,6 @@ class SurveyManager {
      * @returns {void}
      */
     close() {
-        this.finished = true;
         this.closed = true;
     }
 
@@ -58,8 +54,8 @@ class SurveyManager {
      * check if suvey is finished
      * @returns {boolean}
      */
-    isFinished() {
-        return (this.finished && this.closed);
+    isClosed() {
+        return this.closed;
     }
 
     /**
@@ -128,6 +124,9 @@ class SurveyManager {
             if(type === 'undefined' || type === 'function') {
                 return;
             }
+            if(key === 'questions') {
+                return;
+            }
 
             this[key] = cached[key];
         });
@@ -136,7 +135,7 @@ class SurveyManager {
     }
 
     /**
-     * Adds a new set of QuestionItems and sets progress flags
+     * Registers a new set of QuestionItems and sets progress flags
      * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
      * @returns {boolean} whether question was added
      */
@@ -146,45 +145,21 @@ class SurveyManager {
         }
         // TODO double submissions of current
         if(!questions.length) {
-            this.finished = true;
+            this.closed = true;
         }
 
-        const qid = questionsID(questions);
-        const cqid = questionsID(this.current());
-
-        if(qid === cqid) {
-            Log.warn(`Skipping add questions with qid ${qid}, same as current`);
-            return false;
-        }
-
-        this.questions.push(questions);
-        this.step += 1;
+        this.questions = questions;
         return true;
     }
 
     /**
-     * Returns the current question, which is always the last entry in this.questions
+     * Returns the current set of QuestionItems
      * @returns {[object]} array of QuestionItems or empty array
      */
     current() {
-        const { length } = this.questions;
-        return (length) ? this.questions[length - 1] : [];
+        return this.questions;
     }
 
-    /**
-     * Removes current (last) QuestionSet and sets progress flags
-     * @returns {boolean} whether step back was performed
-     */
-    back() {
-        if(this.closed) {
-            Log.warn('survey is closed, cannot go back');
-            return false;
-        }
-        this.questions.splice(-1, 1);
-        this.step -= 1;
-        this.finished = false;
-        return true;
-    }
 }
 
 export { SurveyManager as default, questionsID };
