@@ -171,6 +171,7 @@ class Survey extends Component {
         )
         .then(responses => responses.pop()) // last
         .then(response => survey.add(response.next_questions))
+        .then(() => survey.increment())
         .then(() => this.setState({
             loading: '',
             survey,
@@ -202,6 +203,7 @@ class Survey extends Component {
         )
         .then(responses => responses.pop()) // last ?TODO multi elements mode
         .then(response => survey.add(response.next_questions))
+        .then(() => survey.decrement())
         .then(() => this.setState({
             loading: '',
             survey,
@@ -228,7 +230,8 @@ class Survey extends Component {
         const hasQuestions = questionCount > 0;
         const hasErrors = errorCount > 0;
         const hasAnswers = answerCount > 0 ;
-        const hasAllAnswers = answerCount === questions.length;
+        const hasAllAnswers = (answerCount === questions.length);
+        const didAnswerBefore = (survey.steps > 0);
 
         return (
             <section>
@@ -258,6 +261,7 @@ class Survey extends Component {
                     hasErrors={ hasErrors }
                     hasAnswers={ hasAnswers }
                     hasAllAnswers={ hasAllAnswers }
+                    didAnswerBefore= { didAnswerBefore }
 
                     className="list-group"
                     rowClassName="list-group-item"

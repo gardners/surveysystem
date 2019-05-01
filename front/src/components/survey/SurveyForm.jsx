@@ -26,6 +26,7 @@ const SurveyForm = function(props) {
                     hasErrors={ props.hasErrors }
                     hasAnswers={ props.hasAnswers }
                     hasAllAnswers={ props.hasAllAnswers }
+                    didAnswerBefore={ props.didAnswerBefore }
                 />
             </form>
         </Fade>
@@ -43,6 +44,7 @@ SurveyForm.propTypes = {
     hasErrors: PropTypes.bool.isRequired,
     hasAnswers: PropTypes.bool.isRequired,
     hasAllAnswers: PropTypes.bool.isRequired,
+    didAnswerBefore: PropTypes.bool.isRequired,
 
     className: PropTypes.string,
     rowClassName:  PropTypes.string,

@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const HasErrors = function({ hasErrors, hasAllAnswers }) {
-    if (!hasErrors && hasAllAnswers) {
+const HasErrors = function({ hasErrors, hasAllAnswers, hasAnswers }) {
+    if (!hasAnswers) {
         return null;
     }
 
@@ -17,6 +17,7 @@ const HasErrors = function({ hasErrors, hasAllAnswers }) {
 HasErrors.propTypes = {
     hasErrors: PropTypes.bool.isRequired,
     hasAllAnswers: PropTypes.bool.isRequired,
+    hasAnswers: PropTypes.bool.isRequired,
 };
 
 const canNext = function ({ hasErrors, hasAnswers, hasAllAnswers }) {
@@ -29,25 +30,21 @@ const canNext = function ({ hasErrors, hasAnswers, hasAllAnswers }) {
  */
 const SurveyButtons = function(props) {
     const nextIconClass = (props.hasErrors || !props.hasAllAnswers) ? 'fas fa-ban' : 'fas fa-arrow-circle-right';
-    const prevIconClass = (props.hasErrors || !props.hasAllAnswers) ? 'fas fa-ban' : 'fas fa-arrow-circle-left';
-console.log(
-    props.hasQuestions,
-    props.hasErrors,
-    props.hasAnswers,
-    props.hasAllAnswers);
+    const prevIconClass = (!props.didAnswerBefore) ? 'fas fa-ban' : 'fas fa-arrow-circle-left';
+
     return (
         <div className={ props.className }>
             <HasErrors
                 hasErrors={ props.hasErrors }
                 hasAllAnswers={ props.hasAllAnswers }
+                hasAnswers={ props.hasAnswers }
             />
-           {
-                !props.hasQuestions &&
-                    <button type="submit" className="app--btn-arrow btn btn-default"
-                        onClick={ props.handlePrev }>
-                        <i className={ prevIconClass } /> Previous Question
-                    </button>
-            }
+
+            <button type="submit" className="app--btn-arrow btn btn-default"
+                onClick={ props.handlePrev }>
+                <i className={ prevIconClass } /> Previous Question
+            </button>
+
             <button type="submit" className="app--btn-arrow btn btn-default btn-primary"
                 disabled={ !canNext(props) }
                 onClick={ props.handleNext }>
@@ -68,6 +65,7 @@ SurveyButtons.propTypes = {
     hasErrors: PropTypes.bool.isRequired,
     hasAnswers: PropTypes.bool.isRequired,
     hasAllAnswers: PropTypes.bool.isRequired,
+    didAnswerBefore: PropTypes.bool.isRequired,
 };
 
 export default SurveyButtons;
