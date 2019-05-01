@@ -90,7 +90,7 @@ const SurveyBar = function(props) {
 
     return(
         <pre className={ props.className }>
-            step: { survey.step }, session: { survey.sessionID }, env: { process.env.NODE_ENV }
+            session: { survey.sessionID }, env: { process.env.NODE_ENV }
             { <ClearCachedSurveyButton className="text-primary ml-2" /> }
         </pre>
     );
