@@ -418,7 +418,7 @@ const serializeAnswer = function (id, answer, type, unit) {
 /**
  * Parses a csv row from a SurveyJS answer instance
  * example format of a row: "question1:gfdsg:0:0:0:0:0:0:0"
- *
+ * @param {HTMLElement} element
  * @param {QuestionModel} question
  * @param {object} answer answer object where keys are matching a model properites and values is the answer value
  * @returns {(string|Error)}  csv row or Error to be displayed
@@ -427,6 +427,7 @@ const serializeQuestionAnswer = function (element, question, ...values) {
 
     const { id, type, unit} = question;
 
+    // @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
     if(element && typeof element.validity !== 'undefined') {
         if (!element.validity.valid) {
             return new Error (element.validationMessage);
