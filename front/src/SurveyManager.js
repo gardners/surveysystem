@@ -26,8 +26,8 @@ class SurveyManager {
         this.surveyID = surveyID || null;
         this.sessionID = null;
         this.endpoint = endpoint;
-
         this.closed = false; // all questions are answered && survey is closed
+        this.steps = 0;
 
         // questions
         this.questions = []; // QuestionSets
@@ -43,17 +43,18 @@ class SurveyManager {
     }
 
     /**
-     * Finalizes session
-     * @returns {void}
-     */
+    * Finalizes session
+    * @returns {void}
+    */
     close() {
         this.closed = true;
+        return this.closed;
     }
 
     /**
-     * check if suvey is finished
-     * @returns {boolean}
-     */
+    * check if suvey is finished
+    * @returns {boolean}
+    */
     isClosed() {
         return this.closed;
     }
@@ -101,7 +102,7 @@ class SurveyManager {
             return false;
         }
 
-        if (this.closed){
+        if (this.isClosed()){
             return false;
         }
 
@@ -135,21 +136,50 @@ class SurveyManager {
     }
 
     /**
-     * Registers a new set of QuestionItems and sets progress flags
+     * Registers a new set of QuestionItems
      * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
      * @returns {boolean} whether question was added
      */
     add(questions) {
-        if(this.closed) {
+        if(this.isClosed()) {
             return false;
         }
         // TODO double submissions of current
         if(!questions.length) {
-            this.closed = true;
+            this.close();
         }
 
         this.questions = questions;
         return true;
+    }
+
+    /**
+     * increments progress flags
+     * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
+     * @returns {boolean} whether question was added
+     */
+    increment() {
+        this.steps += 1;
+        return this.steps;
+    }
+
+    /**
+     * decrements progress flags
+     * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
+     * @returns {boolean} whether question was added
+     */
+    decrement() {
+        this.steps -= 1;
+        return this.steps;
+    }
+
+    /**
+     * return steps
+     * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
+     * @returns {boolean} whether question was added
+     */
+    steps() {
+        return this.steps;
     }
 
     /**
