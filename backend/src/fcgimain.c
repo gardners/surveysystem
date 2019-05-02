@@ -195,9 +195,13 @@ int main(int argc,char **argv)
 	  break;
 	}
       }
-      else
+      else {
 	// Call page dispatcher
 	(*disps[req.page])(&req);
+
+	// Make sure no sessions are locked when done.
+	release_my_session_locks();
+      }
       
       // Close off request
       khttp_free(&req);
@@ -398,6 +402,9 @@ static void fcgi_addanswer(struct kreq *req)
       LOG_ERROR("sessionid is blank");
     }
     char *session_id=session->val;
+
+    if (lock_session(session_id)) LOG_ERRORV("Failed to lock session '%s'",session_id);    
+    
     struct session *s=load_session(session_id);
     if (!s) {
       quick_error(req,KHTTP_400,"Could not load specified session. Does it exist?");
@@ -435,7 +442,7 @@ static void fcgi_addanswer(struct kreq *req)
     LOG_INFO("Leaving page handler.");
     
   } while(0);
-  
+
   return;
   
 }
@@ -459,6 +466,9 @@ static void fcgi_updateanswer(struct kreq *req)
       break;
     }
     char *session_id=session->val;
+
+    if (lock_session(session_id)) LOG_ERRORV("Failed to lock session '%s'",session_id);    
+    
     struct session *s=load_session(session_id);
     if (!s) {
       quick_error(req,KHTTP_400,"Could not load specified session. Does it exist?");
@@ -526,6 +536,7 @@ static void fcgi_delanswer(struct kreq *req)
       break;
     }
     char *session_id=session->val;
+    if (lock_session(session_id)) LOG_ERRORV("Failed to lock session '%s'",session_id);    
     struct session *s=load_session(session_id);
     if (!s) {
       quick_error(req,KHTTP_400,"Could not load specified session. Does it exist?");
@@ -613,6 +624,8 @@ static void fcgi_delsession(struct kreq *r)
     }
     char *session_id=session->val;
 
+    if (lock_session(session_id)) LOG_ERRORV("Failed to lock session '%s'",session_id);
+    
     struct session *s=load_session(session_id);
     if (!s) {
       quick_error(r,KHTTP_400,"Could not load specified session. Does it exist?");
@@ -815,6 +828,7 @@ static void fcgi_accesstest(struct kreq *req)
     TEST_REMOVE("sessions/testdir");
 
     // Then try to actually create the various files to test file system permissions and access
+    TEST_WRITE("locks/testfile");
     TEST_WRITE("surveys/testfile");
     TEST_MKDIR("surveys/testdir");
     TEST_READ("surveys/testdir");
