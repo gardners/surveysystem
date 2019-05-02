@@ -80,7 +80,7 @@ int lock_session(char *session_id)
 	    ".%02d:%02d.%d"
 	    ":%ld.%06ld"
 	    ":Lock acquired by pid %d.\n",
-	    1900+tm->tm_year,tm->tm_mon,tm->tm_mday,
+	    1900+tm->tm_year,tm->tm_mon+1,tm->tm_mday,
 	    tm->tm_hour,tm->tm_min,tm->tm_sec,
 	    nowtv.tv_sec,nowtv.tv_usec,
 	    getpid());
