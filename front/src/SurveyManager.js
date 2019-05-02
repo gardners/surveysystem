@@ -30,6 +30,7 @@ class SurveyManager {
         this.steps = 0;
 
         // questions
+        // this is an array of question sets with the length of 2 [previousquestions, currentquestions]
         this.questions = []; // QuestionSets
     }
 
@@ -136,7 +137,7 @@ class SurveyManager {
     }
 
     /**
-     * Registers a new set of QuestionItems
+     * Registers the current set of QuestionItems
      * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
      * @returns {boolean} whether question was added
      */
@@ -144,12 +145,37 @@ class SurveyManager {
         if(this.isClosed()) {
             return false;
         }
-        // TODO double submissions of current
+
         if(!questions.length) {
             this.close();
         }
 
-        this.questions = questions;
+        // remove
+        if(this.questions.length) {
+            this.questions.slice(1);
+        }
+
+        this.questions.push(questions);
+        return true;
+    }
+
+    /**
+     * Clears this.questions and adds current set of QuestionItems
+     * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
+     * @returns {boolean} whether question was added
+     */
+    reset(questions) {
+        if(this.isClosed()) {
+            return false;
+        }
+
+        if(!questions.length) {
+            this.close();
+        }
+
+        // remove
+        this.questions.splice(0, this.questions.length);
+        this.questions.push(questions);
         return true;
     }
 
@@ -187,7 +213,15 @@ class SurveyManager {
      * @returns {[object]} array of QuestionItems or empty array
      */
     current() {
-        return this.questions;
+        return (this.questions.length) ? this.questions[this.questions.length - 1] : [];
+    }
+
+    /**
+     * Returns the previous set of QuestionItems
+     * @returns {[object]} array of QuestionItems or empty array
+     */
+    previous() {
+        return (this.questions.length) ? this.questions[0] : [];
     }
 
 }
