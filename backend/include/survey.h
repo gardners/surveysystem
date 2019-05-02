@@ -147,3 +147,6 @@ void free_question(struct question *q);
 void free_answer(struct answer *a);
 
 int validate_session_id(char *session_id);
+
+int lock_session(char *session_id);
+int release_my_session_locks(void);

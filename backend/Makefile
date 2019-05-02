@@ -28,6 +28,7 @@ STATICSRCS=	$(SRCDIR)/serialisers.c \
 		$(SRCDIR)/sessions.c \
 		$(SRCDIR)/nextquestion.c \
 		$(SRCDIR)/code_instrumentation.c \
+		$(SRCDIR)/filelocks.c \
 		$(SRCDIR)/errorlog.c
 
 GENERATEDHEADERS=$(INCDIR)/question_types.h
@@ -41,7 +42,9 @@ COREOBJS=	$(SRCDIR)/errorlog.o \
 		$(SRCDIR)/nextquestion.o \
 		$(SRCDIR)/serialisers.o \
 		$(SRCDIR)/code_instrumentation.o \
+		$(SRCDIR)/filelocks.o \
 		$(SRCDIR)/question_types.o 
+
 TESTOBJS=	$(COREOBJS) \
 		$(SRCDIR)/test_serialisers.o
 

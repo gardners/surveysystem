@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <ctype.h>
+#include <sys/file.h>
 
 #include "survey.h"
 #include "serialisers.h"
