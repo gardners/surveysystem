@@ -26,10 +26,11 @@ class SurveyManager {
         this.surveyID = surveyID || null;
         this.sessionID = null;
         this.endpoint = endpoint;
-
         this.closed = false; // all questions are answered && survey is closed
+        this.steps = 0;
 
         // questions
+        // this is an array of question sets with the length of 2 [previousquestions, currentquestions]
         this.questions = []; // QuestionSets
     }
 
@@ -43,17 +44,18 @@ class SurveyManager {
     }
 
     /**
-     * Finalizes session
-     * @returns {void}
-     */
+    * Finalizes session
+    * @returns {void}
+    */
     close() {
         this.closed = true;
+        return this.closed;
     }
 
     /**
-     * check if suvey is finished
-     * @returns {boolean}
-     */
+    * check if suvey is finished
+    * @returns {boolean}
+    */
     isClosed() {
         return this.closed;
     }
@@ -101,7 +103,7 @@ class SurveyManager {
             return false;
         }
 
-        if (this.closed){
+        if (this.isClosed()){
             return false;
         }
 
@@ -135,21 +137,75 @@ class SurveyManager {
     }
 
     /**
-     * Registers a new set of QuestionItems and sets progress flags
+     * Registers the current set of QuestionItems
      * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
      * @returns {boolean} whether question was added
      */
     add(questions) {
-        if(this.closed) {
+        if(this.isClosed()) {
             return false;
         }
-        // TODO double submissions of current
+
         if(!questions.length) {
-            this.closed = true;
+            this.close();
         }
 
-        this.questions = questions;
+        // remove
+        if(this.questions.length) {
+            this.questions.slice(1);
+        }
+
+        this.questions.push(questions);
         return true;
+    }
+
+    /**
+     * Clears this.questions and adds current set of QuestionItems
+     * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
+     * @returns {boolean} whether question was added
+     */
+    reset(questions) {
+        if(this.isClosed()) {
+            return false;
+        }
+
+        if(!questions.length) {
+            this.close();
+        }
+
+        // remove
+        this.questions.splice(0, this.questions.length);
+        this.questions.push(questions);
+        return true;
+    }
+
+    /**
+     * increments progress flags
+     * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
+     * @returns {boolean} whether question was added
+     */
+    increment() {
+        this.steps += 1;
+        return this.steps;
+    }
+
+    /**
+     * decrements progress flags
+     * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
+     * @returns {boolean} whether question was added
+     */
+    decrement() {
+        this.steps -= 1;
+        return this.steps;
+    }
+
+    /**
+     * return steps
+     * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
+     * @returns {boolean} whether question was added
+     */
+    steps() {
+        return this.steps;
     }
 
     /**
@@ -157,7 +213,15 @@ class SurveyManager {
      * @returns {[object]} array of QuestionItems or empty array
      */
     current() {
-        return this.questions;
+        return (this.questions.length) ? this.questions[this.questions.length - 1] : [];
+    }
+
+    /**
+     * Returns the previous set of QuestionItems
+     * @returns {[object]} array of QuestionItems or empty array
+     */
+    previous() {
+        return (this.questions.length) ? this.questions[0] : [];
     }
 
 }
