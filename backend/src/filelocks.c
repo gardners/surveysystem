@@ -48,6 +48,10 @@ int lock_session(char *session_id)
     session_prefix[4]=0;
 
     // Create subdirectory in locks directory if required
+    snprintf(session_path_suffix,1024,"locks");
+    if (generate_path(session_path_suffix,lock_path,1024)) LOG_ERRORV("generate_path('%s') failed to build path for lock path when locking session '%s'",session_path_suffix,session_id);
+    mkdir(lock_path,0750);
+
     snprintf(session_path_suffix,1024,"locks/%s",session_prefix);
     if (generate_path(session_path_suffix,lock_path,1024)) LOG_ERRORV("generate_path('%s') failed to build path for lock path when locking session '%s'",session_path_suffix,session_id);
     mkdir(lock_path,0750);
