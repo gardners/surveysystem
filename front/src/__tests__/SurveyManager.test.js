@@ -1,4 +1,4 @@
-import SurveyManager, { questionIDs } from '../SurveyManager';
+import SurveyManager, { questionIDs, matchQuestionIds } from '../SurveyManager';
 
 describe('questionIDs', () => {
 
@@ -19,7 +19,6 @@ describe('questionIDs', () => {
 
         qid = questionIDs([{id: 'B' }, {id: 'A' }]);
         expect(qid).toBe('A:B');
-
     });
 
     test('equality', () => {
@@ -41,7 +40,6 @@ describe('questionIDs', () => {
         qid1 = questionIDs([{id: 'A' }, {id: 'B' }]);
         qid2 = questionIDs([{id: 'B' }, {id: 'A' }]);
         expect(qid1).toBe(qid2);
-
     });
 
     test('inequality', () => {
@@ -59,6 +57,46 @@ describe('questionIDs', () => {
         qid1 = questionIDs([{id: 'A' }, {id: 'B' }]);
         qid2 = questionIDs([{id: 'B' }, {id: 'C' }]);
         expect(qid1).not.toBe(qid2);
+    });
+
+});
+
+describe('matchQuestionIds', () => {
+
+    test('equality', () => {
+        let match;
+
+        match = matchQuestionIds([], []);
+        expect(match).toBe(true);
+
+        match = matchQuestionIds([{id: 'A' }], [{id: 'A' }]);
+        expect(match).toBe(true);
+
+        match = matchQuestionIds([{id: 'A' }, {id: 'B' }], [{id: 'A' }, {id: 'B' }]);
+        expect(match).toBe(true);
+    });
+
+    test('inequality', () => {
+        let match;
+
+        match = matchQuestionIds([], [{id: 'A' }]);
+        expect(match).toBe(false);
+
+        match = matchQuestionIds([{id: 'A' }], []);
+        expect(match).toBe(false);
+
+        match = matchQuestionIds([{id: 'A' }], [{id: 'A' }, {id: 'B' }]);
+        expect(match).toBe(false);
+
+        match = matchQuestionIds([{id: 'A' }, {id: 'B' }], [{id: 'A' }, {id: 'C' }]);
+        expect(match).toBe(false);
+    });
+
+    test('inequality(strict order)', () => {
+        let match;
+
+        match = matchQuestionIds([{id: 'A' }, {id: 'B' }], [{id: 'B' }, {id: 'A' }]);
+        expect(match).toBe(false);
     });
 
 });
@@ -236,15 +274,6 @@ describe('SurveyManager', () => {
 
         expect(JSON.stringify(that.questions)).toBe('[[{"id":1},{"id":2}],[{"id":1},{"id":3}]]');
 
-    });
-
-    test('add - creates record as a new instance', () => {
-        const payload = [{ id: 1 }];
-        const that = new SurveyManager('test', 'uri');
-        that.init('123');
-        that.add(payload);
-        expect(JSON.stringify(that.questions[0])).toBe('[{"id":1}]');
-        expect(payload === that.questions[0]).toBe(false);
     });
 
     xtest('add - merges double submissions of question ids', () => {
