@@ -224,6 +224,7 @@ class Survey extends Component {
         const hasAnswers = answerCount > 0 ;
         const hasAllAnswers = (answerCount === questions.length);
         const didAnswerBefore = (survey.steps > 0);
+        const isClosed = survey.isClosed();
 
         return (
             <section>
@@ -235,7 +236,7 @@ class Survey extends Component {
 
                 {
                     /* show if survey is finished but not closed yet */
-                    (survey.isClosed()) ?
+                    (isClosed) ?
                         <Card>
                             <h2> <i className="fas fa-check-circle"></i> Survey completed.</h2>
                             <p>Thank you for your time!</p>
@@ -245,7 +246,7 @@ class Survey extends Component {
                 }
 
                 <SurveyForm
-                    show={ questionCount > 0 && !this.state.loading }
+                    show={ !isClosed && questionCount > 0 && !this.state.loading }
                     handlePrev={ this.handleDelAnswer.bind(this) }
                     handleNext={ this.handleUpdateAnswers.bind(this) }
 
