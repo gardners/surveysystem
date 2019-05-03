@@ -61,6 +61,7 @@ const Api = {
     /**
      * Send answer to current question and receive next question(s)
      * @param {string} surveyID
+     * @param {string} serialized answer
      * @returns {Promise} deserialized json including next questions
      */
     updateAnswer: function(sessionID, answer) {
@@ -102,21 +103,73 @@ const Api = {
     finishSurvey: function(sessionID) {
         const url = BaseUri + '/surveyapi/analyse';
 
-        // TODO: remove if implemented on backend
-        if(process.env.NODE_ENV !== 'development') {
-
-            return Promise.resolve({
-                TODO: 'TODO'
-            });
-        }
-
         return fetch(`${url}?sessionid=${sessionID}`)
-            .then((response) => {
-                if (!response.ok) {
-                    return responseError(response);
-                }
-                return response.json();
-            });
+        .then((response) => {
+            if (!response.ok) {
+                return responseError(response);
+            }
+            return response.json();
+        });
+    },
+
+    /**
+     * Send multiple answers to current questions and receive next question(s)
+     * @param {string} surveyID
+     * @param {[string]} serialized answer
+     * @returns {Promise} deserialized json including next questions
+     */
+    updateAnswers: function(sessionID, answers) {
+        return Promise.all(
+            answers.map(fragment => Api.updateAnswer(sessionID, fragment))
+        )
+    },
+
+    /**
+     * Send multiple answers to current questions and receive next question(s)
+     * @param {string} surveyID
+     * @param {[string]} serialized answer
+     * @returns {Promise} deserialized json including next questions
+     */
+    updateAnswers_SEQUENTIAL: function(sessionID, answers, responses = []) {
+        const next = responses.length;
+        return Api.updateAnswer(sessionID, answers[next])
+        .then((response) => {
+            responses.push(response);
+            if(responses.length < answers.length) {
+                return Api.updateAnswers_SEQUENTIAL(sessionID, answers, responses);
+            }
+            return responses;
+        });
+    },
+
+    /**
+     * Send multiple answers to current questions and receive next question(s)
+     * @param {string} surveyID
+     * @param {[string]} serialized answer
+     * @returns {Promise} deserialized json including next questions
+     */
+    deleteAnswers: function(sessionID, answers) {
+        return Promise.all(
+            answers.map(fragment => Api.deleteAnswer(sessionID, fragment))
+        )
+    },
+
+    /**
+     * Delete mutiple answers to current questions and new receive next question(s)
+     * @param {string} surveyID
+     * @param {[string]} serialized answer
+     * @returns {Promise} deserialized json including next questions
+     */
+    deleteAnswers_SEQUENTIAL: function(sessionID, questionIDs, responses = []) {
+        const next = responses.length;
+        return Api.deleteAnswer(sessionID, questionIDs[next])
+        .then((response) => {
+            responses.push(response);
+            if(responses.length < questionIDs.length) {
+                return Api.deleteAnswers_SEQUENTIAL(sessionID, questionIDs, responses);
+            }
+            return responses;
+        });
     },
 
 };
