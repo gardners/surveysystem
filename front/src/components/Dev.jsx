@@ -80,9 +80,10 @@ const SurveyBar = function(props) {
     const { survey } = props;
 
     // don't display in production mode
-    if (NODE_ENV === 'production') {
-        return (null);
-    }
+    // TODO enable
+    // if (NODE_ENV === 'production') {
+    //     return (null);
+    // }
 
     if(!survey) {
         return (null);
