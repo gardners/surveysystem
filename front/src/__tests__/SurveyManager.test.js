@@ -1,23 +1,23 @@
-import SurveyManager, { questionsID } from '../SurveyManager';
+import SurveyManager, { questionIDs } from '../SurveyManager';
 
-describe('questionsID', () => {
+describe('questionIDs', () => {
 
     test('format and sorting', () => {
         let qid;
 
-        qid = questionsID([]);
+        qid = questionIDs([]);
         expect(qid).toBe('');
 
-        qid = questionsID([{id: 'A' }]);
+        qid = questionIDs([{id: 'A' }]);
         expect(qid).toBe('A');
 
-        qid = questionsID([{id: 'A' }, {id: 'A' }]);
+        qid = questionIDs([{id: 'A' }, {id: 'A' }]);
         expect(qid).toBe('A:A');
 
-        qid = questionsID([{id: 'A' }, {id: 'B' }]);
+        qid = questionIDs([{id: 'A' }, {id: 'B' }]);
         expect(qid).toBe('A:B');
 
-        qid = questionsID([{id: 'B' }, {id: 'A' }]);
+        qid = questionIDs([{id: 'B' }, {id: 'A' }]);
         expect(qid).toBe('A:B');
 
     });
@@ -26,20 +26,20 @@ describe('questionsID', () => {
         let qid1;
         let qid2;
 
-        qid1 = questionsID([]);
-        qid2 = questionsID([]);
+        qid1 = questionIDs([]);
+        qid2 = questionIDs([]);
         expect(qid1).toBe(qid2);
 
-        qid1 = questionsID([{id: 'A' }]);
-        qid2 = questionsID([{id: 'A' }]);
+        qid1 = questionIDs([{id: 'A' }]);
+        qid2 = questionIDs([{id: 'A' }]);
         expect(qid1).toBe(qid2);
 
-        qid1 = questionsID([{id: 'A' }, {id: 'A' }]);
-        qid2 = questionsID([{id: 'A' }, {id: 'A' }]);
+        qid1 = questionIDs([{id: 'A' }, {id: 'A' }]);
+        qid2 = questionIDs([{id: 'A' }, {id: 'A' }]);
         expect(qid1).toBe(qid2);
 
-        qid1 = questionsID([{id: 'A' }, {id: 'B' }]);
-        qid2 = questionsID([{id: 'B' }, {id: 'A' }]);
+        qid1 = questionIDs([{id: 'A' }, {id: 'B' }]);
+        qid2 = questionIDs([{id: 'B' }, {id: 'A' }]);
         expect(qid1).toBe(qid2);
 
     });
@@ -48,16 +48,16 @@ describe('questionsID', () => {
         let qid1;
         let qid2;
 
-        qid1 = questionsID([]);
-        qid2 = questionsID([{id: 'A' }]);
+        qid1 = questionIDs([]);
+        qid2 = questionIDs([{id: 'A' }]);
         expect(qid1).not.toBe(qid2);
 
-        qid1 = questionsID([{id: 'A' }]);
-        qid2 = questionsID([{id: 'A' }, {id: 'A' }]);
+        qid1 = questionIDs([{id: 'A' }]);
+        qid2 = questionIDs([{id: 'A' }, {id: 'A' }]);
         expect(qid1).not.toBe(qid2);
 
-        qid1 = questionsID([{id: 'A' }, {id: 'B' }]);
-        qid2 = questionsID([{id: 'B' }, {id: 'C' }]);
+        qid1 = questionIDs([{id: 'A' }, {id: 'B' }]);
+        qid2 = questionIDs([{id: 'B' }, {id: 'C' }]);
         expect(qid1).not.toBe(qid2);
     });
 
@@ -65,32 +65,17 @@ describe('questionsID', () => {
 
 describe('SurveyManager.merge', () => {
 
-    test('merge - retain unmatched defaults', () => {
-        const that = new SurveyManager('test', 'uri');
-        that.init('123');
-        that.merge({
-            surveyID: 'test',
-            endpoint: 'uri',
-            sessionID: '123'
-        })
-
-        expect(that.step).toBe(-1);
-        expect(that.finished).toBe(false);
-    });
-
     test('merge - replace', () => {
         const that = new SurveyManager('test', 'uri');
         that.merge({
             surveyID: 'test',
             endpoint: 'uri',
             sessionID: '123',
-            step: 9,
-            finished: true,
+            closed: true,
             questions: [[{ id: 1 }]]
         })
 
-        expect(that.step).toBe(9);
-        expect(that.finished).toBe(true);
+        expect(that.closed).toBe(true);
         expect(JSON.stringify(that.questions)).toBe('[[{"id":1}]]');
     });
 
@@ -143,8 +128,7 @@ describe('SurveyManager', () => {
 
         expect(that.surveyID).toBe('test');
         expect(that.sessionID).toBe(null);
-        expect(that.step).toBe(-1);
-        expect(that.finished).toBe(false);
+        expect(that.questions.length).toBe(0);
         expect(that.closed).toBe(false);
         // array and empty
         expect(JSON.stringify(that.questions)).toBe('[]');
@@ -165,8 +149,8 @@ describe('SurveyManager', () => {
         expect(that.surveyID).toBe('test');
         expect(that.endpoint).toBe('uri');
         expect(that.sessionID).toBe(null);
-        expect(that.step).toBe(-1);
-        expect(that.finished).toBe(false);
+        expect(that.questions.length).toBe(0);
+        expect(that.closed).toBe(false);
         // array and empty
         expect(JSON.stringify(that.questions)).toBe('[]');
     });
@@ -181,8 +165,6 @@ describe('SurveyManager', () => {
         const that = new SurveyManager('test', 'uri');
         that.init('123');
         that.close();
-
-        expect(that.finished).toBe(true);
         expect(that.closed).toBe(true);
     });
 
@@ -256,19 +238,28 @@ describe('SurveyManager', () => {
 
     });
 
+    test('add - creates record as a new instance', () => {
+        const payload = [{ id: 1 }];
+        const that = new SurveyManager('test', 'uri');
+        that.init('123');
+        that.add(payload);
+        expect(JSON.stringify(that.questions[0])).toBe('[{"id":1}]');
+        expect(payload === that.questions[0]).toBe(false);
+    });
+
     xtest('add - merges double submissions of question ids', () => {
     });
 
-    test('back', () => {
+    test('reset()', () => {
         const that = new SurveyManager('test', 'uri');
         that.init('123');
         that.add([{ id: 1 }]);
         that.add([{ id: 2 }]);
-        that.back();
+        that.reset();
         expect(JSON.stringify(that.questions)).toBe('[[{"id":1}]]');
     });
 
-    test('back  has no effect on closed suvey', () => {
+    test('reset() has no effect on closed suvey', () => {
         let did;
         const that = new SurveyManager('test', 'uri');
         that.init('123');
@@ -276,14 +267,14 @@ describe('SurveyManager', () => {
         that.add([{ id: 2 }]);
 
         // before close
-        did = that.back();
+        did = that.reset();
         expect(did).toBe(true);
         expect(JSON.stringify(that.questions)).toBe('[[{"id":1}]]');
 
         that.close();
 
         // after close
-        did = that.back();
+        did = that.reset();
         did = expect(did).toBe(false);
         expect(JSON.stringify(that.questions)).toBe('[[{"id":1}]]');
     });
@@ -304,16 +295,26 @@ describe('SurveyManager', () => {
         curr = that.current();
         expect(JSON.stringify(curr)).toBe('[{"id":2}]');
 
-        that.back();
+        that.reset();
         curr = that.current();
         expect(JSON.stringify(curr)).toBe('[{"id":1}]');
 
-        that.back();
+        that.reset();
         curr = that.current();
         expect(JSON.stringify(curr)).toBe('[]');
 
     });
 
+    test('currentInversed()', () => {
+        const that = new SurveyManager('test', 'uri');
+        that.init('123');
+        that.add([{ id: 'something' }]);
+        that.add([{ id: 1 }, { id: 2 }, { id: 3 }]);
+
+        const inversed = that.currentInversed();
+        expect(inversed === that.current()).toBe(false);
+        expect(JSON.stringify(inversed)).toBe('[{"id":3},{"id":2},{"id":1}]');
+    });
 });
 
 describe('SurveyManager.canMerge', () => {
@@ -450,10 +451,8 @@ describe('SurveyManager.merge', () => {
             surveyID: 'test',
             endpoint: 'uri',
             sessionID: '123'
-        })
-
-        expect(that.step).toBe(-1);
-        expect(that.finished).toBe(false);
+        });
+        expect(that.closed).toBe(false);
     });
 
     test('merge - replace', () => {
@@ -462,13 +461,11 @@ describe('SurveyManager.merge', () => {
             surveyID: 'test',
             endpoint: 'uri',
             sessionID: '123',
-            step: 9,
-            finished: true,
+            closed: true,
             questions: [[{ id: 1 }]]
         })
 
-        expect(that.step).toBe(9);
-        expect(that.finished).toBe(true);
+        expect(that.closed).toBe(true);
         expect(JSON.stringify(that.questions)).toBe('[[{"id":1}]]');
     });
 
@@ -510,6 +507,5 @@ describe('SurveyManager.merge', () => {
         expect(that.sessionID).toBe('123');
         expect(undef).toBe(undefined);
     });
-
 
 });
