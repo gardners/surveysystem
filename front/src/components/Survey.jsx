@@ -165,13 +165,9 @@ class Survey extends Component {
 
         const csvFragments = Object.keys(answers).map(id => answers[id].serialized);
 
-        // each answer is a single request, we are bundling them into Promise.all
-        Promise.all(
-            csvFragments.map(fragment => api.updateAnswer(survey.sessionID, fragment))
-        )
+        api.updateAnswers_SEQUENTIAL(survey.sessionID, csvFragments)
         .then(responses => responses.pop()) // last
         .then(response => survey.add(response.next_questions))
-        .then(() => survey.increment())
         .then(() => this.setState({
             loading: '',
             survey,
@@ -192,22 +188,18 @@ class Survey extends Component {
         }
         this.setState({ loading: 'Fetching previous question...' });
 
-        // FIRST go back to previous (does not render) and then get questionIds
+        survey.reset();
+        const inversed = survey.currentInversed();
+        const questionIds = inversed.map(question => question.id);
 
-        const questionIds = survey.current().map(question => question.id);
-
-        // delete current answer(s)
-        // each answer is a single request, we are bundling them into Promise.all
-        Promise.all(
-            questionIds.map(id => api.deleteAnswer(survey.sessionID, id))
-        )
+        api.deleteAnswers_SEQUENTIAL(survey.sessionID, questionIds)
         .then(responses => responses.pop()) // last ?TODO multi elements mode
         .then(response => survey.add(response.next_questions))
-        .then(() => survey.decrement())
         .then(() => this.setState({
             loading: '',
             survey,
             alerts: [], // clear previous alerts
+            answers: {}, // clear previous answers
         }))
         .then(() => LocalStorage.set(CACHE_KEY, survey))
         .catch(err => this.alert(err));

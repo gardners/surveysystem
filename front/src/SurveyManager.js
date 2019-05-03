@@ -5,8 +5,36 @@ import Log from './Log';
  * @param {[object]} questions array of QuestionItem
  * @returns {string}
  */
-const questionsID = function(questions) {
+const questionIDs = function(questions) {
     return questions.map(q => q.id).sort().join(':');
+};
+
+/**
+ * compares two question sets by question ids, the exact order is required
+ */
+const matchQuestionIds = function(first, second) {
+    if(first.length !== second.length) {
+        return false;
+    }
+
+    for (let i = 0; i < first.length; i +=1) {
+        if(first[i].id !== second[i].id) {
+            return false;
+        }
+    }
+    return true;
+};
+
+/**
+ * create an array of question objects with the minimal required properties from an api response.
+ * Since we store the history locally it makes no sense to store everything
+ * @param {[object]} questions array of json response next_question objects
+ * @returns {[object]}
+ */
+const processQuestions = function(questions) {
+    return questions.map(question => ({
+        id: question.id,
+    }));
 };
 
 /**
@@ -27,7 +55,6 @@ class SurveyManager {
         this.sessionID = null;
         this.endpoint = endpoint;
         this.closed = false; // all questions are answered && survey is closed
-        this.steps = 0;
 
         // questions
         // this is an array of question sets with the length of 2 [previousquestions, currentquestions]
@@ -126,9 +153,6 @@ class SurveyManager {
             if(type === 'undefined' || type === 'function') {
                 return;
             }
-            if(key === 'questions') {
-                return;
-            }
 
             this[key] = cached[key];
         });
@@ -148,14 +172,16 @@ class SurveyManager {
 
         if(!questions.length) {
             this.close();
+            return false;
         }
 
-        // remove
-        if(this.questions.length) {
-            this.questions.slice(1);
+        // deal with cases like browser refresh..
+        const records = processQuestions(questions);
+        if (matchQuestionIds(this.current(), records)) {
+            return false;
         }
 
-        this.questions.push(questions);
+        this.questions.push(records);
         return true;
     }
 
@@ -164,48 +190,16 @@ class SurveyManager {
      * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
      * @returns {boolean} whether question was added
      */
-    reset(questions) {
-        if(this.isClosed()) {
+    reset() {
+        if (this.isClosed()) {
             return false;
         }
 
-        if(!questions.length) {
-            this.close();
+        if (!this.questions.length) {
+            return false;
         }
-
-        // remove
-        this.questions.splice(0, this.questions.length);
-        this.questions.push(questions);
+        this.questions.pop();
         return true;
-    }
-
-    /**
-     * increments progress flags
-     * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
-     * @returns {boolean} whether question was added
-     */
-    increment() {
-        this.steps += 1;
-        return this.steps;
-    }
-
-    /**
-     * decrements progress flags
-     * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
-     * @returns {boolean} whether question was added
-     */
-    decrement() {
-        this.steps -= 1;
-        return this.steps;
-    }
-
-    /**
-     * return steps
-     * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
-     * @returns {boolean} whether question was added
-     */
-    steps() {
-        return this.steps;
     }
 
     /**
@@ -216,14 +210,17 @@ class SurveyManager {
         return (this.questions.length) ? this.questions[this.questions.length - 1] : [];
     }
 
-    /**
-     * Returns the previous set of QuestionItems
-     * @returns {[object]} array of QuestionItems or empty array
-     */
-    previous() {
-        return (this.questions.length) ? this.questions[0] : [];
+    currentInversed() {
+        const current = this.current();
+        let index = current.length - 1;
+        const inversed = [];
+        while (index >= 0) {
+            inversed.push(current[index]);
+            index -= 1;
+        }
+        return inversed;
     }
 
 }
 
-export { SurveyManager as default, questionsID };
+export { SurveyManager as default, questionIDs };
