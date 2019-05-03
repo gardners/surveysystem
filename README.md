@@ -76,3 +76,5 @@ Note that the following section reflects the *current state* of development and 
 | **System**     |                                               |        |                  |                         |         |
 | `accesstest`   | check system health (filesystem)              | GET    | application/text | -                       | - |
 | `fastcgitest`  | check survey access (fastcgi)                 | GET    | application/text | -                       | - |
+
+The survey model is sequential. `addanswer`, `updateanswer` are required to submit the answers for question ids in the exact same order as they were recieved. Similar with `delanswer` requests, where question ids have to be submitted in reverse order.
