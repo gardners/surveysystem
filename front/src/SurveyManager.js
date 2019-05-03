@@ -25,17 +25,18 @@ const matchQuestionIds = function(first, second) {
     return true;
 };
 
-/**
- * create an array of question objects with the minimal required properties from an api response.
- * Since we store the history locally it makes no sense to store everything
- * @param {[object]} questions array of json response next_question objects
- * @returns {[object]}
- */
-const processQuestions = function(questions) {
-    return questions.map(question => ({
-        id: question.id,
-    }));
-};
+// /**
+//  * create an array of question objects with the minimal required properties from an api response.
+//  * Since we store the history locally it makes no sense to store everything
+//  * @param {[object]} questions array of json response next_question objects
+//  * @returns {[object]}
+//  */
+//
+// const processQuestions = function(questions) {
+//     return questions.map(question => ({
+//         id: question.id,
+//     }));
+// };
 
 /**
  * @module SurveyManager Simple state controller for survey progess.
@@ -176,12 +177,11 @@ class SurveyManager {
         }
 
         // deal with cases like browser refresh..
-        const records = processQuestions(questions);
-        if (matchQuestionIds(this.current(), records)) {
+        if (matchQuestionIds(this.current(), questions)) {
             return false;
         }
 
-        this.questions.push(records);
+        this.questions.push(questions);
         return true;
     }
 
@@ -223,4 +223,4 @@ class SurveyManager {
 
 }
 
-export { SurveyManager as default, questionIDs };
+export { SurveyManager as default, questionIDs, matchQuestionIds };
