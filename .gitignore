@@ -74,6 +74,7 @@ backend/python/*
 backend/logs/*
 backend/testlog/*
 backend/sessions/*
+backend/locks/*
 
 # compiled
 backend/kcgi/*
