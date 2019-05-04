@@ -204,6 +204,26 @@ const answerQuestion = function(question, answer, answerType, count) {
 };
 
 /**
+ * @returns {Promise} http request response
+ */
+const answerQuestionsSequential = function(entries, count, responses = []) {
+    const next = responses.length;
+
+    const { question, answer, answerType } = entries[next];
+
+    return answerQuestion(question, answer, answerType, count)
+        .then(response => handleAnswer(response, question, answer, answerType, count))
+        .then(response => Log.log(`    |   └── ${answer}`, response))
+        .then((response) => {
+            responses.push(response);
+            if (responses.length < entries.length) {
+                return answerQuestionsSequential(entries, count, responses);
+            }
+            return responses;
+        });
+};
+
+/**
  * Send answers to a list of given questions. This function is recursive in case the LAST answer request contains next_questions
  * @param {object[]} array of question objects
  *
@@ -235,7 +255,7 @@ const answerQuestions = function(questions) {
     Log.log(`    ├── Sending ${Log.colors.green(data.length)} answers`);
 
     return sleep(50)
-        .then(() => Promise.all(data.map(entry => answerQuestion(entry.question, entry.answer, entry.answerType, curr))))
+        .then(() => answerQuestionsSequential(data, curr))
         .then((responses) => {
             const last = responses[responses.length - 1];
             const newQuestions = last.next_questions;
