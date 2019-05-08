@@ -60,7 +60,7 @@ class Analysis extends Component {
             loading: '',
             alerts: [],
         }))
-        .catch(err => this.alert(err)); //TODO
+        .catch(err => this.alert(err));
     }
 
     /**

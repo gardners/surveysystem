@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 
 import { mockAnalysis } from '../Analysis';
 import Analysis from './Analysis';

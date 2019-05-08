@@ -135,7 +135,7 @@ const Api = {
         return Api.updateAnswer(sessionID, answers[next])
         .then((response) => {
             responses.push(response);
-            if(responses.length < answers.length) {
+            if (responses.length < answers.length) {
                 return Api.updateAnswers_SEQUENTIAL(sessionID, answers, responses);
             }
             return responses;

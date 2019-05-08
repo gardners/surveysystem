@@ -21,6 +21,11 @@ const mockAnalysis = function() {
     };
 };
 
+/**
+ * Sets default values and normalizes an /analyse api response object
+ * @param {object} response
+ * @returns {object}
+ */
 const normalizeAnalysis = function(response) {
     const r = response || {};
 
