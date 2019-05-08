@@ -20,8 +20,10 @@ import EmailInput from './form/EmailInput';
 import PasswordInput from './form/PasswordInput';
 
 import { serializeQuestionAnswer } from '../serializer';
-
 import Question from './survey/Question';
+
+import { mockAnalysis } from '../Analysis';
+import Analysis from './Analysis';
 
 const Pre = function(props) {
 
@@ -168,6 +170,18 @@ class Demo extends Component {
                     />
                     <Row type={ 'EMAIL' }        component={ EmailInput }           unit={ this.state.unit }/>
                     <Row type={ 'PASSWORD' }     component={ PasswordInput }        unit={ this.state.unit }/>
+                </div>
+                <hr />
+                <div>
+                    <Analysis
+                        evaluation={ mockAnalysis() }
+                        match = { {
+                            params: {
+                                sessionID: 'DEMOSESSION',
+                                surveyID: 'DEMO',
+                            }
+                        } }
+                    />
                 </div>
             </section>
         );

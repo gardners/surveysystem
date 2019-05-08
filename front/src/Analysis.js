@@ -1,0 +1,53 @@
+
+const mockAnalysis = function() {
+    return {
+        category: "Vogonic",
+        classification: "Mild conditions",
+        displayResults: {
+            additionalInsights: [],
+            sleepConditions: {
+                condition: "Vogonic Flue",
+                subcondition: "Confusion",
+                mainText: "It is known that there are an infinite number of worlds, simply because there is an infinite amount of space for them to be in. \n However, not every one of them is inhabited. Therefore, there must be a finite number of inhabited worlds. \n Any finite number divided by infinity is as near to nothing as makes no odds, so the average population of all the planets in the Universe can be said to be zero. \n From this it follows that the population of the whole Universe is also zero, and that any people you may meet from time to time are merely the products of a deranged imagination.",
+                learnMore: "Make it totally clear that this gun has a right end and a wrong end. Make it totally clear to anyone standing at the wrong end that things are going badly for them.",
+                mainRecommendation: "Make it totally clear that this gun has a right end and a wrong end. Make it totally clear to anyone standing at the wrong end that things are going badly for them.",
+                mandatoryTips: "Eskimos had over two hundred different words for snow, without which their conversation would probably have got very monotonous.",
+                additionalInsights: "The Total Perspective Vortex derives its picture of the whole Universe on the principle of extrapolated matter analyses.To explain — since every piece of matter in the Universe is in some way affected by every other piece of matter in the Universe, it is in theory possible to extrapolate the whole of creation — every sun, every planet, their orbits, their composition and their economic and social history from, say, one small piece of fairy cake. The man who invented the Total Perspective Vortex did so basically in order to annoy his wife."
+            }
+        },
+        rank: 2,
+        recommendation: "",
+        riskRating: 0
+    };
+};
+
+/**
+ * Sets default values and normalizes an /analyse api response object
+ * @param {object} response
+ * @returns {object}
+ */
+const normalizeAnalysis = function(response) {
+    const r = response || {};
+
+    return Object.assign({
+        category: 'No category',
+        classification: 'No classification',
+        displayResults: {
+            additionalInsights: [],
+            sleepConditions: {
+                condition: 'No condition',
+                subcondition: '',
+                mainText: '',
+                learnMore: '',
+                mainRecommendation: '',
+                mandatoryTips: '',
+                additionalInsights: ''
+            }
+        },
+        rank: 0,
+        recommendation: '',
+        riskRating: 0
+    }, r);
+}
+
+export { normalizeAnalysis, mockAnalysis };

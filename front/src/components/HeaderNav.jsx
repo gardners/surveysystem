@@ -42,7 +42,11 @@ const HeaderNav = function({ location, surveys, surveyProvider, siteName}) {
                             </li>
                     }
                         <li className={ (/^\/demo/.test(location.pathname)) ? 'nav-item active my-2 my-sm-0' : 'nav-item my-2 my-sm-0' }>
-                            <Link className="nav-link" to="/demo">Demo form</Link>
+                            <Link className="nav-link" to="/demo/form">Demo form</Link>
+                        </li>
+
+                        <li className={ (/^\/demo/.test(location.pathname)) ? 'nav-item active my-2 my-sm-0' : 'nav-item my-2 my-sm-0' }>
+                            <Link className="nav-link" to="/demo/analyse">Demo analysis</Link>
                         </li>
                     </ul>
 
