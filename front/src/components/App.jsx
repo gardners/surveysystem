@@ -11,6 +11,7 @@ import Analysis from './Analysis';
 import Page404 from './Page404';
 import Surveys from './Surveys';
 import Demo from './Demo';
+import DemoAnalysis from './DemoAnalysis';
 
 const Navigation = withRouter(HeaderNav);
 
@@ -32,7 +33,8 @@ const App = function(props) {
                             surveys.length > 1 &&
                                 <Route path="/surveys" render={ () => <Surveys surveys={ surveys } surveyProvider={ surveyProvider } /> } />
                         }
-                        <Route path="/demo" component={ Demo } />
+                        <Route path="/demo/form" component={ Demo } />
+                        <Route path="/demo/analyse" component={ DemoAnalysis } />
                         <Route path="/analyse/:id/:sessionID" component={ Analysis } />
                         <Route path="/survey/:id/:sessionID?" component={ Survey } />
                         <Route path="*" component={ Page404 } />
