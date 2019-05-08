@@ -1,21 +1,29 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 
 // apis
 import api from '../api';
 import Log from '../Log';
-import { DirtyJson, camelToNormal } from '../Utils';
+import { normalizeAnalysis } from '../Analysis';
+
 import Alert from './Alert';
 
 // components
-import Feedback from './analysis/Feedback';
-import Evaluation from './analysis/Evaluation';
-
+import Toggle from './Toggle';
 import LoadingSpinner from './LoadingSpinner';
-// TODO Alert
 
 // devel
 import Dev from './Dev';
+
+const tableStyle = {
+    tableLayout: 'fixed',    /* For cells of equal size */
+};
+
+const cellStyle = {
+    width: '25%',
+};
+
 
 class Analysis extends Component {
 
@@ -29,6 +37,17 @@ class Analysis extends Component {
     }
 
     componentDidMount() {
+        // demo
+        if (this.props.evaluation) {
+            const { evaluation } = this.props;
+            this.setState({
+                evaluation,
+                loading: '',
+                alerts: [],
+            });
+            return;
+        }
+
         const sessionID = this.props.match.params.sessionID;
 
         this.setState({
@@ -41,7 +60,7 @@ class Analysis extends Component {
             loading: '',
             alerts: [],
         }))
-        .catch(err => this.alert(err)); //TODO
+        .catch(err => this.alert(err));
     }
 
     /**
@@ -70,9 +89,6 @@ class Analysis extends Component {
         const surveyID = this.props.match.params.id;
         const sessionID = this.props.match.params.sessionID;
         const { evaluation, loading, alerts } = this.state;
-
-        const report = DirtyJson.get(evaluation, 'report', {});
-        const evaluations = DirtyJson.get(report, 'evaluations', {});
 
         if(alerts.length) {
             return (
@@ -106,21 +122,69 @@ class Analysis extends Component {
             );
         }
 
+        const data = normalizeAnalysis(this.state.evaluation);
+        const { category, classification, rank, recommendation, riskRating } = data;
+        const { condition, subcondition, mainText, learnMore, mainRecommendation, mandatoryTips, additionalInsights }  = data.displayResults.sleepConditions;
+
         return (
             <section>
                 <LoadingSpinner loading={ loading } message={ loading }/>
-                <h1>Analysis <small>{ sessionID } </small></h1>
+                <h1>Analysis</h1>
+                <h2>Survey: <span className="text-success">{ surveyID }</span></h2>
 
-                <div className="jumbotron jumbotron-fluid">
-                    <div className="container">
-                        <h2 className="display-4">Feedback</h2>
-                        <Feedback feedback={ evaluation.feedback } />
-                    </div>
+                <div className="table-responsive-md">
+                    <table className="table table-striped table-hover table-sm" style={ tableStyle }>
+                        <tbody>
+                            <tr>
+                                <th style={ cellStyle }>category</th>
+                                <td>{ category }</td>
+                            </tr>
+                            <tr>
+                                <th style={ cellStyle }>classification</th>
+                                <td>{ classification }</td>
+                            </tr>
+                            <tr>
+                                <th style={ cellStyle }>rank</th>
+                                <td>{ rank }</td>
+                            </tr>
+                            <tr>
+                                <th style={ cellStyle }>risk rating</th>
+                                <td>{ riskRating }</td>
+                            </tr>
+                            <tr>
+                                <th style={ cellStyle }>recommendation</th>
+                                <td>{ recommendation }</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
 
-                <h2>Evaluation</h2>
-                { Object.keys(evaluations).map((key) => <Evaluation key={ key } name={ camelToNormal(key) /* TODO redundant */} evaluation={ evaluations[key] } />) }
-                <hr />
+                <h3>Condition</h3>
+
+                <div className="table-responsive-md">
+                    <table className="table table-striped table-hover table-sm" style={ tableStyle }>
+                        <tbody>
+                            <tr>
+                                <th style={ cellStyle }>condition</th>
+                                <td>{ condition }</td>
+                            </tr>
+                            <tr>
+                                <th style={ cellStyle }>sub condition</th>
+                                <td>{ subcondition }</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Details</h3>
+
+                <p>{ mainText }</p>
+                <ul className="list-group list-group-flush">
+                    <Toggle className="list-group-item">Learn More { learnMore }</Toggle>
+                    <Toggle className="list-group-item">Main Recommendation { mainRecommendation }</Toggle>
+                    <Toggle className="list-group-item">Tips { mandatoryTips }</Toggle>
+                    <Toggle className="list-group-item">Additional insights { additionalInsights }</Toggle>
+                </ul>
 
                 <Dev.Pretty label="raw analyis" data={ evaluation } open={ false }/>
             </section>
@@ -128,7 +192,12 @@ class Analysis extends Component {
     }
 }
 
+Analysis.defaultProps = {
+    evaluation: null,
+};
+
 Analysis.propTypes = {
+    evaluation: PropTypes.object,
 };
 
 export default Analysis;
