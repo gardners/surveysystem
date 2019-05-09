@@ -7,7 +7,7 @@ import api from '../api';
 import Log from '../Log';
 import { normalizeAnalysis } from '../Analysis';
 
-import Alert from './Alert';
+import ApiAlert from './ApiAlert';
 
 // components
 import Toggle from './Toggle';
@@ -76,8 +76,8 @@ class Analysis extends Component {
             severity = 'error';
         }
 
-        const entry = Log.add(message, severity);
-        alerts.push(entry);
+        Log.add(message, severity);
+        alerts.push(message);
 
         this.setState({
             loading: '',
@@ -95,7 +95,7 @@ class Analysis extends Component {
                 <section>
                      <h1>Analysis</h1>
                      Unfortunately we encountered an error retrieving your data.
-                    { this.state.alerts.map((entry, index) => <Alert key={ index } severity={ entry.severity } message={ entry.message } />) }
+                    { this.state.alerts.map((entry, index) => <ApiAlert key={ index } message={ entry } />) }
                      <button onClick={ () => window.location.reload() } className="btn btn-secondary">Reload</button>&nbsp;
                      <Link to={ `/survey/${surveyID}` } className="btn bn-lg btn-secondary">Back to survey</Link>
                 </section>
