@@ -15,14 +15,14 @@ Location: `surveys/<surveyID>/current` (can be symlinked)
 | ---                | ---       | ---    | ---         |
 | **uid**            | char[]    | string | question id |
 | **question_text**  | char[]    | string | question label |
-| **question_html**  | char[]    | number | question description (html tags allowed) |
-| **type**           | char[]    | number | question type |
+| **question_html**  | char[]    | string | question description (html tags allowed) |
+| **type**           | char[]    | string | question type |
 | **flags**          | int       | number |             |
-| **default_value**  | char[]    | number |             |
+| **default_value**  | char[]    | string |             |
 | **min_value**      | long long | number |             |
 | **max_value**      | long long | number |             |
 | **decimal_places** | int       | number |             |
-| **num_choices**    | int       | string |             |
+| **num_choices**    | int       | number |             |
 | **choices**        | char[]    | string | comma separated list |
 | **unit**           | char[]    | string |             |
 
