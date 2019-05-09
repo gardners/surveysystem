@@ -48,6 +48,12 @@ const HeaderNav = function({ location, surveys, surveyProvider, siteName}) {
                         <li className={ (/^\/demo/.test(location.pathname)) ? 'nav-item active my-2 my-sm-0' : 'nav-item my-2 my-sm-0' }>
                             <Link className="nav-link" to="/demo/analyse">Demo analysis</Link>
                         </li>
+                    {
+                        process.env.NODE_ENV === 'development' &&
+                            <li className={ (/^\/demo/.test(location.pathname)) ? 'nav-item active my-2 my-sm-0' : 'nav-item my-2 my-sm-0' }>
+                                <Link className="nav-link" to="/demo/manifest">Demo manifest</Link>
+                            </li>
+                    }
                     </ul>
 
                     <ul className="navbar-nav mt-2 mt-md-0">
