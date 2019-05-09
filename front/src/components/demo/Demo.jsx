@@ -2,28 +2,25 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 // form elements
-import GeoLocation from './form/GeoLocation';
-import PeriodRangeSlider from './form/PeriodRangeSlider';
-import DayTimeSlider from './form/DayTimeSlider';
-import CheckboxGroup from './form/CheckboxGroup';
-import Checkbox from './form/Checkbox';
-import RadioGroup from './form/RadioGroup';
-import TextInput from './form/TextInput';
-import NumberInput from './form/NumberInput';
-import Textarea from './form/Textarea';
-import Select from './form/Select';
-import MultiSelect from './form/MultiSelect';
-import TimePicker from './form/TimePicker';
-import RadioMatrix from './form/RadioMatrix';
-import HiddenInput from './form/HiddenInput';
-import EmailInput from './form/EmailInput';
-import PasswordInput from './form/PasswordInput';
+import GeoLocation from '../form/GeoLocation';
+import PeriodRangeSlider from '../form/PeriodRangeSlider';
+import DayTimeSlider from '../form/DayTimeSlider';
+import CheckboxGroup from '../form/CheckboxGroup';
+import Checkbox from '../form/Checkbox';
+import RadioGroup from '../form/RadioGroup';
+import TextInput from '../form/TextInput';
+import NumberInput from '../form/NumberInput';
+import Textarea from '../form/Textarea';
+import Select from '../form/Select';
+import MultiSelect from '../form/MultiSelect';
+import TimePicker from '../form/TimePicker';
+import RadioMatrix from '../form/RadioMatrix';
+import HiddenInput from '../form/HiddenInput';
+import EmailInput from '../form/EmailInput';
+import PasswordInput from '../form/PasswordInput';
 
-import { serializeQuestionAnswer } from '../serializer';
-import Question from './survey/Question';
-
-import { mockAnalysis } from '../Analysis';
-import Analysis from './Analysis';
+import { serializeQuestionAnswer } from '../../serializer';
+import Question from '../survey/Question';
 
 const Pre = function(props) {
 
@@ -170,18 +167,6 @@ class Demo extends Component {
                     />
                     <Row type={ 'EMAIL' }        component={ EmailInput }           unit={ this.state.unit }/>
                     <Row type={ 'PASSWORD' }     component={ PasswordInput }        unit={ this.state.unit }/>
-                </div>
-                <hr />
-                <div>
-                    <Analysis
-                        evaluation={ mockAnalysis() }
-                        match = { {
-                            params: {
-                                sessionID: 'DEMOSESSION',
-                                surveyID: 'DEMO',
-                            }
-                        } }
-                    />
                 </div>
             </section>
         );
