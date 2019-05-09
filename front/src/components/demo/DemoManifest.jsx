@@ -37,6 +37,24 @@ const defaultValue = `
  *         char *choices;
  *         char *unit;
  *     };
+ * @see serialiserc: serialise_question(struct question *q,char *out,int max_len)
+ *     do {
+ *         SERIALISE_BEGIN(out,len,max_len);
+ *         SERIALISE_STRING(q->uid);
+ *         SERIALISE_STRING(q->question_text);
+ *         SERIALISE_STRING(q->question_html);
+ *         SERIALISE_THING(q->type,serialise_question_type);
+ *         SERIALISE_INT(q->flags);
+ *         SERIALISE_STRING(q->default_value);
+ *         SERIALISE_LONGLONG(q->min_value);
+ *         SERIALISE_LONGLONG(q->max_value);
+ *         SERIALISE_INT(q->decimal_places);
+ *         SERIALISE_INT(q->num_choices);
+ *         SERIALISE_STRING(q->choices);
+ *         SERIALISE_STRING(q->unit);
+ *         // Trim terminal separator character
+ *         SERIALISE_COMPLETE(out,len,max_len);
+ *     } while(0);
  * @see sessions.c: load_session(char *session_id)
  * <id>:<title>:<description>:<type>:-1::-999:999:2:2:No,Yes:
  */
