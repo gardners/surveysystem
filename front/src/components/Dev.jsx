@@ -53,7 +53,7 @@ class Pretty extends Component {
 
 Pretty.propTypes = {
     data: PropTypes.any,
-    title: PropTypes.string,
+    label: PropTypes.string,
     open: PropTypes.bool,
 };
 
