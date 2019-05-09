@@ -20,6 +20,12 @@ const NumberInput = function(props) {
                     const { value } = e.target;
                     props.handleChange(e.target, question, value);
                 } }
+                onKeyDown={ (e) => {
+                    if (!e.target.checkValidity()) {
+                        const msg = e.target.validationMessage || 'Please enter an number!';
+                        props.handleChange(e.target, question, new Error(msg));
+                    }
+                } }
             />
         </InputGroup>
     );
