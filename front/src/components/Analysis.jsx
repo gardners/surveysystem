@@ -11,7 +11,7 @@ import ApiAlert from './ApiAlert';
 
 // components
 import Toggle from './Toggle';
-import LoadingSpinner from './LoadingSpinner';
+import Preloader from './Preloader';
 
 // devel
 import Dev from './Dev';
@@ -117,7 +117,7 @@ class Analysis extends Component {
         if(loading) {
             return (
                 <section>
-                    <LoadingSpinner loading={ loading } message={ loading }/>
+                    <Preloader loading={ loading } message={ loading }/>
                 </section>
             );
         }
@@ -128,7 +128,7 @@ class Analysis extends Component {
 
         return (
             <section>
-                <LoadingSpinner loading={ loading } message={ loading }/>
+                <Preloader loading={ loading } message={ loading }/>
                 <h1>Analysis</h1>
                 <h2>Survey: <span className="text-success">{ surveyID }</span></h2>
 

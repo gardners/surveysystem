@@ -1,9 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import '../styles/spinners.scss';
+import './preloader.scss';
 
-const LoadingSpinner = function (props) {
+const Preloader = function (props) {
     const loading = props.loading || false;
 
     if (!loading) {
@@ -21,13 +21,13 @@ const LoadingSpinner = function (props) {
     );
 };
 
-LoadingSpinner.defaultProps = {
+Preloader.defaultProps = {
     loading: false,
     message: 'Processing your answer...',
     color: '#337ab7', // bootstrap-primary
 };
 
-LoadingSpinner.propTypes = {
+Preloader.propTypes = {
     loading: PropTypes.oneOfType([
         PropTypes.bool,
         PropTypes.string,
@@ -36,4 +36,4 @@ LoadingSpinner.propTypes = {
     color: PropTypes.string,
 };
 
-export default LoadingSpinner;
+export default Preloader;
