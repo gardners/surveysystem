@@ -30,6 +30,7 @@ const TimePicker = function(props) {
                 defaultValue={ moment(0) }
                 className="form-control"
                 onChange={ (m) => {
+                    m = m || moment(0); // reset button provides null
                     const value = seconds(m);
                     handleChange(null, question, value);
                 } }
