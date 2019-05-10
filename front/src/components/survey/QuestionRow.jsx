@@ -27,7 +27,7 @@ const QuestionRow = function({ question, className, grouped, componentName, chil
         break;
 
         default:
-            colClass = 'col-md-6';
+            colClass = 'col-md-8';
     }
 
     // TODO grouped
