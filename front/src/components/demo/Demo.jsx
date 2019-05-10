@@ -2,28 +2,25 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 // form elements
-import GeoLocation from './form/GeoLocation';
-import PeriodRangeSlider from './form/PeriodRangeSlider';
-import DayTimeSlider from './form/DayTimeSlider';
-import CheckboxGroup from './form/CheckboxGroup';
-import Checkbox from './form/Checkbox';
-import RadioGroup from './form/RadioGroup';
-import TextInput from './form/TextInput';
-import NumberInput from './form/NumberInput';
-import Textarea from './form/Textarea';
-import Select from './form/Select';
-import MultiSelect from './form/MultiSelect';
-import TimePicker from './form/TimePicker';
-import RadioMatrix from './form/RadioMatrix';
-import HiddenInput from './form/HiddenInput';
-import EmailInput from './form/EmailInput';
-import PasswordInput from './form/PasswordInput';
+import GeoLocation from '../form/GeoLocation';
+import PeriodRangeSlider from '../form/PeriodRangeSlider';
+import DayTimeSlider from '../form/DayTimeSlider';
+import CheckboxGroup from '../form/CheckboxGroup';
+import Checkbox from '../form/Checkbox';
+import RadioGroup from '../form/RadioGroup';
+import TextInput from '../form/TextInput';
+import NumberInput from '../form/NumberInput';
+import Textarea from '../form/Textarea';
+import Select from '../form/Select';
+import MultiSelect from '../form/MultiSelect';
+import TimePicker from '../form/TimePicker';
+import RadioMatrix from '../form/RadioMatrix';
+import HiddenInput from '../form/HiddenInput';
+import EmailInput from '../form/EmailInput';
+import PasswordInput from '../form/PasswordInput';
 
-import { serializeQuestionAnswer } from '../serializer';
-import Question from './survey/Question';
-
-import { mockAnalysis } from '../Analysis';
-import Analysis from './Analysis';
+import { serializeQuestionAnswer } from '../../serializer';
+import Question from '../survey/Question';
 
 const Pre = function(props) {
 
@@ -120,7 +117,7 @@ class Demo extends Component {
                     <Row type={ 'HIDDEN' }       component={ HiddenInput }       unit={ this.state.unit } description="text with some <strong>markup</strong> html and an image: <img src='data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7'>" defaultVlaue="visited"/>
                     <Row type={ 'LATLON' }       component={ GeoLocation }       unit={ this.state.unit } withButton={ true } />
                     <Row type={ 'TIMERANGE' }    component={ PeriodRangeSlider } unit={ this.state.unit }/>
-                    <Row type={ 'FIXEDPOINT' }   component={ DayTimeSlider }     unit={ this.state.unit }/>
+                    <Row type={ 'DAYTIME' }      component={ DayTimeSlider }     unit={ this.state.unit }/>
                     <Row type={ 'FIXEDPOINT' }   component={ TimePicker }        unit={ this.state.unit }/>
                     <Row type={ 'MULTICHOICE' }  component={ CheckboxGroup }     unit={ this.state.unit } choices={ ['This', 'That', 'Another one' ] } defaultValue="Maybe"/>
                     <Row type={ 'SINGLECHOICE' } component={ RadioGroup }        unit={ this.state.unit } choices={ ['This', 'That', 'Another one' ] } defaultValue="Maybe"/>
@@ -170,18 +167,6 @@ class Demo extends Component {
                     />
                     <Row type={ 'EMAIL' }        component={ EmailInput }           unit={ this.state.unit }/>
                     <Row type={ 'PASSWORD' }     component={ PasswordInput }        unit={ this.state.unit }/>
-                </div>
-                <hr />
-                <div>
-                    <Analysis
-                        evaluation={ mockAnalysis() }
-                        match = { {
-                            params: {
-                                sessionID: 'DEMOSESSION',
-                                surveyID: 'DEMO',
-                            }
-                        } }
-                    />
                 </div>
             </section>
         );
