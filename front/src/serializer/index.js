@@ -9,24 +9,26 @@ const { isFinite } = Number; //not Math!
 /*
  Notes:
     @see backend/include/survey.h
-    @see backend/src/deserialise_parse_field.c
+    @see backend/src/serialisers.c
 
- #define QTYPE_INT         1
- #define QTYPE_FIXEDPOINT  2
- #define QTYPE_MULTICHOICE 3
- #define QTYPE_MULTISELECT 4
- #define QTYPE_LATLON      5
- #define QTYPE_DATETIME    6
- #define QTYPE_TIMERANGE   7
- #define QTYPE_UPLOAD      8
- #define QTYPE_TEXT        9
- #define QTYPE_CHECKBOX    10
- #define QTYPE_HIDDEN      11
- #define QTYPE_TEXTAREA    12
- #define QTYPE_EMAIL       13
- #define QTYPE_PASSWORD    14
- #define QTYPE_UUID        15
-
+    #define QTYPE_INT          1
+    #define QTYPE_FIXEDPOINT   2
+    #define QTYPE_MULTICHOICE  3 // instruction for multi choice inputs (select), answer is a single choice or comma separated list
+    #define QTYPE_MULTISELECT  4 // instruction for multi choice inputs (select), answer is a single choice or comma separated list
+    #define QTYPE_LATLON       5
+    #define QTYPE_DATETIME     6
+    #define QTYPE_DAYTIME      7 // instruction for time of a generic day in seconds since midnight (answer->value)
+    #define QTYPE_TIMERANGE    8 // instruction for time range within a generic day (answer->time_begin, answer->time_end)
+    #define QTYPE_UPLOAD       9
+    #define QTYPE_TEXT         10
+    #define QTYPE_CHECKBOX     11 // instruction for single html checkbox, requires two defined choices in the following order: [OFF-value, ON-value]
+    #define QTYPE_HIDDEN       12 // instruction for hidden input (pure textslide) answer is default value or default value
+    #define QTYPE_TEXTAREA     13 // instruction for textarea.
+    #define QTYPE_EMAIL        14 // instruction for email input
+    #define QTYPE_PASSWORD     15 // instruction for (html) password input, this type can be used to mask any user input
+    #define QTYPE_SINGLECHOICE 16 // instruction for single choice inputs (checkbox, radios), answer is a single choice
+    #define QTYPE_SINGLESELECT 17 // instruction for single choice inputs (select), answer is a single choice
+    #define QTYPE_UUID         18
 
     DESERIALISE_STRING(a->uid);
     DESERIALISE_STRING(a->text);
@@ -148,6 +150,7 @@ const mapTypeToField = function(questionType) {
 
         case 'INT':
         case 'FIXEDPOINT':
+        case 'DAYTIME':
             return (value) => ({
                 value,
             });

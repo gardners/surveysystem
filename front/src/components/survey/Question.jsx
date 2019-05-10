@@ -6,6 +6,7 @@ import QuestionModel from '../../Question';
 import TextInput from '../form/TextInput';
 import RadioGroup from '../form/RadioGroup';
 import CheckboxGroup from '../form/CheckboxGroup';
+import DayTimeSlider from '../form/DayTimeSlider';
 import Checkbox from '../form/Checkbox';
 import GeoLocation from '../form/GeoLocation';
 import PeriodRangeSlider from '../form/PeriodRangeSlider';
@@ -61,6 +62,9 @@ const getComponentByType = function(questionType = 'TEXT') {
 
         // TODO DATETIME
         // TODO DAYTIME slider/select
+
+        case 'DAYTIME':
+            return DayTimeSlider;
 
         case 'TIMERANGE':
             return PeriodRangeSlider;

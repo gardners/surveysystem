@@ -117,7 +117,7 @@ class Demo extends Component {
                     <Row type={ 'HIDDEN' }       component={ HiddenInput }       unit={ this.state.unit } description="text with some <strong>markup</strong> html and an image: <img src='data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7'>" defaultVlaue="visited"/>
                     <Row type={ 'LATLON' }       component={ GeoLocation }       unit={ this.state.unit } withButton={ true } />
                     <Row type={ 'TIMERANGE' }    component={ PeriodRangeSlider } unit={ this.state.unit }/>
-                    <Row type={ 'FIXEDPOINT' }   component={ DayTimeSlider }     unit={ this.state.unit }/>
+                    <Row type={ 'DAYTIME' }      component={ DayTimeSlider }     unit={ this.state.unit }/>
                     <Row type={ 'FIXEDPOINT' }   component={ TimePicker }        unit={ this.state.unit }/>
                     <Row type={ 'MULTICHOICE' }  component={ CheckboxGroup }     unit={ this.state.unit } choices={ ['This', 'That', 'Another one' ] } defaultValue="Maybe"/>
                     <Row type={ 'SINGLECHOICE' } component={ RadioGroup }        unit={ this.state.unit } choices={ ['This', 'That', 'Another one' ] } defaultValue="Maybe"/>
