@@ -5,8 +5,7 @@ import InputRange from 'react-input-range';
 import './PeriodRangeSlider.scss';
 
 import Question from '../../Question';
-
-const DaySec = 86400; // 24 hours
+import { prettyHours, DaySeconds } from '../../Utils';
 
 // bg gradient
 const dark = '#212077';
@@ -36,23 +35,6 @@ const cellStyle = function(percent) {
         fontSize: '2em',
     };
 };
-
-const prettyHours = function(sec) {
-    let hours   = Math.floor(sec / 3600);
-    let minutes = Math.floor((sec - (hours * 3600)) / 60);
-    let seconds = sec - (hours * 3600) - (minutes * 60);
-
-    if (hours   < 10) {hours   = "0" + hours;}
-    let t = 'am';
-    if (hours > 12) {
-        hours -= 12;
-        t = 'pm';
-    }
-    if (minutes < 10) {minutes = "0" + minutes;}
-    if (seconds < 10) {seconds = "0" + seconds;}
-    return `${hours}:${minutes} ${t}`;
-};
-
 
 /**
  * range sliders for defining period secondss (seconds) within 24 hours
@@ -90,7 +72,7 @@ class PeriodRangeSlider extends Component {
                 </div>
                 <InputRange
                     minValue={ 0 }
-                    maxValue={ DaySec }
+                    maxValue={ DaySeconds }
                     value={ value }
                     onChange={ this.handleChange.bind(this) }
                     formatLabel={ val => prettyHours(val) }

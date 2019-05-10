@@ -118,6 +118,38 @@ const sanitizeKcgiJsonString = function(str) {
     return str.replace('\\/', '/');
 };
 
+////
+// time helpers
+////
+
+const DaySeconds = 86400; // 24 hours
+
+const prettyHours = function(sec) {
+    let hours   = Math.floor(sec / 3600);
+    let minutes = Math.floor((sec - (hours * 3600)) / 60);
+    let seconds = sec - (hours * 3600) - (minutes * 60);
+
+    if (hours   < 10) {
+        hours   = "0" + hours;
+    }
+
+    let t = 'am';
+    if (hours > 12) {
+        hours -= 12;
+        t = 'pm';
+    }
+
+    if (minutes < 10) {
+        minutes = "0" + minutes;
+    }
+
+    if (seconds < 10) {
+        seconds = "0" + seconds;
+    }
+
+    return `${hours}:${minutes} ${t}`;
+};
+
 export {
     isScalar,
     DirtyJson,
@@ -126,4 +158,6 @@ export {
     isObject,
     addClassNames,
     sanitizeKcgiJsonString,
+    DaySeconds,
+    prettyHours,
 };
