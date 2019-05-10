@@ -18,7 +18,7 @@ import Question from './survey/Question';
 import QuestionGroup from './survey/QuestionGroup';
 
 // misc components
-import LoadingSpinner from './LoadingSpinner';
+import Preloader from './Preloader';
 import Card from './bootstrap/Card';
 import ApiAlert from './ApiAlert';
 
@@ -231,13 +231,13 @@ class Survey extends Component {
                 <Dev.SurveyBar survey = { survey } />
                 <h1>{ survey.surveyID }</h1>
 
-                <LoadingSpinner loading={ this.state.loading } message={ this.state.loading }/>
+                <Preloader loading={ this.state.loading } message={ this.state.loading }/>
                 {
-                    this.state.alerts.length &&
+                    (this.state.alerts.length) ?
                         <React.Fragment>
                             Unfortunately we encountered an error sending your data.
                             { this.state.alerts.map((entry, index) => <ApiAlert key={ index } message={ entry } />) }
-                        </React.Fragment>
+                        </React.Fragment> : null
                 }
 
                 {
