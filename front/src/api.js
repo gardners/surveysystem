@@ -5,16 +5,24 @@
 // config
 const BaseUri = process.env.REACT_APP_SURVEY_ENDPOINT;
 
+class ApiError extends Error {
+    constructor(message, response = {}) {
+        super(message);
+        this.status = response.status || null;
+        this.statusText = response.statusText || null;
+        this.url = response.url || null;
+    }
+}
+
 /**
  * Handles and formats response errors in a promise context
  * @param {Response} fetch response object @see https://developer.mozilla.org/en-US/docs/Web/API/Response
  * @returns {Promise} Promise object throwing an exception (being catched in flow)
  */
 const responseError = function (response) {
-    const { status, statusText } = response;
     return response.text()
         .then((text) => {
-            throw new Error(`[${status}: ${statusText}], reason: ${text}`)
+            throw new ApiError(text.replace(/(<([^>]+)>)/ig, ''), response);
         });
 };
 
@@ -176,4 +184,4 @@ const Api = {
 
 Api.getAnalysis = Api.finishSurvey; //TODO tmp
 
-export { Api as default, BaseUri };
+export { Api as default, ApiError, BaseUri };

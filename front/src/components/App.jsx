@@ -10,8 +10,10 @@ import Survey from './Survey';
 import Analysis from './Analysis';
 import Page404 from './Page404';
 import Surveys from './Surveys';
-import Demo from './Demo';
-import DemoAnalysis from './DemoAnalysis';
+
+import Demo from './demo/Demo';
+import DemoAnalysis from './demo/DemoAnalysis';
+import DemoManifest from './demo/DemoManifest';
 
 const Navigation = withRouter(HeaderNav);
 
@@ -35,6 +37,7 @@ const App = function(props) {
                         }
                         <Route path="/demo/form" component={ Demo } />
                         <Route path="/demo/analyse" component={ DemoAnalysis } />
+                        <Route path="/demo/manifest" component={ DemoManifest } />
                         <Route path="/analyse/:id/:sessionID" component={ Analysis } />
                         <Route path="/survey/:id/:sessionID?" component={ Survey } />
                         <Route path="*" component={ Page404 } />

@@ -20,7 +20,7 @@ import QuestionGroup from './survey/QuestionGroup';
 // misc components
 import LoadingSpinner from './LoadingSpinner';
 import Card from './bootstrap/Card';
-import Alert from './Alert';
+import ApiAlert from './ApiAlert';
 
 
 // devel
@@ -75,8 +75,8 @@ class Survey extends Component {
             severity = 'error';
         }
 
-        const entry = Log.add(message, severity);
-        alerts.push(entry);
+        Log.add(message, severity);
+        alerts.push(message);
 
         this.setState({
             loading: '',
@@ -232,7 +232,13 @@ class Survey extends Component {
                 <h1>{ survey.surveyID }</h1>
 
                 <LoadingSpinner loading={ this.state.loading } message={ this.state.loading }/>
-                { this.state.alerts.map((entry, index) => <Alert key={ index } severity={ entry.severity } message={ entry.message } />) }
+                {
+                    this.state.alerts.length &&
+                        <React.Fragment>
+                            Unfortunately we encountered an error sending your data.
+                            { this.state.alerts.map((entry, index) => <ApiAlert key={ index } message={ entry } />) }
+                        </React.Fragment>
+                }
 
                 {
                     /* show if survey is finished but not closed yet */
