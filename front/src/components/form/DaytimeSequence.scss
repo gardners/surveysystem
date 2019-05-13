@@ -1,0 +1,24 @@
+.daytimeslider--table {}
+.daytimeslider--firstcol {
+    min-width: 30%;
+    max-width: 35%;
+}
+.daytimeslider--secondcol {
+    min-width: 20%;
+    max-width: 30%;
+}
+
+////  react-input-range overwrites
+
+$input-range-primary-color : #ffffff;
+$input-range-slider-background: #28a745;
+$input-range-slider-border: 1px solid $input-range-primary-color !default;
+$input-range-track-active-background: lighten($input-range-slider-background, 10%);
+
+@import 'react-input-range/src/scss/index.scss';
+
+.daytimeslider {
+    .input-range__label {
+        display: none;
+    }
+}
