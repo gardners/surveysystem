@@ -5,33 +5,55 @@ import { Link } from 'react-router-dom';
 
 import LocalStorage from '../storage/LocalStorage';
 
+const CACHE_KEY = process.env.REACT_APP_SURVEY_CACHEKEY;
+
+const formatDate = function(timestamp) {
+    return (timestamp) ? new Date(timestamp).toLocaleString() : 'n/a';
+};
+
 const Surveys = function({ surveyProvider, surveys }) {
 
-    const cache = LocalStorage.get('sessionstate');
+    const cache = LocalStorage.get(CACHE_KEY);
     const cachedSurveyID = (cache) ? cache.surveyID : '';
-    const cachedTime = (cache) ? cache.time : '';
+    let created = cache.created || 0;
+    let modified = cache.modified || 0;
 
     return (
         <React.Fragment>
-            <h1>{ surveyProvider }</h1>
-            <strong>Our Surveys</strong>
+            <h1>{ surveyProvider } <small>Surveys</small></h1>
 
-            <div className="row">
-
-                { surveys.map(survey =>
-                    <div key={survey} className="col col-sm-6">
-                        <div className="card">
-                            <div className="card-body">
-                                <h3 className="card-title">{ survey }</h3>
-                                { (cachedSurveyID === survey) ?
-                                    <div>
-                                        { (cachedTime) ? <p><small>last access: <i>{ new Date(cachedTime).toLocaleString() }</i>, session ID: { cache.sessionID }</small></p> : 'n/a' }
+            <div className="row card-deck">
+                { surveys.map((survey, index) =>
+                    <div className="card" key={ index }>
+                        <div className="card-header">
+                            <h2 className="card-title">{ survey }</h2>
+                        </div>
+                        <div className="card-body">
+                            {
+                                (cachedSurveyID === survey) ?
+                                    <React.Fragment>
+                                        <p className="card-text">
+                                            <small>session ID: { cache.sessionID }</small><br/>
+                                            <small>created: { formatDate(created) }</small><br/>
+                                            <small>last access: { formatDate(modified) }</small>
+                                        </p>
+                                    </React.Fragment>
+                                :
+                                    <p className="card-text">
+                                        <small>Start survey</small>
+                                    </p>
+                            }
+                        </div>
+                        <div className="card-footer">
+                            {
+                                (cachedSurveyID === survey) ?
+                                    <React.Fragment>
                                         <Link to={ `/survey/${survey}/${cache.sessionID}` } className="btn btn-primary">Continue</Link>
-                                        <Link to={ `/survey/${survey}/new` } onClick={ () => LocalStorage.delete('sessionstate') } className="btn btn-default">Restart</Link>
-                                    </div>
-                                    :
-                                <Link to={ `/survey/${survey}` } className="btn btn-primary">Start</Link> }
-                            </div>
+                                        <Link to={ `/survey/${survey}/new` } onClick={ () => LocalStorage.delete(CACHE_KEY) } className="btn btn-s">Restart</Link>
+                                    </React.Fragment>
+                                :
+                                    <Link to={ `/survey/${survey}` } className="btn btn-primary">Start</Link>
+                            }
                         </div>
                     </div>
                 ) }
