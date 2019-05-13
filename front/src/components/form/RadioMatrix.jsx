@@ -50,7 +50,7 @@ const Row = function({ question, handleChange, expanded, required }) {
                     <Select
                         key={ question.id }
                         question={ question }
-                        handleChange={ handleChange}
+                        handleChange={ handleChange }
                     />
                 </td>
             </tr>

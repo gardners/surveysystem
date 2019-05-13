@@ -19,7 +19,6 @@ import QuestionGroup from './survey/QuestionGroup';
 
 // misc components
 import Preloader from './Preloader';
-import Card from './bootstrap/Card';
 import ApiAlert from './ApiAlert';
 
 
@@ -243,11 +242,16 @@ class Survey extends Component {
                 {
                     /* show if survey is finished but not closed yet */
                     (isClosed) ?
-                        <Card>
-                            <h2> <i className="fas fa-check-circle"></i> Survey completed.</h2>
-                            <p>Thank you for your time!</p>
-                            <Link className="btn btn-default btn-primary" to={ `/analyse/${survey.surveyID}/${survey.sessionID}` }>Finish Survey</Link>
-                        </Card>
+                        <div className="card">
+                            <div className="card-header">
+                                <h2 className="card-title"> <i className="fas fa-check-circle"></i> Survey completed.</h2>
+                            </div>
+                            <div className="card-body">
+
+                                <p className="card-text">Thank you for your time!</p>
+                                <Link className="btn btn-default btn-primary" to={ `/analyse/${survey.surveyID}/${survey.sessionID}` }>Finish Survey</Link>
+                            </div>
+                        </div>
                     : null
                 }
 

@@ -15,14 +15,18 @@ $input-range-label-value-position-top: -3rem;
 
 @import 'react-input-range/src/scss/index.scss';
 
+
 .input-range__label-container {
     background-color: #ffffff;
     padding: 0.2rem;
     opacity: .8;
 }
-.input-range__label--min,
-.input-range__label--max {
-    display:none;
+
+.periodrangeslider {
+    .input-range__label--min,
+    .input-range__label--max {
+        display:none;
+    }
 }
 
 .input-range__track--background {

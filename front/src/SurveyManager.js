@@ -57,6 +57,9 @@ class SurveyManager {
         this.endpoint = endpoint;
         this.closed = false; // all questions are answered && survey is closed
 
+        this.created = Date.now();
+        this.modified = 0;
+
         // questions
         // this is an array of question sets with the length of 2 [previousquestions, currentquestions]
         this.questions = []; // QuestionSets
@@ -182,6 +185,8 @@ class SurveyManager {
         }
 
         this.questions.push(questions);
+
+        this.modified = Date.now();
         return true;
     }
 
@@ -199,6 +204,8 @@ class SurveyManager {
             return false;
         }
         this.questions.pop();
+
+        this.modified = Date.now();
         return true;
     }
 
