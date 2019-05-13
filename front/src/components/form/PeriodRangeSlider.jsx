@@ -64,7 +64,7 @@ class PeriodRangeSlider extends Component {
         const { value } = this.state;
 
         return (
-            <div style={ wrapperStyle }>
+            <div className="periodrangeslider" style={ wrapperStyle }>
                 <div className={ this.props.className } style={ tableStyle }>
                     <div style={ cellStyle(0)}><i className="fas fa-moon text-white"></i></div>
                     <div style={ cellStyle(50) }><i className="fas fa-sun text-white"></i></div>
