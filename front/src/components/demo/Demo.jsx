@@ -18,6 +18,7 @@ import RadioMatrix from '../form/RadioMatrix';
 import HiddenInput from '../form/HiddenInput';
 import EmailInput from '../form/EmailInput';
 import PasswordInput from '../form/PasswordInput';
+import DaytimeSequence from '../form/DaytimeSequence';
 
 import { serializeQuestionAnswer } from '../../serializer';
 import Question from '../survey/Question';
@@ -71,7 +72,7 @@ class Row extends Component {
             id: Component.name,
             name: Component.name,
             title: props.title || 'title',
-            description: props.description || 'title text',
+            description: props.description || 'question description',
             type: props.type,
 
             defaultValue: props.defaultValue || 'default',
@@ -128,7 +129,7 @@ class Demo extends Component {
                     <Row type={ 'TEXT' }         component={ TextInput }         unit={ this.state.unit }/>
                     <Row type={ 'INT' }          component={ NumberInput }       unit={ this.state.unit }/>
                     <Row type={ 'TEXT' }         component={ Textarea }          unit={ this.state.unit }/>
-                    <Row type={ 'FIXEDPOINT' }   component={ RadioMatrix }       unit={ this.state.unit }
+                    <Row type={ 'FIXEDPOINT' }   component={ RadioMatrix }       unit={ this.state.unit } description="This is the <em>description</em> for this question group"
                         questions={ [
                             {
                                 id: 'question1',
@@ -167,6 +168,39 @@ class Demo extends Component {
                     />
                     <Row type={ 'EMAIL' }        component={ EmailInput }           unit={ this.state.unit }/>
                     <Row type={ 'PASSWORD' }     component={ PasswordInput }        unit={ this.state.unit }/>
+                    <Row type={ 'DAYTIME' }      component={ DaytimeSequence }      unit={ this.state.unit }
+                        questions={ [
+                            {
+                                id: 'question1',
+                                name: 'question1',
+                                type: 'DAYTIME',
+                                title: 'breakfast time',
+                                description: 'Row 1 text',
+                                unit: 'seconds',
+                            }, {
+                                id: 'question2',
+                                name: 'question2',
+                                type: 'DAYTIME',
+                                title: 'lunch time',
+                                description: 'Row 2 text',
+                                unit: 'seconds',
+                            },{
+                                id: 'question3',
+                                name: 'question3',
+                                type: 'DAYTIME',
+                                title: 'afternoon tea time',
+                                description: 'Row 3 text',
+                                unit: 'seconds',
+                            },{
+                                id: 'question4',
+                                name: 'question4',
+                                type: 'DAYTIME',
+                                title: 'late snack time',
+                                description: 'Row 4 text',
+                                unit: 'seconds',
+                            }
+                        ] }
+                    />
                 </div>
             </section>
         );
