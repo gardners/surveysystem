@@ -64,4 +64,7 @@ DropdownMenu.propTypes = {
     title: PropTypes.string.isRequired,
 };
 
-export { DropdownMenu, MenuLink };
+export {
+    DropdownMenu,
+    MenuLink
+};
