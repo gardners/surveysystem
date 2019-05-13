@@ -5,6 +5,7 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 
 import ThemePicker from './ThemePicker';
+import { DropdownMenu, MenuLink } from './bootstrap/DropdownMenu';
 
 // toggles navbar collapse
 // element.classList support is ie > 10, we ned this to work always!
@@ -41,19 +42,13 @@ const HeaderNav = function({ location, surveys, surveyProvider, siteName}) {
                                 <Link className="nav-link" to="/surveys">Survey List</Link>
                             </li>
                     }
-                        <li className={ (/^\/demo/.test(location.pathname)) ? 'nav-item active my-2 my-sm-0' : 'nav-item my-2 my-sm-0' }>
-                            <Link className="nav-link" to="/demo/form">Demo form</Link>
-                        </li>
-
-                        <li className={ (/^\/demo/.test(location.pathname)) ? 'nav-item active my-2 my-sm-0' : 'nav-item my-2 my-sm-0' }>
-                            <Link className="nav-link" to="/demo/analyse">Demo analysis</Link>
-                        </li>
-                    {
-                        process.env.NODE_ENV === 'development' &&
-                            <li className={ (/^\/demo/.test(location.pathname)) ? 'nav-item active my-2 my-sm-0' : 'nav-item my-2 my-sm-0' }>
-                                <Link className="nav-link" to="/demo/manifest">Demo manifest</Link>
-                            </li>
-                    }
+                    <li>
+                        <DropdownMenu title="Demos">
+                            <MenuLink to="/demo/form">Form Elements</MenuLink>
+                            <MenuLink to="/demo/analyse">Analysis</MenuLink>
+                            <MenuLink to="/demo/manifest">Manifest</MenuLink>
+                        </DropdownMenu>
+                    </li>
                     </ul>
 
                     <ul className="navbar-nav mt-2 mt-md-0">
