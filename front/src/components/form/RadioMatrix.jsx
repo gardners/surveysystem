@@ -129,7 +129,7 @@ const RadioMatrix = function({ questions, handleChange, required, expand }) {
 
 RadioMatrix.defaultProps = {
     required: true,
-    expand: null,
+    expand: null, // indicates that bool was not set yet (testing), TODO
 };
 
 RadioMatrix.propTypes = {

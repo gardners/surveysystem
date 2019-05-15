@@ -15,7 +15,7 @@ MenuLink.propTypes = {
     to: PropTypes.string.isRequired,
 };
 
-class DropdownMenu extends React.Component {
+class DropdownMenu extends Component {
     constructor(props){
         super(props);
 
@@ -45,7 +45,7 @@ class DropdownMenu extends React.Component {
         const cls = (this.state.show) ? 'show' : '';
         return (
             <div className={ `dropdown ${cls}` }>
-                <button className="button" className="btn btn-secondary dropdown-toggle" type="button" aria-haspopup="true" aria-expanded="false"
+                <button className="btn btn-secondary dropdown-toggle" type="button" aria-haspopup="true" aria-expanded="false"
                     onClick={ this.show }>
                     { this.props.title }
                 </button>
