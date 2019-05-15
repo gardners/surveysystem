@@ -1,4 +1,16 @@
-import { isScalar, sanitizeKcgiJsonString, isArray, isObject, camelToNormal } from '../Utils';
+import { isScalar, sanitizeKcgiJsonString, isArray, isObject, camelToNormal, prettyHours } from '../Utils';
+
+const days = function(factor) {
+    return factor * 86400;
+};
+
+const hours = function(factor) {
+    return factor * 3600;
+};
+
+const minutes = function(factor) {
+    return factor * 60;
+};
 
 describe('isScalar', () => {
 
@@ -56,6 +68,44 @@ describe('Misc', () => {
         expect(camelToNormal('TestTest')).toBe('Test Test');
         expect(camelToNormal(' TestTest ')).toBe('Test Test');
         expect(camelToNormal('TesttesT ')).toBe('Testtes T');
+    });
+});
+
+describe('Time', () => {
+    test('prettyHours', () => {
+        expect(prettyHours(days(0) + hours(0)  + minutes(0) )).toBe('12:00:00 am');
+        expect(prettyHours(days(0) + hours(11) + minutes(59))).toBe('11:59:00 am');
+        expect(prettyHours(days(0) + hours(12) + minutes(0) )).toBe('12:00:00 pm');
+        expect(prettyHours(days(0) + hours(12) + minutes(1) )).toBe('12:01:00 pm');
+        expect(prettyHours(days(0) + hours(23) + minutes(59))).toBe('11:59:00 pm');
+        expect(prettyHours(days(0) + hours(24) + minutes(0) )).toBe('12:00:00 am');
+
+        expect(prettyHours(days(1) + hours(0)  + minutes(1) )).toBe('12:01:00 am +1 day');
+        expect(prettyHours(days(1) + hours(11) + minutes(59))).toBe('11:59:00 am +1 day');
+        expect(prettyHours(days(1) + hours(12) + minutes(0) )).toBe('12:00:00 pm +1 day');
+        expect(prettyHours(days(1) + hours(12) + minutes(1) )).toBe('12:01:00 pm +1 day');
+        expect(prettyHours(days(1) + hours(23) + minutes(59))).toBe('11:59:00 pm +1 day');
+        expect(prettyHours(days(1) + hours(24) + minutes(0) )).toBe('12:00:00 am +2 days');
+
+        expect(prettyHours(days(2) + hours(0)  + minutes(1) )).toBe('12:01:00 am +2 days');
+        expect(prettyHours(days(2) + hours(11) + minutes(59))).toBe('11:59:00 am +2 days');
+        expect(prettyHours(days(2) + hours(12) + minutes(0) )).toBe('12:00:00 pm +2 days');
+        expect(prettyHours(days(2) + hours(12) + minutes(1) )).toBe('12:01:00 pm +2 days');
+        expect(prettyHours(days(2) + hours(23) + minutes(59))).toBe('11:59:00 pm +2 days');
+        expect(prettyHours(days(2) + hours(24) + minutes(0) )).toBe('12:00:00 am +3 days');
+
+        expect(prettyHours(days(0) - hours(11) - minutes(59))).toBe('11:59:00 am -1 day');
+        expect(prettyHours(days(0) - hours(12) - minutes(0) )).toBe('12:00:00 pm -1 day');
+        expect(prettyHours(days(0) - hours(12) - minutes(1) )).toBe('12:01:00 pm -1 day');
+        expect(prettyHours(days(0) - hours(23) - minutes(59))).toBe('11:59:00 pm -1 day');
+        expect(prettyHours(days(0) - hours(24) - minutes(0) )).toBe('12:00:00 am -1 day');
+
+        expect(prettyHours(days(-1) - hours(0)  - minutes(1) )).toBe('12:01:00 am -2 days');
+        expect(prettyHours(days(-1) - hours(11) - minutes(59))).toBe('11:59:00 am -2 days');
+        expect(prettyHours(days(-1) - hours(12) - minutes(0) )).toBe('12:00:00 pm -2 days');
+        expect(prettyHours(days(-1) - hours(12) - minutes(1) )).toBe('12:01:00 pm -2 days');
+        expect(prettyHours(days(-1) - hours(23) - minutes(59))).toBe('11:59:00 pm -2 days');
+        expect(prettyHours(days(-1) - hours(24) - minutes(0) )).toBe('12:00:00 am -3 days');
     });
 });
 
