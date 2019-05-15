@@ -248,4 +248,23 @@ describe('findQuestionGroupCommons', () => {
         expect(qc).toBe('TYPE');
     });
 
+    test('DAYTIME_SEQUENCE', () => {
+        let qc;
+        let group;
+
+        qc = findQuestionGroupCommons([
+            makeQuestion('test1', 'DAYTIME'),
+            makeQuestion('test2', 'DAYTIME'),
+        ]);
+        expect(qc).toBe('DAYTIME_SEQUENCE');
+
+
+        qc = findQuestionGroupCommons([
+            makeQuestion('test1', 'HIDDEN'),
+            makeQuestion('test1', 'DAYTIME'),
+            makeQuestion('test2', 'DAYTIME'),
+        ]);
+        expect(qc).toBe('DAYTIME_SEQUENCE');
+    });
+
 });
