@@ -5,6 +5,7 @@ import Question from './Question';
 import QuestionModel, { findQuestionGroupCommons } from '../../Question';
 
 import RadioMatrix from '../form/RadioMatrix';
+import DaytimeSequence from '../form/DaytimeSequence';
 
 const QuestionGroup = function({ questions, answers, handleChange }) {
 
@@ -27,7 +28,17 @@ const QuestionGroup = function({ questions, answers, handleChange }) {
                     <RadioMatrix
                         handleChange={ handleChange }
                         questions={ items }
-                        answers={ answers }
+                    />
+                </React.Fragment>
+            );
+
+        case 'DAYTIME_SEQUENCE':
+            return (
+                <React.Fragment>
+                    { header && <Question question={ header } handleChange={ handleChange } answer= { null } /> }
+                    <DaytimeSequence
+                        handleChange={ handleChange }
+                        questions={ items }
                     />
                 </React.Fragment>
             );
