@@ -15,8 +15,8 @@ const Surveys = function({ surveyProvider, surveys }) {
 
     const cache = LocalStorage.get(CACHE_KEY);
     const cachedSurveyID = (cache) ? cache.surveyID : '';
-    let created = cache.created || 0;
-    let modified = cache.modified || 0;
+    let created = (cache && typeof cache.created !== 'undefined') ? cache.created : 0;
+    let modified = (cache && typeof cache.modified !== 'undefined') ? cache.modified : 0;
 
     return (
         <React.Fragment>
