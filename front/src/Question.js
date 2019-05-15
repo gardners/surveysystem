@@ -112,6 +112,10 @@ const findQuestionGroupCommons = function(group) {
         }
     }
 
+    if (type === 'DAYTIME') {
+        return 'DAYTIME_SEQUENCE';
+    }
+
     return (!choices) ? 'TYPE' : 'CHOICES'
 };
 
