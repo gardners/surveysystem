@@ -258,7 +258,6 @@ describe('findQuestionGroupCommons', () => {
         ]);
         expect(qc).toBe('DAYTIME_SEQUENCE');
 
-
         qc = findQuestionGroupCommons([
             makeQuestion('test1', 'HIDDEN'),
             makeQuestion('test1', 'DAYTIME'),
