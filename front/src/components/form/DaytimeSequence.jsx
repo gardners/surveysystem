@@ -10,6 +10,22 @@ import TimePicker from './TimePicker';
 
 import './DaytimeSequence.scss';
 
+const tableStyle = {
+    display: 'table',
+    width: '100%',
+    padding: '.5em',
+    tableLayout: 'fixed',    /* For cells of equal size */
+};
+
+const cellStyle = function(percent) {
+    const textAlign = ((percent === 50) ? 'center' : (percent < 50) ? 'left' : 'right');
+    return {
+        width: '25%',
+        display: 'table-cell',
+        textAlign,
+    };
+};
+
 /**
  * @var {string} MEDIA_BREAKPOINT bootstrap media query breaKpoint who triggers a d=single <Select> column instead separate columns of radio buttons
  */
@@ -59,8 +75,11 @@ const TheadRow = function({ question, expanded }) {
             <th className="daytimeslider--firstcol"></th>
             <th className="daytimeslider--secondcol"></th>
             <th>
-                <small className="float-left">{ prettyHours(0) }</small>
-                <small className="float-right">{ prettyHours(DaySeconds) }</small>
+                <div style={ tableStyle }>
+                    <div style={ cellStyle(0) }><i className="fas fa-moon"></i></div>
+                    <div style={ cellStyle(50) }><i className="fas fa-sun"></i></div>
+                    <div style={ cellStyle(100) }><i className="fas fa-moon"></i></div>
+                </div>
             </th>
         </tr>
     );
@@ -100,7 +119,6 @@ const Row = function({ question, handleChange, value, disabled, minValue, expand
                 <td className="daytimeslider--secondcol">{ prettyHours(value) }</td>
                 <td>
                     <InputRange
-                        className=""
                         minValue={ minValue }
                         maxValue={ DaySeconds }
                         value={ value }
@@ -148,7 +166,7 @@ const setValues = function(value, index, values) {
     values[index] = (prev && value < prev) ? prev: value;
     for (let i = index; i < length; i += 1) {
         if(values[i] < value) {
-            values [i ] = value;
+            values[i] = value;
         }
     }
     return values;
@@ -166,7 +184,6 @@ class DaytimeSequence extends Component {
 
     handleChange(value, question, index){
         const values = setValues(value, index, this.state.values);
-        console.log(JSON.stringify(values));
         this.setState({
             values
         });
@@ -175,8 +192,7 @@ class DaytimeSequence extends Component {
     }
 
     render() {
-        const { questions, handleChange, required, expand } = this.props;
-        const { values } = this.state;
+        const { questions, required, expand } = this.props;
 
         if(!questions.length) {
             return (null);

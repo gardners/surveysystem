@@ -49,7 +49,7 @@ class DayTimeSlider extends Component {
 
     render() {
         const { value } = this.state;
-        const { withIcons} = this.props;
+        const { withIcons, minValue, maxValue, handleChangeComplete } = this.props;
         return (
             <div style={ wrapperStyle }>
                 {
@@ -62,10 +62,11 @@ class DayTimeSlider extends Component {
                 }
                 <InputRange
                     className=""
-                    minValue={ 0 }
-                    maxValue={ DaySeconds }
+                    minValue={ minValue }
+                    maxValue={ maxValue }
                     value={ value }
                     onChange={ this.handleChange.bind(this) }
+                    onChangeComplete={ handleChangeComplete }
                     formatLabel={ val => prettyHours(val) }
                     step= { this.props.step }
                 />
@@ -76,24 +77,26 @@ class DayTimeSlider extends Component {
 
 DayTimeSlider.defaultProps = {
     required: true,
-    timeBeginLabel: null,
-    timeEndLabel: null,
 
     // react-input-range props
     step:  15 * 60,
+    minValue: 0,
+    maxValue: DaySeconds,
     withIcons: true,
+    handleChangeComplete: () => {},
 };
 
 DayTimeSlider.propTypes = {
     handleChange: PropTypes.func.isRequired,
     question: Question.propTypes().isRequired,
     required: PropTypes.bool,
-    timeBeginLabel: PropTypes.string,
-    timeEndLabel: PropTypes.string,
     withIcons: PropTypes.bool,
 
     // react-input-range props
     step: PropTypes.number,
+    minValue: PropTypes.number,
+    maxValue: PropTypes.number,
+    handleChangeComplete: PropTypes.func,
 };
 
 export default DayTimeSlider;
