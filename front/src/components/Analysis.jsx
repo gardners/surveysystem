@@ -1,20 +1,56 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+
 import { Link } from 'react-router-dom';
+import Typography from '@material-ui/core/Typography';
+import Table from '@material-ui/core/Table';
+import Box from '@material-ui/core/Box';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableRow from '@material-ui/core/TableRow';
+import Button from '@material-ui/core/Button';
+
+import ExpansionPanel from '@material-ui/core/ExpansionPanel';
+import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
+import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
 // apis
 import api from '../api';
 import Log from '../Log';
 import { normalizeAnalysis } from '../Analysis';
-
-import ApiAlert from './ApiAlert';
-
 // components
-import Toggle from './Toggle';
+import Content from './Content';
+import Section from './Section';
+import ApiAlert from './ApiAlert';
 import Preloader from './Preloader';
 
 // devel
 import Dev from './Dev';
+
+const WrapDisplay = function({ surveyID, sessionID, noPaper, children }) {
+    return (
+        <Content
+            noPaper= { noPaper }
+            title="Analysis"
+            subTitle={ () => <Box component="span" color="primary.main">{ surveyID }</Box> }
+            prepend={ sessionID }
+        >
+        { children }
+        </Content>
+    );
+};
+
+WrapDisplay.defaultProps = {
+    noPaper: false,
+};
+
+WrapDisplay.propTypes = {
+    surveyID: PropTypes.string.isRequired,
+    sessionID: PropTypes.string.isRequired,
+    noPaper: PropTypes.bool,
+};
+
 
 const tableStyle = {
     tableLayout: 'fixed',    /* For cells of equal size */
@@ -90,35 +126,36 @@ class Analysis extends Component {
         const sessionID = this.props.match.params.sessionID;
         const { evaluation, loading, alerts } = this.state;
 
-        if(alerts.length) {
+        if (alerts.length) {
             return (
-                <section>
-                     <h1>Analysis</h1>
-                     Unfortunately we encountered an error retrieving your data.
+                <WrapDisplay surveyID={ surveyID } sessionID={ sessionID }>
+                    <Typography color="error" paragraph>Unfortunately we encountered an error retrieving your data.</Typography>
                     { this.state.alerts.map((entry, index) => <ApiAlert key={ index } message={ entry } />) }
-                     <button onClick={ () => window.location.reload() } className="btn btn-secondary">Reload</button>&nbsp;
-                     <Link to={ `/survey/${surveyID}` } className="btn bn-lg btn-secondary">Back to survey</Link>
-                </section>
+                    <Button variant="contained"
+                        color="primary"
+                        onClick={ () => window.location.reload() }>
+                        Reload
+                    </Button>&nbsp;
+                    <Button variant="contained"
+                        component={ Link } to={ `/survey/${surveyID}` }>
+                        Back to Survey
+                    </Button>
+                </WrapDisplay>
             );
         }
 
-        if(!evaluation && !loading) {
+        if (!evaluation && !loading) {
             return (
-                <section>
-                    <h1>{ sessionID }: Analysis</h1>
-                    <div className="text-danger">
-                        <p><i className="fas fa-exclamation-circle"></i> This survey is not finished yet!</p>
-                        <Link to={ `/survey/${surveyID}` } className="btn btn-lg btn-primary">Continue survey</Link>
-                    </div>
-                </section>
-            );
-        }
-
-        if(loading) {
-            return (
-                <section>
-                    <Preloader loading={ loading } message={ loading }/>
-                </section>
+                <WrapDisplay surveyID={ surveyID } sessionID={ sessionID }>
+                    <Typography color="error" paragraph>
+                        This survey is not finished yet!<br/>
+                        <Button variant="contained"
+                        color="primary"
+                            component={ Link } to={ `/survey/${surveyID}` }>
+                            Back to Survey
+                        </Button>
+                    </Typography>
+                </WrapDisplay>
             );
         }
 
@@ -127,67 +164,110 @@ class Analysis extends Component {
         const { condition, subcondition, mainText, learnMore, mainRecommendation, mandatoryTips, additionalInsights }  = data.displayResults.sleepConditions;
 
         return (
-            <section>
-                <Preloader loading={ loading } message={ loading }/>
-                <h1>Analysis</h1>
-                <h2>Survey: <span className="text-success">{ surveyID }</span></h2>
+            <WrapDisplay surveyID={ surveyID } sessionID={ sessionID } noPaper>
+                <Preloader loading={ loading }/>
+                <Section noPadding>
+                    <Table className="table table-striped table-hover table-sm" style={ tableStyle }>
+                        <TableBody>
+                            <TableRow>
+                                <TableCell style={ cellStyle }>category</TableCell>
+                                <TableCell>{ category }</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell style={ cellStyle }>classification</TableCell>
+                                <TableCell>{ classification }</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell style={ cellStyle }>rank</TableCell>
+                                <TableCell>{ rank }</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell style={ cellStyle }>risk rating</TableCell>
+                                <TableCell>{ riskRating }</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell style={ cellStyle }>recommendation</TableCell>
+                                <TableCell>{ recommendation }</TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+                </Section>
 
-                <div className="table-responsive-md">
-                    <table className="table table-striped table-hover table-sm" style={ tableStyle }>
-                        <tbody>
-                            <tr>
-                                <th style={ cellStyle }>category</th>
-                                <td>{ category }</td>
-                            </tr>
-                            <tr>
-                                <th style={ cellStyle }>classification</th>
-                                <td>{ classification }</td>
-                            </tr>
-                            <tr>
-                                <th style={ cellStyle }>rank</th>
-                                <td>{ rank }</td>
-                            </tr>
-                            <tr>
-                                <th style={ cellStyle }>risk rating</th>
-                                <td>{ riskRating }</td>
-                            </tr>
-                            <tr>
-                                <th style={ cellStyle }>recommendation</th>
-                                <td>{ recommendation }</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <Typography variant="h3" gutterBottom>Condition</Typography>
+                <Section noPadding>
+                    <Table style={ tableStyle }>
+                        <TableBody>
+                            <TableRow>
+                                <TableCell style={ cellStyle }>condition</TableCell>
+                                <TableCell>{ condition }</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell style={ cellStyle }>sub condition</TableCell>
+                                <TableCell>{ subcondition }</TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+                </Section>
+                <Typography variant="h3" gutterBottom>Details</Typography>
 
-                <h3>Condition</h3>
+                <Section>
+                    { mainText }
+                </Section>
 
-                <div className="table-responsive-md">
-                    <table className="table table-striped table-hover table-sm" style={ tableStyle }>
-                        <tbody>
-                            <tr>
-                                <th style={ cellStyle }>condition</th>
-                                <td>{ condition }</td>
-                            </tr>
-                            <tr>
-                                <th style={ cellStyle }>sub condition</th>
-                                <td>{ subcondition }</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <ExpansionPanel>
+                    <ExpansionPanelSummary
+                        expandIcon={ <ExpandMoreIcon /> }
+                        aria-controls="ep1-content"
+                        id="ep1-header"
+                    >
+                        <Typography>Learn More</Typography>
+                    </ExpansionPanelSummary>
+                    <ExpansionPanelDetails>
+                        <Typography>{ learnMore }</Typography>
+                    </ExpansionPanelDetails>
+                </ExpansionPanel>
 
-                <h3>Details</h3>
+                <ExpansionPanel>
+                    <ExpansionPanelSummary
+                        expandIcon={ <ExpandMoreIcon /> }
+                        aria-controls="ep2-content"
+                        id="rep2-header"
+                    >
+                        <Typography>Main Recommendation</Typography>
+                    </ExpansionPanelSummary>
+                    <ExpansionPanelDetails>
+                        <Typography>{ mainRecommendation }</Typography>
+                    </ExpansionPanelDetails>
+                </ExpansionPanel>
 
-                <p>{ mainText }</p>
-                <ul className="list-group list-group-flush">
-                    <Toggle className="list-group-item">Learn More { learnMore }</Toggle>
-                    <Toggle className="list-group-item">Main Recommendation { mainRecommendation }</Toggle>
-                    <Toggle className="list-group-item">Tips { mandatoryTips }</Toggle>
-                    <Toggle className="list-group-item">Additional insights { additionalInsights }</Toggle>
-                </ul>
+                <ExpansionPanel>
+                    <ExpansionPanelSummary
+                        expandIcon={ <ExpandMoreIcon /> }
+                        aria-controls="ep3-content"
+                        id="ep3-header"
+                    >
+                        <Typography>Tips</Typography>
+                    </ExpansionPanelSummary>
+                    <ExpansionPanelDetails>
+                        <Typography>{ mandatoryTips }</Typography>
+                    </ExpansionPanelDetails>
+                </ExpansionPanel>
+
+                <ExpansionPanel>
+                    <ExpansionPanelSummary
+                        expandIcon={ <ExpandMoreIcon /> }
+                        aria-controls="ep4-content"
+                        id="ep4-header"
+                    >
+                        <Typography>Additional insights</Typography>
+                    </ExpansionPanelSummary>
+                    <ExpansionPanelDetails>
+                        <Typography>{ additionalInsights }</Typography>
+                    </ExpansionPanelDetails>
+                </ExpansionPanel>
 
                 <Dev.Pretty label="raw analyis" data={ evaluation } open={ false }/>
-            </section>
+            </WrapDisplay>
         );
     }
 }

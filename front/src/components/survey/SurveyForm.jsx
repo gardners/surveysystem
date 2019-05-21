@@ -1,6 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import Box from '@material-ui/core/Box';
+
 import { Fade } from '../Transitions';
 import SurveyButtons from './SurveyButtons';
 
@@ -17,17 +19,19 @@ const SurveyForm = function(props) {
                     /* inputs */
                     props.children
                 }
-                <SurveyButtons
-                    className={ props.rowClassName }
-                    handlePrev={ props.handlePrev }
-                    handleNext={ props.handleNext }
+                <Box boxShadow={ 2 } mb={ 2 } px={ 4 } py={ 2 }>
+                    <SurveyButtons
+                        className={ props.rowClassName }
+                        handlePrev={ props.handlePrev }
+                        handleNext={ props.handleNext }
 
-                    hasQuestions={ props.hasQuestions }
-                    hasErrors={ props.hasErrors }
-                    hasAnswers={ props.hasAnswers }
-                    hasAllAnswers={ props.hasAllAnswers }
-                    didAnswerBefore={ props.didAnswerBefore }
-                />
+                        hasQuestions={ props.hasQuestions }
+                        hasErrors={ props.hasErrors }
+                        hasAnswers={ props.hasAnswers }
+                        hasAllAnswers={ props.hasAllAnswers }
+                        didAnswerBefore={ props.didAnswerBefore }
+                    />
+                </Box>
             </form>
         </Fade>
     );
@@ -47,7 +51,6 @@ SurveyForm.propTypes = {
     didAnswerBefore: PropTypes.bool.isRequired,
 
     className: PropTypes.string,
-    rowClassName:  PropTypes.string,
 };
 
 export default SurveyForm;

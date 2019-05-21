@@ -1,6 +1,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import FormGroup from '@material-ui/core/FormGroup';
+import Input from '@material-ui/core/Input';
+import Button from '@material-ui/core/Button';
+import LocationOn from '@material-ui/icons/LocationOn';
+
 import { FieldError, InputGroup } from '../FormHelpers';
 import Question from '../../Question';
 
@@ -80,25 +85,33 @@ class GeoLocation extends Component {
 
     render() {
         const { question } = this.props;
-        const { value } = this.state;
+        const { values} = this.state;
+
         return (
             <React.Fragment>
                 <InputGroup prepend={ question.unit }>
-                    <input
-                        readOnly
-                        id={ question.id }
-                        name={ question.name }
-                        type="text"
-                        className="form-control"
-                        placeholder={ this.props.placeholder }
-                        value={ value }
-                    />
-                    {
-                        this.props.withButton &&
-                            <div className="input-group-append">
-                                <button className="btn btn-secondary btn-sm" onClick={ this.fetchLocation.bind(this) }>Get Location</button>
-                            </div>
-                    }
+                    <FormGroup row>
+                        <Input
+                            readOnly
+                            id={ question.id }
+                            name={ question.name }
+                            value={ values }
+                            variant="outlined"
+                            placeholder={ this.props.placeholder }
+                        />
+                        {
+                            this.props.withButton &&
+                                    <Button
+                                        variant="contained"
+                                        aria-label="Location"
+                                        onClick={ this.fetchLocation.bind(this) }
+                                        style={ { marginLeft: '1rem' } }
+                                    >
+                                        <LocationOn /> Get Location
+                                    </Button>
+
+                        }
+                    </FormGroup>
                 </InputGroup>
                 { <FieldError error={ this.state.error } /> }
             </React.Fragment>

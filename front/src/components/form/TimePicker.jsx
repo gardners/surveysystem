@@ -1,14 +1,14 @@
-import React from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-
 import moment from 'moment';
 
-import RcTimePicker from 'rc-time-picker';
-import 'rc-time-picker/assets/index.css';
+import MomentUtils from '@date-io/moment';
+import { MuiPickersUtilsProvider } from '@material-ui/pickers';
+import { TimePicker as MuiTimePicker }  from "@material-ui/pickers";
+import InputAdornment from '@material-ui/core/InputAdornment';
+import ScheduleIcon from "@material-ui/icons/Schedule";
 
 import { InputGroup } from '../FormHelpers';
-import './TimePicker.scss';
-
 import Question from '../../Question';
 
 const format = 'h:mm a';
@@ -18,30 +18,57 @@ const seconds = function(m) {
     return  m.diff(midnight, 'seconds');
 };
 
-const TimePicker = function(props) {
+class TimePicker extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            value: moment(0)
+        }
+    }
 
-    const { question, handleChange } = props;
-    return (
-        <InputGroup prepend={ question.unit }>
-            <RcTimePicker
-                id={ question.id }
-                name={ question.name }
-                showSecond={ false }
-                defaultValue={ moment(0) }
-                className="form-control"
-                onChange={ (m) => {
-                    m = m || moment(0); // reset button provides null
-                    const value = seconds(m);
-                    handleChange(null, question, value);
-                } }
-                format={ format }
-                use12Hours
-                inputReadOnly
-            />
-        </InputGroup>
-    );
+    handleChange(m) {
+        m = m || moment(0);
+        this.setState({
+            value: m
+        });
+        this.props.handleChange(null, this.props.question, seconds(m));
+    }
 
-};
+    render() {
+        const { question, handleChange } = this.props;
+        const { id, name, unit } = question;
+        const { value } = this.state;
+
+        return (
+            <InputGroup prepend={ unit }>
+                <MuiPickersUtilsProvider utils={ MomentUtils }>
+                    <MuiTimePicker
+                        ampm
+                        clearable
+                        id={ id }
+                        name={ name }
+                        seconds={ false }
+                        value = { value }
+                        minutesStep={ 5 }
+                        onChange={ this.handleChange.bind(this) }
+                        format={ format }
+
+                        InputProps={{
+                            /* TextField props https://material-ui.com/demos/text-fields/#with-icon */
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <ScheduleIcon />
+                                </InputAdornment>
+                            ),
+                        }}
+
+                    />
+                </MuiPickersUtilsProvider>
+            </InputGroup>
+        );
+    }
+
+}
 
 TimePicker.defaultProps = {
     required: true,

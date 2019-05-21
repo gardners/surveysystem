@@ -6,17 +6,16 @@ import Analysis from '../Analysis';
 class DemoAnalysis extends Component {
     render() {
         return (
-            <section>
-                <Analysis
-                    evaluation={ mockAnalysis() }
-                    match = { {
-                        params: {
-                            id: 'DEMOSESSION',
-                            surveyID: 'DEMOSURVEY',
-                        }
-                    } }
-                />
-            </section>
+            <Analysis
+                evaluation={ mockAnalysis() }
+                match = { {
+                    params: {
+                        id: 'DEMOSESSION',
+                        surveyID: 'DEMOSURVEY',
+                        sessionID: 'demo-session-id'
+                    }
+                } }
+            />
         );
     }
 }

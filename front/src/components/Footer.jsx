@@ -1,13 +1,16 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import Typography from '@material-ui/core/Typography';
+import Box from '@material-ui/core/Box';
+
 const Footer = function({ surveyProvider }) {
     return (
-        <footer>
-            <div className="text-center">
+         <Box component="footer" p={ 2 }>
+            <Typography align="center">
             { `© ${surveyProvider} ${new Date().getFullYear()}` }
-            </div>
-        </footer>
+            </Typography>
+        </Box>
     );
 }
 

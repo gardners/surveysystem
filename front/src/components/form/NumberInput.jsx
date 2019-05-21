@@ -1,6 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import TextField from '@material-ui/core/TextField';
+
 import { InputGroup } from '../FormHelpers';
 import Question from '../../Question';
 
@@ -9,11 +11,10 @@ const NumberInput = function(props) {
 
     return (
         <InputGroup prepend={ question.unit }>
-            <input
+            <TextField
                 id={ question.id }
                 name={ question.name }
                 type="number"
-                className="form-control"
                 placeholder={ placeholder }
                 autoComplete="off"
                 onChange={ (e) => {

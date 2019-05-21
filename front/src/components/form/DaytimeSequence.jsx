@@ -1,6 +1,12 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
+
 import Question from '../../Question';
 import { prettyHours, DaySeconds } from '../../Utils';
 import { matchesBreakpoint } from '../../Media';
@@ -70,18 +76,19 @@ const TheadRow = function({ question, expanded }) {
     if(!expanded) {
         return(null);
     }
+
     return (
-        <tr>
-            <th className="daytimeslider--firstcol"></th>
-            <th className="daytimeslider--secondcol"></th>
-            <th>
+        <TableRow>
+            <TableCell className="daytimeslider--firstcol"></TableCell>
+            <TableCell className="daytimeslider--secondcol"></TableCell>
+            <TableCell>
                 <div style={ tableStyle }>
                     <div style={ cellStyle(0) }><i className="fas fa-moon"></i></div>
                     <div style={ cellStyle(50) }><i className="fas fa-sun"></i></div>
                     <div style={ cellStyle(100) }><i className="fas fa-moon"></i></div>
                 </div>
-            </th>
-        </tr>
+            </TableCell>
+        </TableRow>
     );
 };
 
@@ -97,9 +104,9 @@ const Row = function({ question, handleChange, value, disabled, minValue, expand
 
         if(!expanded) {
             return (
-                <tr>
-                    <td className="daytimeslider--firstcol">{ question.title }</td>
-                    <td>
+                <TableRow hover>
+                    <TableCell className="daytimeslider--firstcol">{ question.title }</TableCell>
+                    <TableCell>
                         <TimePicker
                             key={ question.id }
                             question={ question }
@@ -108,16 +115,16 @@ const Row = function({ question, handleChange, value, disabled, minValue, expand
                             disabledMinutes= { timePickerDisabled(value, 'm') }
                             disabledHSeconds= { timePickerDisabled(value, 's') }
                         />
-                    </td>
-                </tr>
+                    </TableCell>
+                </TableRow>
             );
         }
 
         return (
-            <tr>
-                <td className="daytimeslider--firstcol">{ question.title }</td>
-                <td className="daytimeslider--secondcol">{ prettyHours(value) }</td>
-                <td>
+            <TableRow hover>
+                <TableCell className="daytimeslider--firstcol">{ question.title }</TableCell>
+                <TableCell className="daytimeslider--secondcol">{ prettyHours(value) }</TableCell>
+                <TableCell>
                     <InputRange
                         minValue={ minValue }
                         maxValue={ DaySeconds }
@@ -127,8 +134,8 @@ const Row = function({ question, handleChange, value, disabled, minValue, expand
                         step= { step }
                         formatLabel={value => prettyHours(value)}
                     />
-                </td>
-            </tr>
+                </TableCell>
+            </TableRow>
         );
 };
 
@@ -202,35 +209,33 @@ class DaytimeSequence extends Component {
         const first = questions[0];
 
         return (
-            <div className="table-responsive daytimeslider">
-                <table className="table table-sm table-hover daytimeslider--table">
-                    <thead>
-                        <TheadRow
-                            question={ first }
-                            expanded={ expanded }
-                        />
-                    </thead>
-                    <tbody>
-                        {
-                            questions.map((question, index) => {
-                                const prev = prevValue(index, this.state.values);
-                                return (
-                                    <Row
-                                        key={ index }
-                                        question={ question }
-                                        handleChange={ (value) => this.handleChange(value, question, index) }
-                                        value={ this.state.values[index] }
-                                        // minValue={ minValue }
-                                        disabled={ index > 0 && !prev }
-                                        required={ required }
-                                        expanded={ expanded }
-                                    />
-                                );
-                            })
-                        }
-                    </tbody>
-                </table>
-            </div>
+            <Table>
+                <TableHead>
+                    <TheadRow
+                        question={ first }
+                        expanded={ expanded }
+                    />
+                </TableHead>
+                <TableBody>
+                    {
+                        questions.map((question, index) => {
+                            const prev = prevValue(index, this.state.values);
+                            return (
+                                <Row
+                                    key={ index }
+                                    question={ question }
+                                    handleChange={ (value) => this.handleChange(value, question, index) }
+                                    value={ this.state.values[index] }
+                                    // minValue={ minValue }
+                                    disabled={ index > 0 && !prev }
+                                    required={ required }
+                                    expanded={ expanded }
+                                />
+                            );
+                        })
+                    }
+                </TableBody>
+            </Table>
         );
     }
 };

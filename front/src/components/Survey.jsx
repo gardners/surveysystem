@@ -1,7 +1,5 @@
 import React, { Component } from 'react';
 
-import { Link } from 'react-router-dom';
-
 // apis
 import api, { BaseUri } from '../api';
 import { serializeQuestionAnswer } from '../serializer';
@@ -16,11 +14,13 @@ import Log from '../Log';
 import SurveyForm from './survey/SurveyForm';
 import Question from './survey/Question';
 import QuestionGroup from './survey/QuestionGroup';
+import SurveyCompleted from './survey/SurveyCompleted';
 
 // misc components
 import Preloader from './Preloader';
 import ApiAlert from './ApiAlert';
-
+import Content from './Content';
+import Section from './Section';
 
 // devel
 import Dev from './Dev';
@@ -226,33 +226,25 @@ class Survey extends Component {
         const isClosed = survey.isClosed();
 
         return (
-            <section>
+            <Content title={ survey.surveyID }>
                 <Dev.SurveyBar survey = { survey } />
-                <h1>{ survey.surveyID }</h1>
+
+                {
+                        /* show if survey is finished but not closed yet */
+                    (isClosed) ?
+                        <Section noPaper>
+                            <SurveyCompleted surveyID={ survey.surveyID } sessionID={ survey.sessionID }/>
+                        </Section>
+                    : null
+                }
 
                 <Preloader loading={ this.state.loading } message={ this.state.loading }/>
                 {
                     (this.state.alerts.length) ?
-                        <React.Fragment>
+                        <Section>
                             Unfortunately we encountered an error sending your data.
                             { this.state.alerts.map((entry, index) => <ApiAlert key={ index } message={ entry } />) }
-                        </React.Fragment> : null
-                }
-
-                {
-                    /* show if survey is finished but not closed yet */
-                    (isClosed) ?
-                        <div className="card">
-                            <div className="card-header">
-                                <h2 className="card-title"> <i className="fas fa-check-circle"></i> Survey completed.</h2>
-                            </div>
-                            <div className="card-body">
-
-                                <p className="card-text">Thank you for your time!</p>
-                                <Link className="btn btn-default btn-primary" to={ `/analyse/${survey.surveyID}/${survey.sessionID}` }>Finish Survey</Link>
-                            </div>
-                        </div>
-                    : null
+                        </Section> : null
                 }
 
                 <SurveyForm
@@ -265,33 +257,30 @@ class Survey extends Component {
                     hasAnswers={ hasAnswers }
                     hasAllAnswers={ hasAllAnswers }
                     didAnswerBefore= { didAnswerBefore }
-
-                    className="list-group"
-                    rowClassName="list-group-item"
                 >
                 {
                     withGroups.map((entry, index) => {
 
                         if(isArray(entry)) {
                             return (
-                                <div key={ index } className="list-group-item">
+                                <Section key={ index }>
                                     <QuestionGroup
                                         handleChange={ this.handleChange.bind(this) }
                                         questions={ entry }
                                         answers={ this.state.answers }
                                     />
-                                </div>
+                                </Section>
                             );
                         }
 
                         return (
-                            <div key={ index } className="list-group-item">
+                            <Section key={ index }>
                                 <Question
                                     handleChange={ this.handleChange.bind(this) }
                                     question={ entry }
                                     answer={ this.state.answers[entry.id] || null }
                                 />
-                            </div>
+                            </Section>
                         );
 
                     })
@@ -302,8 +291,7 @@ class Survey extends Component {
                 <Dev.Pretty label="questions" data={ questions } open={ false }/>
                 <Dev.Pretty label="answers" data={ answers } open={ false }/>
                 <Dev.Pretty label="errors" data={ errors } open={ false }/>
-
-            </section>
+            </Content>
         );
     }
 }

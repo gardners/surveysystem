@@ -2,8 +2,18 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import { Link } from 'react-router-dom';
+import Button from '@material-ui/core/Button';
+import Typography from '@material-ui/core/Typography';
+import Grid from '@material-ui/core/Grid';
+import Card from '@material-ui/core/Card';
+import CardHeader from '@material-ui/core/CardHeader';
+import CardActions from '@material-ui/core/CardActions';
+import CardContent from '@material-ui/core/CardContent';
 
 import LocalStorage from '../storage/LocalStorage';
+
+import Content from './Content';
+import Section from './Section';
 
 const CACHE_KEY = process.env.REACT_APP_SURVEY_CACHEKEY;
 
@@ -19,46 +29,44 @@ const Surveys = function({ surveyProvider, surveys }) {
     let modified = (cache && typeof cache.modified !== 'undefined') ? cache.modified : 0;
 
     return (
-        <React.Fragment>
-            <h1>{ surveyProvider } <small>Surveys</small></h1>
+        <Content title="Surveys">
+            <Section noPaper>
+                <Grid container spacing={4}>
+                    { surveys.map((survey, index) =>
+                        <Grid item key={ index } xs={ 12 } md={ 6 }>
+                            <Card>
+                                <CardHeader
+                                    title={ survey }
+                                />
+                                <CardContent>
+                                    {
+                                        (cachedSurveyID === survey) ?
 
-            <div className="row card-deck">
-                { surveys.map((survey, index) =>
-                    <div className="card" key={ index }>
-                        <div className="card-header">
-                            <h2 className="card-title">{ survey }</h2>
-                        </div>
-                        <div className="card-body">
-                            {
-                                (cachedSurveyID === survey) ?
-                                    <React.Fragment>
-                                        <p className="card-text">
-                                            <small>session ID: { cache.sessionID }</small><br/>
-                                            <small>created: { formatDate(created) }</small><br/>
-                                            <small>last access: { formatDate(modified) }</small>
-                                        </p>
-                                    </React.Fragment>
-                                :
-                                    <p className="card-text">
-                                        <small>Start survey</small>
-                                    </p>
-                            }
-                        </div>
-                        <div className="card-footer">
-                            {
-                                (cachedSurveyID === survey) ?
-                                    <React.Fragment>
-                                        <Link to={ `/survey/${survey}/${cache.sessionID}` } className="btn btn-primary">Continue</Link>
-                                        <Link to={ `/survey/${survey}/new` } onClick={ () => LocalStorage.delete(CACHE_KEY) } className="btn btn-s">Restart</Link>
-                                    </React.Fragment>
-                                :
-                                    <Link to={ `/survey/${survey}` } className="btn btn-primary">Start</Link>
-                            }
-                        </div>
-                    </div>
-                ) }
-            </div>
-        </React.Fragment>
+                                                <Typography variant="body2">
+                                                    session ID: { cache.sessionID }<br/>
+                                                    created: { formatDate(created) }<br/>
+                                                    last access: { formatDate(modified) }
+                                                </Typography>
+                                            : null
+                                    }
+                                </CardContent>
+                                <CardActions>
+                                    {
+                                        (cachedSurveyID === survey) ?
+                                                <React.Fragment>
+                                                    <Button variant="contained" color="primary" component={ Link } to={ `/survey/${survey}/${cache.sessionID}` }>Continue Survey</Button>
+                                                    <Button variant="contained" component={ Link } to={ `/survey/${survey}/new` }>Start again</Button>
+                                                </React.Fragment>
+                                                :
+                                                <Button variant="contained" color="primary" component={ Link } to={ `/survey/${survey}/new` }>Start Survey</Button>
+                                    }
+                                </CardActions>
+                            </Card>
+                        </Grid>
+                    ) }
+                </Grid>
+            </Section>
+        </Content>
     );
 
 };

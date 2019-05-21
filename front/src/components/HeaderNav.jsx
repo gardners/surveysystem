@@ -1,69 +1,88 @@
-//Basic HeaderNav made with bootstrap
-import React from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { Link } from 'react-router-dom';
+import AppBar from '@material-ui/core/AppBar';
+import Toolbar from '@material-ui/core/Toolbar';
 
-import ThemePicker from './ThemePicker';
-import { DropdownMenu, MenuLink } from './bootstrap/DropdownMenu';
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
+import MenuIcon from '@material-ui/icons/Menu';
+import Button from '@material-ui/core/Button';
+import IconButton from '@material-ui/core/IconButton';
+import WbSunny from '@material-ui/icons/WbSunny';
+import WbSunnyOutlined from '@material-ui/icons/WbSunnyOutlined';
 
-// toggles navbar collapse
-// element.classList support is ie > 10, we ned this to work always!
-const toggle = function(el){
-    if (!el) {
-        return;
+import HideOnScroll from './HideOnScroll';
+
+class HeaderNav extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            anchorEl: null,
+        }
     }
-    if(el.className.match(/(?:^|\s)show(?!\S)/)) {
-        el.className = el.className.replace( /(?:^|\s)show(?!\S)/g , '' );
-        return;
+
+    handleMenu (e) {
+        this.setState({
+            anchorEl: (!this.state.anchorEl) ? e.currentTarget : null,
+        });
     }
-    el.className += ' show';
-};
 
-const HeaderNav = function({ location, surveys, surveyProvider, siteName}) {
-    return (
-        <header>
-            <nav className="navbar navbar-expand-md navbar-dark fixed-top bg-dark shadow-sm">
-                <Link to="/" className="navbar-brand align-items-center">{ siteName }</Link>
+    render() {
 
-                <button
-                    className="navbar-toggler"
-                    type="button" data-toggle="collapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation"
-                    onClick={ () => toggle(document.getElementById('header-nav--collapse')) }
-                >
-                    <span className="navbar-toggler-icon"></span>
-                </button>
+        const  { surveys, siteName, themeType, toggleThemeType } = this.props;
+        const  { anchorEl } = this.state;
 
-                <div className="collapse navbar-collapse" id="header-nav--collapse">
-                    <ul className="navbar-nav mr-auto">
-                    {
-                        surveys.length > 1 &&
-                            <li className={ (/^\/surveys/.test(location.pathname)) ? 'nav-item active' : 'nav-item' }>
-                                <Link className="nav-link" to="/surveys">Survey List</Link>
-                            </li>
-                    }
-                    <li>
-                        <DropdownMenu title="Demos">
-                            <MenuLink to="/demo/form">Form Elements</MenuLink>
-                            <MenuLink to="/demo/analyse">Analysis</MenuLink>
-                            <MenuLink to="/demo/manifest">Manifest</MenuLink>
-                        </DropdownMenu>
-                    </li>
-                    </ul>
+        return (
+            <HideOnScroll threshold={200 }>
+                <AppBar position="relative">
+                    <Toolbar>
 
-                    <ul className="navbar-nav mt-2 mt-md-0">
-                        <ThemePicker className="nav-item active my-2 my-sm-0" />
-                    </ul>
-                </div>
-            </nav>
-        </header>
-    );
+                        <IconButton edge="start" color="inherit" aria-label="Menu">
+                            <MenuIcon />
+                        </IconButton>
+
+                        <Button component={ Link } to="/" color="inherit">{ siteName }</Button>
+
+                        {
+                            surveys.length > 1 &&
+                                <Button component={ Link } to="/surveys" color="inherit">Survey List</Button>
+                        }
+
+                        <Button
+                            aria-owns={ anchorEl ? 'demo-menu' : undefined }
+                            aria-haspopup="true"
+                            onClick={ this.handleMenu.bind(this) }
+                            color="inherit"
+                        >
+                            Demos
+                        </Button>
+
+                        <Menu id="demo-menu" anchorEl={ anchorEl } open={ anchorEl !== null } onClose={ this.handleMenu.bind(this) }>
+                            <MenuItem onClick={ this.handleMenu.bind(this) } component={ Link } to="/demo/form">Form Elements</MenuItem>
+                            <MenuItem onClick={ this.handleMenu.bind(this) } component={ Link } to="/demo/analyse">Analysis</MenuItem>
+                            <MenuItem onClick={ this.handleMenu.bind(this) } component={ Link } to="/demo/manifest">Manifest</MenuItem>
+                        </Menu>
+
+                        <IconButton
+                            color="inherit"
+                            onClick={ toggleThemeType }
+                        >
+                            { (themeType === 'light') ? <WbSunnyOutlined /> : <WbSunny /> }
+                        </IconButton>
+                    </Toolbar>
+                </AppBar>
+            </HideOnScroll>
+        );
+    }
 };
 
 HeaderNav.propTypes = {
     surveys: PropTypes.arrayOf(PropTypes.string).isRequired,
     surveyProvider: PropTypes.string.isRequired,
     siteName: PropTypes.string.isRequired,
+    themeType: PropTypes.oneOf(['light', 'dark' ]).isRequired,
 };
 
 export default HeaderNav;

@@ -1,24 +1,27 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import TextField from '@material-ui/core/TextField';
+
 import { InputGroup } from '../FormHelpers';
 import Question from '../../Question';
 
-const Textarea = function(props) {
-    const { question, placeholder } = props;
+const Textarea = function({ question, handleChange, placeholder, required }) {
+    const { id, name, unit } = question;
 
     return (
-        <InputGroup prepend={ question.unit }>
-            <textarea
-                id={ question.id }
-                name={ question.name }
-                type="text"
+        <InputGroup prepend={ unit }>
+            <TextField
+                id={ id }
+                name={ name }
+                multiline
+                rows="4"
                 className="form-control"
                 placeholder={ placeholder }
                 autoComplete="off"
                 onChange={ (e) => {
                     const { value } = e.target;
-                    props.handleChange(e.target, question, value);
+                    handleChange(e.target, question, value);
                 } }
             />
         </InputGroup>

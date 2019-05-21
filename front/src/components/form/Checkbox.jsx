@@ -1,30 +1,32 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { InputGroup } from '../FormHelpers';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import MuiCheckbox from '@material-ui/core/Checkbox';
+
 import Question from '../../Question';
 
-const Checkbox = function(props) {
-
-    const { question, required } = props;
-    const { choices } = question;
+/**
+ * requires two defined choices in the following order: [OFF-value, ON-value]
+ */
+const Checkbox = function({ question, required, handleChange }) {
+    const { id, name, choices } = question;
 
     return (
-        <div className="form-check">
-            <InputGroup prepend={ question.unit }>
-                <input
-                    id={ question.id }
-                    name={ question.name }
-                    type="checkbox"
-                    className="form-check-input"
-                    autoComplete="off"
+        <FormControlLabel
+            control={
+                <MuiCheckbox
+                    color="primary"
+                    id={ id }
+                    name={ name }
                     required={ required }
                     onChange={ (e) => {
-                        props.handleChange(e.target, question, (e.target.checked) ?  choices[1] : choices[0]);
+                        handleChange(e.target, question, (e.target.checked) ?  choices[1] : choices[0]);
                     } }
                 />
-            </InputGroup>
-        </div>
+            }
+            label={ choices[1] }
+        />
     );
 };
 

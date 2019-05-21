@@ -1,5 +1,10 @@
 import React, { Component } from 'react';
 
+import Typography from '@material-ui/core/Typography';
+import Content from '../Content';
+import Section from '../Section';
+import TextField from '@material-ui/core/TextField';
+
 import { mapQuestionGroups } from '../../Question';
 import { isArray } from '../../Utils';
 
@@ -101,7 +106,6 @@ const parseQuestionManifest = function(survey) {
         };
 
         questions.push(question);
-
     }
 
     return questions;
@@ -135,45 +139,58 @@ class DemoManifest extends Component {
         const withGroups = mapQuestionGroups(next_questions);
 
         return (
-            <div>
-                <h2>Manifest</h2>
-                <textarea style={ { width: '100%', height: '400px' } } onChange={ this.handleChange.bind(this) } defaultValue={ defaultValue } />
+            <Content title="Demo: Question Manifest">
+                <Section noPaper>
+                    <Typography variant="h4" component="h3">Manifest</Typography>
+                    <TextField
+                        multiline
+                        fullWidth
+                        margin="normal"
+                        variant="outlined"
+                        label="Edit manifest:"
+                        onChange={ this.handleChange.bind(this) }
+                        defaultValue={ defaultValue }
+                    />
 
-                <Dev.Pretty label='parsed "next_questions" JSON' data={ this.state.next_questions } />
+                    <Dev.Pretty label='parsed "next_questions" JSON' data={ this.state.next_questions } />
+                </Section>
 
-                <h2>Display Form</h2>
-                {
-                    (next_questions instanceof Error) && <div className="alert alert-danger">{ next_questions.message }</div>
-                }
-                {
-                    isArray(next_questions) &&
-                        withGroups.map((entry, index) => {
+                <Typography variant="h4" component="h3" gutterBottom>Component</Typography>
 
-                            if(isArray(entry)) {
+                <Section>
+                    {
+                        (next_questions instanceof Error) && <div className="alert alert-danger">{ next_questions.message }</div>
+                    }
+                    {
+                        isArray(next_questions) &&
+                            withGroups.map((entry, index) => {
+
+                                if(isArray(entry)) {
+                                    return (
+                                        <div key={ index } className="list-group-item">
+                                            <QuestionGroup
+                                                handleChange={ () => true }
+                                                questions={ entry }
+                                                answers={ this.state.answers }
+                                            />
+                                        </div>
+                                    );
+                                }
+
                                 return (
                                     <div key={ index } className="list-group-item">
-                                        <QuestionGroup
-                                            handleChange={ () => true }
-                                            questions={ entry }
-                                            answers={ this.state.answers }
+                                        <Question
+                                            handleChange={ this.handleChange.bind(this) }
+                                            question={ entry }
+                                            answer={ this.state.answers[entry.id] || null }
                                         />
                                     </div>
                                 );
-                            }
 
-                            return (
-                                <div key={ index } className="list-group-item">
-                                    <Question
-                                        handleChange={ this.handleChange.bind(this) }
-                                        question={ entry }
-                                        answer={ this.state.answers[entry.id] || null }
-                                    />
-                                </div>
-                            );
-
-                        })
-                }
-            </div>
+                            })
+                    }
+                </Section>
+            </Content>
         );
     }
 }

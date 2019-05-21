@@ -1,16 +1,23 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import Box from '@material-ui/core/Box';
+import Grid from '@material-ui/core/Grid';
+import Fab from '@material-ui/core/Fab';
+import CheckCircleIcon from '@material-ui/icons/CheckCircle';
+import BackspaceIcon from '@material-ui/icons/Backspace';
+import WarningIcon from '@material-ui/icons/Warning';
+
 const HasErrors = function({ hasErrors, hasAllAnswers, hasAnswers }) {
     if (!hasAnswers) {
         return null;
     }
 
     return (
-        <ul className="list-group mb-1">
-            { hasErrors && <li className="list-group-item list-group-item-danger">Please fix errors above</li> }
-            { !hasAllAnswers && <li className="list-group-item list-group-item-warning">Please answer all questions</li> }
-        </ul>
+        <React.Fragment>
+            { hasErrors && <Box color="red" p={ 1 }> <WarningIcon/> Please fix errors above</Box> }
+            { !hasAllAnswers && <Box color="orange" p={ 1 }><WarningIcon/> Please answer all questions</Box> }
+        </React.Fragment>
     );
 };
 
@@ -29,28 +36,52 @@ const canNext = function ({ hasErrors, hasAnswers, hasAllAnswers }) {
  * The component should not contain survey logic or handle complex data. It merely recieves a number of flags from the parent component
  */
 const SurveyButtons = function(props) {
-    const nextIconClass = (props.hasErrors || !props.hasAllAnswers) ? 'fas fa-ban' : 'fas fa-arrow-circle-right';
-    const prevIconClass = (!props.didAnswerBefore) ? 'fas fa-ban' : 'fas fa-arrow-circle-left';
 
     return (
-        <div className={ props.className }>
-            <HasErrors
-                hasErrors={ props.hasErrors }
-                hasAllAnswers={ props.hasAllAnswers }
-                hasAnswers={ props.hasAnswers }
-            />
+        <Box className={ props.className }>
+            <Grid
+                className={ props.className }
+                justify="space-between" // Add it here :)
+                container
+                spacing={ 2 }
+                direction="row"
+                alignItems="center"
+            >
+                <Grid item xs={ 12 }>
+                    <HasErrors
+                        hasErrors={ props.hasErrors }
+                        hasAllAnswers={ props.hasAllAnswers }
+                        hasAnswers={ props.hasAnswers }
+                    />
+                </Grid>
 
-            <button type="submit" className="app--btn-arrow btn btn-default"
-                onClick={ props.handlePrev }>
-                <i className={ prevIconClass } /> Previous Question
-            </button>
+                <Grid item xs={ 8 }>
+                    <Fab
+                        variant="extended"
+                        color="primary"
+                        aria-label="Next Question"
+                        disabled={ !canNext(props) }
+                        onClick={ props.handleNext }
+                        size="large"
+                    >
+                        Next Question
+                        <CheckCircleIcon style={ { marginLeft: '.5rem' } } />
+                    </Fab>
+                </Grid>
 
-            <button type="submit" className="app--btn-arrow btn btn-default btn-primary"
-                disabled={ !canNext(props) }
-                onClick={ props.handleNext }>
-                Next Question <i className={ nextIconClass } />
-            </button>
-        </div>
+                <Grid item xs={ 3 }>
+                    <Fab
+                        variant="extended"
+                        aria-label="Previous Question"
+                        onClick={ props.handlePrev }
+                        size="small"
+                    >
+                        <BackspaceIcon style={ { marginRight: '.5rem' } } />
+                        Back
+                    </Fab>
+                </Grid>
+            </Grid>
+        </Box>
     );
 };
 

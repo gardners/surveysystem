@@ -1,24 +1,25 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import TextField from '@material-ui/core/TextField';
+
 import { InputGroup } from '../FormHelpers';
 import Question from '../../Question';
 
-const EmailInput = function(props) {
-    const { question, placeholder } = props;
+const EmailInput = function({ question, required, handleChange, placeholder }) {
+    const { id, name } = question;
 
     return (
         <InputGroup prepend={ question.unit }>
-            <input
-                id={ question.id }
-                name={ question.name }
+            <TextField
+                id={ id }
+                name={ name }
                 type="email"
-                className="form-control"
                 placeholder={ placeholder }
                 autoComplete="off"
                 onChange={ (e) => {
                     const { value } = e.target;
-                    props.handleChange(e.target, question, value);
+                    handleChange(e.target, question, value);
                 } }
             />
         </InputGroup>

@@ -1,6 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
+
 import Question from '../../Question';
 import { matchesBreakpoint } from '../../Media';
 
@@ -23,12 +29,12 @@ const TheadRow = function({ question, expanded }) {
     const labels = question.choices || [];
 
     return (
-        <tr>
-            <th className="radiomatrix--firstcol"></th>
+        <TableRow>
+            <TableCell className="radiomatrix--firstcol"></TableCell>
             {
-                labels.map((label, index) => <th key={ index }>{ label }</th>)
+                labels.map((label, index) => <TableCell key={ index }>{ label }</TableCell>)
             }
-        </tr>
+        </TableRow>
     );
 };
 
@@ -44,28 +50,28 @@ const Row = function({ question, handleChange, expanded, required }) {
 
     if(!expanded) {
         return (
-            <tr>
-                <td className="radiomatrix--firstcol">{ question.title }</td>
-                <td>
+            <TableRow hover>
+                <TableCell className="radiomatrix--firstcol">{ question.title }</TableCell>
+                <TableCell>
                     <Select
                         key={ question.id }
                         question={ question }
                         handleChange={ handleChange }
                     />
-                </td>
-            </tr>
+                </TableCell>
+            </TableRow>
         );
     }
 
     const choices = question.choices || [];
 
     return (
-        <tr>
-            <td className="radiomatrix--firstcol">{ question.title }</td>
+        <TableRow hover>
+            <TableCell className="radiomatrix--firstcol">{ question.title }</TableCell>
             {
                 choices.map((choice, index) => {
                     return (
-                        <td key={ index }>
+                        <TableCell key={ index }>
                             <input
                                 type="radio"
                                 id={ question.id }
@@ -74,11 +80,11 @@ const Row = function({ question, handleChange, expanded, required }) {
                                 onChange={ (e) => handleChange(e.target, question, choice) }
                                 required={ required }
                             />
-                        </td>
+                        </TableCell>
                     );
                 })
             }
-        </tr>
+        </TableRow>
     );
 };
 
@@ -103,27 +109,25 @@ const RadioMatrix = function({ questions, handleChange, required, expand }) {
     const first = questions[0];
 
     return (
-        <div className="table-responsive">
-            <table className="table table-sm table-hover radiomatrix--table">
-                <thead>
-                    <TheadRow
-                        question={ first }
+        <Table>
+            <TableHead>
+                <TheadRow
+                    question={ first }
+                    expanded={ expanded }
+                />
+            </TableHead>
+            <TableBody>
+                {
+                    questions.map((question, index) => <Row
+                        key={ index }
+                        question={ question }
+                        handleChange={ handleChange }
+                        required={ required }
                         expanded={ expanded }
-                    />
-                </thead>
-                <tbody>
-                    {
-                        questions.map((question, index) => <Row
-                            key={ index }
-                            question={ question }
-                            handleChange={ handleChange }
-                            required={ required }
-                            expanded={ expanded }
-                        />)
-                    }
-                </tbody>
-            </table>
-        </div>
+                    />)
+                }
+            </TableBody>
+        </Table>
     );
 };
 

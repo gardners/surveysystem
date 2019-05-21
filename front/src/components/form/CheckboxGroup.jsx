@@ -1,9 +1,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Checkbox from '@material-ui/core/Checkbox';
+
 import Question from '../../Question';
 
 class CheckboxGroup extends Component {
+
     constructor(props) {
         super(props);
         this.state = {
@@ -36,20 +40,21 @@ class CheckboxGroup extends Component {
         return (
             <React.Fragment>
                 {
-                    choices.map((value, index) => {
-                        return <div key={index} className="radio form-check form-check-inline">
-                            <input
-                                type="checkbox"
-                                className="form-check-input"
-                                name={ question.name }
-                                id={ question.id }
-                                value={ value }
-                                onChange={ this.handleChange.bind(this)}
-                                checked={  this.state.values.indexOf(value) > -1 }
-                            />
-                            <label className="form-check-label">{ value }</label>
-                        </div>
-                    })
+                    choices.map((value, index) =>
+                        <FormControlLabel
+                            key={ index }
+                            control={
+                                <Checkbox
+                                    color="primary"
+                                    name={ question.name }
+                                    id={ question.id }
+                                    value={ value }
+                                    onChange={ this.handleChange.bind(this)}
+                                    checked={  this.state.values.indexOf(value) > -1 }
+                                />
+                            }
+                            label={ value }
+                        />)
                 }
             </React.Fragment>
         );

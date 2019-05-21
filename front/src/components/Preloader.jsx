@@ -1,30 +1,29 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import Box from '@material-ui/core/Box';
+import Typography from '@material-ui/core/Typography';
+import LinearProgress from '@material-ui/core/LinearProgress';
 
 import './preloader.scss';
 
-const Preloader = function (props) {
-    const loading = props.loading || false;
-
+const Preloader = function ({ loading, message, color }) {
     if (!loading) {
         return (null);
     }
 
     return (
-        <div className="loader">
-            <div className="spinner">
-                <div className="double-bounce1" style={{ backgroundColor: props.color, }}></div>
-                <div className="double-bounce2" style={{ backgroundColor: props.color, }}></div>
-                <div className="message" style={{ color: props.color, }}> { props.message || 'Processing your answer...' } </div>
-            </div>
-        </div>
+        <Box display="block">
+            <LinearProgress />
+            <Typography variant="caption" align="center" display="block" style={ { marginTop: '0.5em' } }>
+                { message || 'Processing your answer...' }
+            </Typography>
+        </Box>
     );
 };
 
 Preloader.defaultProps = {
     loading: false,
     message: 'Processing your answer...',
-    color: '#337ab7', // bootstrap-primary
 };
 
 Preloader.propTypes = {

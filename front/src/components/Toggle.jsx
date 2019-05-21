@@ -1,5 +1,6 @@
 import React , { Component } from 'react';
 import PropTypes from 'prop-types';
+import Icon from '@material-ui/core/Icon';
 
 class Toggle extends Component{
     constructor(props) {
@@ -17,16 +18,16 @@ class Toggle extends Component{
     }
 
     render() {
-
         const { open } = this.state;
+        const { classes } = this.props;
         const [ header, ...contents ] = this.props.children;
-        const cls = (!open) ? `d-print-block d-none` : '';
+
         return(
             <div className={ this.props.className }>
-                <div role="menuitem" className="d-block text-primary" onClick={ this.toggle.bind(this) }>
-                    { (!open) ? <i className="fas fa-caret-down d-inline-block d-print-none"></i> : <i className="fas fa-caret-up d-inline-block  d-print-none"></i> }<div className="d-inline-block ml-2">{ header }</div>
+                <div role="menuitem"  onClick={ this.toggle.bind(this) }>
+                    <Icon color="primary">{ (!open) ? 'keyboard_arrow_down' : 'keyboard_arrow_down' }</Icon> <React.Fragment>{ header }</React.Fragment>
                 </div>
-                <div className={ cls }>{ contents }</div>
+                { open && <div>{ contents }</div> }
             </div>
         );
     }
