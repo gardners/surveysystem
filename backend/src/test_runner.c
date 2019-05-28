@@ -832,7 +832,13 @@ int run_test(char *dir, char *test_file)
         // Ignore blank lines
       }
       else if (line[0]=='#') {
-        // Ignore comments
+        // print special comments starting with "#!"
+        if(line[1]!=0 && line[1]=='!') {
+          char *l = line;
+          l +=2;
+          fprintf(log,"%s\n",l);
+        }
+        // Ignore default comments
       }
       else {
         fprintf(log,"T+%4.3fms : FATAL : Test script '%s' has unknown directive '%s'\n",tdelta,test_file,line);
