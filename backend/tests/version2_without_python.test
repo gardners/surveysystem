@@ -1,0 +1,91 @@
+description Answer a question in a survey
+
+#!---------------------
+#!Survey WITHOUT python
+#!---------------------
+
+# Create a dummy survey
+definesurvey without_python
+version 2
+Silly test survey updated
+without python
+question1:Question 1::TEXT:0::-1:-1:0:0::
+question2:Question 2::TEXT:0::-1:-1:0:0::
+question3:Question 3::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+# Create python module, skipping question 2 for the first answer. Test passes if this is NOT invoked
+python
+def nextquestion(questions, answers):
+    if len(answers) == 0:
+        return 'question3'
+    else:
+        return 'question3'
+endofpython
+
+# Request creation of a  new session
+request 200 newsession?surveyid=without_python
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session
+without_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
+endofsession
+
+request 200 addanswer?sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0:
+match_string {"next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "unit": ""}]}
+
+# Check that we are offered the next question to answer
+
+# Make sure answer ends up in file
+verify_session
+without_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
+question1:Hello World:0:0:0:0:0:0:0:
+endofsession
+
+#!---------------------
+#!Survey WITH python
+#!---------------------
+
+# Create a dummy survey
+definesurvey with_python
+version 2
+Silly test survey updated
+pythondir=.
+question1:Question 1::TEXT:0::-1:-1:0:0::
+question2:Question 2::TEXT:0::-1:-1:0:0::
+question3:Question 3::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+# Create python module, skipping question 2 for the first answer. Test passes if this IS invoked
+python
+def nextquestion(questions, answers):
+    if len(answers) == 0:
+        return 'question3'
+    else:
+        return 'question3'
+endofpython
+
+# Request creation of a  new session
+request 200 newsession?surveyid=with_python
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session
+with_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
+endofsession
+
+request 200 addanswer?sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0:
+match_string {"next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "unit": ""}]}
+
+# Check that we are offered the next question to answer
+
+# Make sure answer ends up in file
+verify_session
+with_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
+question1:Hello World:0:0:0:0:0:0:0:
+endofsession
