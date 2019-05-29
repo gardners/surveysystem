@@ -298,7 +298,13 @@ int run_test(char *dir, char *test_file)
       fprintf(stderr,"\nFirst line of test definition must be description <description text>\n");
       retVal=-1; break;
     }
+
     char description[8192];
+    if (sscanf(line,"skip! description %[^\r\n]",description)==1) {
+      fprintf(stderr,"\r\033[90m[\033[33mSKIP\033[39m]  %s : %s\n",test_name,description); fflush(stderr);
+      break;
+    }
+
     if (sscanf(line,"description %[^\r\n]",description)!=1) {
       fprintf(stderr,"\nCould not parse description line of test.\n");
       retVal=-1; break;

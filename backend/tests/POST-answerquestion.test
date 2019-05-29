@@ -1,4 +1,4 @@
-description POST requests - open session and answer a question
+skip! description POST requests - open session and answer a question
 
 # Create a dummy survey
 definesurvey postrequests
