@@ -222,7 +222,7 @@ class Survey extends Component {
         const hasErrors = errorCount > 0;
         const hasAnswers = answerCount > 0 ;
         const hasAllAnswers = (answerCount === questions.length);
-        const didAnswerBefore = (survey.steps > 0);
+        const didAnswerBefore = questions.length > 1;
         const isClosed = survey.isClosed();
 
         return (
