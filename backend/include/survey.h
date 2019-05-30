@@ -118,6 +118,7 @@ struct answer {
 
   // #186 flags
   int flags;
+#define ANSWER_DELETED 1
 };
 
 #define MAX_QUESTIONS 8192
@@ -143,8 +144,8 @@ int delete_session(char *session_id);
 struct session *load_session(char *session_id);
 int save_session(struct session *s);
 int session_add_answer(struct session *s,struct answer *a);
-int session_delete_answer(struct session *s,struct answer *a);
-int session_delete_answers_by_question_uid(struct session *ses,char *uid);
+int session_delete_answer(struct session *s,struct answer *a, int deleteFollowingP);
+int session_delete_answers_by_question_uid(struct session *ses,char *uid,int deleteFollowingP);
 int delete_session(char *session_id);
 void free_session(struct session *s);
 void free_question(struct question *q);

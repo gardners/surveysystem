@@ -493,7 +493,7 @@ static void fcgi_updateanswer(struct kreq *req)
       break;
     }
 
-    if (session_delete_answers_by_question_uid(s,a.uid)<0) {
+    if (session_delete_answers_by_question_uid(s,a.uid,0)<0) {
       quick_error(req,KHTTP_400,"session_delete_answers_by_question_uid() failed");
       break;
     }
@@ -572,14 +572,14 @@ static void fcgi_delanswer(struct kreq *req)
 	break;
       }
       // We have an answer, so try to delete it.
-      if (session_delete_answer(s,&a)) {
+      if (session_delete_answer(s,&a,0)) {
 	quick_error(req,KHTTP_400,"session_delete_answer() failed");
 	break;
       }
     }
     else if (question&&question->val) {
       // No answer give, so delete all answers to the given question
-      if (session_delete_answers_by_question_uid(s,question->val)<0) {
+      if (session_delete_answers_by_question_uid(s,question->val,0)<0) {
 	quick_error(req,KHTTP_400,"session_delete_answers_by_question_uid() failed");
 	break;
       }      
