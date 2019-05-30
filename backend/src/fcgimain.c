@@ -82,6 +82,7 @@ enum	page {
 	PAGE_UPDATEANSWER,
 	PAGE_NEXTQUESTION,
 	PAGE_DELANSWER,
+	PAGE_DELANSWERANDFOLLOWING,
 	PAGE_DELSESSION,
 	PAGE_ACCESTEST,
 	PAGE_FCGITEST,
@@ -96,6 +97,7 @@ static void fcgi_addanswer(struct kreq *);
 static void fcgi_updateanswer(struct kreq *);
 static void fcgi_nextquestion(struct kreq *);
 static void fcgi_delanswer(struct kreq *);
+static void fcgi_delanswerandfollowing(struct kreq *);
 static void fcgi_delsession(struct kreq *);
 static void fcgi_accesstest(struct kreq *);
 static void fcgi_fastcgitest(struct kreq *);
@@ -107,6 +109,7 @@ static const disp disps[PAGE__MAX] = {
   fcgi_updateanswer,
   fcgi_nextquestion,
   fcgi_delanswer,
+  fcgi_delanswerandfollowing,
   fcgi_delsession,
   fcgi_accesstest,
   fcgi_fastcgitest,
@@ -119,6 +122,7 @@ static const char *const pages[PAGE__MAX] = {
   "updateanswer",
   "nextquestion",
   "delanswer",
+  "delanswerandfollowing",
   "delsession",
   "accesstest",
   "fastcgitest",
@@ -493,7 +497,7 @@ static void fcgi_updateanswer(struct kreq *req)
       break;
     }
 
-    if (session_delete_answers_by_question_uid(s,a.uid)<0) {
+    if (session_delete_answers_by_question_uid(s,a.uid,0)<0) {
       quick_error(req,KHTTP_400,"session_delete_answers_by_question_uid() failed");
       break;
     }
@@ -572,14 +576,14 @@ static void fcgi_delanswer(struct kreq *req)
 	break;
       }
       // We have an answer, so try to delete it.
-      if (session_delete_answer(s,&a)) {
+      if (session_delete_answer(s,&a,0)) {
 	quick_error(req,KHTTP_400,"session_delete_answer() failed");
 	break;
       }
     }
     else if (question&&question->val) {
       // No answer give, so delete all answers to the given question
-      if (session_delete_answers_by_question_uid(s,question->val)<0) {
+      if (session_delete_answers_by_question_uid(s,question->val,0)<0) {
 	quick_error(req,KHTTP_400,"session_delete_answers_by_question_uid() failed");
 	break;
       }      
@@ -602,6 +606,93 @@ static void fcgi_delanswer(struct kreq *req)
 
   return;   
 }
+
+static void fcgi_delanswerandfollowing(struct kreq *req)
+{
+  int retVal=0;
+  
+  do {
+
+    LOG_INFO("Entering page handler.");
+
+    struct kpair *session = req->fieldmap[KEY_SESSIONID];
+    if (!session) {
+      // No session ID, so return 400
+      quick_error(req,KHTTP_400,"sessionid missing");
+      break;
+    }
+    if (!session->val) {
+      quick_error(req,KHTTP_400,"sessionid is blank");
+      break;
+    }
+    char *session_id=session->val;
+    if (lock_session(session_id)) LOG_ERRORV("Failed to lock session '%s'",session_id);    
+    struct session *s=load_session(session_id);
+    if (!s) {
+      quick_error(req,KHTTP_400,"Could not load specified session. Does it exist?");
+      break;
+    }
+
+    struct kpair *question = req->fieldmap[KEY_QUESTIONID];
+    struct kpair *answer = req->fieldmap[KEY_ANSWER];
+    if ((!answer)&&(!question)) {
+      // No answer, so return 400
+      quick_error(req,KHTTP_400,"answer missing");
+      break;
+    }
+    if (answer&&(!answer->val)) {
+      quick_error(req,KHTTP_400,"answer is blank");
+      break;
+    }
+    if (question&&(!question->val)) {
+      quick_error(req,KHTTP_400,"question is blank");
+      break;
+    }
+    if (answer&&question) {
+      quick_error(req,KHTTP_400,"You cannot provide both a question ID and and answer when deleting answer(s) to a question");
+      break;
+    }
+
+    // We have an answer -- so delete the specific answer
+    if (answer&&answer->val) {
+      // Deserialise answer
+      struct answer a;
+      if (deserialise_answer(answer->val,&a)) {
+	quick_error(req,KHTTP_400,"deserialise_answer() failed");
+	break;
+      }
+      // We have an answer, so try to delete it.
+      if (session_delete_answer(s,&a,1)) {
+	quick_error(req,KHTTP_400,"session_delete_answer() failed");
+	break;
+      }
+    }
+    else if (question&&question->val) {
+      // No answer give, so delete all answers to the given question
+      if (session_delete_answers_by_question_uid(s,question->val,0)<0) {
+	quick_error(req,KHTTP_400,"session_delete_answers_by_question_uid() failed");
+	break;
+      }      
+    }
+    else {
+      quick_error(req,KHTTP_400,"Either a question ID or an answer must be providd");
+      break;
+    }
+    if (save_session(s)) {
+      quick_error(req,KHTTP_400,"save_session() failed");
+      LOG_ERRORV("save_session('%s') failed",session_id);
+    }
+    
+    // All ok, so tell the caller the next question to be answered
+    fcgi_nextquestion(req);
+
+    LOG_INFO("Leaving page handler.");
+    
+  } while(0);
+
+  return;   
+}
+
 
 static void fcgi_delsession(struct kreq *r)
 {
@@ -696,51 +787,91 @@ static void fcgi_nextquestion(struct kreq *r)
       kjson_putstringp(&req,"title",q[i]->question_text);
       kjson_putstringp(&req,"description",q[i]->question_html);
       kjson_putstringp(&req,"type",question_type_names[q[i]->type]);
-
-      switch (q[i]->type)
-    {
-    case QTYPE_MULTICHOICE:
-    case QTYPE_MULTISELECT:
-    //#98 add single checkbox choices
-    case QTYPE_SINGLESELECT:
-    case QTYPE_SINGLECHOICE:
-    case QTYPE_CHECKBOX: 
-    
-      kjson_arrayp_open(&req,"choices");
-      int len=strlen(q[i]->choices);
-      if (len) {
-        for(int j=0;q[i]->choices[j];) {
-          char choice[65536];
-          int cl=0;
-          choice[0]=0;
-          while(
-            ((j+cl)<len)
-            &&q[i]->choices[j+cl]
-            &&(q[i]->choices[j+cl]!=',')
-            )
-          {
-            if (cl<65535) {
-              choice[cl]=q[i]->choices[j+cl];
-              choice[cl+1]=0;
-            }
-            cl++;
-          } 
-          // #74 skip empty values
-          if (q[i]->choices[j]!=',') {
-            kjson_putstring(&req,choice);
-          }
-          j+=cl;
-          if (q[i]->choices[j+cl]==',') j++;
-        }
+      // Provide default value if question not previously answered,
+      // else provide the most recent deleted answer for this question. #186
+      {
+	int found_value=0;	
+	struct answer *a;
+	for(int i=0;i<s->answer_count;i++)
+	  if(!strcmp(s->answers[i]->uid,q[i]->uid)) {
+	    if (s->answers[i]->flags&ANSWER_DELETED)
+	      {
+		char rendered[8192];
+		snprintf(rendered,8192,"%s",s->answers[i]->text);
+		
+		switch(q[i]->type)
+		  {
+		  case QTYPE_INT:	    snprintf(rendered,8192,"%lld",s->answers[i]->value); break;
+		  case QTYPE_FIXEDPOINT:    snprintf(rendered,8192,"%lld",s->answers[i]->value); break;
+		  case QTYPE_MULTICHOICE:   break;
+		  case QTYPE_MULTISELECT:   break;
+		  case QTYPE_LATLON:        snprintf(rendered,8192,"%lld,%lld",s->answers[i]->lat,s->answers[i]->lon); break;
+		  case QTYPE_DATETIME:      snprintf(rendered,8192,"%lld",s->answers[i]->time_begin); break;
+		  case QTYPE_DAYTIME:       snprintf(rendered,8192,"%lld",s->answers[i]->time_begin); break;
+		  case QTYPE_TIMERANGE:     snprintf(rendered,8192,"%lld,%lld",s->answers[i]->time_begin,s->answers[i]->time_end); break;
+		  case QTYPE_UPLOAD:        break;
+		  case QTYPE_TEXT:          break;
+		  case QTYPE_CHECKBOX:      break;
+		  case QTYPE_HIDDEN:        break;
+		  case QTYPE_TEXTAREA:      break;
+		  case QTYPE_EMAIL:         break;
+		  case QTYPE_PASSWORD:      break;
+		  case QTYPE_SINGLECHOICE:  break;
+		  case QTYPE_SINGLESELECT:  break;
+		  case QTYPE_UUID:          break;
+		  default:
+		    LOG_ERRORV("Unknown question type #%d in session '%s'",q[i]->type,session_id);
+		    break;
+		  }
+		  kjson_putstringp(&req,"default_value",rendered);
+	      }
+	  }
       }
-      kjson_array_close(&req);
-      break;
-    default:
-      break;
-    }
+      
+      switch (q[i]->type)
+	{
+	case QTYPE_MULTICHOICE:
+	case QTYPE_MULTISELECT:
+	  //#98 add single checkbox choices
+	case QTYPE_SINGLESELECT:
+	case QTYPE_SINGLECHOICE:
+	case QTYPE_CHECKBOX: 
+	  
+	  kjson_arrayp_open(&req,"choices");
+	  int len=strlen(q[i]->choices);
+	  if (len) {
+	    for(int j=0;q[i]->choices[j];) {
+	      char choice[65536];
+	      int cl=0;
+	      choice[0]=0;
+	      while(
+		    ((j+cl)<len)
+		    &&q[i]->choices[j+cl]
+		    &&(q[i]->choices[j+cl]!=',')
+		    )
+		{
+		  if (cl<65535) {
+		    choice[cl]=q[i]->choices[j+cl];
+		    choice[cl+1]=0;
+		  }
+		  cl++;
+		} 
+	      // #74 skip empty values
+	      if (q[i]->choices[j]!=',') {
+		kjson_putstring(&req,choice);
+	      }
+	      j+=cl;
+	      if (q[i]->choices[j+cl]==',') j++;
+	    }
+	  }
+	  kjson_array_close(&req);
+	  break;
+	default:
+	  break;
+	}
       // #72 unit field
       kjson_putstringp(&req,"unit",q[i]->unit);
-
+      
       kjson_obj_close(&req);
     }
     kjson_array_close(&req); 

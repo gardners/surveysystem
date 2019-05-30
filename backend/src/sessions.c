@@ -678,6 +678,7 @@ int save_session(struct session *s)
 int session_add_answer(struct session *ses,struct answer *a)
 {
   int retVal=0;
+  int undeleted=0;
   do {
     // Add answer to list of answers
     if (!ses) LOG_ERROR("Session structure is NULL");
@@ -694,13 +695,29 @@ int session_add_answer(struct session *ses,struct answer *a)
 
     // Don't allow multiple answers to the same question
     for(int i=0;i<ses->answer_count;i++)
-      if (!strcmp(ses->answers[i]->uid,a->uid))
-    LOG_ERRORV("Question '%s' has already been answered in session '%s'. Delete old answer before adding a new one",a->uid,ses->session_id);
+      if (!strcmp(ses->answers[i]->uid,a->uid)) {
+	if (ses->answers[i]->flags&ANSWER_DELETED) {
+	  // Answer exists, but was deleted, so we can just update the values
+	  // by replacing the answer structure. #186
+	  free(ses->answers[i]);
+	  ses->answers[i]=a;
+	  undeleted=1;
+	} else
+	  {
+	    LOG_ERRORV("Question '%s' has already been answered in session '%s'. Delete old answer before adding a new one",a->uid,ses->session_id);
+	  }
+	
+	
+      }
     if (retVal) break;
 
     if (ses->answer_count>=MAX_QUESTIONS) LOG_ERRORV("Too many answers in session '%s' (increase MAX_QUESTIONS?)",ses->session_id);
-    ses->answers[ses->answer_count]=a;
-    ses->answer_count++;
+
+    // #186 Don't append answer if we are undeleting it.
+    if (!undeleted) {
+      ses->answers[ses->answer_count]=a;
+      ses->answer_count++;
+    }
 
     char serialised_answer[65536]="(could not serialise)";
     serialise_answer(a,serialised_answer,65536);
@@ -714,7 +731,7 @@ int session_add_answer(struct session *ses,struct answer *a)
   Delete any and all answers to a given question from the provided session structure.
   It is not an error if there were no matching answers to delete
 */
-int session_delete_answers_by_question_uid(struct session *ses,char *uid)
+int session_delete_answers_by_question_uid(struct session *ses,char *uid, int deleteFollowingP)
 {
   int retVal=0;
   int deletions=0;
@@ -726,16 +743,20 @@ int session_delete_answers_by_question_uid(struct session *ses,char *uid)
       while ((i<ses->answer_count)&&(!strcmp(ses->answers[i]->uid,uid)))
     {
       // Delete matching questions
+      // #186 - Deletion now just sets the ANSWER_DELETED flag in the flags field for the answer.
+      // If deleteFollowingP is non-zero, then this is applied to all later answers in the session also.
 
       char serialised_answer[65536]="(could not serialise)";
       serialise_answer(ses->answers[i],serialised_answer,65536);
       LOG_INFOV("Deleted from session '%s' answer '%s'.",ses->session_id,serialised_answer);
 
-      free_answer(ses->answers[i]);
-      ses->answer_count--;
-      for(int j=i;j<ses->answer_count;j++)
-        ses->answers[j]=ses->answers[j+1];
-      ses->answers[ses->answer_count]=0;
+      ses->answers[i]->flags |= ANSWER_DELETED;
+
+      // Mark all following answers deleted, if required
+      if (deleteFollowingP) {
+	for(int j=i+1;j<ses->answer_count;j++)
+	  ses->answers[j]->flags |= ANSWER_DELETED;	  
+      }
     }
     if (retVal) break;
 
@@ -749,7 +770,7 @@ int session_delete_answers_by_question_uid(struct session *ses,char *uid)
   and return the number of answers deleted.
   If there is no exactly matching answer, it will return 0.
  */
-int session_delete_answer(struct session *ses,struct answer *a)
+int session_delete_answer(struct session *ses,struct answer *a, int deleteFollowingP)
 {
   int retVal=0;
   int deletions=0;
@@ -761,16 +782,19 @@ int session_delete_answer(struct session *ses,struct answer *a)
       while ((i<ses->answer_count)&&(!compare_answers(a,ses->answers[i],MISMATCH_IS_NOT_AN_ERROR)))
     {
       // Delete matching questions
+      // (Actually just mark them deleted. #186)
 
       char serialised_answer[65536]="(could not serialise)";
       serialise_answer(ses->answers[i],serialised_answer,65536);
       LOG_INFOV("Deleted from session '%s' answer '%s'.",ses->session_id,serialised_answer);
 
-      free_answer(ses->answers[i]);
-      ses->answer_count--;
-      for(int j=i;j<ses->answer_count;j++)
-        ses->answers[j]=ses->answers[j+1];
-      ses->answers[ses->answer_count]=0;
+      ses->answers[i]->flags |= ANSWER_DELETED;
+
+      // Mark all following answers deleted, if required
+      if (deleteFollowingP) {
+	for(int j=i+1;j<ses->answer_count;j++)
+	  ses->answers[j]->flags |= ANSWER_DELETED;	  
+      }
     }
     if (retVal) break;
 
