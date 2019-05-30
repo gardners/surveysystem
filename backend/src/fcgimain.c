@@ -82,6 +82,7 @@ enum	page {
 	PAGE_UPDATEANSWER,
 	PAGE_NEXTQUESTION,
 	PAGE_DELANSWER,
+	PAGE_DELANSWERANDFOLLOWING,
 	PAGE_DELSESSION,
 	PAGE_ACCESTEST,
 	PAGE_FCGITEST,
@@ -96,6 +97,7 @@ static void fcgi_addanswer(struct kreq *);
 static void fcgi_updateanswer(struct kreq *);
 static void fcgi_nextquestion(struct kreq *);
 static void fcgi_delanswer(struct kreq *);
+static void fcgi_delanswerandfollowing(struct kreq *);
 static void fcgi_delsession(struct kreq *);
 static void fcgi_accesstest(struct kreq *);
 static void fcgi_fastcgitest(struct kreq *);
@@ -107,6 +109,7 @@ static const disp disps[PAGE__MAX] = {
   fcgi_updateanswer,
   fcgi_nextquestion,
   fcgi_delanswer,
+  fcgi_delanswerandfollowing,
   fcgi_delsession,
   fcgi_accesstest,
   fcgi_fastcgitest,
@@ -119,6 +122,7 @@ static const char *const pages[PAGE__MAX] = {
   "updateanswer",
   "nextquestion",
   "delanswer",
+  "delanswerandfollowing",
   "delsession",
   "accesstest",
   "fastcgitest",
@@ -602,6 +606,93 @@ static void fcgi_delanswer(struct kreq *req)
 
   return;   
 }
+
+static void fcgi_delanswerandfollowing(struct kreq *req)
+{
+  int retVal=0;
+  
+  do {
+
+    LOG_INFO("Entering page handler.");
+
+    struct kpair *session = req->fieldmap[KEY_SESSIONID];
+    if (!session) {
+      // No session ID, so return 400
+      quick_error(req,KHTTP_400,"sessionid missing");
+      break;
+    }
+    if (!session->val) {
+      quick_error(req,KHTTP_400,"sessionid is blank");
+      break;
+    }
+    char *session_id=session->val;
+    if (lock_session(session_id)) LOG_ERRORV("Failed to lock session '%s'",session_id);    
+    struct session *s=load_session(session_id);
+    if (!s) {
+      quick_error(req,KHTTP_400,"Could not load specified session. Does it exist?");
+      break;
+    }
+
+    struct kpair *question = req->fieldmap[KEY_QUESTIONID];
+    struct kpair *answer = req->fieldmap[KEY_ANSWER];
+    if ((!answer)&&(!question)) {
+      // No answer, so return 400
+      quick_error(req,KHTTP_400,"answer missing");
+      break;
+    }
+    if (answer&&(!answer->val)) {
+      quick_error(req,KHTTP_400,"answer is blank");
+      break;
+    }
+    if (question&&(!question->val)) {
+      quick_error(req,KHTTP_400,"question is blank");
+      break;
+    }
+    if (answer&&question) {
+      quick_error(req,KHTTP_400,"You cannot provide both a question ID and and answer when deleting answer(s) to a question");
+      break;
+    }
+
+    // We have an answer -- so delete the specific answer
+    if (answer&&answer->val) {
+      // Deserialise answer
+      struct answer a;
+      if (deserialise_answer(answer->val,&a)) {
+	quick_error(req,KHTTP_400,"deserialise_answer() failed");
+	break;
+      }
+      // We have an answer, so try to delete it.
+      if (session_delete_answer(s,&a,1)) {
+	quick_error(req,KHTTP_400,"session_delete_answer() failed");
+	break;
+      }
+    }
+    else if (question&&question->val) {
+      // No answer give, so delete all answers to the given question
+      if (session_delete_answers_by_question_uid(s,question->val,0)<0) {
+	quick_error(req,KHTTP_400,"session_delete_answers_by_question_uid() failed");
+	break;
+      }      
+    }
+    else {
+      quick_error(req,KHTTP_400,"Either a question ID or an answer must be providd");
+      break;
+    }
+    if (save_session(s)) {
+      quick_error(req,KHTTP_400,"save_session() failed");
+      LOG_ERRORV("save_session('%s') failed",session_id);
+    }
+    
+    // All ok, so tell the caller the next question to be answered
+    fcgi_nextquestion(req);
+
+    LOG_INFO("Leaving page handler.");
+    
+  } while(0);
+
+  return;   
+}
+
 
 static void fcgi_delsession(struct kreq *r)
 {
