@@ -678,6 +678,7 @@ int save_session(struct session *s)
 int session_add_answer(struct session *ses,struct answer *a)
 {
   int retVal=0;
+  int undeleted=0;
   do {
     // Add answer to list of answers
     if (!ses) LOG_ERROR("Session structure is NULL");
@@ -700,6 +701,7 @@ int session_add_answer(struct session *ses,struct answer *a)
 	  // by replacing the answer structure. #186
 	  free(ses->answers[i]);
 	  ses->answers[i]=a;
+	  undeleted=1;
 	} else
 	  {
 	    LOG_ERRORV("Question '%s' has already been answered in session '%s'. Delete old answer before adding a new one",a->uid,ses->session_id);
@@ -710,8 +712,12 @@ int session_add_answer(struct session *ses,struct answer *a)
     if (retVal) break;
 
     if (ses->answer_count>=MAX_QUESTIONS) LOG_ERRORV("Too many answers in session '%s' (increase MAX_QUESTIONS?)",ses->session_id);
-    ses->answers[ses->answer_count]=a;
-    ses->answer_count++;
+
+    // #186 Don't append answer if we are undeleting it.
+    if (!undeleted) {
+      ses->answers[ses->answer_count]=a;
+      ses->answer_count++;
+    }
 
     char serialised_answer[65536]="(could not serialise)";
     serialise_answer(a,serialised_answer,65536);
