@@ -448,7 +448,7 @@ int deserialise_answer(char *in,struct answer *a)
     // #72 unit field
     DESERIALISE_STRING(a->unit);
     // #186 add "answer deleted" flag
-    DESERIALISE_ANSWER(a->flags);
+    DESERIALISE_INT(a->flags);
     // Check that we are at the end of the input string
     DESERIALISE_COMPLETE(out,len,max_len);
     
