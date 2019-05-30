@@ -317,7 +317,7 @@ int call_python_nextquestion(struct session *s,
     }
     for(int i=0;i<s->answer_count;i++)
       // Don't include deleted answers in the list fed to Python. #186
-      if (!(s->answers[i].flags&ANSWER_DELETED))
+      if (!(s->answers[i]->flags&ANSWER_DELETED))
 	{
 	  PyObject *dict = PyDict_New();
 	  PyObject *uid = PyUnicode_FromString(s->answers[i]->uid);
@@ -559,7 +559,7 @@ int get_analysis(struct session *s,const unsigned char **output)
     }
     for(int i=0;i<s->answer_count;i++)
       // Don't include deleted answers in the list fed to Python. #186
-      if (!(s->answers[i].flags&ANSWER_DELETED))
+      if (!(s->answers[i]->flags&ANSWER_DELETED))
 	{      
 	  PyObject *dict = PyDict_New();
 	  PyObject *uid = PyUnicode_FromString(s->answers[i]->uid);
