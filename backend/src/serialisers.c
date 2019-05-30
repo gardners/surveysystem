@@ -412,6 +412,8 @@ int serialise_answer(struct answer *a,char *out,int max_len)
     SERIALISE_INT(a->dst_delta);
     // #72 unit field
     SERIALISE_STRING(a->unit);
+    // #186 - Add "answer deleted" flag
+    SERIALISE_INT(a->flags);
     // Trim terminal separator character
     SERIALISE_COMPLETE(out,len,max_len);
     
@@ -445,6 +447,8 @@ int deserialise_answer(char *in,struct answer *a)
     DESERIALISE_INT(a->dst_delta);
     // #72 unit field
     DESERIALISE_STRING(a->unit);
+    // #186 add "answer deleted" flag
+    DESERIALISE_INT(a->flags);
     // Check that we are at the end of the input string
     DESERIALISE_COMPLETE(out,len,max_len);
     
