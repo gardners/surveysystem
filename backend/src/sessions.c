@@ -694,8 +694,19 @@ int session_add_answer(struct session *ses,struct answer *a)
 
     // Don't allow multiple answers to the same question
     for(int i=0;i<ses->answer_count;i++)
-      if (!strcmp(ses->answers[i]->uid,a->uid))
-    LOG_ERRORV("Question '%s' has already been answered in session '%s'. Delete old answer before adding a new one",a->uid,ses->session_id);
+      if (!strcmp(ses->answers[i]->uid,a->uid)) {
+	if (ses->answers[i]->flags&ANSWER_DELETED) {
+	  // Answer exists, but was deleted, so we can just update the values
+	  // by replacing the answer structure. #186
+	  free(ses->answers[i]);
+	  ses->answers[i]=a;
+	} else
+	  {
+	    LOG_ERRORV("Question '%s' has already been answered in session '%s'. Delete old answer before adding a new one",a->uid,ses->session_id);
+	  }
+	
+	
+      }
     if (retVal) break;
 
     if (ses->answer_count>=MAX_QUESTIONS) LOG_ERRORV("Too many answers in session '%s' (increase MAX_QUESTIONS?)",ses->session_id);
