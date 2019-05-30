@@ -115,6 +115,9 @@ struct answer {
   int dst_delta;
   // #72 unit field
   char *unit;
+
+  // #186 flags
+  int flags;
 };
 
 #define MAX_QUESTIONS 8192
