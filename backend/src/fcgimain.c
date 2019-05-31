@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include "kcgi.h"
 #include "kcgijson.h"
@@ -43,7 +44,7 @@ int kvalid_surveyid(struct kpair *kp) {
   if (retVal) retVal=0; else retVal=1;
 
   LOG_UNMUTE();
-  return 1;
+  return retVal;
 }
 
 int kvalid_sessionid(struct kpair *kp)
@@ -316,6 +317,7 @@ int main(int argc,char **argv)
 
 void quick_error(struct kreq *req,int e,const char *msg)
 {
+  int retVal=0;
   enum kcgi_err    er;
   do {
     er = khttp_head(req, kresps[KRESP_STATUS], 
@@ -351,12 +353,14 @@ void quick_error(struct kreq *req,int e,const char *msg)
     
     // Write some stuff in reply
     er = khttp_puts(req, msg);
+    if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
 
     // Display error log as well.
     dump_errors_kcgi(req);
     
   } while(0);
 
+  (void)retVal;
   return;
 }  
 
@@ -461,7 +465,9 @@ static void fcgi_newsession(struct kreq *req)
     if (create_session(survey->val,session_id)) {
       begin_500(req);
       er = khttp_puts(req, "<h1>500 Internal Error. Session could not be created.</h1>\n");
+      if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
       er = khttp_puts(req, "Error log:<br>\n");
+      if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
       dump_errors_kcgi(req);
       break;
     }    
@@ -470,11 +476,12 @@ static void fcgi_newsession(struct kreq *req)
 
     // Write some stuff in reply
     er = khttp_puts(req, session_id);
-
+    if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
     LOG_INFO("Leaving page handler");
     
   } while(0);
 
+  (void)retVal;
   return;
 }
 
@@ -534,7 +541,8 @@ static void fcgi_addanswer(struct kreq *req)
       quick_error(req,KHTTP_400,"session_add_answer() failed");
       break;
     }
-    if (a) free_answer(a); a=NULL;
+    if (a) free_answer(a);
+    a=NULL;
     
     if (save_session(s)) LOG_ERRORV("save_session('%s') failed",session_id);
 
@@ -546,6 +554,7 @@ static void fcgi_addanswer(struct kreq *req)
     
   } while(0);
 
+  (void)retVal;
   return;
   
 }
@@ -599,18 +608,25 @@ static void fcgi_updateanswer(struct kreq *req)
       break;
     }
 
+    if (!a) {
+      quick_error(req,KHTTP_400,"Deserialised answer is null");
+      break;
+    }
     if (session_delete_answers_by_question_uid(s,a->uid,0)<0) {
-      if (a) free_answer(a); a=NULL;
+      if (a) free_answer(a);
+      a=NULL;
       quick_error(req,KHTTP_400,"session_delete_answers_by_question_uid() failed");
       break;
     }
     if (session_add_answer(s,a)) {
-      if (a) free_answer(a); a=NULL;
+      if (a) free_answer(a);
+      a=NULL;
       quick_error(req,KHTTP_400,"session_add_answer() failed");
       break;
     }
     if (save_session(s)) {
-      if (a) free_answer(a); a=NULL;
+      if (a) free_answer(a);
+      a=NULL;
       quick_error(req,KHTTP_400,"save_session() failed");
       LOG_ERRORV("save_session('%s') failed",session_id);
     }
@@ -622,6 +638,7 @@ static void fcgi_updateanswer(struct kreq *req)
     
   } while(0);
 
+  (void)retVal;
   return; 
 }  
 
@@ -681,13 +698,15 @@ static void fcgi_delanswer(struct kreq *req)
       }
 
       if (deserialise_answer(answer->val,a)) {
-	if (a) free_answer(a); a=NULL;
+	if (a) free_answer(a);
+	a=NULL;
 	quick_error(req,KHTTP_400,"deserialise_answer() failed");
 	break;
       }
       // We have an answer, so try to delete it.
       if (session_delete_answer(s,a,0)) {
-	if (a) free_answer(a); a=NULL;
+	if (a) free_answer(a);
+	a=NULL;
 	quick_error(req,KHTTP_400,"session_delete_answer() failed");
 	break;
       }
@@ -715,6 +734,7 @@ static void fcgi_delanswer(struct kreq *req)
     
   } while(0);
 
+  (void)retVal;
   return;   
 }
 
@@ -777,7 +797,8 @@ static void fcgi_delanswerandfollowing(struct kreq *req)
       }
       // We have an answer, so try to delete it.
       if (session_delete_answer(s,a,1)) {
-	if (a) free_answer(a); a=NULL;
+	if (a) free_answer(a);
+	a=NULL;
 	quick_error(req,KHTTP_400,"session_delete_answer() failed");
 	break;
       }
@@ -805,6 +826,7 @@ static void fcgi_delanswerandfollowing(struct kreq *req)
     
   } while(0);
 
+  (void)retVal;
   return;   
 }
 
@@ -848,7 +870,8 @@ static void fcgi_delsession(struct kreq *r)
     LOG_INFO("Leaving page handler.");
     
   } while(0);
-  
+
+  (void)retVal;
   return;  
 }
 
@@ -905,8 +928,6 @@ static void fcgi_nextquestion(struct kreq *r)
       // Provide default value if question not previously answered,
       // else provide the most recent deleted answer for this question. #186
       {
-	int found_value=0;	
-	struct answer *a;
 	for(int j=0;j<s->answer_count;j++)
 	  if(!strcmp(s->answers[j]->uid,q[i]->uid)) {
 	    if (s->answers[j]->flags&ANSWER_DELETED)
@@ -997,6 +1018,8 @@ static void fcgi_nextquestion(struct kreq *r)
     
   } while(0);
 
+  (void)retVal;
+  
   return;  
 }
 
@@ -1152,5 +1175,7 @@ static void fcgi_analyse(struct kreq *r)
     
   } while(0);
 
+  (void)retVal;
+  
   return;  
 }
