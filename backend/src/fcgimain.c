@@ -187,16 +187,24 @@ int main(int argc,char **argv)
 
     // For each request
     for (;;) {
+
+      LOG_WARNV("Top of loop",1);
+      
       // Clear our internal error log
       clear_errors();
 
+      LOG_WARNV("Cleared errors",1);
+
       // Parse request
       er = khttp_fcgi_parse(fcgi, &req);
+
+      LOG_WARNV("parsed fcgi",1);
+
       if (KCGI_EXIT == er) {
-	fprintf(stderr, "khttp_fcgi_parse: terminate\n");
+	LOG_WARNV("khttp_fcgi_parse: terminate, becausee er == KCGI_EXIT",1);
 	break;
       } else if (KCGI_OK != er) {
-	fprintf(stderr, "khttp_fcgi_parse: error: %d\n", er);
+	LOG_WARNV("khttp_fcgi_parse: error: %d\n", er);
 	break;
       }
 
@@ -219,10 +227,15 @@ int main(int argc,char **argv)
       }
       else {
 	// Call page dispatcher
+	LOG_WARNV("Calling dispatcher %d",req.page);
 	(*disps[req.page])(&req);
+
+	LOG_WARNV("Returned from dispatcher %d",req.page);
 
 	// Make sure no sessions are locked when done.
 	release_my_session_locks();
+
+	LOG_WARNV("Released locks",1);
       }
       
       // Close off request
