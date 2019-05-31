@@ -46,17 +46,31 @@ int kvalid_questionid(struct kpair *kp) {
 }
 
 int kvalid_answer(struct kpair *kp) {
-  // Only use our validation here, not one of the pre-defined ones
-  kp->type = KPAIR__MAX;
 
-  kp->parsed.s = kp->val;
-  
-  struct answer a;
+  int retVal=0;
 
-  // XXX Remember deserialised answer and keep it in memory to save parsing twice?
-  
-  if (deserialise_answer(kp->val,&a)) return 0;
-  else return 1;
+  do {
+    // Only use our validation here, not one of the pre-defined ones
+    kp->type = KPAIR__MAX;
+    
+    kp->parsed.s = kp->val;
+    
+    struct answer *a=calloc(sizeof(struct answer),1);
+    if (!a) {
+      LOG_ERROR("Could not calloc() answer structure.");
+    }
+    
+    // XXX Remember deserialised answer and keep it in memory to save parsing twice?
+    
+    if (deserialise_answer(kp->val,a)) {
+      free_answer(a);
+      return 0;
+    } else {
+      free_answer(a);
+      LOG_ERROR("Failed to deserialise answer");
+    }
+  } while(0);
+  return retVal;
 }
 
 enum key {
@@ -187,8 +201,12 @@ int main(int argc,char **argv)
       }
 
       // Fail if we can't find the page, or the mime type is wrong
+      LOG_WARNV("Considering whether to throw a 404 (req.page=%d, MAX=%d; req.mime=%d, KMIME=%d)",
+		(int)req.page,(int)PAGE__MAX,
+		(int)KMIME_TEXT_HTML, (int)req.mime);
       if (PAGE__MAX == req.page || 
 	  KMIME_TEXT_HTML != req.mime) {
+	LOG_WARNV("Throwing a 404 error",1);
 	er = khttp_head(&req, kresps[KRESP_STATUS], 
 			"%s", khttps[KHTTP_404]);
 	if (KCGI_HUP == er) {
@@ -427,16 +445,24 @@ static void fcgi_addanswer(struct kreq *req)
     }
 
     // Deserialise answer
-    struct answer a;
-    if (deserialise_answer(answer->val,&a)) {
+    struct answer *a=calloc(sizeof(struct answer),1);
+    if (!a) {
+      quick_error(req,KHTTP_500,"calloc() of answer structure failed.");
+    }
+
+    if (deserialise_answer(answer->val,a)) {
+      free_answer(a); a=NULL;
       quick_error(req,KHTTP_400,"Could not deserialise answer");
       break;
     }
 
-    if (session_add_answer(s,&a)) {
+    if (session_add_answer(s,a)) {
+      free_answer(a); a=NULL;
       quick_error(req,KHTTP_400,"session_add_answer() failed");
       break;
     }
+    if (a) free_answer(a); a=NULL;
+    
     if (save_session(s)) LOG_ERRORV("save_session('%s') failed",session_id);
 
     
@@ -491,21 +517,27 @@ static void fcgi_updateanswer(struct kreq *req)
     }
 
     // Deserialise answer
-    struct answer a;
-    if (deserialise_answer(answer->val,&a)) {
+    struct answer *a=calloc(sizeof(struct answer),1);
+    if (!a) {
+      quick_error(req,KHTTP_500,"calloc() of answer structure failed.");
+    }
+    if (deserialise_answer(answer->val,a)) {
       quick_error(req,KHTTP_400,"Could not deserialise answer");
       break;
     }
 
-    if (session_delete_answers_by_question_uid(s,a.uid,0)<0) {
+    if (session_delete_answers_by_question_uid(s,a->uid,0)<0) {
+      if (a) free_answer(a); a=NULL;
       quick_error(req,KHTTP_400,"session_delete_answers_by_question_uid() failed");
       break;
     }
-    if (session_add_answer(s,&a)) {
+    if (session_add_answer(s,a)) {
+      if (a) free_answer(a); a=NULL;
       quick_error(req,KHTTP_400,"session_add_answer() failed");
       break;
     }
     if (save_session(s)) {
+      if (a) free_answer(a); a=NULL;
       quick_error(req,KHTTP_400,"save_session() failed");
       LOG_ERRORV("save_session('%s') failed",session_id);
     }
@@ -570,13 +602,19 @@ static void fcgi_delanswer(struct kreq *req)
     // We have an answer -- so delete the specific answer
     if (answer&&answer->val) {
       // Deserialise answer
-      struct answer a;
-      if (deserialise_answer(answer->val,&a)) {
+      struct answer *a=calloc(sizeof(struct answer),1);
+      if (!a) {
+	quick_error(req,KHTTP_500,"calloc() of answer structure failed.");
+      }
+
+      if (deserialise_answer(answer->val,a)) {
+	if (a) free_answer(a); a=NULL;
 	quick_error(req,KHTTP_400,"deserialise_answer() failed");
 	break;
       }
       // We have an answer, so try to delete it.
-      if (session_delete_answer(s,&a,0)) {
+      if (session_delete_answer(s,a,0)) {
+	if (a) free_answer(a); a=NULL;
 	quick_error(req,KHTTP_400,"session_delete_answer() failed");
 	break;
       }
@@ -656,13 +694,17 @@ static void fcgi_delanswerandfollowing(struct kreq *req)
     // We have an answer -- so delete the specific answer
     if (answer&&answer->val) {
       // Deserialise answer
-      struct answer a;
-      if (deserialise_answer(answer->val,&a)) {
+      struct answer *a=calloc(sizeof(struct answer),1);
+      if (!a) {
+	quick_error(req,KHTTP_500,"calloc() of answer structure failed.");
+      }
+      if (deserialise_answer(answer->val,a)) {
 	quick_error(req,KHTTP_400,"deserialise_answer() failed");
 	break;
       }
       // We have an answer, so try to delete it.
-      if (session_delete_answer(s,&a,1)) {
+      if (session_delete_answer(s,a,1)) {
+	if (a) free_answer(a); a=NULL;
 	quick_error(req,KHTTP_400,"session_delete_answer() failed");
 	break;
       }

@@ -671,6 +671,24 @@ int save_session(struct session *s)
   return retVal;
 }
 
+struct answer *copy_answer(struct answer *aa)
+{
+  int retVal=0;
+  struct answer *a=NULL;
+  do {
+    // Duplicate aa into a, so that we don't put pointers to structures that are on the
+    // stack into our list.
+    a=malloc(sizeof(struct answer));
+    if (!a) LOG_ERROR("malloc() of struct answer failed.");
+    bcopy(aa,a,sizeof(struct answer));
+    if (a->uid) { a->uid=strdup(a->uid); if (!a->uid) { LOG_ERROR("Could not copy a->uid"); } }
+    if (a->text) { a->text=strdup(a->text);if (!a->text) { LOG_ERROR("Could not copy a->text"); } }
+    if (a->unit) { a->unit=strdup(a->unit); if (!a->unit) { LOG_ERROR("Could not copy a->unit"); } }
+  } while(0);
+  if (retVal) return NULL;
+  else return a;
+}
+
 /*
   Add the provided answer to the set of answers in the provided session.
   If another answer exists for the same question, it will trigger an error.
@@ -700,7 +718,7 @@ int session_add_answer(struct session *ses,struct answer *a)
 	  // Answer exists, but was deleted, so we can just update the values
 	  // by replacing the answer structure. #186
 	  free(ses->answers[i]);
-	  ses->answers[i]=a;
+	  ses->answers[i]=copy_answer(a);
 	  undeleted=1;
 	} else
 	  {
@@ -715,7 +733,7 @@ int session_add_answer(struct session *ses,struct answer *a)
 
     // #186 Don't append answer if we are undeleting it.
     if (!undeleted) {
-      ses->answers[ses->answer_count]=a;
+      ses->answers[ses->answer_count]=copy_answer(a);
       ses->answer_count++;
     }
 
