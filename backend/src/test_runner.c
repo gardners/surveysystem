@@ -190,6 +190,26 @@ int dump_logs(char *dir,FILE *log)
     fprintf(log,"Backend server logs follow.\n");
     fprintf(log,"========================================================================\n");
 
+    {
+      char breakage_log[16384];
+      // XXX breakage.log exists outside of the logs directory. It should be moved in there.
+      // XXX We don't ignore previous content of the breakage log.  We should do that.
+      snprintf(breakage_log,16384,"%s/../breakage.log",dir);
+      FILE *f=fopen(breakage_log,"r");
+      if (f) {
+	fprintf(log,"--------- %s ----------\n",breakage_log);
+	char line[4096];
+	line[0]=0; fgets(line,4096,f);
+	while(line[0]) {
+	  fprintf(log,"%s",line);
+	  line[0]=0; fgets(line,4096,f);
+	}
+	fclose(f);
+      } else
+	fprintf(log,"WARNING: Could not open breakage log file '%s' for reading.\n",breakage_log);
+    }
+    fprintf(log,"========================================================================\n");    
+
     int ret = 0;
     FTS *ftsp = NULL;
     FTSENT *curr;
@@ -905,6 +925,7 @@ char *config_template=
   "     \"mod_redirect\",\n"
   ")\n"
   "\n"
+  "server.breakagelog           = \"%s/breakage.log\"\n"
   "server.document-root        = \"%s/front/build\"\n"
   "server.upload-dirs          = ( \"/var/cache/lighttpd/uploads\" )\n"
   "server.errorlog             = \"/var/log/lighttpd/error.log\"\n"
@@ -967,7 +988,16 @@ int configure_and_start_lighttpd(char *test_dir)
     if (time_since_last<10) sleep(11-time_since_last);
     last_config_time=time(0);
 
+    // Create log file in test directory, and make it globally writeable
+    {
+      snprintf(conf_data,16384,"%s/breakage.log",test_dir);
+      FILE *f=fopen(conf_data,"w");
+      if (f) fclose(f);
+      chmod(conf_data,0777);
+    }
+    
     snprintf(conf_data,16384,config_template,
+             test_dir,
              getcwd(cwd,cwdlen),
              LIGHTY_USER, LIGHTY_GROUP, HTTP_PORT, SURVEYFCGI_PORT, test_dir,
              test_dir, getcwd(cwd,cwdlen));
