@@ -19,30 +19,54 @@
 #include "question_types.h"
 
 int kvalid_surveyid(struct kpair *kp) {
-  // Only use our validation here, not one of the pre-defined ones
-  kp->type = KPAIR__MAX;
 
-  // Is okay
-  kp->parsed.s = kp->val;
+  int retVal=0;
+  do {
+    if (!kp) LOG_ERROR("kp is NULL");
+    // Only use our validation here, not one of the pre-defined ones
+    kp->type = KPAIR__MAX;
+    
+    LOG_WARNV("Validating surveyid",1);
+    
+    // Is okay
+    kp->parsed.s = kp->val;
+  } while(0);
+  if (retVal) retVal=0; else retVal=1;
   return 1;
 }
 
 int kvalid_sessionid(struct kpair *kp) {
-  // Only use our validation here, not one of the pre-defined ones
-  kp->type = KPAIR__MAX;
 
-  kp->parsed.s = kp->val;
-  if (validate_session_id(kp->val)) return 0;
-  else return 1;
+  int retVal=0;
+  do {
+    if (!kp) LOG_ERROR("kp is NULL");
+    // Only use our validation here, not one of the pre-defined ones
+    kp->type = KPAIR__MAX;
+
+    kp->parsed.s = kp->val;
+    LOG_WARNV("Validating sessionid",1);
+    if (validate_session_id(kp->val)) LOG_ERROR("validate_session_id failed");
+  } while(0);
+  if (retVal) retVal=0; else retVal=1;
 }
 
 int kvalid_questionid(struct kpair *kp) {
-  // Only use our validation here, not one of the pre-defined ones
-  kp->type = KPAIR__MAX;
 
-  kp->parsed.s = kp->val;
-  // Is okay
-  return kvalid_string(kp);
+  int retVal=0;
+  do {
+    if (!kp) LOG_ERROR("kp is NULL");
+    // Only use our validation here, not one of the pre-defined ones
+    kp->type = KPAIR__MAX;
+
+    LOG_WARNV("Validating questionid",1);
+    
+    kp->parsed.s = kp->val;
+    // Is okay
+    if (kvalid_string(kp)) retVal=0;
+    else LOG_ERROR("questionid is not a valid string");
+  } while(0);
+  if (retVal) retVal=0; else retVal=1;
+  return retVal;
 }
 
 int kvalid_answer(struct kpair *kp) {
@@ -50,11 +74,14 @@ int kvalid_answer(struct kpair *kp) {
   int retVal=0;
 
   do {
+
+    LOG_ERRORV("Validating answer",1);
+        
     // Only use our validation here, not one of the pre-defined ones
     kp->type = KPAIR__MAX;
     
     kp->parsed.s = kp->val;
-    
+
     struct answer *a=calloc(sizeof(struct answer),1);
     if (!a) {
       LOG_ERROR("Could not calloc() answer structure.");
@@ -64,12 +91,14 @@ int kvalid_answer(struct kpair *kp) {
     
     if (deserialise_answer(kp->val,a)) {
       free_answer(a);
-      return 0;
+      LOG_ERROR("deserialise_answer() failed");
     } else {
       free_answer(a);
-      LOG_ERROR("Failed to deserialise answer");
+      // Success, so nothing to do
     }
   } while(0);
+
+  if (retVal) retVal=0; else retVal=1;
   return retVal;
 }
 
@@ -83,7 +112,7 @@ enum key {
 
 static const struct kvalid keys[KEY__MAX] = {
   { kvalid_surveyid, "surveyid"},
-  { kvalid_sessionid, "sessionid"},
+  { kvalid_sessionid, "sessionidfish"},
   { kvalid_questionid, "questionid"},
   { kvalid_answer, "answer"}
 };
