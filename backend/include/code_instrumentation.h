@@ -27,6 +27,9 @@
 
 #define COMPILE_TEST_LEVEL TEST_LEVEL_LIGHT // Change this as desired
 
+#define LOG_MUTE() code_instrumentation_mute()
+#define LOG_UNMUTE() code_instrumentation_unmute()
+
 #define LOG_MESSAGE(...) \
   code_instrumentation_log(__FILE__, __LINE__, __FUNCTION__, LOG_LEVEL_OFF, ##__VA_ARGS__)
 
@@ -148,5 +151,7 @@
 void code_instrumentation_log(const char* fileName, int line, const char* functionName, int logLevel, const char *msg, ...);
 void code_instrumentation_entry(const char* functionName);
 void code_instrumentation_exit(const char* functionName);
+void code_instrumentation_mute();
+void code_instrumentation_unmute();
 
 #endif

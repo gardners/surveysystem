@@ -18,11 +18,20 @@
 #include "serialisers.h"
 #include "question_types.h"
 
+#define          CHECKPOINT() { fprintf(stderr,"%s:%d:%s():pid=%d: Checkpoint\n",__FILE__,__LINE__,__FUNCTION__,getpid()); }
+
 int kvalid_surveyid(struct kpair *kp) {
 
+  // XXX - This process runs in the sandboxed child environment, from where
+  // it is not possible to emit any log output.  Very annoying, but we have
+  // to live with it.
+  LOG_MUTE();
+  
   int retVal=0;
   do {
+  
     if (!kp) LOG_ERROR("kp is NULL");
+
     // Only use our validation here, not one of the pre-defined ones
     kp->type = KPAIR__MAX;
     
@@ -32,26 +41,43 @@ int kvalid_surveyid(struct kpair *kp) {
     kp->parsed.s = kp->val;
   } while(0);
   if (retVal) retVal=0; else retVal=1;
+
+  LOG_UNMUTE();
   return 1;
 }
 
-int kvalid_sessionid(struct kpair *kp) {
-
+int kvalid_sessionid(struct kpair *kp)
+{
+  // XXX - This process runs in the sandboxed child environment, from where
+  // it is not possible to emit any log output.  Very annoying, but we have
+  // to live with it.
+  LOG_MUTE();
+  
   int retVal=0;
   do {
     if (!kp) LOG_ERROR("kp is NULL");
+   
     // Only use our validation here, not one of the pre-defined ones
     kp->type = KPAIR__MAX;
 
     kp->parsed.s = kp->val;
     LOG_WARNV("Validating sessionid",1);
-    if (validate_session_id(kp->val)) LOG_ERROR("validate_session_id failed");
+    if (validate_session_id(kp->val)) {
+      LOG_ERROR("validate_session_id failed");
+    }
   } while(0);
   if (retVal) retVal=0; else retVal=1;
+  LOG_UNMUTE();
+  return retVal;
 }
 
-int kvalid_questionid(struct kpair *kp) {
-
+int kvalid_questionid(struct kpair *kp)
+{
+  // XXX - This process runs in the sandboxed child environment, from where
+  // it is not possible to emit any log output.  Very annoying, but we have
+  // to live with it.
+  LOG_MUTE();
+  
   int retVal=0;
   do {
     if (!kp) LOG_ERROR("kp is NULL");
@@ -66,16 +92,22 @@ int kvalid_questionid(struct kpair *kp) {
     else LOG_ERROR("questionid is not a valid string");
   } while(0);
   if (retVal) retVal=0; else retVal=1;
+  LOG_UNMUTE();
   return retVal;
 }
 
 int kvalid_answer(struct kpair *kp) {
 
+  // XXX - This process runs in the sandboxed child environment, from where
+  // it is not possible to emit any log output.  Very annoying, but we have
+  // to live with it.
+  LOG_MUTE();
+
   int retVal=0;
 
   do {
 
-    LOG_ERRORV("Validating answer",1);
+    LOG_WARNV("Validating answer",1);
         
     // Only use our validation here, not one of the pre-defined ones
     kp->type = KPAIR__MAX;
@@ -98,7 +130,10 @@ int kvalid_answer(struct kpair *kp) {
     }
   } while(0);
 
+  LOG_WARNV("retVal=%d",retVal);
+  
   if (retVal) retVal=0; else retVal=1;
+  LOG_UNMUTE();
   return retVal;
 }
 
@@ -112,7 +147,7 @@ enum key {
 
 static const struct kvalid keys[KEY__MAX] = {
   { kvalid_surveyid, "surveyid"},
-  { kvalid_sessionid, "sessionidfish"},
+  { kvalid_sessionid, "sessionid"},
   { kvalid_questionid, "questionid"},
   { kvalid_answer, "answer"}
 };
@@ -205,7 +240,7 @@ int main(int argc,char **argv)
     struct kreq      req;
     struct kfcgi    *fcgi=NULL;
     enum kcgi_err    er;
-    
+
     if (KCGI_OK != khttp_fcgi_init(&fcgi,
 				   keys, KEY__MAX, // CGI variable parse definitions
 				   pages, PAGE__MAX,  // Pages for parsing
@@ -221,13 +256,17 @@ int main(int argc,char **argv)
       clear_errors();
 
       // Parse request
+      fprintf(stderr,"Calling fcgi_parse()\n");
       er = khttp_fcgi_parse(fcgi, &req);
+      fprintf(stderr,"Returned from fcgi_parse()\n");
 
       if (KCGI_EXIT == er) {
 	LOG_WARNV("khttp_fcgi_parse: terminate, becausee er == KCGI_EXIT",1);
+	fprintf(stderr,"khttp_fcgi_parse: terminate, becausee er == KCGI_EXIT");
 	break;
       } else if (KCGI_OK != er) {
 	LOG_WARNV("khttp_fcgi_parse: error: %d\n", er);
+	fprintf(stderr,"khttp_fcgi_parse: error: %d\n", er);
 	break;
       }
 
@@ -261,7 +300,9 @@ int main(int argc,char **argv)
       khttp_free(&req);
     }
 
+    CHECKPOINT();
     khttp_fcgi_free(fcgi);
+    CHECKPOINT();
     
       
   } while(0);
