@@ -46,7 +46,8 @@ void log_python_error(void)
     }
     
   } while(0);
-  
+
+  (void)retVal;
   return;
 }
 
@@ -243,6 +244,7 @@ void log_python_object(char *msg,PyObject *result)
     char buffer[8192]="";
     if (f) {
       int bytes=fread(buffer,1,8192,f);
+      (void)bytes;
       fclose(f);
     }
     if (buffer[0]) LOG_INFOV("%s = %s",msg,buffer);

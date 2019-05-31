@@ -219,7 +219,7 @@ int create_session(char *survey_id,char *session_id_out)
   int retVal=0;
 
   do {
-    char session_id[256];
+    char session_id[256]={0};
     char session_prefix[5];
     char session_path_suffix[1024];
     char session_path[1024];
@@ -459,7 +459,6 @@ int load_survey_questions(struct session *ses)
   FILE *f=NULL;
 
   do {
-
     if (!ses) LOG_ERROR("session structure is NULL");
     if (!ses->survey_id) LOG_ERROR("survey_id in session structure is NULL");
 
@@ -474,7 +473,8 @@ int load_survey_questions(struct session *ses)
     char line[8192];
 
     // Check survey file format version
-    line[0]=0;fgets(line,8192,f);
+    line[0]=0;
+    if (!fgets(line,8192,f)) LOG_ERRORV("Failed to read survey file format version in survey specification file '%s'",survey_path);
     if (!line[0]) LOG_ERRORV("Failed to read survey file format version in survey specification file '%s'",survey_path);
     int format_version=0;
     int offset=0;
@@ -485,7 +485,8 @@ int load_survey_questions(struct session *ses)
     if (format_version<1||format_version>2) LOG_ERRORV("Unknown survey file format version in survey file '%s'",survey_path);
 
     // Get survey file description
-    line[0]=0;fgets(line,8192,f);
+    line[0]=0;
+    if (!fgets(line,8192,f)) LOG_ERRORV("Failed to read survey description in survey specification file '%s'",survey_path);
     if (!line[0]) LOG_ERRORV("Failed to read survey description in survey specification file '%s'",survey_path);
     // Trim CR and LF chars from description
     trim_crlf(line);
@@ -496,7 +497,8 @@ int load_survey_questions(struct session *ses)
     ses->allow_generic=0;
     if (format_version>1) {
       // Check for pythondir and without python directives
-      line[0]=0;fgets(line,8192,f);
+      line[0]=0;
+      if (!fgets(line,8192,f)) LOG_ERRORV("Failed to read survey description in survey specification file '%s'",survey_path);
       if (!line[0]) LOG_ERRORV("Failed to read survey description in survey specification file '%s'",survey_path);
       // Trim CR and LF chars from description
       trim_crlf(line);
@@ -513,13 +515,11 @@ int load_survey_questions(struct session *ses)
 
     // Now read questions
     do {
-      line[0]=0;fgets(line,8192,f);
+      line[0]=0;
+      if (!fgets(line,8192,f)) break;
       if (!line[0]) break;
 
       if (ses->question_count>=MAX_QUESTIONS) LOG_ERRORV("Too many questions in survey '%s' (increase MAX_QUESTIONS?)",survey_path);
-
-      struct question *q=calloc(sizeof(struct question),1);
-      if (!q) LOG_ERRORV("calloc(struct question) failed while loading survey question list from '%s'",survey_path);
 
       // Remove end of line markers
       trim_crlf(line);
@@ -527,9 +527,16 @@ int load_survey_questions(struct session *ses)
       // Skip blank lines
       if (!line[0]) continue;
 
-      if (deserialise_question(line,q)) { free_question(q); q=NULL; LOG_ERRORV("Error deserialising question '%s' in survey file '%s'",line,survey_path); }
-      ses->questions[ses->question_count++]=q;
-
+      struct question *q=calloc(sizeof(struct question),1);
+      if (!q) LOG_ERRORV("calloc(struct question) failed while loading survey question list from '%s'",survey_path);
+      
+      if (deserialise_question(line,q))
+	{ free_question(q); q=NULL;
+	  LOG_ERRORV("Error deserialising question '%s' in survey file '%s'",line,survey_path);
+	}
+      else
+	ses->questions[ses->question_count++]=q;
+      
     } while(line[0]);
 
     fclose(f); f=NULL;
@@ -573,7 +580,8 @@ struct session *load_session(char *session_id)
 
     // Read survey ID line
     char survey_id[1024];
-    survey_id[0]=0; fgets(survey_id,1024,s);
+    survey_id[0]=0;
+    if (!fgets(survey_id,1024,s)) { fclose(s); LOG_ERRORV("Could not read survey ID from session file '%s'",session_path); }
     if (!survey_id[0]) { fclose(s); LOG_ERRORV("Could not read survey ID from session file '%s'",session_path); }
     // Trim CR / LF characters from the end
     trim_crlf(survey_id);
@@ -595,7 +603,8 @@ struct session *load_session(char *session_id)
     line[0]=0;
     do {
       // Get next line with an answer in it
-      line[0]=0; fgets(line,65536,s);
+      line[0]=0;
+      if (!fgets(line,65536,s)) break;
       if (!line[0]) break;
       int len=strlen(line);
       if (!len) LOG_ERRORV("Empty line in session file '%s'",session_path);
@@ -686,7 +695,11 @@ struct answer *copy_answer(struct answer *aa)
     if (a->text) { a->text=strdup(a->text);if (!a->text) { LOG_ERROR("Could not copy a->text"); } }
     if (a->unit) { a->unit=strdup(a->unit); if (!a->unit) { LOG_ERROR("Could not copy a->unit"); } }
   } while(0);
-  if (retVal) return NULL;
+  if (retVal) {
+    if (a) free_answer(a);
+    a=NULL;
+    return NULL;
+  }
   else return a;
 }
 
