@@ -102,3 +102,10 @@ clean:
 
 /usr/bin/bmake:
 	echo "Run sudo apt-get install bmake"
+
+# Run static analysis of code using sparse and scan-build
+analyse_scanbuild:
+	make clean && scan-build-3.8 make
+
+analyse_sparse:
+	sparse -std=c99 -D__USE_MISC=1 -Iinclude/ -Ikcgi `$(PYCONFIG) --includes`  -Wsparse-all -Wnoundef src/*.c
