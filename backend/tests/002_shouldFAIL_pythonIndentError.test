@@ -1,4 +1,4 @@
-description Python implementation of nextquestion can be used
+skip! description Python implementation of nextquestion can be used
 
 # note that this test requires the actual sleep question logic (Python) to be available.
 #
