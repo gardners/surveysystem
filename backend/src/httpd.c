@@ -256,6 +256,7 @@ int http_send_file(int socket,char *filename,char *mime_type)
   char m[1024];
   FILE *f=fopen(filename,"r");
   if (!f) {
+    LOG_WARNV("Throwing a 404 from here.",1);
     snprintf(m,1024,"HTTP/1.0 404 File not found\nServer: Serval LBARD\n\nCould not read file '%s'\n",filename);
     write_all(socket,m,strlen(m));
     return -1;
