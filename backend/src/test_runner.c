@@ -1042,7 +1042,9 @@ int configure_and_start_lighttpd(char *test_dir)
     while((v=system(cmd))!=0) {
       fprintf(stderr,"cmd returned code %d\n",v);
       char log_dir[8192];
-      snprintf(log_dir,8192,"%s/logs",test_dir);
+      // This should be /logs, but it doesn't exist yet, and we really only need it for the
+      // ../ to get to breakage.log
+      snprintf(log_dir,8192,"%s/sessions",test_dir);
       dump_logs(log_dir,stderr);
       sleep(2);
       continue;
