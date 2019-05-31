@@ -8,6 +8,8 @@
 char error_messages[MAX_ERRORS][1024];
 int error_count=0;
 
+extern int instrumentation_muted;
+
 void clear_errors(void)
 {
   error_count=0;
@@ -16,6 +18,7 @@ void clear_errors(void)
 
 void dump_errors(FILE *f)
 {
+  if (instrumentation_muted) return;
   for(int i=0;i<error_count;i++)
     {
 
@@ -26,6 +29,7 @@ void dump_errors(FILE *f)
 
 int remember_error(const char *severity,const char *file,const int line, const char *function,const char *format,...)
 {
+  if (instrumentation_muted) return 0;
 
   char message[65536];
 
