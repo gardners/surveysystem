@@ -484,7 +484,7 @@ static void fcgi_addanswer(struct kreq *req)
   
   do {
 
-    LOG_INFO("Entering page handler.");
+    LOG_INFO("Entering page handler for addanswer.");
     
     struct kpair *session = req->fieldmap[KEY_SESSIONID];
     if (!session) {
@@ -907,23 +907,23 @@ static void fcgi_nextquestion(struct kreq *r)
       {
 	int found_value=0;	
 	struct answer *a;
-	for(int i=0;i<s->answer_count;i++)
-	  if(!strcmp(s->answers[i]->uid,q[i]->uid)) {
-	    if (s->answers[i]->flags&ANSWER_DELETED)
+	for(int j=0;j<s->answer_count;j++)
+	  if(!strcmp(s->answers[j]->uid,q[i]->uid)) {
+	    if (s->answers[j]->flags&ANSWER_DELETED)
 	      {
 		char rendered[8192];
-		snprintf(rendered,8192,"%s",s->answers[i]->text);
+		snprintf(rendered,8192,"%s",s->answers[j]->text);
 		
 		switch(q[i]->type)
 		  {
-		  case QTYPE_INT:	    snprintf(rendered,8192,"%lld",s->answers[i]->value); break;
-		  case QTYPE_FIXEDPOINT:    snprintf(rendered,8192,"%lld",s->answers[i]->value); break;
+		  case QTYPE_INT:	    snprintf(rendered,8192,"%lld",s->answers[j]->value); break;
+		  case QTYPE_FIXEDPOINT:    snprintf(rendered,8192,"%lld",s->answers[j]->value); break;
 		  case QTYPE_MULTICHOICE:   break;
 		  case QTYPE_MULTISELECT:   break;
-		  case QTYPE_LATLON:        snprintf(rendered,8192,"%lld,%lld",s->answers[i]->lat,s->answers[i]->lon); break;
-		  case QTYPE_DATETIME:      snprintf(rendered,8192,"%lld",s->answers[i]->time_begin); break;
-		  case QTYPE_DAYTIME:       snprintf(rendered,8192,"%lld",s->answers[i]->time_begin); break;
-		  case QTYPE_TIMERANGE:     snprintf(rendered,8192,"%lld,%lld",s->answers[i]->time_begin,s->answers[i]->time_end); break;
+		  case QTYPE_LATLON:        snprintf(rendered,8192,"%lld,%lld",s->answers[j]->lat,s->answers[j]->lon); break;
+		  case QTYPE_DATETIME:      snprintf(rendered,8192,"%lld",s->answers[j]->time_begin); break;
+		  case QTYPE_DAYTIME:       snprintf(rendered,8192,"%lld",s->answers[j]->time_begin); break;
+		  case QTYPE_TIMERANGE:     snprintf(rendered,8192,"%lld,%lld",s->answers[j]->time_begin,s->answers[j]->time_end); break;
 		  case QTYPE_UPLOAD:        break;
 		  case QTYPE_TEXT:          break;
 		  case QTYPE_CHECKBOX:      break;
