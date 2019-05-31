@@ -952,7 +952,8 @@ char *config_template=
   "     \"port\" => %d,\n"
   "     \"bin-path\" => \"%s/surveyfcgi\",\n"
   "     \"bin-environment\" => (\n"
-  "     \"SURVEY_HOME\" => \"%s\"\n"
+  "     \"SURVEY_HOME\" => \"%s\",\n"
+  "     \"SURVEY_PYTHON_DIR\" => \"%s\"\n"
   "     ),\n"
   "     \"check-local\" => \"disable\",\n"
   "     \"docroot\" => \"%s/front/build\" # remote server may use \n"
@@ -1000,11 +1001,16 @@ int configure_and_start_lighttpd(char *test_dir)
 
     fprintf(stderr,"Created breakage.log\n");
     
+    char python_dir[4096];
+    if(!realpath("python", python_dir)) {
+      python_dir[0]=0;
+    }
+    
     snprintf(conf_data,16384,config_template,
              test_dir,
              getcwd(cwd,cwdlen),
              LIGHTY_USER, LIGHTY_GROUP, HTTP_PORT, SURVEYFCGI_PORT, test_dir,
-             test_dir, getcwd(cwd,cwdlen));
+             test_dir, python_dir, getcwd(cwd,cwdlen));
     char tmp_conf_file[1024];
     snprintf(tmp_conf_file,1024,"%s/lighttpd.conf",test_dir);
     FILE *f=fopen(tmp_conf_file,"w");
