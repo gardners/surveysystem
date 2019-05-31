@@ -29,6 +29,7 @@ int validate_session_id(char *session_id)
   int retVal=0;
   do {
     if (!session_id) LOG_ERROR("session_id is NULL");
+    LOG_WARNV("Validating session id '%s'",session_id);
     if (strlen(session_id)!=36) LOG_ERRORV("session_id '%s' must be exactly 36 characters long",session_id);
     if (session_id[0]=='-') LOG_ERRORV("session_id '%s' may not begin with a dash",session_id);
     for(int i=0;session_id[i];i++)
