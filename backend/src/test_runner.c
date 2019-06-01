@@ -1118,6 +1118,7 @@ int main(int argc,char **argv)
   // all the necessary hash files get created.)
   require_test_directory("surveys", 0777);
   require_test_directory("sessions", 0777);
+  require_test_directory("logs", 0777);
   require_test_directory("locks", 0777);
 
   // Make sure we have a test log directory
