@@ -835,14 +835,14 @@ int run_test(char *dir, char *test_file)
           if (session_line[0]&&(!strcmp("endofsession",comparison_line))) {
             // End of comparison list before end of session file
             tdelta=gettime_us()-start_time; tdelta/=1000;
-            fprintf(log,"T+%4.3fms : FAIL : Session log file contains more lines than expected.\n",tdelta);
+            fprintf(log,"T+%4.3fms : FAIL : 1 Session log file contains more lines than expected.\n",tdelta);
             goto fail;
           }
 
           if ((!session_line[0])&&(strcmp("endofsession",comparison_line))) {
             // End of session file before end of comparison list
             tdelta=gettime_us()-start_time; tdelta/=1000;
-            fprintf(log,"T+%4.3fms : FAIL : Session log file contains less lines than expected.\n",tdelta);
+            fprintf(log,"T+%4.3fms : FAIL : 2 Session log file contains less lines than expected.\n",tdelta);
             goto fail;
           }
 
@@ -1072,32 +1072,32 @@ int stop_lighttpd(int verbose)
    }
 
   FILE *fp;
-  char cmd[2048];
-  char pidc[20] = { '\0' };
-  snprintf(cmd, 2048, "sudo lsof -t -i:%d", HTTP_PORT);
+  char lsof_cmd[2048];
+  char kill_cmd[2048];
+  char pidc[20];
+  size_t hits = 0;
+  
+  snprintf(lsof_cmd, 2048, "sudo lsof -t -i:%d", HTTP_PORT);
   if (verbose) fprintf(stderr,"Got lsof output\n");
-  fp = popen(cmd, "r");
-  fgets(pidc, sizeof(pidc), fp);
+  fp = popen(lsof_cmd, "r");
+  while (fgets(pidc, sizeof(pidc), fp) != NULL) {
+    hits++;
+    snprintf(kill_cmd,2048,"sudo kill %s", pidc);
+    if (verbose) fprintf(stderr," - running: %s\n", kill_cmd);
+    if (system(kill_cmd)) {
+      fprintf(stderr,"system() call to stop lighttpd failed (kill %s)\n", pidc);
+      exit(-3);
+    }
+  }
   fclose(fp);
 
-  fprintf(stderr,"Read pidc\n");
-  
-  int pid = atoi(pidc);
-  fprintf(stderr,"Parsed pidc as %d\n",pid);
-  if(!pid) {
+  if(!hits) {
     if (verbose) fprintf(stderr,"No pid to kill.\n");
     return 0;
   }
-  fprintf(stderr,"Considering my options...\n");
+  if (verbose) fprintf(stderr,"Considering my options...\n");
 
-  if (verbose) {
-    fprintf(stderr,"killing pid %d on port %d...\n", pid, HTTP_PORT);
-  }
-  snprintf(cmd,2048,"sudo kill %d", pid);
-  if (system(cmd)) {
-    perror("system() call to stop lighttpd failed\n");
-    exit(-3);
-  }
+  sleep(1);
   if (verbose) fprintf(stderr,"Done.\n");
   return 0;
 }
