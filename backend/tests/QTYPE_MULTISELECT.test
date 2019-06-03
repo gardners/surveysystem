@@ -23,9 +23,11 @@ endofsession
 request 200 nextquestion?sessionid=$SESSION
 match_string {"next_questions": [{"id": "multiselect", "name": "multiselect", "title": "Select any from the following", "description": "Select any from the following", "type": "MULTISELECT", "choices": ["Zaphod", "Marvin", "Arthur", "Ford", "Trillan"], "unit": ""}]}
 
-request 200 addanswer?sessionid=$SESSION&answer=multiselect:Marvin,Ford:0:0:0:0:0:0:0:
+request 200 addanswer?sessionid=$SESSION&answer=multiselect:Marvin,Ford:0:0:0:0:0:0:0::0
+match_string {"next_questions": []}
+
 # Make sure answer ends up in file
 verify_session
 field_unit/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
-multiselect:Marvin,Ford:0:0:0:0:0:0:0:
+multiselect:Marvin,Ford:0:0:0:0:0:0:0::0
 endofsession
