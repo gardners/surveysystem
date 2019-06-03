@@ -772,24 +772,28 @@ int session_delete_answers_by_question_uid(struct session *ses,char *uid, int de
     if (!uid) LOG_ERRORV("Asked to remove answers to null question UID from session '%s'",ses->session_id);
 
     for(int i=0;i<ses->answer_count;i++)
-      while ((i<ses->answer_count)&&(!strcmp(ses->answers[i]->uid,uid)))
-    {
-      // Delete matching questions
-      // #186 - Deletion now just sets the ANSWER_DELETED flag in the flags field for the answer.
-      // If deleteFollowingP is non-zero, then this is applied to all later answers in the session also.
-
-      char serialised_answer[65536]="(could not serialise)";
-      serialise_answer(ses->answers[i],serialised_answer,65536);
-      LOG_INFOV("Deleted from session '%s' answer '%s'.",ses->session_id,serialised_answer);
-
-      ses->answers[i]->flags |= ANSWER_DELETED;
-
-      // Mark all following answers deleted, if required
-      if (deleteFollowingP) {
-	for(int j=i+1;j<ses->answer_count;j++)
-	  ses->answers[j]->flags |= ANSWER_DELETED;	  
-      }
-    }
+      if (!strcmp(ses->answers[i]->uid,uid))
+	{
+	  // Delete matching questions
+	  // #186 - Deletion now just sets the ANSWER_DELETED flag in the flags field for the answer.
+	  // If deleteFollowingP is non-zero, then this is applied to all later answers in the session also.
+	  
+	  char serialised_answer[65536]="(could not serialise)";
+	  serialise_answer(ses->answers[i],serialised_answer,65536);
+	  LOG_INFOV("Deleted from session '%s' answer '%s'.",ses->session_id,serialised_answer);
+	  
+	  ses->answers[i]->flags |= ANSWER_DELETED;
+	  deletions++;
+	  
+	  // Mark all following answers deleted, if required
+	  if (deleteFollowingP) {
+	    for(int j=i+1;j<ses->answer_count;j++) {
+	      ses->answers[j]->flags |= ANSWER_DELETED;	  
+	      deletions++;
+	    }
+	  }
+	  
+	}
     if (retVal) break;
 
     if (!retVal) retVal=deletions;
@@ -811,23 +815,31 @@ int session_delete_answer(struct session *ses,struct answer *a, int deleteFollow
     if (!a) LOG_ERRORV("Asked to remove null answer from session '%s'",ses->session_id?ses->session_id:"(null)");
 
     for(int i=0;i<ses->answer_count;i++)
-      while ((i<ses->answer_count)&&(!compare_answers(a,ses->answers[i],MISMATCH_IS_NOT_AN_ERROR)))
-    {
-      // Delete matching questions
-      // (Actually just mark them deleted. #186)
-
-      char serialised_answer[65536]="(could not serialise)";
-      serialise_answer(ses->answers[i],serialised_answer,65536);
-      LOG_INFOV("Deleted from session '%s' answer '%s'.",ses->session_id,serialised_answer);
-
-      ses->answers[i]->flags |= ANSWER_DELETED;
-
-      // Mark all following answers deleted, if required
-      if (deleteFollowingP) {
-	for(int j=i+1;j<ses->answer_count;j++)
-	  ses->answers[j]->flags |= ANSWER_DELETED;	  
-      }
-    }
+      // XXX - Doesn't actually check the value of the answer, but deletes first instance of an answer to the
+      // same question.
+      if ((!strcmp(ses->answers[i]->uid,a->uid))
+	  &&(1))
+	{
+	  // Delete matching questions
+	  // (Actually just mark them deleted. #186)
+	  
+	  char serialised_answer[65536]="(could not serialise)";
+	  serialise_answer(ses->answers[i],serialised_answer,65536);
+	  LOG_INFOV("Deleted from session '%s' answer '%s'.",ses->session_id,serialised_answer);
+	  
+	  ses->answers[i]->flags |= ANSWER_DELETED;
+	  deletions++;
+	  
+	  // Mark all following answers deleted, if required
+	  if (deleteFollowingP) {
+	    for(int j=i+1;j<ses->answer_count;j++) {
+	      ses->answers[j]->flags |= ANSWER_DELETED;
+	      deletions++;
+	    }
+	  }
+	  
+	  break;
+	}
     if (retVal) break;
 
     if (!retVal) retVal=deletions;
