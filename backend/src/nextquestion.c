@@ -441,6 +441,8 @@ int get_next_questions_generic(struct session *s,
     if (!next_questions) LOG_ERROR("next_questions is NULL");
     if (max_next_questions<1) LOG_ERROR("max_next_questions < 1");
     if (!next_question_count) LOG_ERROR("next_question_count is NULL");
+
+    LOG_INFOV("Calling get_next_questions_generic()",0);
     
     // Check each question to see if it has been answered already
     for(i=0;i<s->question_count;i++)
@@ -449,11 +451,15 @@ int get_next_questions_generic(struct session *s,
 	    if (!(s->answers[j]->flags&ANSWER_DELETED))
 	      if (!strcmp(s->answers[j]->uid,s->questions[i]->uid)) break;
 	  // LOG_INFOV("Answer to question %d is answer %d/%d",i,j,s->answer_count);
-	  if (j<s->answer_count) continue;
+	  if (j<s->answer_count) {
+	    LOG_INFOV("Answer to question %d exists.",i);
+	    continue;
+	  }
 	  else {
 	    if ((*next_question_count)<max_next_questions) {
 	      next_questions[*next_question_count]=s->questions[i];
 	      (*next_question_count)++;
+	      LOG_INFOV("Need answer to question %d.",i);
 	      
 	      // XXX - For now, just return exactly the first unanswered question
 	      break;
