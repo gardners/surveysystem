@@ -4,9 +4,7 @@ description Run post-survey analysis
 definesurvey runanalysis
 version 1
 Silly test survey updated
-multichoice:Select one of the following:Select one of the following:MULTICHOICE:0::-1:-1:-1:3:Yes,No,Maybe:
-question1:What is the answer to question 1?:What is the answer to question 1?:TEXT:0:I don't know:-1:-1:0:0::
-question2:How boring was question 1?:How boring was question 1?:TEXT:0:I don't know:-1:-1:0:0::
+question1:Question 1::TEXT:0::-1:-1:0:0::
 endofsurvey
 
 python
@@ -22,7 +20,7 @@ extract_sessionid
 
 # Check that we have an empty session file created
 verify_session
-funanalysis/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+runanalysis/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 
 request 200 analyse?sessionid=$SESSION
