@@ -444,22 +444,23 @@ int get_next_questions_generic(struct session *s,
     
     // Check each question to see if it has been answered already
     for(i=0;i<s->question_count;i++)
-      {
-	for(j=0;j<s->answer_count;j++)
-	  if (!strcmp(s->answers[j]->uid,s->questions[i]->uid)) break;
-	// LOG_INFOV("Answer to question %d is answer %d/%d",i,j,s->answer_count);
-	if (j<s->answer_count) continue;
-	else {
-	  if ((*next_question_count)<max_next_questions) {
-	    next_questions[*next_question_count]=s->questions[i];
-	    (*next_question_count)++;
-
-	    // XXX - For now, just return exactly the first unanswered question
-	    break;
-	    
+	{
+	  for(j=0;j<s->answer_count;j++)
+	    if (!(s->answers[j]->flags&ANSWER_DELETED))
+	      if (!strcmp(s->answers[j]->uid,s->questions[i]->uid)) break;
+	  // LOG_INFOV("Answer to question %d is answer %d/%d",i,j,s->answer_count);
+	  if (j<s->answer_count) continue;
+	  else {
+	    if ((*next_question_count)<max_next_questions) {
+	      next_questions[*next_question_count]=s->questions[i];
+	      (*next_question_count)++;
+	      
+	      // XXX - For now, just return exactly the first unanswered question
+	      break;
+	      
+	    }
 	  }
 	}
-      }
     
   } while(0);
   
