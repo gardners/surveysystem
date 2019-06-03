@@ -76,6 +76,26 @@ void require_test_directory(char *sub_dir, int perm) {
   }
 }
 
+void require_test_file(char *file_name, int perm) {
+  char tmp[2048];
+  snprintf(tmp,2048,"%s/%s",test_dir,file_name);
+  
+  FILE* f = fopen(tmp, "w");
+  if(!f) {
+    fprintf(stderr,"fopen(%s) failed.", tmp);
+    exit(-3);
+  }
+  fclose(f);
+  
+  // Now make sessions directory writeable by all users
+  if (chmod(tmp,S_IRUSR|S_IWUSR|S_IXUSR|
+            S_IRGRP|S_IWGRP|S_IXGRP|
+            S_IROTH|S_IWOTH|S_IXOTH)) {
+    fprintf(stderr,"chmod(%s) failed.", tmp);
+    exit(-3);
+  }
+}
+
 void require_directory(char *dir, int perm) {
   if (mkdir(dir,perm)) {
     fprintf(stderr,"mkdir(%s, %o) failed.", dir, perm);
@@ -923,17 +943,19 @@ char *config_template=
   "     \"mod_fastcgi\",\n"
   "     \"mod_compress\",\n"
   "     \"mod_redirect\",\n"
+  "     \"mod_accesslog\",\n"
   ")\n"
   "\n"
-  "server.breakagelog           = \"%s/breakage.log\"\n"
+  "server.breakagelog          = \"%s/breakage.log\"\n"
   "server.document-root        = \"%s/front/build\"\n"
   "server.upload-dirs          = ( \"/var/cache/lighttpd/uploads\" )\n"
-  "server.errorlog             = \"/var/log/lighttpd/error.log\"\n"
+  "server.errorlog             = \"%s/lighttpd-error.log\"\n"
   "server.pid-file             = \"/var/run/lighttpd.pid\"\n"
   "server.username             = \"%s\"\n"
   "server.groupname            = \"%s\"\n"
   "server.port                 = %d\n"
   "\n"
+  "accesslog.filename = \"%s/lighttpd-access.log\"\n"
   "\n"
   "index-file.names            = ( \"index.php\", \"index.html\", \"index.lighttpd.html\" )\n"
   "url.access-deny             = ( \"~\", \".inc\" )\n"
@@ -1009,8 +1031,16 @@ int configure_and_start_lighttpd(char *test_dir)
     snprintf(conf_data,16384,config_template,
              test_dir,
              getcwd(cwd,cwdlen),
-             LIGHTY_USER, LIGHTY_GROUP, HTTP_PORT, SURVEYFCGI_PORT, test_dir,
-             test_dir, python_dir, getcwd(cwd,cwdlen));
+             test_dir,
+             LIGHTY_USER, 
+             LIGHTY_GROUP, 
+             HTTP_PORT, 
+             test_dir,
+             SURVEYFCGI_PORT, 
+             test_dir,
+             test_dir, 
+             python_dir, 
+             getcwd(cwd,cwdlen));
     char tmp_conf_file[1024];
     snprintf(tmp_conf_file,1024,"%s/lighttpd.conf",test_dir);
     FILE *f=fopen(tmp_conf_file,"w");
@@ -1120,6 +1150,8 @@ int main(int argc,char **argv)
   require_test_directory("sessions", 0777);
   require_test_directory("logs", 0777);
   require_test_directory("locks", 0777);
+  require_test_file("lighttpd-access.log", 0777);
+  require_test_file("lighttpd-error.log", 0777);
 
   // Make sure we have a test log directory
   mkdir("testlogs",0755);
