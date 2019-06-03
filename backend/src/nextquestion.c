@@ -46,7 +46,8 @@ void log_python_error(void)
     }
     
   } while(0);
-  
+
+  (void)retVal;
   return;
 }
 
@@ -243,6 +244,7 @@ void log_python_object(char *msg,PyObject *result)
     char buffer[8192]="";
     if (f) {
       int bytes=fread(buffer,1,8192,f);
+      (void)bytes;
       fclose(f);
     }
     if (buffer[0]) LOG_INFOV("%s = %s",msg,buffer);
@@ -315,47 +317,50 @@ int call_python_nextquestion(struct session *s,
 	LOG_ERRORV("Error inserting question name '%s' into Python list",s->questions[i]->uid); 
       }
     }
-    for(int i=0;i<s->answer_count;i++) {
-      PyObject *dict = PyDict_New();
-      PyObject *uid = PyUnicode_FromString(s->answers[i]->uid);
-      PyObject *text = PyUnicode_FromString(s->answers[i]->text);
-      PyObject *value = PyLong_FromLongLong(s->answers[i]->value);
-      PyObject *lat = PyLong_FromLongLong(s->answers[i]->lat);
-      PyObject *lon = PyLong_FromLongLong(s->answers[i]->lon);
-      PyObject *time_begin = PyLong_FromLongLong(s->answers[i]->time_begin);
-      PyObject *time_end = PyLong_FromLongLong(s->answers[i]->time_end);
-      PyObject *time_zone_delta = PyLong_FromLongLong(s->answers[i]->time_zone_delta);
-      PyObject *dst_delta = PyLong_FromLongLong(s->answers[i]->dst_delta);
-      PyObject *uid_l = PyUnicode_FromString("uid");
-      PyObject *text_l = PyUnicode_FromString("text");
-      PyObject *value_l = PyUnicode_FromString("value");
-      PyObject *lat_l = PyUnicode_FromString("latitude");
-      PyObject *lon_l = PyUnicode_FromString("longitude");
-      PyObject *time_begin_l = PyUnicode_FromString("time_begin");
-      PyObject *time_end_l = PyUnicode_FromString("time_end");
-      PyObject *time_zone_delta_l = PyUnicode_FromString("time_zone_delta");
-      PyObject *dst_delta_l = PyUnicode_FromString("dst_delta");
-      int errors = PyDict_SetItem(dict,uid_l,uid);
-      errors += PyDict_SetItem(dict,text_l,text);
-      errors += PyDict_SetItem(dict,value_l,value);
-      errors += PyDict_SetItem(dict,lat_l,lat);
-      errors += PyDict_SetItem(dict,lon_l,lon);
-      errors += PyDict_SetItem(dict,time_begin_l,time_begin);
-      errors += PyDict_SetItem(dict,time_end_l,time_end);
-      errors += PyDict_SetItem(dict,time_zone_delta_l,time_zone_delta);
-      errors += PyDict_SetItem(dict,dst_delta_l,dst_delta);
-
-      if (errors) {
-	Py_DECREF(dict);
-	LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.",s->answers[i]->uid);
-      }
-      
-      if (PyList_SetItem(answers,i,dict)) {
-	Py_DECREF(dict);
-	LOG_ERRORV("Error inserting question name '%s' into Python list",s->questions[i]->uid); 
-      }
-    }
-
+    for(int i=0;i<s->answer_count;i++)
+      // Don't include deleted answers in the list fed to Python. #186
+      if (!(s->answers[i]->flags&ANSWER_DELETED))
+	{
+	  PyObject *dict = PyDict_New();
+	  PyObject *uid = PyUnicode_FromString(s->answers[i]->uid);
+	  PyObject *text = PyUnicode_FromString(s->answers[i]->text);
+	  PyObject *value = PyLong_FromLongLong(s->answers[i]->value);
+	  PyObject *lat = PyLong_FromLongLong(s->answers[i]->lat);
+	  PyObject *lon = PyLong_FromLongLong(s->answers[i]->lon);
+	  PyObject *time_begin = PyLong_FromLongLong(s->answers[i]->time_begin);
+	  PyObject *time_end = PyLong_FromLongLong(s->answers[i]->time_end);
+	  PyObject *time_zone_delta = PyLong_FromLongLong(s->answers[i]->time_zone_delta);
+	  PyObject *dst_delta = PyLong_FromLongLong(s->answers[i]->dst_delta);
+	  PyObject *uid_l = PyUnicode_FromString("uid");
+	  PyObject *text_l = PyUnicode_FromString("text");
+	  PyObject *value_l = PyUnicode_FromString("value");
+	  PyObject *lat_l = PyUnicode_FromString("latitude");
+	  PyObject *lon_l = PyUnicode_FromString("longitude");
+	  PyObject *time_begin_l = PyUnicode_FromString("time_begin");
+	  PyObject *time_end_l = PyUnicode_FromString("time_end");
+	  PyObject *time_zone_delta_l = PyUnicode_FromString("time_zone_delta");
+	  PyObject *dst_delta_l = PyUnicode_FromString("dst_delta");
+	  int errors = PyDict_SetItem(dict,uid_l,uid);
+	  errors += PyDict_SetItem(dict,text_l,text);
+	  errors += PyDict_SetItem(dict,value_l,value);
+	  errors += PyDict_SetItem(dict,lat_l,lat);
+	  errors += PyDict_SetItem(dict,lon_l,lon);
+	  errors += PyDict_SetItem(dict,time_begin_l,time_begin);
+	  errors += PyDict_SetItem(dict,time_end_l,time_end);
+	  errors += PyDict_SetItem(dict,time_zone_delta_l,time_zone_delta);
+	  errors += PyDict_SetItem(dict,dst_delta_l,dst_delta);
+	  
+	  if (errors) {
+	    Py_DECREF(dict);
+	    LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.",s->answers[i]->uid);
+	  }
+	  
+	  if (PyList_SetItem(answers,i,dict)) {
+	    Py_DECREF(dict);
+	    LOG_ERRORV("Error inserting question name '%s' into Python list",s->questions[i]->uid); 
+	  }
+	}
+    
     //    log_python_object("Answers",answers);
     
     PyObject* args = PyTuple_Pack(2,questions,answers);
@@ -554,46 +559,49 @@ int get_analysis(struct session *s,const unsigned char **output)
 	LOG_ERRORV("Error inserting question name '%s' into Python list",s->questions[i]->uid); 
       }
     }
-    for(int i=0;i<s->answer_count;i++) {
-      PyObject *dict = PyDict_New();
-      PyObject *uid = PyUnicode_FromString(s->answers[i]->uid);
-      PyObject *text = PyUnicode_FromString(s->answers[i]->text);
-      PyObject *value = PyLong_FromLongLong(s->answers[i]->value);
-      PyObject *lat = PyLong_FromLongLong(s->answers[i]->lat);
-      PyObject *lon = PyLong_FromLongLong(s->answers[i]->lon);
-      PyObject *time_begin = PyLong_FromLongLong(s->answers[i]->time_begin);
-      PyObject *time_end = PyLong_FromLongLong(s->answers[i]->time_end);
-      PyObject *time_zone_delta = PyLong_FromLongLong(s->answers[i]->time_zone_delta);
-      PyObject *dst_delta = PyLong_FromLongLong(s->answers[i]->dst_delta);
-      PyObject *uid_l = PyUnicode_FromString("uid");
-      PyObject *text_l = PyUnicode_FromString("text");
-      PyObject *value_l = PyUnicode_FromString("value");
-      PyObject *lat_l = PyUnicode_FromString("latitude");
-      PyObject *lon_l = PyUnicode_FromString("longitude");
-      PyObject *time_begin_l = PyUnicode_FromString("time_begin");
-      PyObject *time_end_l = PyUnicode_FromString("time_end");
-      PyObject *time_zone_delta_l = PyUnicode_FromString("time_zone_delta");
-      PyObject *dst_delta_l = PyUnicode_FromString("dst_delta");
-      int errors = PyDict_SetItem(dict,uid_l,uid);
-      errors += PyDict_SetItem(dict,text_l,text);
-      errors += PyDict_SetItem(dict,value_l,value);
-      errors += PyDict_SetItem(dict,lat_l,lat);
-      errors += PyDict_SetItem(dict,lon_l,lon);
-      errors += PyDict_SetItem(dict,time_begin_l,time_begin);
-      errors += PyDict_SetItem(dict,time_end_l,time_end);
-      errors += PyDict_SetItem(dict,time_zone_delta_l,time_zone_delta);
-      errors += PyDict_SetItem(dict,dst_delta_l,dst_delta);
-
-      if (errors) {
-	Py_DECREF(dict);
-	LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.",s->answers[i]->uid);
-      }
-      
-      if (PyList_SetItem(answers,i,dict)) {
-	Py_DECREF(dict);
-	LOG_ERRORV("Error inserting question name '%s' into Python list",s->questions[i]->uid); 
-      }
-    }
+    for(int i=0;i<s->answer_count;i++)
+      // Don't include deleted answers in the list fed to Python. #186
+      if (!(s->answers[i]->flags&ANSWER_DELETED))
+	{      
+	  PyObject *dict = PyDict_New();
+	  PyObject *uid = PyUnicode_FromString(s->answers[i]->uid);
+	  PyObject *text = PyUnicode_FromString(s->answers[i]->text);
+	  PyObject *value = PyLong_FromLongLong(s->answers[i]->value);
+	  PyObject *lat = PyLong_FromLongLong(s->answers[i]->lat);
+	  PyObject *lon = PyLong_FromLongLong(s->answers[i]->lon);
+	  PyObject *time_begin = PyLong_FromLongLong(s->answers[i]->time_begin);
+	  PyObject *time_end = PyLong_FromLongLong(s->answers[i]->time_end);
+	  PyObject *time_zone_delta = PyLong_FromLongLong(s->answers[i]->time_zone_delta);
+	  PyObject *dst_delta = PyLong_FromLongLong(s->answers[i]->dst_delta);
+	  PyObject *uid_l = PyUnicode_FromString("uid");
+	  PyObject *text_l = PyUnicode_FromString("text");
+	  PyObject *value_l = PyUnicode_FromString("value");
+	  PyObject *lat_l = PyUnicode_FromString("latitude");
+	  PyObject *lon_l = PyUnicode_FromString("longitude");
+	  PyObject *time_begin_l = PyUnicode_FromString("time_begin");
+	  PyObject *time_end_l = PyUnicode_FromString("time_end");
+	  PyObject *time_zone_delta_l = PyUnicode_FromString("time_zone_delta");
+	  PyObject *dst_delta_l = PyUnicode_FromString("dst_delta");
+	  int errors = PyDict_SetItem(dict,uid_l,uid);
+	  errors += PyDict_SetItem(dict,text_l,text);
+	  errors += PyDict_SetItem(dict,value_l,value);
+	  errors += PyDict_SetItem(dict,lat_l,lat);
+	  errors += PyDict_SetItem(dict,lon_l,lon);
+	  errors += PyDict_SetItem(dict,time_begin_l,time_begin);
+	  errors += PyDict_SetItem(dict,time_end_l,time_end);
+	  errors += PyDict_SetItem(dict,time_zone_delta_l,time_zone_delta);
+	  errors += PyDict_SetItem(dict,dst_delta_l,dst_delta);
+	  
+	  if (errors) {
+	    Py_DECREF(dict);
+	    LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.",s->answers[i]->uid);
+	  }
+	  
+	  if (PyList_SetItem(answers,i,dict)) {
+	    Py_DECREF(dict);
+	    LOG_ERRORV("Error inserting question name '%s' into Python list",s->questions[i]->uid); 
+	  }
+	}
     
     PyObject* args = PyTuple_Pack(2,questions,answers);
     

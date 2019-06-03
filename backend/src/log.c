@@ -48,10 +48,15 @@ int log_message(const char *file,const char *function,const int line,char *forma
 
     FILE *lf=fopen(log_file,"a");
     if (!lf) LOG_ERRORV("Could not open log file '%s' for append: %s",log_file,strerror(errno));
-    fprintf(lf,"%04d/%02d/%02d.%02d:%02d.%d:%s:%d:%s():%s\n",
-	    1900+tm->tm_year,tm->tm_mon+1,tm->tm_mday,tm->tm_hour,tm->tm_min,tm->tm_sec,
-	    file,line,function,
-	    message);
+    if (tm)
+      fprintf(lf,"%04d/%02d/%02d.%02d:%02d.%d:%s:%d:%s():%s\n",
+	      1900+tm->tm_year,tm->tm_mon+1,tm->tm_mday,tm->tm_hour,tm->tm_min,tm->tm_sec,
+	      file,line,function,
+	      message);
+    else
+      fprintf(lf,"\?\?\?\?/\?\?/\?\?.\?\?:\?\?.\?:%s:%d:%s():%s\n",
+	      file,line,function,
+	      message);
     fclose(lf);
     
   } while(0);

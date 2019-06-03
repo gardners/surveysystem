@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include "kcgi.h"
 #include "kcgijson.h"
@@ -18,45 +19,123 @@
 #include "serialisers.h"
 #include "question_types.h"
 
+#define          CHECKPOINT() { fprintf(stderr,"%s:%d:%s():pid=%d: Checkpoint\n",__FILE__,__LINE__,__FUNCTION__,getpid()); }
+
 int kvalid_surveyid(struct kpair *kp) {
-  // Only use our validation here, not one of the pre-defined ones
-  kp->type = KPAIR__MAX;
 
-  // Is okay
-  kp->parsed.s = kp->val;
-  return 1;
+  // XXX - This process runs in the sandboxed child environment, from where
+  // it is not possible to emit any log output.  Very annoying, but we have
+  // to live with it.
+  LOG_MUTE();
+  
+  int retVal=0;
+  do {
+  
+    if (!kp) LOG_ERROR("kp is NULL");
+
+    // Only use our validation here, not one of the pre-defined ones
+    kp->type = KPAIR__MAX;
+    
+    LOG_WARNV("Validating surveyid",1);
+    
+    // Is okay
+    kp->parsed.s = kp->val;
+  } while(0);
+  if (retVal) retVal=0; else retVal=1;
+
+  LOG_UNMUTE();
+  return retVal;
 }
 
-int kvalid_sessionid(struct kpair *kp) {
-  // Only use our validation here, not one of the pre-defined ones
-  kp->type = KPAIR__MAX;
+int kvalid_sessionid(struct kpair *kp)
+{
+  // XXX - This process runs in the sandboxed child environment, from where
+  // it is not possible to emit any log output.  Very annoying, but we have
+  // to live with it.
+  LOG_MUTE();
+  
+  int retVal=0;
+  do {
+    if (!kp) LOG_ERROR("kp is NULL");
+   
+    // Only use our validation here, not one of the pre-defined ones
+    kp->type = KPAIR__MAX;
 
-  kp->parsed.s = kp->val;
-  if (validate_session_id(kp->val)) return 0;
-  else return 1;
+    kp->parsed.s = kp->val;
+    LOG_WARNV("Validating sessionid",1);
+    if (validate_session_id(kp->val)) {
+      LOG_ERROR("validate_session_id failed");
+    }
+  } while(0);
+  if (retVal) retVal=0; else retVal=1;
+  LOG_UNMUTE();
+  return retVal;
 }
 
-int kvalid_questionid(struct kpair *kp) {
-  // Only use our validation here, not one of the pre-defined ones
-  kp->type = KPAIR__MAX;
+int kvalid_questionid(struct kpair *kp)
+{
+  // XXX - This process runs in the sandboxed child environment, from where
+  // it is not possible to emit any log output.  Very annoying, but we have
+  // to live with it.
+  LOG_MUTE();
+  
+  int retVal=0;
+  do {
+    if (!kp) LOG_ERROR("kp is NULL");
+    // Only use our validation here, not one of the pre-defined ones
+    kp->type = KPAIR__MAX;
 
-  kp->parsed.s = kp->val;
-  // Is okay
-  return kvalid_string(kp);
+    LOG_WARNV("Validating questionid",1);
+    
+    kp->parsed.s = kp->val;
+    // Is okay
+    if (kvalid_string(kp)) retVal=0;
+    else LOG_ERROR("questionid is not a valid string");
+  } while(0);
+  if (retVal) retVal=0; else retVal=1;
+  LOG_UNMUTE();
+  return retVal;
 }
 
 int kvalid_answer(struct kpair *kp) {
-  // Only use our validation here, not one of the pre-defined ones
-  kp->type = KPAIR__MAX;
 
-  kp->parsed.s = kp->val;
-  
-  struct answer a;
+  // XXX - This process runs in the sandboxed child environment, from where
+  // it is not possible to emit any log output.  Very annoying, but we have
+  // to live with it.
+  LOG_MUTE();
 
-  // XXX Remember deserialised answer and keep it in memory to save parsing twice?
+  int retVal=0;
+
+  do {
+
+    LOG_WARNV("Validating answer",1);
+        
+    // Only use our validation here, not one of the pre-defined ones
+    kp->type = KPAIR__MAX;
+    
+    kp->parsed.s = kp->val;
+
+    struct answer *a=calloc(sizeof(struct answer),1);
+    if (!a) {
+      LOG_ERROR("Could not calloc() answer structure.");
+    }
+    
+    // XXX Remember deserialised answer and keep it in memory to save parsing twice?
+    
+    if (deserialise_answer(kp->val,a)) {
+      free_answer(a);
+      LOG_ERROR("deserialise_answer() failed");
+    } else {
+      free_answer(a);
+      // Success, so nothing to do
+    }
+  } while(0);
+
+  LOG_WARNV("retVal=%d",retVal);
   
-  if (deserialise_answer(kp->val,&a)) return 0;
-  else return 1;
+  if (retVal) retVal=0; else retVal=1;
+  LOG_UNMUTE();
+  return retVal;
 }
 
 enum key {
@@ -82,6 +161,7 @@ enum	page {
 	PAGE_UPDATEANSWER,
 	PAGE_NEXTQUESTION,
 	PAGE_DELANSWER,
+	PAGE_DELANSWERANDFOLLOWING,
 	PAGE_DELSESSION,
 	PAGE_ACCESTEST,
 	PAGE_FCGITEST,
@@ -96,6 +176,7 @@ static void fcgi_addanswer(struct kreq *);
 static void fcgi_updateanswer(struct kreq *);
 static void fcgi_nextquestion(struct kreq *);
 static void fcgi_delanswer(struct kreq *);
+static void fcgi_delanswerandfollowing(struct kreq *);
 static void fcgi_delsession(struct kreq *);
 static void fcgi_accesstest(struct kreq *);
 static void fcgi_fastcgitest(struct kreq *);
@@ -107,6 +188,7 @@ static const disp disps[PAGE__MAX] = {
   fcgi_updateanswer,
   fcgi_nextquestion,
   fcgi_delanswer,
+  fcgi_delanswerandfollowing,
   fcgi_delsession,
   fcgi_accesstest,
   fcgi_fastcgitest,
@@ -119,6 +201,7 @@ static const char *const pages[PAGE__MAX] = {
   "updateanswer",
   "nextquestion",
   "delanswer",
+  "delanswerandfollowing",
   "delsession",
   "accesstest",
   "fastcgitest",
@@ -158,7 +241,7 @@ int main(int argc,char **argv)
     struct kreq      req;
     struct kfcgi    *fcgi=NULL;
     enum kcgi_err    er;
-    
+
     if (KCGI_OK != khttp_fcgi_init(&fcgi,
 				   keys, KEY__MAX, // CGI variable parse definitions
 				   pages, PAGE__MAX,  // Pages for parsing
@@ -169,22 +252,32 @@ int main(int argc,char **argv)
 
     // For each request
     for (;;) {
+
       // Clear our internal error log
       clear_errors();
 
       // Parse request
+      fprintf(stderr,"Calling fcgi_parse()\n");
       er = khttp_fcgi_parse(fcgi, &req);
+      fprintf(stderr,"Returned from fcgi_parse()\n");
+
       if (KCGI_EXIT == er) {
-	fprintf(stderr, "khttp_fcgi_parse: terminate\n");
+	LOG_WARNV("khttp_fcgi_parse: terminate, becausee er == KCGI_EXIT",1);
+	fprintf(stderr,"khttp_fcgi_parse: terminate, becausee er == KCGI_EXIT");
 	break;
       } else if (KCGI_OK != er) {
-	fprintf(stderr, "khttp_fcgi_parse: error: %d\n", er);
+	LOG_WARNV("khttp_fcgi_parse: error: %d\n", er);
+	fprintf(stderr,"khttp_fcgi_parse: error: %d\n", er);
 	break;
       }
 
       // Fail if we can't find the page, or the mime type is wrong
+      LOG_WARNV("Considering whether to throw a 404 (req.page=%d, MAX=%d; req.mime=%d, KMIME=%d)",
+		(int)req.page,(int)PAGE__MAX,
+		(int)KMIME_TEXT_HTML, (int)req.mime);
       if (PAGE__MAX == req.page || 
 	  KMIME_TEXT_HTML != req.mime) {
+	LOG_WARNV("Throwing a 404 error",1);
 	er = khttp_head(&req, kresps[KRESP_STATUS], 
 			"%s", khttps[KHTTP_404]);
 	if (KCGI_HUP == er) {
@@ -201,13 +294,16 @@ int main(int argc,char **argv)
 
 	// Make sure no sessions are locked when done.
 	release_my_session_locks();
+
       }
       
       // Close off request
       khttp_free(&req);
     }
 
+    CHECKPOINT();
     khttp_fcgi_free(fcgi);
+    CHECKPOINT();
     
       
   } while(0);
@@ -221,6 +317,7 @@ int main(int argc,char **argv)
 
 void quick_error(struct kreq *req,int e,const char *msg)
 {
+  int retVal=0;
   enum kcgi_err    er;
   do {
     er = khttp_head(req, kresps[KRESP_STATUS], 
@@ -256,12 +353,14 @@ void quick_error(struct kreq *req,int e,const char *msg)
     
     // Write some stuff in reply
     er = khttp_puts(req, msg);
+    if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
 
     // Display error log as well.
     dump_errors_kcgi(req);
     
   } while(0);
 
+  (void)retVal;
   return;
 }  
 
@@ -366,7 +465,9 @@ static void fcgi_newsession(struct kreq *req)
     if (create_session(survey->val,session_id)) {
       begin_500(req);
       er = khttp_puts(req, "<h1>500 Internal Error. Session could not be created.</h1>\n");
+      if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
       er = khttp_puts(req, "Error log:<br>\n");
+      if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
       dump_errors_kcgi(req);
       break;
     }    
@@ -375,11 +476,12 @@ static void fcgi_newsession(struct kreq *req)
 
     // Write some stuff in reply
     er = khttp_puts(req, session_id);
-
+    if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
     LOG_INFO("Leaving page handler");
     
   } while(0);
 
+  (void)retVal;
   return;
 }
 
@@ -389,7 +491,7 @@ static void fcgi_addanswer(struct kreq *req)
   
   do {
 
-    LOG_INFO("Entering page handler.");
+    LOG_INFO("Entering page handler for addanswer.");
     
     struct kpair *session = req->fieldmap[KEY_SESSIONID];
     if (!session) {
@@ -423,16 +525,25 @@ static void fcgi_addanswer(struct kreq *req)
     }
 
     // Deserialise answer
-    struct answer a;
-    if (deserialise_answer(answer->val,&a)) {
+    struct answer *a=calloc(sizeof(struct answer),1);
+    if (!a) {
+      quick_error(req,KHTTP_500,"calloc() of answer structure failed.");
+    }
+
+    if (deserialise_answer(answer->val,a)) {
+      free_answer(a); a=NULL;
       quick_error(req,KHTTP_400,"Could not deserialise answer");
       break;
     }
 
-    if (session_add_answer(s,&a)) {
+    if (session_add_answer(s,a)) {
+      free_answer(a); a=NULL;
       quick_error(req,KHTTP_400,"session_add_answer() failed");
       break;
     }
+    if (a) free_answer(a);
+    a=NULL;
+    
     if (save_session(s)) LOG_ERRORV("save_session('%s') failed",session_id);
 
     
@@ -443,6 +554,7 @@ static void fcgi_addanswer(struct kreq *req)
     
   } while(0);
 
+  (void)retVal;
   return;
   
 }
@@ -487,21 +599,34 @@ static void fcgi_updateanswer(struct kreq *req)
     }
 
     // Deserialise answer
-    struct answer a;
-    if (deserialise_answer(answer->val,&a)) {
+    struct answer *a=calloc(sizeof(struct answer),1);
+    if (!a) {
+      quick_error(req,KHTTP_500,"calloc() of answer structure failed.");
+    }
+    if (deserialise_answer(answer->val,a)) {
       quick_error(req,KHTTP_400,"Could not deserialise answer");
       break;
     }
 
-    if (session_delete_answers_by_question_uid(s,a.uid)<0) {
+    if (!a) {
+      quick_error(req,KHTTP_400,"Deserialised answer is null");
+      break;
+    }
+    if (session_delete_answers_by_question_uid(s,a->uid,0)<0) {
+      if (a) free_answer(a);
+      a=NULL;
       quick_error(req,KHTTP_400,"session_delete_answers_by_question_uid() failed");
       break;
     }
-    if (session_add_answer(s,&a)) {
+    if (session_add_answer(s,a)) {
+      if (a) free_answer(a);
+      a=NULL;
       quick_error(req,KHTTP_400,"session_add_answer() failed");
       break;
     }
     if (save_session(s)) {
+      if (a) free_answer(a);
+      a=NULL;
       quick_error(req,KHTTP_400,"save_session() failed");
       LOG_ERRORV("save_session('%s') failed",session_id);
     }
@@ -513,6 +638,7 @@ static void fcgi_updateanswer(struct kreq *req)
     
   } while(0);
 
+  (void)retVal;
   return; 
 }  
 
@@ -566,20 +692,28 @@ static void fcgi_delanswer(struct kreq *req)
     // We have an answer -- so delete the specific answer
     if (answer&&answer->val) {
       // Deserialise answer
-      struct answer a;
-      if (deserialise_answer(answer->val,&a)) {
+      struct answer *a=calloc(sizeof(struct answer),1);
+      if (!a) {
+	quick_error(req,KHTTP_500,"calloc() of answer structure failed.");
+      }
+
+      if (deserialise_answer(answer->val,a)) {
+	if (a) free_answer(a);
+	a=NULL;
 	quick_error(req,KHTTP_400,"deserialise_answer() failed");
 	break;
       }
       // We have an answer, so try to delete it.
-      if (session_delete_answer(s,&a)) {
+      if (session_delete_answer(s,a,0)) {
+	if (a) free_answer(a);
+	a=NULL;
 	quick_error(req,KHTTP_400,"session_delete_answer() failed");
 	break;
       }
     }
     else if (question&&question->val) {
       // No answer give, so delete all answers to the given question
-      if (session_delete_answers_by_question_uid(s,question->val)<0) {
+      if (session_delete_answers_by_question_uid(s,question->val,0)<0) {
 	quick_error(req,KHTTP_400,"session_delete_answers_by_question_uid() failed");
 	break;
       }      
@@ -600,8 +734,102 @@ static void fcgi_delanswer(struct kreq *req)
     
   } while(0);
 
+  (void)retVal;
   return;   
 }
+
+static void fcgi_delanswerandfollowing(struct kreq *req)
+{
+  int retVal=0;
+  
+  do {
+
+    LOG_INFO("Entering page handler.");
+
+    struct kpair *session = req->fieldmap[KEY_SESSIONID];
+    if (!session) {
+      // No session ID, so return 400
+      quick_error(req,KHTTP_400,"sessionid missing");
+      break;
+    }
+    if (!session->val) {
+      quick_error(req,KHTTP_400,"sessionid is blank");
+      break;
+    }
+    char *session_id=session->val;
+    if (lock_session(session_id)) LOG_ERRORV("Failed to lock session '%s'",session_id);    
+    struct session *s=load_session(session_id);
+    if (!s) {
+      quick_error(req,KHTTP_400,"Could not load specified session. Does it exist?");
+      break;
+    }
+
+    struct kpair *question = req->fieldmap[KEY_QUESTIONID];
+    struct kpair *answer = req->fieldmap[KEY_ANSWER];
+    if ((!answer)&&(!question)) {
+      // No answer, so return 400
+      quick_error(req,KHTTP_400,"answer missing");
+      break;
+    }
+    if (answer&&(!answer->val)) {
+      quick_error(req,KHTTP_400,"answer is blank");
+      break;
+    }
+    if (question&&(!question->val)) {
+      quick_error(req,KHTTP_400,"question is blank");
+      break;
+    }
+    if (answer&&question) {
+      quick_error(req,KHTTP_400,"You cannot provide both a question ID and and answer when deleting answer(s) to a question");
+      break;
+    }
+
+    // We have an answer -- so delete the specific answer
+    if (answer&&answer->val) {
+      // Deserialise answer
+      struct answer *a=calloc(sizeof(struct answer),1);
+      if (!a) {
+	quick_error(req,KHTTP_500,"calloc() of answer structure failed.");
+      }
+      if (deserialise_answer(answer->val,a)) {
+	quick_error(req,KHTTP_400,"deserialise_answer() failed");
+	break;
+      }
+      // We have an answer, so try to delete it.
+      if (session_delete_answer(s,a,1)) {
+	if (a) free_answer(a);
+	a=NULL;
+	quick_error(req,KHTTP_400,"session_delete_answer() failed");
+	break;
+      }
+    }
+    else if (question&&question->val) {
+      // No answer give, so delete all answers to the given question
+      if (session_delete_answers_by_question_uid(s,question->val,0)<0) {
+	quick_error(req,KHTTP_400,"session_delete_answers_by_question_uid() failed");
+	break;
+      }      
+    }
+    else {
+      quick_error(req,KHTTP_400,"Either a question ID or an answer must be providd");
+      break;
+    }
+    if (save_session(s)) {
+      quick_error(req,KHTTP_400,"save_session() failed");
+      LOG_ERRORV("save_session('%s') failed",session_id);
+    }
+    
+    // All ok, so tell the caller the next question to be answered
+    fcgi_nextquestion(req);
+
+    LOG_INFO("Leaving page handler.");
+    
+  } while(0);
+
+  (void)retVal;
+  return;   
+}
+
 
 static void fcgi_delsession(struct kreq *r)
 {
@@ -642,7 +870,8 @@ static void fcgi_delsession(struct kreq *r)
     LOG_INFO("Leaving page handler.");
     
   } while(0);
-  
+
+  (void)retVal;
   return;  
 }
 
@@ -696,51 +925,89 @@ static void fcgi_nextquestion(struct kreq *r)
       kjson_putstringp(&req,"title",q[i]->question_text);
       kjson_putstringp(&req,"description",q[i]->question_html);
       kjson_putstringp(&req,"type",question_type_names[q[i]->type]);
-
-      switch (q[i]->type)
-    {
-    case QTYPE_MULTICHOICE:
-    case QTYPE_MULTISELECT:
-    //#98 add single checkbox choices
-    case QTYPE_SINGLESELECT:
-    case QTYPE_SINGLECHOICE:
-    case QTYPE_CHECKBOX: 
-    
-      kjson_arrayp_open(&req,"choices");
-      int len=strlen(q[i]->choices);
-      if (len) {
-        for(int j=0;q[i]->choices[j];) {
-          char choice[65536];
-          int cl=0;
-          choice[0]=0;
-          while(
-            ((j+cl)<len)
-            &&q[i]->choices[j+cl]
-            &&(q[i]->choices[j+cl]!=',')
-            )
-          {
-            if (cl<65535) {
-              choice[cl]=q[i]->choices[j+cl];
-              choice[cl+1]=0;
-            }
-            cl++;
-          } 
-          // #74 skip empty values
-          if (q[i]->choices[j]!=',') {
-            kjson_putstring(&req,choice);
-          }
-          j+=cl;
-          if (q[i]->choices[j+cl]==',') j++;
-        }
+      // Provide default value if question not previously answered,
+      // else provide the most recent deleted answer for this question. #186
+      {
+	for(int j=0;j<s->answer_count;j++)
+	  if(!strcmp(s->answers[j]->uid,q[i]->uid)) {
+	    if (s->answers[j]->flags&ANSWER_DELETED)
+	      {
+		char rendered[8192];
+		snprintf(rendered,8192,"%s",s->answers[j]->text);
+		
+		switch(q[i]->type)
+		  {
+		  case QTYPE_INT:	    snprintf(rendered,8192,"%lld",s->answers[j]->value); break;
+		  case QTYPE_FIXEDPOINT:    snprintf(rendered,8192,"%lld",s->answers[j]->value); break;
+		  case QTYPE_MULTICHOICE:   break;
+		  case QTYPE_MULTISELECT:   break;
+		  case QTYPE_LATLON:        snprintf(rendered,8192,"%lld,%lld",s->answers[j]->lat,s->answers[j]->lon); break;
+		  case QTYPE_DATETIME:      snprintf(rendered,8192,"%lld",s->answers[j]->time_begin); break;
+		  case QTYPE_DAYTIME:       snprintf(rendered,8192,"%lld",s->answers[j]->time_begin); break;
+		  case QTYPE_TIMERANGE:     snprintf(rendered,8192,"%lld,%lld",s->answers[j]->time_begin,s->answers[j]->time_end); break;
+		  case QTYPE_UPLOAD:        break;
+		  case QTYPE_TEXT:          break;
+		  case QTYPE_CHECKBOX:      break;
+		  case QTYPE_HIDDEN:        break;
+		  case QTYPE_TEXTAREA:      break;
+		  case QTYPE_EMAIL:         break;
+		  case QTYPE_PASSWORD:      break;
+		  case QTYPE_SINGLECHOICE:  break;
+		  case QTYPE_SINGLESELECT:  break;
+		  case QTYPE_UUID:          break;
+		  default:
+		    LOG_ERRORV("Unknown question type #%d in session '%s'",q[i]->type,session_id);
+		    break;
+		  }
+		  kjson_putstringp(&req,"default_value",rendered);
+	      }
+	  }
       }
-      kjson_array_close(&req);
-      break;
-    default:
-      break;
-    }
+      
+      switch (q[i]->type)
+	{
+	case QTYPE_MULTICHOICE:
+	case QTYPE_MULTISELECT:
+	  //#98 add single checkbox choices
+	case QTYPE_SINGLESELECT:
+	case QTYPE_SINGLECHOICE:
+	case QTYPE_CHECKBOX: 
+	  
+	  kjson_arrayp_open(&req,"choices");
+	  int len=strlen(q[i]->choices);
+	  if (len) {
+	    for(int j=0;q[i]->choices[j];) {
+	      char choice[65536];
+	      int cl=0;
+	      choice[0]=0;
+	      while(
+		    ((j+cl)<len)
+		    &&q[i]->choices[j+cl]
+		    &&(q[i]->choices[j+cl]!=',')
+		    )
+		{
+		  if (cl<65535) {
+		    choice[cl]=q[i]->choices[j+cl];
+		    choice[cl+1]=0;
+		  }
+		  cl++;
+		} 
+	      // #74 skip empty values
+	      if (q[i]->choices[j]!=',') {
+		kjson_putstring(&req,choice);
+	      }
+	      j+=cl;
+	      if (q[i]->choices[j+cl]==',') j++;
+	    }
+	  }
+	  kjson_array_close(&req);
+	  break;
+	default:
+	  break;
+	}
       // #72 unit field
       kjson_putstringp(&req,"unit",q[i]->unit);
-
+      
       kjson_obj_close(&req);
     }
     kjson_array_close(&req); 
@@ -751,6 +1018,8 @@ static void fcgi_nextquestion(struct kreq *r)
     
   } while(0);
 
+  (void)retVal;
+  
   return;  
 }
 
@@ -906,5 +1175,7 @@ static void fcgi_analyse(struct kreq *r)
     
   } while(0);
 
+  (void)retVal;
+  
   return;  
 }

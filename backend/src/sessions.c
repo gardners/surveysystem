@@ -29,6 +29,7 @@ int validate_session_id(char *session_id)
   int retVal=0;
   do {
     if (!session_id) LOG_ERROR("session_id is NULL");
+    LOG_WARNV("Validating session id '%s'",session_id);
     if (strlen(session_id)!=36) LOG_ERRORV("session_id '%s' must be exactly 36 characters long",session_id);
     if (session_id[0]=='-') LOG_ERRORV("session_id '%s' may not begin with a dash",session_id);
     for(int i=0;session_id[i];i++)
@@ -218,7 +219,7 @@ int create_session(char *survey_id,char *session_id_out)
   int retVal=0;
 
   do {
-    char session_id[256];
+    char session_id[256]={0};
     char session_prefix[5];
     char session_path_suffix[1024];
     char session_path[1024];
@@ -458,7 +459,6 @@ int load_survey_questions(struct session *ses)
   FILE *f=NULL;
 
   do {
-
     if (!ses) LOG_ERROR("session structure is NULL");
     if (!ses->survey_id) LOG_ERROR("survey_id in session structure is NULL");
 
@@ -473,7 +473,8 @@ int load_survey_questions(struct session *ses)
     char line[8192];
 
     // Check survey file format version
-    line[0]=0;fgets(line,8192,f);
+    line[0]=0;
+    if (!fgets(line,8192,f)) LOG_ERRORV("Failed to read survey file format version in survey specification file '%s'",survey_path);
     if (!line[0]) LOG_ERRORV("Failed to read survey file format version in survey specification file '%s'",survey_path);
     int format_version=0;
     int offset=0;
@@ -484,7 +485,8 @@ int load_survey_questions(struct session *ses)
     if (format_version<1||format_version>2) LOG_ERRORV("Unknown survey file format version in survey file '%s'",survey_path);
 
     // Get survey file description
-    line[0]=0;fgets(line,8192,f);
+    line[0]=0;
+    if (!fgets(line,8192,f)) LOG_ERRORV("Failed to read survey description in survey specification file '%s'",survey_path);
     if (!line[0]) LOG_ERRORV("Failed to read survey description in survey specification file '%s'",survey_path);
     // Trim CR and LF chars from description
     trim_crlf(line);
@@ -495,7 +497,8 @@ int load_survey_questions(struct session *ses)
     ses->allow_generic=0;
     if (format_version>1) {
       // Check for pythondir and without python directives
-      line[0]=0;fgets(line,8192,f);
+      line[0]=0;
+      if (!fgets(line,8192,f)) LOG_ERRORV("Failed to read survey description in survey specification file '%s'",survey_path);
       if (!line[0]) LOG_ERRORV("Failed to read survey description in survey specification file '%s'",survey_path);
       // Trim CR and LF chars from description
       trim_crlf(line);
@@ -512,13 +515,11 @@ int load_survey_questions(struct session *ses)
 
     // Now read questions
     do {
-      line[0]=0;fgets(line,8192,f);
+      line[0]=0;
+      if (!fgets(line,8192,f)) break;
       if (!line[0]) break;
 
       if (ses->question_count>=MAX_QUESTIONS) LOG_ERRORV("Too many questions in survey '%s' (increase MAX_QUESTIONS?)",survey_path);
-
-      struct question *q=calloc(sizeof(struct question),1);
-      if (!q) LOG_ERRORV("calloc(struct question) failed while loading survey question list from '%s'",survey_path);
 
       // Remove end of line markers
       trim_crlf(line);
@@ -526,9 +527,16 @@ int load_survey_questions(struct session *ses)
       // Skip blank lines
       if (!line[0]) continue;
 
-      if (deserialise_question(line,q)) { free_question(q); q=NULL; LOG_ERRORV("Error deserialising question '%s' in survey file '%s'",line,survey_path); }
-      ses->questions[ses->question_count++]=q;
-
+      struct question *q=calloc(sizeof(struct question),1);
+      if (!q) LOG_ERRORV("calloc(struct question) failed while loading survey question list from '%s'",survey_path);
+      
+      if (deserialise_question(line,q))
+	{ free_question(q); q=NULL;
+	  LOG_ERRORV("Error deserialising question '%s' in survey file '%s'",line,survey_path);
+	}
+      else
+	ses->questions[ses->question_count++]=q;
+      
     } while(line[0]);
 
     fclose(f); f=NULL;
@@ -572,7 +580,8 @@ struct session *load_session(char *session_id)
 
     // Read survey ID line
     char survey_id[1024];
-    survey_id[0]=0; fgets(survey_id,1024,s);
+    survey_id[0]=0;
+    if (!fgets(survey_id,1024,s)) { fclose(s); LOG_ERRORV("Could not read survey ID from session file '%s'",session_path); }
     if (!survey_id[0]) { fclose(s); LOG_ERRORV("Could not read survey ID from session file '%s'",session_path); }
     // Trim CR / LF characters from the end
     trim_crlf(survey_id);
@@ -594,7 +603,8 @@ struct session *load_session(char *session_id)
     line[0]=0;
     do {
       // Get next line with an answer in it
-      line[0]=0; fgets(line,65536,s);
+      line[0]=0;
+      if (!fgets(line,65536,s)) break;
       if (!line[0]) break;
       int len=strlen(line);
       if (!len) LOG_ERRORV("Empty line in session file '%s'",session_path);
@@ -671,6 +681,28 @@ int save_session(struct session *s)
   return retVal;
 }
 
+struct answer *copy_answer(struct answer *aa)
+{
+  int retVal=0;
+  struct answer *a=NULL;
+  do {
+    // Duplicate aa into a, so that we don't put pointers to structures that are on the
+    // stack into our list.
+    a=malloc(sizeof(struct answer));
+    if (!a) LOG_ERROR("malloc() of struct answer failed.");
+    bcopy(aa,a,sizeof(struct answer));
+    if (a->uid) { a->uid=strdup(a->uid); if (!a->uid) { LOG_ERROR("Could not copy a->uid"); } }
+    if (a->text) { a->text=strdup(a->text);if (!a->text) { LOG_ERROR("Could not copy a->text"); } }
+    if (a->unit) { a->unit=strdup(a->unit); if (!a->unit) { LOG_ERROR("Could not copy a->unit"); } }
+  } while(0);
+  if (retVal) {
+    if (a) free_answer(a);
+    a=NULL;
+    return NULL;
+  }
+  else return a;
+}
+
 /*
   Add the provided answer to the set of answers in the provided session.
   If another answer exists for the same question, it will trigger an error.
@@ -678,6 +710,7 @@ int save_session(struct session *s)
 int session_add_answer(struct session *ses,struct answer *a)
 {
   int retVal=0;
+  int undeleted=0;
   do {
     // Add answer to list of answers
     if (!ses) LOG_ERROR("Session structure is NULL");
@@ -694,13 +727,29 @@ int session_add_answer(struct session *ses,struct answer *a)
 
     // Don't allow multiple answers to the same question
     for(int i=0;i<ses->answer_count;i++)
-      if (!strcmp(ses->answers[i]->uid,a->uid))
-    LOG_ERRORV("Question '%s' has already been answered in session '%s'. Delete old answer before adding a new one",a->uid,ses->session_id);
+      if (!strcmp(ses->answers[i]->uid,a->uid)) {
+	if (ses->answers[i]->flags&ANSWER_DELETED) {
+	  // Answer exists, but was deleted, so we can just update the values
+	  // by replacing the answer structure. #186
+	  free(ses->answers[i]);
+	  ses->answers[i]=copy_answer(a);
+	  undeleted=1;
+	} else
+	  {
+	    LOG_ERRORV("Question '%s' has already been answered in session '%s'. Delete old answer before adding a new one",a->uid,ses->session_id);
+	  }
+	
+	
+      }
     if (retVal) break;
 
     if (ses->answer_count>=MAX_QUESTIONS) LOG_ERRORV("Too many answers in session '%s' (increase MAX_QUESTIONS?)",ses->session_id);
-    ses->answers[ses->answer_count]=a;
-    ses->answer_count++;
+
+    // #186 Don't append answer if we are undeleting it.
+    if (!undeleted) {
+      ses->answers[ses->answer_count]=copy_answer(a);
+      ses->answer_count++;
+    }
 
     char serialised_answer[65536]="(could not serialise)";
     serialise_answer(a,serialised_answer,65536);
@@ -714,7 +763,7 @@ int session_add_answer(struct session *ses,struct answer *a)
   Delete any and all answers to a given question from the provided session structure.
   It is not an error if there were no matching answers to delete
 */
-int session_delete_answers_by_question_uid(struct session *ses,char *uid)
+int session_delete_answers_by_question_uid(struct session *ses,char *uid, int deleteFollowingP)
 {
   int retVal=0;
   int deletions=0;
@@ -726,16 +775,20 @@ int session_delete_answers_by_question_uid(struct session *ses,char *uid)
       while ((i<ses->answer_count)&&(!strcmp(ses->answers[i]->uid,uid)))
     {
       // Delete matching questions
+      // #186 - Deletion now just sets the ANSWER_DELETED flag in the flags field for the answer.
+      // If deleteFollowingP is non-zero, then this is applied to all later answers in the session also.
 
       char serialised_answer[65536]="(could not serialise)";
       serialise_answer(ses->answers[i],serialised_answer,65536);
       LOG_INFOV("Deleted from session '%s' answer '%s'.",ses->session_id,serialised_answer);
 
-      free_answer(ses->answers[i]);
-      ses->answer_count--;
-      for(int j=i;j<ses->answer_count;j++)
-        ses->answers[j]=ses->answers[j+1];
-      ses->answers[ses->answer_count]=0;
+      ses->answers[i]->flags |= ANSWER_DELETED;
+
+      // Mark all following answers deleted, if required
+      if (deleteFollowingP) {
+	for(int j=i+1;j<ses->answer_count;j++)
+	  ses->answers[j]->flags |= ANSWER_DELETED;	  
+      }
     }
     if (retVal) break;
 
@@ -749,7 +802,7 @@ int session_delete_answers_by_question_uid(struct session *ses,char *uid)
   and return the number of answers deleted.
   If there is no exactly matching answer, it will return 0.
  */
-int session_delete_answer(struct session *ses,struct answer *a)
+int session_delete_answer(struct session *ses,struct answer *a, int deleteFollowingP)
 {
   int retVal=0;
   int deletions=0;
@@ -761,16 +814,19 @@ int session_delete_answer(struct session *ses,struct answer *a)
       while ((i<ses->answer_count)&&(!compare_answers(a,ses->answers[i],MISMATCH_IS_NOT_AN_ERROR)))
     {
       // Delete matching questions
+      // (Actually just mark them deleted. #186)
 
       char serialised_answer[65536]="(could not serialise)";
       serialise_answer(ses->answers[i],serialised_answer,65536);
       LOG_INFOV("Deleted from session '%s' answer '%s'.",ses->session_id,serialised_answer);
 
-      free_answer(ses->answers[i]);
-      ses->answer_count--;
-      for(int j=i;j<ses->answer_count;j++)
-        ses->answers[j]=ses->answers[j+1];
-      ses->answers[ses->answer_count]=0;
+      ses->answers[i]->flags |= ANSWER_DELETED;
+
+      // Mark all following answers deleted, if required
+      if (deleteFollowingP) {
+	for(int j=i+1;j<ses->answer_count;j++)
+	  ses->answers[j]->flags |= ANSWER_DELETED;	  
+      }
     }
     if (retVal) break;
 

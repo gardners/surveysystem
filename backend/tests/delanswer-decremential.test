@@ -1,0 +1,65 @@
+description Answer a sequence of questions and then delete answers (decremential)
+
+#!---------------------
+#!running delanswer decremential
+#!---------------------
+
+# Create a dummy survey
+definesurvey del_decremential
+version 2
+Silly test survey updated
+without python
+question1:Question 1::TEXT:0::-1:-1:0:0::
+question2:Question 2::TEXT:0::-1:-1:0:0::
+question3:Question 3::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+# Request creation of a  new session
+request 200 newsession?surveyid=del_decremential
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+#! ------- answer 3 questions -------
+request 200 addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0::0
+match_string {"next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "unit": ""}]}
+
+request 200 addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0::0
+match_string {"next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "unit": ""}]}
+
+request 200 addanswer?sessionid=$SESSION&answer=question3:Answer+3:0:0:0:0:0:0:0::0
+match_string {"next_questions": []}
+
+verify_session
+del_decremential/0b39e0c93f1b338433b8a8773d57f738dd405e17
+question1:Answer 1:0:0:0:0:0:0:0::0
+question2:Answer 2:0:0:0:0:0:0:0::0
+question3:Answer 3:0:0:0:0:0:0:0::0
+endofsession
+
+#! ------- delanswer question 3 -------
+request 200 delanswer?sessionid=$SESSION&questionid=question3
+match_string {"next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "unit": ""}]}
+
+verify_session
+del_decremential/0b39e0c93f1b338433b8a8773d57f738dd405e17
+question1:Answer 1:0:0:0:0:0:0:0:
+question2:Answer 2:0:0:0:0:0:0:0:
+endofsession
+
+#! ------- delanswer question 2 -------
+request 200 delanswer?sessionid=$SESSION&questionid=question2
+match_string {"next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "unit": ""}]}
+
+verify_session
+del_decremential/0b39e0c93f1b338433b8a8773d57f738dd405e17
+question1:Answer 1:0:0:0:0:0:0:0:
+endofsession
+
+#! ------- delanswer question 1 -------
+request 200 delanswer?sessionid=$SESSION&questionid=question1
+match_string {"next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "unit": ""}]}
+
+verify_session
+del_decremential/0b39e0c93f1b338433b8a8773d57f738dd405e17
+endofsession
