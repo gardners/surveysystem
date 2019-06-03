@@ -1,4 +1,4 @@
-description Answer a question in a survey
+description Version 2 without python does not invoke nextquestion
 
 #!---------------------
 #!Survey WITHOUT python
