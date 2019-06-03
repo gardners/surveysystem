@@ -3,7 +3,7 @@ description Python implementation of nextquestion can be used
 # Create a dummy survey
 # XXX - In any test where we use python, we need to make sure we don't reuse any survey name
 # that appears in any othe test, else our python functions will be hanging around and will get used.
-definesurvey nextquestionpython
+definesurvey nextquestion_python
 version 1
 Silly test survey updated
 multichoice:Select one of the following:Select one of the following:MULTICHOICE:0::-1:-1:-1:3:Yes,No,Maybe:
@@ -13,20 +13,20 @@ endofsurvey
 
 # Create python module
 python
-def nextquestion_nextquestionpython(questions,answers):
+def nextquestion_nextquestion_python(questions,answers):
         print (questions,answers)
         return ["question2"]
 endofpython
 
 # Request creation of a  new session
-request 200 newsession?surveyid=nextquestionpython
+request 200 newsession?surveyid=nextquestion_python
 
 # Get the session ID that newsession should have returned
 extract_sessionid
 
 # Check that we have an empty session file created
 verify_session
-nextquestionpython/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+nextquestion_python/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 
 # Ask for next question

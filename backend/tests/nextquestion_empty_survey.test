@@ -1,0 +1,22 @@
+description An empty survey should return HTTP 400
+
+# Create a dummy survey
+definesurvey nextquestion_empty_survey
+version 2
+without python
+Silly test survey updated
+endofsurvey
+
+# Request creation of a  new session
+request 200 newsession?surveyid=nextquestion_empty_survey
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session
+nextquestion_empty_survey/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+endofsession
+
+request 400 nextquestion?sessionid=$SESSION
+
