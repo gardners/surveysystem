@@ -76,6 +76,26 @@ void require_test_directory(char *sub_dir, int perm) {
   }
 }
 
+void require_test_file(char *file_name, int perm) {
+  char tmp[2048];
+  snprintf(tmp,2048,"%s/%s",test_dir,file_name);
+  
+  FILE* f = fopen(tmp, "w");
+  if(!f) {
+    fprintf(stderr,"fopen(%s) failed.", tmp);
+    exit(-3);
+  }
+  fclose(f);
+  
+  // Now make sessions directory writeable by all users
+  if (chmod(tmp,S_IRUSR|S_IWUSR|S_IXUSR|
+            S_IRGRP|S_IWGRP|S_IXGRP|
+            S_IROTH|S_IWOTH|S_IXOTH)) {
+    fprintf(stderr,"chmod(%s) failed.", tmp);
+    exit(-3);
+  }
+}
+
 void require_directory(char *dir, int perm) {
   if (mkdir(dir,perm)) {
     fprintf(stderr,"mkdir(%s, %o) failed.", dir, perm);
@@ -835,14 +855,14 @@ int run_test(char *dir, char *test_file)
           if (session_line[0]&&(!strcmp("endofsession",comparison_line))) {
             // End of comparison list before end of session file
             tdelta=gettime_us()-start_time; tdelta/=1000;
-            fprintf(log,"T+%4.3fms : FAIL : Session log file contains more lines than expected.\n",tdelta);
+            fprintf(log,"T+%4.3fms : FAIL : 1 Session log file contains more lines than expected.\n",tdelta);
             goto fail;
           }
 
           if ((!session_line[0])&&(strcmp("endofsession",comparison_line))) {
             // End of session file before end of comparison list
             tdelta=gettime_us()-start_time; tdelta/=1000;
-            fprintf(log,"T+%4.3fms : FAIL : Session log file contains less lines than expected.\n",tdelta);
+            fprintf(log,"T+%4.3fms : FAIL : 2 Session log file contains less lines than expected.\n",tdelta);
             goto fail;
           }
 
@@ -923,17 +943,19 @@ char *config_template=
   "     \"mod_fastcgi\",\n"
   "     \"mod_compress\",\n"
   "     \"mod_redirect\",\n"
+  "     \"mod_accesslog\",\n"
   ")\n"
   "\n"
-  "server.breakagelog           = \"%s/breakage.log\"\n"
+  "server.breakagelog          = \"%s/breakage.log\"\n"
   "server.document-root        = \"%s/front/build\"\n"
   "server.upload-dirs          = ( \"/var/cache/lighttpd/uploads\" )\n"
-  "server.errorlog             = \"/var/log/lighttpd/error.log\"\n"
+  "server.errorlog             = \"%s/lighttpd-error.log\"\n"
   "server.pid-file             = \"/var/run/lighttpd.pid\"\n"
   "server.username             = \"%s\"\n"
   "server.groupname            = \"%s\"\n"
   "server.port                 = %d\n"
   "\n"
+  "accesslog.filename = \"%s/lighttpd-access.log\"\n"
   "\n"
   "index-file.names            = ( \"index.php\", \"index.html\", \"index.lighttpd.html\" )\n"
   "url.access-deny             = ( \"~\", \".inc\" )\n"
@@ -952,7 +974,8 @@ char *config_template=
   "     \"port\" => %d,\n"
   "     \"bin-path\" => \"%s/surveyfcgi\",\n"
   "     \"bin-environment\" => (\n"
-  "     \"SURVEY_HOME\" => \"%s\"\n"
+  "     \"SURVEY_HOME\" => \"%s\",\n"
+  "     \"SURVEY_PYTHON_DIR\" => \"%s\"\n"
   "     ),\n"
   "     \"check-local\" => \"disable\",\n"
   "     \"docroot\" => \"%s/front/build\" # remote server may use \n"
@@ -1000,11 +1023,24 @@ int configure_and_start_lighttpd(char *test_dir)
 
     fprintf(stderr,"Created breakage.log\n");
     
+    char python_dir[4096];
+    if(!realpath("python", python_dir)) {
+      python_dir[0]=0;
+    }
+    
     snprintf(conf_data,16384,config_template,
              test_dir,
              getcwd(cwd,cwdlen),
-             LIGHTY_USER, LIGHTY_GROUP, HTTP_PORT, SURVEYFCGI_PORT, test_dir,
-             test_dir, getcwd(cwd,cwdlen));
+             test_dir,
+             LIGHTY_USER, 
+             LIGHTY_GROUP, 
+             HTTP_PORT, 
+             test_dir,
+             SURVEYFCGI_PORT, 
+             test_dir,
+             test_dir, 
+             python_dir, 
+             getcwd(cwd,cwdlen));
     char tmp_conf_file[1024];
     snprintf(tmp_conf_file,1024,"%s/lighttpd.conf",test_dir);
     FILE *f=fopen(tmp_conf_file,"w");
@@ -1066,32 +1102,32 @@ int stop_lighttpd(int verbose)
    }
 
   FILE *fp;
-  char cmd[2048];
-  char pidc[20] = { '\0' };
-  snprintf(cmd, 2048, "sudo lsof -t -i:%d", HTTP_PORT);
+  char lsof_cmd[2048];
+  char kill_cmd[2048];
+  char pidc[20];
+  size_t hits = 0;
+  
+  snprintf(lsof_cmd, 2048, "sudo lsof -t -i:%d", HTTP_PORT);
   if (verbose) fprintf(stderr,"Got lsof output\n");
-  fp = popen(cmd, "r");
-  fgets(pidc, sizeof(pidc), fp);
+  fp = popen(lsof_cmd, "r");
+  while (fgets(pidc, sizeof(pidc), fp) != NULL) {
+    hits++;
+    snprintf(kill_cmd,2048,"sudo kill %s", pidc);
+    if (verbose) fprintf(stderr," - running: %s\n", kill_cmd);
+    if (system(kill_cmd)) {
+      fprintf(stderr,"system() call to stop lighttpd failed (kill %s)\n", pidc);
+      exit(-3);
+    }
+  }
   fclose(fp);
 
-  fprintf(stderr,"Read pidc\n");
-  
-  int pid = atoi(pidc);
-  fprintf(stderr,"Parsed pidc as %d\n",pid);
-  if(!pid) {
+  if(!hits) {
     if (verbose) fprintf(stderr,"No pid to kill.\n");
     return 0;
   }
-  fprintf(stderr,"Considering my options...\n");
+  if (verbose) fprintf(stderr,"Considering my options...\n");
 
-  if (verbose) {
-    fprintf(stderr,"killing pid %d on port %d...\n", pid, HTTP_PORT);
-  }
-  snprintf(cmd,2048,"sudo kill %d", pid);
-  if (system(cmd)) {
-    perror("system() call to stop lighttpd failed\n");
-    exit(-3);
-  }
+  sleep(1);
   if (verbose) fprintf(stderr,"Done.\n");
   return 0;
 }
@@ -1112,7 +1148,10 @@ int main(int argc,char **argv)
   // all the necessary hash files get created.)
   require_test_directory("surveys", 0777);
   require_test_directory("sessions", 0777);
+  require_test_directory("logs", 0777);
   require_test_directory("locks", 0777);
+  require_test_file("lighttpd-access.log", 0777);
+  require_test_file("lighttpd-error.log", 0777);
 
   // Make sure we have a test log directory
   mkdir("testlogs",0755);
