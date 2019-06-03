@@ -1,4 +1,4 @@
-description test infrastructure should check syntax in test file (in this case, endOfSurvey line is missing) 
+skip! description test infrastructure should check syntax in test file (in this case, endOfSurvey line is missing) 
 
 # Create a dummy survey
 definesurvey 007_testShouldVerifyDefinitions

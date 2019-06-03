@@ -4,9 +4,7 @@ description Create a new session
 definesurvey foo
 version 1
 Silly test survey updated
-multichoice:Select one of the following:Select one of the following:MULTICHOICE:0::-1:-1:-1:3:Yes,No,Maybe
-question1:What is the answer to question 1?:What is the answer to question 1?:TEXT:0:I don't know:-1:-1:0:0:
-question2:How boring was question 1?:How boring was question 1?:TEXT:0:I don't know:-1:-1:0:0:
+question1:What is the answer to question 1?::TEXT:0:I don't know:-1:-1:0:0:
 endofsurvey
 
 # Request creation of a  new session
