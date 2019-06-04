@@ -21,6 +21,7 @@ import PasswordInput from '../form/PasswordInput';
 import DaytimeSequence from '../form/DaytimeSequence';
 
 import { serializeQuestionAnswer } from '../../serializer';
+import { normalizeQuestion, normalizeQuestions } from '../../Question';
 import Question from '../survey/Question';
 
 const Pre = function(props) {
@@ -45,10 +46,20 @@ Pre.propTypes = {
 class Row extends Component {
     constructor(props) {
         super(props);
+        const { unit, default_value } = props;
         this.state = {
-            unit: '',
+            unit,
+            default_value,
             values: {},
         }
+    }
+
+    componentDidMount() {
+        const { unit, default_value } = this.props;
+        this.setState({
+            unit,
+            default_value,
+        });
     }
 
     handleChange(element, question, ...values) {
@@ -62,23 +73,23 @@ class Row extends Component {
 
     render() {
         const { props } = this;
-        const { values, unit } = this.state;
+        const { values, unit, default_value } = this.state;
 
         const hasAnswers = Object.keys(values).length > 0;
 
         const Component = props.component;
 
-        const question =  {
+        const question =  normalizeQuestion({
             id: Component.name,
             name: Component.name,
-            title: props.title || 'title',
+            title: Component.name,
             description: props.description || 'question description',
             type: props.type,
 
-            defaultValue: props.defaultValue || 'default',
+            default_value,
             choices: props.choices || [],
             unit,
-        };
+        });
 
         return (
             <div className="card mb-1" >
@@ -99,113 +110,107 @@ class Row extends Component {
     }
 };
 
+Row.defaultProps = {
+    unit: '',
+    default_value: '',
+};
+
 Row.propTypes = {
     component: PropTypes.func.isRequired,
 };
 
-class Demo extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            unit: '',
-        };
-    }
+const Demo = function(props){
 
-    render() {
-        return (
-            <section>
-                <div>
-                    <Row type={ 'HIDDEN' }       component={ HiddenInput }       unit={ this.state.unit } description="text with some <strong>markup</strong> html and an image: <img src='data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7'>" defaultVlaue="visited"/>
-                    <Row type={ 'LATLON' }       component={ GeoLocation }       unit={ this.state.unit } withButton={ true } />
-                    <Row type={ 'TIMERANGE' }    component={ PeriodRangeSlider } unit={ this.state.unit }/>
-                    <Row type={ 'DAYTIME' }      component={ DayTimeSlider }     unit={ this.state.unit }/>
-                    <Row type={ 'FIXEDPOINT' }   component={ TimePicker }        unit={ this.state.unit }/>
-                    <Row type={ 'MULTICHOICE' }  component={ CheckboxGroup }     unit={ this.state.unit } choices={ ['This', 'That', 'Another one' ] } defaultValue="Maybe"/>
-                    <Row type={ 'SINGLECHOICE' } component={ RadioGroup }        unit={ this.state.unit } choices={ ['This', 'That', 'Another one' ] } defaultValue="Maybe"/>
-                    <Row type={ 'CHECKBOX' }     component={ Checkbox }          unit={ this.state.unit } choices={ [ 'Unchecked!', 'Checked!'] }/>
-                    <Row type={ 'TEXT' }         component={ RadioGroup }        unit={ this.state.unit } choices={ ['Yes', 'No', 'Maybe' ] } defaultValue="Maybe"/>
-                    <Row type={ 'SINGLESELECT' } component={ Select }            unit={ this.state.unit } choices={ ['First', 'Second', 'Third' ] } defaultValue="Second"/>
-                    <Row type={ 'MULTISELECT' }  component={ MultiSelect }       unit={ this.state.unit } choices={ ['First', 'Second', 'Third' ] } defaultValue="Second"/>
-                    <Row type={ 'TEXT' }         component={ TextInput }         unit={ this.state.unit }/>
-                    <Row type={ 'INT' }          component={ NumberInput }       unit={ this.state.unit }/>
-                    <Row type={ 'TEXT' }         component={ Textarea }          unit={ this.state.unit }/>
-                    <Row type={ 'FIXEDPOINT' }   component={ RadioMatrix }       unit={ this.state.unit } description="This is the <em>description</em> for this question group"
-                        questions={ [
-                            {
-                                id: 'question1',
-                                name: 'question1',
-                                type: 'FIXEDPOINT',
-                                title: 'Row 1',
-                                description: 'Row 1 text',
-                                choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
-                                unit: this.state.unit,
-                            }, {
-                                id: 'question2',
-                                name: 'question2',
-                                type: 'FIXEDPOINT',
-                                title: 'Row 2',
-                                description: 'Row 2 text',
-                                choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
-                                unit: this.state.unit,
-                            },{
-                                id: 'question3',
-                                name: 'question3',
-                                type: 'FIXEDPOINT',
-                                title: 'Row 3',
-                                description: 'Row 3 text',
-                                choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
-                                unit: this.state.unit,
-                            },{
-                                id: 'question4',
-                                name: 'question4',
-                                type: 'FIXEDPOINT',
-                                title: 'Row 4',
-                                description: 'Row 4 text',
-                                choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
-                                unit: this.state.unit,
-                            }
-                        ] }
-                    />
-                    <Row type={ 'EMAIL' }        component={ EmailInput }           unit={ this.state.unit }/>
-                    <Row type={ 'PASSWORD' }     component={ PasswordInput }        unit={ this.state.unit }/>
-                    <Row type={ 'DAYTIME' }      component={ DaytimeSequence }      unit={ this.state.unit }
-                        questions={ [
-                            {
-                                id: 'question1',
-                                name: 'question1',
-                                type: 'DAYTIME',
-                                title: 'breakfast time',
-                                description: 'Row 1 text',
-                                unit: 'seconds',
-                            }, {
-                                id: 'question2',
-                                name: 'question2',
-                                type: 'DAYTIME',
-                                title: 'lunch time',
-                                description: 'Row 2 text',
-                                unit: 'seconds',
-                            },{
-                                id: 'question3',
-                                name: 'question3',
-                                type: 'DAYTIME',
-                                title: 'afternoon tea time',
-                                description: 'Row 3 text',
-                                unit: 'seconds',
-                            },{
-                                id: 'question4',
-                                name: 'question4',
-                                type: 'DAYTIME',
-                                title: 'late snack time',
-                                description: 'Row 4 text',
-                                unit: 'seconds',
-                            }
-                        ] }
-                    />
-                </div>
-            </section>
-        );
-    }
-}
+    return (
+        <section>
+            <div>
+                <Row type={ 'HIDDEN' }       component={ HiddenInput }       description="text with some <strong>markup</strong> html and an image: <img src='data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7'>" />
+                <Row type={ 'LATLON' }       component={ GeoLocation }       withButton={ true } />
+                <Row type={ 'TIMERANGE' }    component={ PeriodRangeSlider } />
+                <Row type={ 'DAYTIME' }      component={ DayTimeSlider }     />
+                <Row type={ 'FIXEDPOINT' }   component={ TimePicker }        />
+                <Row type={ 'MULTICHOICE' }  component={ CheckboxGroup }     choices={ ['This', 'That', 'Another one' ] } default_value="That" />
+                <Row type={ 'SINGLECHOICE' } component={ RadioGroup }        choices={ ['This', 'That', 'Another one' ] } />
+                <Row type={ 'CHECKBOX' }     component={ Checkbox }          choices={ [ 'Unchecked!', 'Checked!'] }  default_value="Checked!" />
+                <Row type={ 'TEXT' }         component={ RadioGroup }        choices={ ['Yes', 'No', 'Maybe' ] }  />
+                <Row type={ 'SINGLESELECT' } component={ Select }            choices={ ['First', 'Second', 'Third' ] } />
+                <Row type={ 'MULTISELECT' }  component={ MultiSelect }       choices={ ['First', 'Second', 'Third' ] } />
+                <Row type={ 'TEXT' }         component={ TextInput }         />
+                <Row type={ 'INT' }          component={ NumberInput }       />
+                <Row type={ 'TEXT' }         component={ Textarea }          />
+                <Row type={ 'FIXEDPOINT' }   component={ RadioMatrix }       description="This is the <em>description</em> for this question group"
+                    questions={ normalizeQuestions([
+                        {
+                            id: 'question1',
+                            name: 'question1',
+                            type: 'FIXEDPOINT',
+                            title: 'Row 1',
+                            description: 'Row 1 text',
+                            choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
+                        }, {
+                            id: 'question2',
+                            name: 'question2',
+                            type: 'FIXEDPOINT',
+                            title: 'Row 2',
+                            description: 'Row 2 text',
+                            choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
+                        },{
+                            id: 'question3',
+                            name: 'question3',
+                            type: 'FIXEDPOINT',
+                            title: 'Row 3',
+                            description: 'Row 3 text',
+                            choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
+                        },{
+                            id: 'question4',
+                            name: 'question4',
+                            type: 'FIXEDPOINT',
+                            title: 'Row 4',
+                            description: 'Row 4 text',
+                            choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
+                        }
+                    ]) }
+                />
+                <Row type={ 'EMAIL' }        component={ EmailInput }        />
+                <Row type={ 'PASSWORD' }     component={ PasswordInput }     />
+                <Row type={ 'DAYTIME' }      component={ DaytimeSequence }
+                    questions={ normalizeQuestions([
+                        {
+                            id: 'question1',
+                            name: 'question1',
+                            type: 'DAYTIME',
+                            title: 'breakfast time',
+                            description: 'Row 1 text',
+                            default_value: 27000, /* 07:30:00 */
+                        }, {
+                            id: 'question2',
+                            name: 'question2',
+                            type: 'DAYTIME',
+                            title: 'lunch time',
+                            description: 'Row 2 text',
+                            default_value: 43200, /* 12:00:00 */
+                        },{
+                            id: 'question3',
+                            name: 'question3',
+                            type: 'DAYTIME',
+                            title: 'afternoon tea time',
+                            description: 'Row 3 text',
+                            default_value: 55800, /* 15:30:00 */
+                        },{
+                            id: 'question4',
+                            name: 'question4',
+                            type: 'DAYTIME',
+                            title: 'late snack time',
+                            description: 'Row 4 text',
+                            default_value: 73800, /* 20:30:00 */
+                        }
+                    ]) }
+                />
+            </div>
+        </section>
+    );
+};
+
 
 Demo.propTypes = {};
 
