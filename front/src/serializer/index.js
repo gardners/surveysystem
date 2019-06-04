@@ -75,6 +75,7 @@ const escPattern = new RegExp(`${CSV_SEPARATOR}'"`, 'g');
  * @property {number} time_zone_delta - timeperiod timzone offset in seconds, type: number (INT)
  * @property {number} dst_delta - distance(?), type: number (INT)
  * @property {string} unit - answer unit
+ * @property {number} flag - Bitmask ANSWERED|DELETED
 
  * @see backend/src/question_types.c
  * @see backend/src/deserialise_parse_field.c
@@ -107,6 +108,7 @@ const getModel = function() {
         time_zone_delta : 0,    // type: number (INT)
         dst_delta : 0,          // type: number (INT)
         unit: '',               // type: text
+        flag: 0,                // bitmask
     };
 };
 
@@ -394,6 +396,7 @@ const serializeAnswerValue = function(id, answer, questionType) {
  * @returns {(string|Error)}  csv row or Error to be displayed
  */
 const serializeAnswer = function (id, answer, type, unit) {
+
     let model = getModel();
     let key;
 
