@@ -1,7 +1,20 @@
 import PropTypes from 'prop-types';
 
 /**
+ * @typedef QuestionModel
+ * @type {object}
+ * @property {string} id - required
+ * @property {string} name - required
+ * @property {string} description - required
+ * @property {string} type - required
+ * @property {string} default_value - required
+ * @property {string[]|number[]} choices - optional
+ * @property {string} unit - required
+ */
+
+/**
 * Get Proptypes schema
+* @see survey.h:: struct question
 * @returns {PropTypes}
 */
 const Question = {
@@ -12,10 +25,44 @@ const Question = {
             title: PropTypes.string.isRequired,
             description: PropTypes.string.isRequired,
             type: PropTypes.string.isRequired,
+            default_value: PropTypes.oneOfType([
+                PropTypes.string,
+                PropTypes.number
+            ]).isRequired,
             choices: (!withChoices) ? PropTypes.array : PropTypes.array.isRequired,
             unit: PropTypes.string.isRequired,
         });
     },
+};
+
+/**
+* Normalize a question object, received via REST api
+* @see survey.h:: struct question
+* @param {QuestionModel} question
+*
+* @returns {QuestionModel}
+*/
+const normalizeQuestion = function(question) {
+    return Object.assign({
+            id: "",
+            name: "",
+            title: "",
+            description: "",
+            type: "",
+            default_value: "",
+            unit: "",
+    }, question);
+};
+
+/**
+* Normalize an array of question objects, received via REST api
+* @see survey.h:: struct question
+* @param {QuestionModel[]} questions
+*
+* @returns {QuestionModel[]}
+*/
+const normalizeQuestions = function(questions) {
+    return questions.map(q => normalizeQuestion(q));
 };
 
 /**
@@ -119,4 +166,4 @@ const findQuestionGroupCommons = function(group) {
     return (!choices) ? 'TYPE' : 'CHOICES'
 };
 
-export { Question as default, getGroupId, mapQuestionGroups, findQuestionGroupCommons };
+export { Question as default, getGroupId, mapQuestionGroups, findQuestionGroupCommons, normalizeQuestion, normalizeQuestions };
