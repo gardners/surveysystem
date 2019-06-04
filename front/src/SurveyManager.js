@@ -1,4 +1,5 @@
 import Log from './Log';
+import { normalizeQuestions } from './Question';
 
 /**
  * Builds a colon-separated sorted string of question ids from a questions entry. This allows to shallow compare querstions entries
@@ -184,7 +185,7 @@ class SurveyManager {
             return false;
         }
 
-        this.questions.push(questions);
+        this.questions.push(normalizeQuestions(questions));
 
         this.modified = Date.now();
         return true;
