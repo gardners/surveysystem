@@ -35,7 +35,7 @@ const App = function(props) {
                             surveys.length > 1 &&
                                 <Route path="/surveys" render={ () => <Surveys surveys={ surveys } surveyProvider={ surveyProvider } /> } />
                         }
-                        <Route path="/demo/form" component={ Demo } />
+                        <Route path="/demo/form/:component?" component={ Demo } />
                         <Route path="/demo/analyse" component={ DemoAnalysis } />
                         <Route path="/demo/manifest" component={ DemoManifest } />
                         <Route path="/analyse/:id/:sessionID" component={ Analysis } />

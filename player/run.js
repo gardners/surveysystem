@@ -10,7 +10,7 @@ const { getlastSessionEntry } = require('./session');
 
 // frontend serializer
 const AppSrcDir = path.resolve(path.join(__dirname, '../front/src'));
-const { serializeQuestionAnswer } = imports(`${AppSrcDir}/serializer`);
+const Answer = imports(`${AppSrcDir}/Answer`);
 
 // api
 const Fetch = require('./fetch');
@@ -65,73 +65,75 @@ const sleep = millisec => new Promise(resolve => setTimeout(resolve, millisec));
  * @returns {string} serialized answer (colon-separated csv fragment)
  */
 const provideSerializedAnswer = function(question, customAnswer = null) {
-    let serialized;
+    let answer;
 
     if (customAnswer !== null) {
-        return serializeQuestionAnswer(null, question, customAnswer);
+        answer = Answer.setValue(question, 42);
+        return Answer.serialize(answer);
     }
 
-    const { type } = question;
+    const { type, id } = question;
 
     switch (type) {
 
         case 'INT':
-            serialized = serializeQuestionAnswer(null, question, 42);
+            answer = Answer.setValue(question, 42);
             break;
         case 'FIXEDPOINT':
-            serialized = serializeQuestionAnswer(null, question, Math.PI);
+            answer = Answer.setValue(question, Math.PI);
             break;
 
         case 'MULTICHOICE':
-            serialized = serializeQuestionAnswer(null, question, question.choices[0]);
+            answer = Answer.setValue(question, [question.choices[0]]);
             break;
 
         case 'MULTISELECT':
-            serialized = serializeQuestionAnswer(null, question, question.choices[0]);
+            answer = Answer.setValue(question, [question.choices[0]]);
             break;
 
         case 'LATLON':
-            serialized = serializeQuestionAnswer(null, question, 1.01, 2.01);
+            answer = Answer.setValue(question, [1.01, 2.01]);
             break;
 
             // TODO DATETIME
             // TODO DAYTIME slider/select
 
         case 'TIMERANGE':
-            serialized = serializeQuestionAnswer(null, question, 2.5, 3.5);
+            answer = Answer.setValue(question, [2.5, 3.5]);
             break;
 
         case 'TEXTAREA':
-            serialized = serializeQuestionAnswer(null, question, 'textarea');
+            answer = Answer.setValue(question, 'textarea');
             break;
         case 'CHECKBOX':
-            serialized = serializeQuestionAnswer(null, question, question.choices[1]);
+            answer = Answer.setValue(question, question.choices[1]);
             break;
         case 'HIDDEN':
-            serialized = serializeQuestionAnswer(null, question, 'hidden value');
+            answer = Answer.setValue(question, 'hidden value');
             break;
         case 'EMAIL':
-            serialized = serializeQuestionAnswer(null, question, 'email@test.com');
+            answer = Answer.setValue(question, 'email@test.com');
             break;
         case 'PASSWORD':
-            serialized = serializeQuestionAnswer(null, question, 'mypassword');
+            answer = Answer.setValue(question, 'mypassword');
             break;
 
         // TODO SINGLECHOICE
         case 'SINGLECHOICE':
-            serialized = serializeQuestionAnswer(null, question, question.choices[0]);
+            answer = Answer.setValue(question, question.choices[0]);
             break;
 
         case 'SINGLESELECT':
-            serialized = serializeQuestionAnswer(null, question, question.choices[0]);
+            answer = Answer.setValue(question, question.choices[0]);
             break;
 
         case 'TEXT':
         default:
-            serialized = serializeQuestionAnswer(null, question, 'Answer text');
+            Log.error('Question type error:');
+            throw new Error(`Question id: ${id} Unknown question type ${type}`)
     }
 
-    return serialized;
+    return Answer.serialize(answer);
 };
 
 ////
@@ -241,6 +243,12 @@ const answerQuestions = function(questions) {
         const answerType = (customAnswer !== null) ? 'custom' : 'generic';
 
         const answer = provideSerializedAnswer(question, customAnswer);
+
+        if(typeof answer === Error) {
+            Log.error(answer.message);
+            console.log(question, answer);
+            process.exit(1);
+        }
 
         const logType = (answerType === 'custom') ? Log.colors.green(answerType) : answerType;
         Log.log(`  ${Log.colors.yellow('title')}: ${question.id}: ${Log.colors.yellow('title:')} ${question.title}, ${Log.colors.yellow('answer type:')} ${logType}, ${Log.colors.yellow('answer:')} ${answer}`);

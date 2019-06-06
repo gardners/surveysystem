@@ -44,13 +44,13 @@ const Question = {
 */
 const normalizeQuestion = function(question) {
     return Object.assign({
-            id: "",
-            name: "",
-            title: "",
-            description: "",
-            type: "",
-            default_value: "",
-            unit: "",
+        id: "",
+        name: "",
+        title: "",
+        description: "",
+        type: "",
+        default_value: "",
+        unit: "",
     }, question);
 };
 
