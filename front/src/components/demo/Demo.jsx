@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import { Link } from 'react-router-dom';
+
 // form elements
 import GeoLocation from '../form/GeoLocation';
 import PeriodRangeSlider from '../form/PeriodRangeSlider';
@@ -73,11 +75,14 @@ class Row extends Component {
 
     render() {
         const { props } = this;
-        const { values, unit, default_value } = this.state;
-
-        const hasAnswers = Object.keys(values).length > 0;
-
         const Component = props.component;
+
+        if (props.selected && props.selected !== Component.name) {
+            return (null);
+        }
+
+        const { values, unit, default_value } = this.state;
+        const hasAnswers = Object.keys(values).length > 0;
 
         const question =  normalizeQuestion({
             id: Component.name,
@@ -102,7 +107,8 @@ class Row extends Component {
 
                 <div className="card-footer text-muted">
                     { hasAnswers && <small className="mr-2 float-left text-info" style={ { fontFamily: 'monospace' } }>{ JSON.stringify(Object.values(values)) }</small> }
-                    <small className="mr-2 float-left">Type: { this.props.type }</small>
+                    <small className="mr-2 float-left">Type: { props.type }</small>
+                    <small className="mr-2 float-right">{ (props.selected !== Component.name) ? <Link to={ `/demo/form/${Component.name}` }><i className="fas fa-expand-arrows-alt"></i></Link> : <Link to="/demo/form/"><i className="fas fa-compress-arrows-alt"></i></Link> }</small>
                     <small className="mr-2 float-right"><input type="checkbox" onChange={(e) => this.setState({ unit: (e.target.checked) ? 'example unit': '' })} /> toggle unit</small>
                 </div>
             </div>
@@ -111,34 +117,36 @@ class Row extends Component {
 };
 
 Row.defaultProps = {
-    unit: '',
-    default_value: '',
 };
 
 Row.propTypes = {
+    selected: PropTypes.string.isRequired, //component.name
+    type: PropTypes.string.isRequired,
     component: PropTypes.func.isRequired,
 };
 
 const Demo = function(props){
 
+    const selected = props.match.params.component || '';
+
     return (
         <section>
             <div>
-                <Row type={ 'HIDDEN' }       component={ HiddenInput }       description="text with some <strong>markup</strong> html and an image: <img src='data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7'>" />
-                <Row type={ 'LATLON' }       component={ GeoLocation }       withButton={ true } />
-                <Row type={ 'TIMERANGE' }    component={ PeriodRangeSlider } />
-                <Row type={ 'DAYTIME' }      component={ DayTimeSlider }     />
-                <Row type={ 'FIXEDPOINT' }   component={ TimePicker }        />
-                <Row type={ 'MULTICHOICE' }  component={ CheckboxGroup }     choices={ ['This', 'That', 'Another one' ] } default_value="That" />
-                <Row type={ 'SINGLECHOICE' } component={ RadioGroup }        choices={ ['This', 'That', 'Another one' ] } />
-                <Row type={ 'CHECKBOX' }     component={ Checkbox }          choices={ [ 'Unchecked!', 'Checked!'] }  default_value="Checked!" />
-                <Row type={ 'TEXT' }         component={ RadioGroup }        choices={ ['Yes', 'No', 'Maybe' ] }  />
-                <Row type={ 'SINGLESELECT' } component={ Select }            choices={ ['First', 'Second', 'Third' ] } />
-                <Row type={ 'MULTISELECT' }  component={ MultiSelect }       choices={ ['First', 'Second', 'Third' ] } />
-                <Row type={ 'TEXT' }         component={ TextInput }         />
-                <Row type={ 'INT' }          component={ NumberInput }       />
-                <Row type={ 'TEXT' }         component={ Textarea }          />
-                <Row type={ 'FIXEDPOINT' }   component={ RadioMatrix }       description="This is the <em>description</em> for this question group"
+                <Row selected={ selected } type={ 'HIDDEN' }       component={ HiddenInput }       description="text with some <strong>markup</strong> html and an image: <img src='data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7'>" />
+                <Row selected={ selected } type={ 'LATLON' }       component={ GeoLocation }       withButton={ true } />
+                <Row selected={ selected } type={ 'TIMERANGE' }    component={ PeriodRangeSlider } />
+                <Row selected={ selected } type={ 'DAYTIME' }      component={ DayTimeSlider }     />
+                <Row selected={ selected } type={ 'DAYTIME' }      component={ TimePicker }        />
+                <Row selected={ selected } type={ 'MULTICHOICE' }  component={ CheckboxGroup }     choices={ ['This', 'That', 'Another one' ] } default_value="That" />
+                <Row selected={ selected } type={ 'SINGLECHOICE' } component={ RadioGroup }        choices={ ['This', 'That', 'Another one' ] } />
+                <Row selected={ selected } type={ 'CHECKBOX' }     component={ Checkbox }          choices={ [ 'Unchecked!', 'Checked!'] }  default_value="Checked!" />
+                <Row selected={ selected } type={ 'TEXT' }         component={ RadioGroup }        choices={ ['Yes', 'No', 'Maybe' ] }  />
+                <Row selected={ selected } type={ 'SINGLESELECT' } component={ Select }            choices={ ['First', 'Second', 'Third' ] } />
+                <Row selected={ selected } type={ 'MULTISELECT' }  component={ MultiSelect }       choices={ ['First', 'Second', 'Third' ] } />
+                <Row selected={ selected } type={ 'TEXT' }         component={ TextInput }         />
+                <Row selected={ selected } type={ 'INT' }          component={ NumberInput }       />
+                <Row selected={ selected } type={ 'TEXT' }         component={ Textarea }          />
+                <Row selected={ selected } type={ 'FIXEDPOINT' }   component={ RadioMatrix }       description="This is the <em>description</em> for this question group"
                     questions={ normalizeQuestions([
                         {
                             id: 'question1',
@@ -171,9 +179,9 @@ const Demo = function(props){
                         }
                     ]) }
                 />
-                <Row type={ 'EMAIL' }        component={ EmailInput }        />
-                <Row type={ 'PASSWORD' }     component={ PasswordInput }     />
-                <Row type={ 'DAYTIME' }      component={ DaytimeSequence }
+                <Row selected={ selected } type={ 'EMAIL' }        component={ EmailInput }        />
+                <Row selected={ selected } type={ 'PASSWORD' }     component={ PasswordInput }     />
+                <Row selected={ selected } type={ 'DAYTIME' }      component={ DaytimeSequence }
                     questions={ normalizeQuestions([
                         {
                             id: 'question1',
@@ -210,7 +218,6 @@ const Demo = function(props){
         </section>
     );
 };
-
 
 Demo.propTypes = {};
 

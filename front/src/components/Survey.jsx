@@ -4,7 +4,8 @@ import { Link } from 'react-router-dom';
 
 // apis
 import api, { BaseUri } from '../api';
-import { serializeQuestionAnswer } from '../serializer';
+import Answer from '../Answer';
+
 import SurveyManager from '../SurveyManager';
 import  { mapQuestionGroups } from '../Question';
 import  { isArray } from '../Utils';
@@ -87,17 +88,12 @@ class Survey extends Component {
     // form processing
     ////
 
-    handleChange(element, question, ...values) {
+    handleChange(element, question, value) {
         const { answers } = this.state;
         const { id } = question;
 
-        // Error or csv
-        const serialized = serializeQuestionAnswer(element, question, ...values);
-
-        answers[id] = {
-            values,
-            serialized,
-        };
+        // Error or Answer object
+        answers[id] = Answer.setValue(value);
 
         this.setState({
             answers,
@@ -106,7 +102,7 @@ class Survey extends Component {
 
     getFormErrors() {
         const { answers } = this.state;
-        return Object.keys(answers).filter(key => answers[key] && typeof answers[key].serialized !== 'undefined' && answers[key].serialized instanceof Error)
+        return Object.keys(answers).filter(key => answers[key] instanceof Error)
     }
 
     ////
@@ -162,7 +158,7 @@ class Survey extends Component {
             return;
         }
 
-        const csvFragments = Object.keys(answers).map(id => answers[id].serialized);
+        const csvFragments = Object.keys(answers).map(id => Answer.serialize(answers[id]));
 
         api.updateAnswers_SEQUENTIAL(survey.sessionID, csvFragments)
         .then(responses => responses.pop()) // last
