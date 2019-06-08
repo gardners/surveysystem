@@ -937,24 +937,28 @@ static void fcgi_nextquestion(struct kreq *r)
 		
 		switch(q[i]->type)
 		  {
-		  case QTYPE_INT:	    snprintf(rendered,8192,"%lld",s->answers[j]->value); break;
-		  case QTYPE_FIXEDPOINT:    snprintf(rendered,8192,"%lld",s->answers[j]->value); break;
-		  case QTYPE_MULTICHOICE:   break;
-		  case QTYPE_MULTISELECT:   break;
-		  case QTYPE_LATLON:        snprintf(rendered,8192,"%lld,%lld",s->answers[j]->lat,s->answers[j]->lon); break;
-		  case QTYPE_DATETIME:      snprintf(rendered,8192,"%lld",s->answers[j]->time_begin); break;
-		  case QTYPE_DAYTIME:       snprintf(rendered,8192,"%lld",s->answers[j]->time_begin); break;
-		  case QTYPE_TIMERANGE:     snprintf(rendered,8192,"%lld,%lld",s->answers[j]->time_begin,s->answers[j]->time_end); break;
-		  case QTYPE_UPLOAD:        break;
-		  case QTYPE_TEXT:          break;
-		  case QTYPE_CHECKBOX:      break;
-		  case QTYPE_HIDDEN:        break;
-		  case QTYPE_TEXTAREA:      break;
-		  case QTYPE_EMAIL:         break;
-		  case QTYPE_PASSWORD:      break;
-		  case QTYPE_SINGLECHOICE:  break;
-		  case QTYPE_SINGLESELECT:  break;
-		  case QTYPE_UUID:          break;
+		  case QTYPE_INT:                 snprintf(rendered,8192,"%lld",s->answers[j]->value); break;
+		  case QTYPE_FIXEDPOINT:          snprintf(rendered,8192,"%lld",s->answers[j]->value); break;
+		  case QTYPE_MULTICHOICE:         break;
+		  case QTYPE_MULTISELECT:         break;
+		  case QTYPE_LATLON:              snprintf(rendered,8192,"%lld,%lld",s->answers[j]->lat,s->answers[j]->lon); break;
+		  case QTYPE_DATETIME:            snprintf(rendered,8192,"%lld",s->answers[j]->time_begin); break;
+		  case QTYPE_DAYTIME:             snprintf(rendered,8192,"%lld",s->answers[j]->time_begin); break;
+		  case QTYPE_TIMERANGE:           snprintf(rendered,8192,"%lld,%lld",s->answers[j]->time_begin,s->answers[j]->time_end); break;
+		  case QTYPE_UPLOAD:              break;
+		  case QTYPE_TEXT:                break;
+		  case QTYPE_CHECKBOX:            break;
+		  case QTYPE_HIDDEN:              break;
+		  case QTYPE_TEXTAREA:            break;
+		  case QTYPE_EMAIL:               break;
+		  case QTYPE_PASSWORD:            break;
+		  case QTYPE_SINGLECHOICE:        break;
+		  case QTYPE_SINGLESELECT:        break;
+		  case QTYPE_UUID:                break;
+		  // #205 add sequence fields
+		  case QTYPE_FIXEDPOINT_SEQUENCE: break;
+		  case QTYPE_DAYTIME_SEQUENCE: 	  break;
+		  case QTYPE_DATETIME_SEQUENCE:   break;
 		  default:
 		    LOG_ERRORV("Unknown question type #%d in session '%s'",q[i]->type,session_id);
 		    break;
@@ -968,10 +972,14 @@ static void fcgi_nextquestion(struct kreq *r)
 	{
 	case QTYPE_MULTICHOICE:
 	case QTYPE_MULTISELECT:
-	  //#98 add single checkbox choices
+	// #98 add single checkbox choices
 	case QTYPE_SINGLESELECT:
 	case QTYPE_SINGLECHOICE:
 	case QTYPE_CHECKBOX: 
+	// #205 add sequence fields
+	case QTYPE_FIXEDPOINT_SEQUENCE:
+	case QTYPE_DAYTIME_SEQUENCE:
+	case QTYPE_DATETIME_SEQUENCE:
 	  
 	  kjson_arrayp_open(&req,"choices");
 	  int len=strlen(q[i]->choices);
