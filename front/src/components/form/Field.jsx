@@ -149,56 +149,15 @@ _Error.propTypes = {
     grouped: PropTypes.bool.isRequired,
 };
 
-const InputGroup = function(props) {
-    let pre = (typeof props.prepend === 'string') ? [props.prepend] : props.prepend;
-    let app = (typeof props.append === 'string') ? [props.append] : props.append;
-    pre = pre.filter(entry => !entry === false);
-    app = app.filter(entry => !entry === false);
-
-    return(
-        <div className="input-group">
-            { pre.length > 0 &&
-                <div className="input-group-prepend">
-                    { pre.map((entry, index) => <span key={ index } className="input-group-text">{ entry }</span>) }
-                </div>
-            }
-            { props.children }
-            { app.length > 0 &&
-                <div className="input-group-append">
-                    { app.map((entry, index) => <span key={ index } className="input-group-text">{ entry }</span>) }
-                </div>
-            }
-        </div>
-    );
-};
-
 /**
- * Question input group: textual inputs, custom selects, and custom file inputs.
- * @see https://getbootstrap.com/docs/4.3/components/input-group/
+ * Bundle
  */
-
-InputGroup.defaultProps = {
-    append: '',
-    prepend: '',
-};
-
-InputGroup.propTypes = {
-    append: PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.array,
-    ]),
-    prepend: PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.array,
-    ]),
-};
 
 const Field = {
     Row,
     Unit,
     Title,
     Error: _Error,
-    InputGroup,
     Description,
 };
 
