@@ -2,6 +2,11 @@ import Log from './Log';
 import { normalizeQuestions } from './Question';
 
 /**
+ * @module The survey manager keeps track and manipulates of the question history. The module is designed to be used by LocalStorage.
+ * Thus, answers are not considered here due privacy concerns.
+ */
+
+/**
  * Builds a colon-separated sorted string of question ids from a questions entry. This allows to shallow compare querstions entries
  * @param {[object]} questions array of QuestionItem
  * @returns {string}
