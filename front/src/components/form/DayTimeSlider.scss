@@ -1,0 +1,21 @@
+////  react-input-range overwrites
+
+@import 'react-input-range/src/scss/index.scss';
+
+.input-range__track--background {
+    box-shadow: inset 1px 1px 2px 0px rgba(0,0,0,1);
+}
+.input-range__label {
+    font-family: inherit !important;
+}
+
+.input-range__label--value {
+    top: -2.5rem !important;
+    .input-range__label-container {
+        background-color: rgba(0,0,0,.8);
+        padding: .3rem;
+        border-radius: .3rem;
+        color: white;
+    }
+}
+

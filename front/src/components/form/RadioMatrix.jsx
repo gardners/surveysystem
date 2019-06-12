@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import Question from '../../Question';
+import Field from './Field';
+import QuestionModel from '../../Question';
 import { matchesBreakpoint } from '../../Media';
-
-import Select from './Select';
 
 import './RadioMatrix.scss';
 //TODO, required, error
@@ -36,29 +35,47 @@ TheadRow.defaultProps = {
 };
 
 TheadRow.propTypes = {
-    question: Question.propTypes(true).isRequired,
+    question: QuestionModel.propTypes(true).isRequired,
     expanded: PropTypes.bool.isRequired,
 };
 
-const Row = function({ question, handleChange, expanded, required }) {
+const Row = function({ question, index, value, handleChange, expanded, required }) {
+
+    const choices = question.choices || [];
 
     if(!expanded) {
         return (
             <tr>
                 <td className="radiomatrix--firstcol">{ question.title }</td>
                 <td>
-                    <Select
+                    <select
+                        id={ question.id }
+                        name={ question.name }
+                        autoComplete="off"
                         key={ question.id }
                         question={ question }
-                        handleChange={ handleChange }
-                    />
+                        value={ value }
+                        onChange={ (e) => handleChange(question, e.target.value) }
+                    >
+                    {
+                        choices.map((choice, key) => {
+                            return (
+                                <option
+                                    key= { key }
+                                    value={ choice }
+                                >
+                                    { choice }
+                                </option>
+                            );
+                        })
+                    }
+                    </select>
                 </td>
             </tr>
         );
     }
 
-    const choices = question.choices || [];
-
+    /* eslint-disable eqeqeq */
     return (
         <tr>
             <td className="radiomatrix--firstcol">{ question.title }</td>
@@ -68,10 +85,12 @@ const Row = function({ question, handleChange, expanded, required }) {
                         <td key={ index }>
                             <input
                                 type="radio"
-                                id={ question.id }
+                                id={ `${question.name}[${index}]` }
                                 name={ question.name }
+                                autoComplete="off"
                                 value={ choice }
-                                onChange={ (e) => handleChange(e.target, question, choice) }
+                                checked={ choice == value /* intentionally using non-typesafe operator */ }
+                                onChange={ (e) => handleChange(question, e.target.value) }
                                 required={ required }
                             />
                         </td>
@@ -80,6 +99,7 @@ const Row = function({ question, handleChange, expanded, required }) {
             }
         </tr>
     );
+    /* eslint-enable eqeqeq */
 };
 
 Row.defaultProps = {
@@ -87,58 +107,116 @@ Row.defaultProps = {
 };
 
 Row.propTypes = {
-    question: Question.propTypes(true).isRequired,
+    question: QuestionModel.propTypes(true).isRequired,
+    index: PropTypes.number.isRequired,
     handleChange: PropTypes.func.isRequired,
     expanded: PropTypes.bool.isRequired,
+    value: PropTypes.any,
     required: PropTypes.bool,
 };
 
-const RadioMatrix = function({ questions, handleChange, required, expand }) {
-    //TODO
-    if(!questions.length) {
-        return (null);
+class RadioMatrix extends Component {
+
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            values: {},
+        };
     }
 
-    const expanded = (expand === null) ? matchesBreakpoint(MEDIA_BREAKPOINT) : expand;
-    const first = questions[0];
+    componentDidMount() {
+        const { questions } = this.props;
+        const values = {};
 
-    return (
-        <div className="table-responsive">
-            <table className="table table-sm table-hover radiomatrix--table">
-                <thead>
-                    <TheadRow
-                        question={ first }
-                        expanded={ expanded }
-                    />
-                </thead>
-                <tbody>
-                    {
-                        questions.map((question, index) => <Row
-                            key={ index }
-                            question={ question }
-                            handleChange={ handleChange }
-                            required={ required }
-                            expanded={ expanded }
-                        />)
-                    }
-                </tbody>
-            </table>
-        </div>
-    );
+        questions.forEach((q) => {
+            values[q.id] = q.default_value;
+        });
+
+        this.setState({
+            values,
+        });
+    }
+
+    handleChange(question, value) {
+        const { values } = this.state;
+        values[question.id] = value;
+
+        this.setState({
+            values,
+        });
+
+        this.props.handleChange(null, question, value);
+    }
+
+    render() {
+        const { values } = this.state;
+        const { questions, errors, required, grouped, className, expand } = this.props;
+
+        if(!questions.length) {
+            return (null);
+        }
+
+        const expanded = (expand === null) ? matchesBreakpoint(MEDIA_BREAKPOINT) : expand;
+        const first = questions[0];
+
+        return (
+            <Field.Row className={ className } question={ first } grouped={ grouped } required={ required }>
+                { /* No Field.title */ }
+                <Field.Description question={ first } grouped={ grouped } required={ required }>
+                    <Field.Unit className="badge badge-secondary ml-1" question={ first } grouped={ grouped } />
+                </Field.Description>
+
+                <div className="table-responsive">
+                    <table className="table table-sm table-hover radiomatrix--table">
+                        <thead>
+                            <TheadRow
+                                question={ first }
+                                expanded={ expanded }
+                            />
+                        </thead>
+                        <tbody>
+                            {
+                                questions.map((question, index) => <Row
+                                    key={ index }
+                                    index={ index }
+                                    question={ question }
+                                    value={ values[question.id] }
+                                    handleChange={ this.handleChange.bind(this) }
+                                    required={ required }
+                                    expanded={ expanded }
+                                />)
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                { Object.keys(errors).map(id => <Field.Error key= { id } error={ errors[id] } grouped={ grouped } />) }
+            </Field.Row>
+        );
+    }
 };
 
 RadioMatrix.defaultProps = {
-    required: true,
-    expand: null, // indicates that bool was not set yet (testing), TODO
+    grouped: false,
+    required: false,
+
+    expand: null, // null!
 };
 
 RadioMatrix.propTypes = {
     handleChange: PropTypes.func.isRequired,
     questions: PropTypes.arrayOf(
-        Question.propTypes(true)
-    ),
+        QuestionModel.propTypes(),
+    ).isRequired,
+
+    errors: PropTypes.object.isRequired,
+    grouped: PropTypes.bool,
     required: PropTypes.bool,
+
+    className: PropTypes.string,
     expand: PropTypes.bool, // force contracted or expanded display
 };
+
 
 export default RadioMatrix;

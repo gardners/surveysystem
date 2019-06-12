@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import Question from '../../Question';
+import Field from './Field';
+import QuestionModel from '../../Question';
 
 class RadioGroup extends Component {
     constructor(props) {
@@ -11,49 +12,68 @@ class RadioGroup extends Component {
         };
     }
 
+    componentDidMount() {
+        const { question } = this.props;
+        this.setState({
+            value: question.default_value,
+        });
+    }
+
     handleChange(e) {
         const { value } = e.target;
         const { question } = this.props;
 
         this.setState({
-            value: value
+            value: value,
         });
 
         this.props.handleChange(e.target, question, value);
     }
 
     render() {
-        const { question } = this.props;
+        const { question, error, required, grouped, className } = this.props;
         const { choices } = question;
+        const { value } = this.state;
 
         return (
-            <React.Fragment>
-                { choices.map((value, index) => {
-                    return <div key={index} className="radio form-check form-check-inline">
+            <Field.Row className={ className } question={ question } grouped={ grouped } required={ required }>
+                <Field.Description question={ question } grouped={ grouped } required={ required } />
+                <Field.Title element="label" grouped={ grouped } question={ question } required={ required }>
+                    <Field.Unit className="badge badge-secondary ml-1" question={ question } grouped={ grouped } />
+                </Field.Title>
+                {
+                    choices.map((choice, index) => (
+                        <div key={index} className="radio form-check form-check-inline">
                             <input
                                 type="radio"
-                                name={ question.name }
                                 className="form-check-input"
-                                id={ question.id }
-                                value={ value }
+                                autoComplete="off"
+                                name={ question.name }
+                                id={ `${question.name}[${index}]` }
+                                value={ choice }
                                 onChange={ this.handleChange.bind(this)}
-                                checked={ value === this.state.value }
+                                checked={ choice === value }
                             />
-                            <label className="form-check-label">{ value }</label>
-                    </div>
-                }) }
-            </React.Fragment>
+                            <label htmlFor={ `${question.name}[${index}]` } className="form-check-label">{ choice }</label>
+                        </div>
+                    ))
+                }
+                <Field.Error error={ error } grouped={ grouped } />
+            </Field.Row>
         );
     }
 }
 
 RadioGroup.defaultProps = {
-    required: true,
+    grouped: false,
+    required: false,
 };
 
 RadioGroup.propTypes = {
     handleChange: PropTypes.func.isRequired,
-    question: Question.propTypes(true).isRequired,
+    question: QuestionModel.propTypes().isRequired,
+    error: PropTypes.instanceOf(Error),
+    grouped: PropTypes.bool,
     required: PropTypes.bool,
 };
 

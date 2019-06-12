@@ -7,11 +7,14 @@ import QuestionModel, { findQuestionGroupCommons } from '../../Question';
 import RadioMatrix from '../form/RadioMatrix';
 import DaytimeSequence from '../form/DaytimeSequence';
 
-const QuestionGroup = function({ questions, answers, handleChange }) {
+import { addClassNames } from '../../Utils';
+
+const QuestionGroup = function({ handleChange, questions, values, errors, className}) {
 
     const commons = findQuestionGroupCommons(questions);
-
     const header = (commons !== 'NONE' && questions[0].type === 'HIDDEN') ? questions[0] : null;
+    const cls = addClassNames('question-group', className);
+
     const items = questions.filter((question, index) => {
         if(!header) {
             return true;
@@ -23,24 +26,48 @@ const QuestionGroup = function({ questions, answers, handleChange }) {
 
         case 'CHOICES':
             return (
-                <React.Fragment>
-                    { header && <Question question={ header } handleChange={ handleChange } answer= { null } /> }
+                <div className={ cls }>
+                    {
+                        header &&
+                            <Question
+                                handleChange={ handleChange }
+                                question={ header }
+                                value={ (header) ? values[header.id] : null }
+                                error={ (header) ? errors[header.id] : null }
+                                grouped={ true }
+                            />
+                    }
                     <RadioMatrix
                         handleChange={ handleChange }
                         questions={ items }
+                        values={ values }
+                        errors={ errors }
+                        grouped={ true }
                     />
-                </React.Fragment>
+                </div>
             );
 
         case 'DAYTIME_SEQUENCE':
             return (
-                <React.Fragment>
-                    { header && <Question question={ header } handleChange={ handleChange } answer= { null } /> }
+                <div className={ cls }>
+                    {
+                        header &&
+                            <Question
+                                handleChange={ handleChange }
+                                question={ header }
+                                value={ (header) ? values[header.id] : null }
+                                error={ (header) ? errors[header.id] : null }
+                                grouped={ true }
+                            />
+                    }
                     <DaytimeSequence
                         handleChange={ handleChange }
                         questions={ items }
+                        values={ values }
+                        errors={ errors }
+                        grouped={ true }
                     />
-                </React.Fragment>
+                </div>
             );
 
         default:
@@ -48,31 +75,41 @@ const QuestionGroup = function({ questions, answers, handleChange }) {
     }
 
     return (
-        <React.Fragment>
-
-        { header && <Question question={ header } handleChange={ handleChange } answer= { null } /> }
+        <div className={ cls }>
         {
+            header &&
+                <Question
+                    handleChange={ handleChange }
+                    question={ header }
+                    value={ (header) ? values[header.id] : null }
+                    error={ (header) ? errors[header.id] : null }
+                    grouped={ true }
+                />
+        } {
             items.map((question, index) => {
-                const answer = answers[question.id] || null;
+                const value = values[question.id] || null;
+                const error = errors[question.id] || null;
                 return(
                     <Question
                         key={ index }
                         handleChange={ handleChange }
                         question={ question }
-                        answer= { answer }
+                        value={ value }
+                        error={ error }
                         grouped={ true }
                     />
                 );
             })
 
         }
-        </React.Fragment>
+        </div>
     );
 
 };
 
 QuestionGroup.defaultProps = {
-    answers: {}
+    answers: {},
+    errors: {},
 };
 
 QuestionGroup.propTypes = {
@@ -80,6 +117,7 @@ QuestionGroup.propTypes = {
         QuestionModel.propTypes(),
     ).isRequired,
     answers: PropTypes.object,
+    errors: PropTypes.object,
     handleChange: PropTypes.func.isRequired,
 };
 
