@@ -22,7 +22,7 @@ import EmailInput from '../form/EmailInput';
 import PasswordInput from '../form/PasswordInput';
 import DaytimeSequence from '../form/DaytimeSequence';
 
-import { serializeQuestionAnswer } from '../../serializer';
+import Answer from '../../Answer';
 import { normalizeQuestion, normalizeQuestions } from '../../Question';
 import Question from '../survey/Question';
 
@@ -64,9 +64,10 @@ class Row extends Component {
         });
     }
 
-    handleChange(element, question, ...values) {
+    handleChange(element, question, value) {
         const updated = this.state.values;
-        updated[question.id] = serializeQuestionAnswer(element, question, ...values);
+        const answer = Answer.setValue(question, value);
+        updated[question.id] = Answer.serialize(answer);
 
         this.setState({
             values: updated,
