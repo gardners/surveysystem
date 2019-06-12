@@ -12,41 +12,49 @@ import './TimePicker.scss';
 
 const format = 'h:mm a';
 
-const seconds = function(m) {
+
+const getSeconds = function(m) {
     const midnight = m.clone().startOf('day');
     return  m.diff(midnight, 'seconds');
+};
+
+const setSeconds = function(sec) {
+    return moment().startOf('day').seconds(sec);
 };
 
 class TimePicker extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            value: 0,
+            value: setSeconds(0),
         };
     }
 
     componentDidMount() {
         const { question } = this.props;
+
+        let val = Number(question.default_value);
+        val = (!isNaN(val)) ? val : 0;
+
         this.setState({
-            value: question.default_value,
+            value: setSeconds(val),
         });
     }
 
     handleChange(m) {
+        console.log(m);
         const { question, handleChange } = this.props;
-
-        m = m || moment(0); // reset button provides null
-        const value = seconds(m);
+        const value = m || moment().startOf('day'); // reset button provides null
 
         this.setState({
-            value,
+            value: m,
         });
-        handleChange(null, question, value);
+        handleChange(null, question, getSeconds(m));
     }
 
     render() {
         const { value } = this.state;
-        const { handleChange, question, error, required, grouped, className } = this.props;
+        const { question, error, required, grouped, className } = this.props;
 
         return (
             <Field.Row className={ className } question={ question } grouped={ grouped } required={ required }>
@@ -59,7 +67,7 @@ class TimePicker extends Component {
                     id={ question.id }
                     name={ question.name }
                     showSecond={ false }
-                    defaultValue={ moment(0) }
+                    value={ value }
                     className="form-control"
                     onChange={ this.handleChange.bind(this) }
                     format={ format }
