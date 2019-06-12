@@ -1,40 +1,72 @@
-import React from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { InputGroup } from '../FormHelpers';
-import Question from '../../Question';
+import Field from './Field';
+import QuestionModel from '../../Question';
 
-const Textarea = function(props) {
-    const { question, placeholder } = props;
+class Textarea extends Component {
+    constructor(props) {
+        super(props);
 
-    return (
-        <InputGroup prepend={ question.unit }>
-            <textarea
-                id={ question.id }
-                name={ question.name }
-                type="text"
-                className="form-control"
-                placeholder={ placeholder }
-                autoComplete="off"
-                onChange={ (e) => {
-                    const { value } = e.target;
-                    props.handleChange(e.target, question, value);
-                } }
-            />
-        </InputGroup>
-    );
+        this.state = {
+            value: '',
+        };
+    }
+
+    componentDidMount() {
+        const { question } = this.props;
+        this.setState({
+            value: question.default_value,
+        });
+    }
+
+    handleChange(e){
+        const { question, handleChange } = this.props;
+        const { value } = e.target;
+        this.setState({
+            value,
+        });
+        handleChange(e.target, question, value);
+    }
+
+    render() {
+        const { value  } = this.state;
+        const { question, error, required, grouped, className } = this.props;
+        return (
+            <Field.Row className={ className } question={ question } grouped={ grouped } required={ required }>
+                <Field.Description question={ question } grouped={ grouped } required={ required } />
+                <Field.Title element="label" grouped={ grouped } question={ question } required={ required }>
+                    <Field.Unit className="badge badge-secondary ml-1" question={ question } grouped={ grouped } />
+                </Field.Title>
+                    <textarea
+                        id={ question.id }
+                        name={ question.name }
+                        className="form-control"
+                        autoComplete="off"
+                        required={ required }
+                        value={ value }
+                        onChange={ this.handleChange.bind(this) }
+                    />
+                <Field.Error error={ error } grouped={ grouped } />
+            </Field.Row>
+        );
+    }
 };
 
 Textarea.defaultProps = {
-    required: true,
-    placeholder: null,
+    grouped: false,
+    required: false,
 };
 
 Textarea.propTypes = {
     handleChange: PropTypes.func.isRequired,
-    question: Question.propTypes().isRequired,
+    question: QuestionModel.propTypes().isRequired,
+    value: QuestionModel.valuePropTypes(),
+    error: PropTypes.instanceOf(Error),
+    grouped: PropTypes.bool,
     required: PropTypes.bool,
-    placeholder: PropTypes.string,
+
+    className: PropTypes.string,
 };
 
 export default Textarea;
