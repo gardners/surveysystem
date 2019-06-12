@@ -101,6 +101,23 @@ const Api = {
             });
     },
 
+    /**
+     * Delete all previous answers until the specified question id
+     * @param {string} surveyID
+     * @returns {Promise} deserialized json including next questions
+     */
+    deleteAnswerAndFollowing: function(sessionID, questionID) {
+        const url = BaseUri + '/surveyapi/delanswerandfollowing';
+
+        return fetch(`${url}?sessionid=${sessionID}&questionid=${questionID}`)
+            .then((response) => {
+                if (!response.ok) {
+                    return responseError(response);
+                }
+                return response.json();
+            });
+    },
+
     // TODO: this is a temporary implementation
 
     /**
