@@ -1,0 +1,46 @@
+description FIXEDPOINT_SEQUENCE question type: Answer a FIXEDPOINT_SEQUENCE question with choices
+
+# Create a dummy survey
+definesurvey qtype_fixedpointsequence
+version 2
+Silly test survey updated
+without python
+sequence:Plant height?::FIXEDPOINT_SEQUENCE:0::-1:-1:-1:5:week 1,week 2,week 3:cm
+endofsurvey
+
+# Request creation of a  new session
+request 200 newsession?surveyid=qtype_fixedpointsequence
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session
+qtype_fixedpointsequence/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+endofsession
+
+# Ask for next question
+request 200 nextquestion?sessionid=$SESSION
+match_string {"next_questions": [{"id": "sequence", "name": "sequence", "title": "Plant height?", "description": "", "type": "FIXEDPOINT_SEQUENCE", "choices": ["week 1", "week 2", "week 3"], "unit": "cm"}]}
+
+#! ------- answer question -------
+
+request 200 addanswer?sessionid=$SESSION&answer=sequence:0,5.5,30.8:0:0:0:0:0:0:0:cm:0
+match_string {"next_questions": []}
+
+# Make sure answer ends up in file
+verify_session
+field_unit/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+sequence:0,5.5,30.8:0:0:0:0:0:0:0:cm:0
+endofsession
+
+#! ------- delete question -------
+
+request 200 delanswer?sessionid=$SESSION&questionid=sequence
+match_string {"next_questions": [{"id": "sequence", "name": "sequence", "title": "Plant height?", "description": "", "type": "FIXEDPOINT_SEQUENCE", "default_value": "0,5.5,30.8", "choices": ["week 1", "week 2", "week 3"], "unit": "cm"}]}
+
+# Make sure answer ends up in file
+verify_session
+field_unit/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+sequence:0,5.5,30.8:0:0:0:0:0:0:0:cm:1
+endofsession

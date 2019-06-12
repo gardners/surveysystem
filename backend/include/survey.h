@@ -11,29 +11,31 @@ struct question {
   // Type of question
   int type;
   // Answer is an integer, bounded by min_value and max_value
-#define QTYPE_INT          1
+#define QTYPE_INT               1
   // Answer is a fixed point value encoded as a 64-bit integer
   // and with decimal_places places after the decimal.
   // (we don't allow true floating point, as encoding differences can be a
   // pain, especially when compressing)
-#define QTYPE_FIXEDPOINT   2
-#define QTYPE_MULTICHOICE  3 // instruction for multi choice inputs (select), answer is a single choice or comma separated list
-#define QTYPE_MULTISELECT  4 // instruction for multi choice inputs (select), answer is a single choice or comma separated list
-#define QTYPE_LATLON       5
-#define QTYPE_DATETIME     6
-#define QTYPE_DAYTIME      7 // instruction for time of a generic day in seconds since midnight (answer->value)
-#define QTYPE_TIMERANGE    8 // instruction for time range within a generic day (answer->time_begin, answer->time_end)
-#define QTYPE_UPLOAD       9
-#define QTYPE_TEXT         10
-#define QTYPE_CHECKBOX     11 // instruction for single html checkbox, requires two defined choices in the following order: [OFF-value, ON-value]
-#define QTYPE_HIDDEN       12 // instruction for hidden input (pure textslide) answer is default value or default value
-#define QTYPE_TEXTAREA     13 // instruction for textarea.
-#define QTYPE_EMAIL        14 // instruction for email input
-#define QTYPE_PASSWORD     15 // instruction for (html) password input, this type can be used to mask any user input
-#define QTYPE_SINGLECHOICE 16 // instruction for single choice inputs (checkbox, radios), answer is a single choice
-#define QTYPE_SINGLESELECT 17 // instruction for single choice inputs (select), answer is a single choice
-#define QTYPE_UUID         18
-
+#define QTYPE_FIXEDPOINT          2
+#define QTYPE_MULTICHOICE         3  // answer->text (comma separated): instruction for multi choice inputs (checkbox), answer is a single choice or comma separated list.
+#define QTYPE_MULTISELECT         4  // answer->text (comma separated): instruction for multi choice inputs (select), answer is a single choice or comma separated list. (unit: *)
+#define QTYPE_LATLON              5  // answer->lat & answer->lon: instruction for geographic coordinate ([-90 +90] & [-180 +180]). (unit: degrees)
+#define QTYPE_DATETIME            6  // answer->time_begin: instruction for UNIX datetime (+-). (unit: seconds)
+#define QTYPE_DAYTIME             7  // answer->time_begin: instruction for time of a generic day in seconds since midnight. (unit: seconds)
+#define QTYPE_TIMERANGE           8  // answer->time_begin & answer->time_end: instruction for time range within a generic day. (unit: seconds)
+#define QTYPE_UPLOAD              9
+#define QTYPE_TEXT                10 // answer->text: instruction for generic text. (unit: *)
+#define QTYPE_CHECKBOX            11 // answer->text: instruction for single html checkbox, requires two defined choices in the following order: [OFF-value, ON-value]. (unit: *)
+#define QTYPE_HIDDEN              12 // answer->text: instruction for hidden input (pure textslide) answer is default value or default value. (unit: *)
+#define QTYPE_TEXTAREA            13 // answer->text: instruction for textarea. (unit: *)
+#define QTYPE_EMAIL               14 // answer->text: instruction for email input. (unit: *)
+#define QTYPE_PASSWORD            15 // answer->text: instruction for (html) password input, this type can be used to mask any user input. (unit: *)
+#define QTYPE_SINGLECHOICE        16 // answer->text: instruction for single choice inputs (checkbox, radios), answer is a single choice. (unit: *)
+#define QTYPE_SINGLESELECT        17 // answer->text: instruction for single choice inputs (select), answer is a single choice. (unit: *)
+#define QTYPE_FIXEDPOINT_SEQUENCE 18 // answer->text (comma separated): instruction an ascending sequence of FIXEDPOINT values, labels are defined in q.choices. (unit: *)
+#define QTYPE_DAYTIME_SEQUENCE    19 // answer->text (comma separated): instruction an ascending sequence of DAYTIME values (comma separated), labels are defined in q.choices. (unit: seconds)
+#define QTYPE_DATETIME_SEQUENCE   20 // answer->text (comma separated): instruction an ascending sequence of DATETIME values (comma separated), labels are defined in q.choices (unit: seconds)
+#define QTYPE_UUID                21
   // Formatting and other flags
   int flags;
   // Format integer input as times for questions like
