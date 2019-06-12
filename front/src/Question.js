@@ -13,6 +13,39 @@ import PropTypes from 'prop-types';
  */
 
 /**
+ * Create an empty question object,
+ * @see survey.h  struct question
+ *
+ * @returns {QuestionModel}
+ */
+const model = function() {
+    return {
+        id: "",
+        name: "",
+        title: "",
+        description: "",
+        type: "",
+        default_value: "",
+        min_value: "",
+        max_value: "",
+        choices: [],
+        unit: "",
+    };
+};
+
+/**
+ * Normalize a question object, received via REST api
+ * @see survey.h struct question
+ * @param {object} raw question object
+ *
+ * @returns {QuestionModel}
+ */
+const normalize = function(raw) {
+    const q = Object.assign(model(), raw);
+    return q;
+};
+
+/**
 * Get Proptypes schema
 * @see survey.h:: struct question
 * @returns {PropTypes}
@@ -29,29 +62,22 @@ const Question = {
                 PropTypes.string,
                 PropTypes.number
             ]).isRequired,
+            min_value: PropTypes.string,
+            max_value: PropTypes.string,
             choices: (!withChoices) ? PropTypes.array : PropTypes.array.isRequired,
             unit: PropTypes.string.isRequired,
         });
     },
-};
-
-/**
-* Normalize a question object, received via REST api
-* @see survey.h:: struct question
-* @param {QuestionModel} question
-*
-* @returns {QuestionModel}
-*/
-const normalizeQuestion = function(question) {
-    return Object.assign({
-        id: "",
-        name: "",
-        title: "",
-        description: "",
-        type: "",
-        default_value: "",
-        unit: "",
-    }, question);
+    valuePropTypes: function() {
+        return PropTypes.oneOfType([
+            PropTypes.string,
+            PropTypes.number,
+            PropTypes.array,
+            PropTypes.bool,
+        ]);
+    },
+    model,
+    normalize,
 };
 
 /**
@@ -62,7 +88,7 @@ const normalizeQuestion = function(question) {
 * @returns {QuestionModel[]}
 */
 const normalizeQuestions = function(questions) {
-    return questions.map(q => normalizeQuestion(q));
+    return questions.map(q => Question.normalize(q));
 };
 
 /**
@@ -166,4 +192,4 @@ const findQuestionGroupCommons = function(group) {
     return (!choices) ? 'TYPE' : 'CHOICES'
 };
 
-export { Question as default, getGroupId, mapQuestionGroups, findQuestionGroupCommons, normalizeQuestion, normalizeQuestions };
+export { Question as default, getGroupId, mapQuestionGroups, findQuestionGroupCommons, normalizeQuestions };
