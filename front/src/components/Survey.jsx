@@ -105,6 +105,8 @@ class Survey extends Component {
         const { answers, errors } = this.state;
         const { id } = question;
 
+        delete(errors[id]);
+
         // @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
         if(element && typeof element.validity !== 'undefined') {
             if (!element.validity.valid) {
@@ -134,7 +136,6 @@ class Survey extends Component {
             return;
         }
 
-        errors[id] = null;
         answers[id] = serialized;
 
         this.setState({
@@ -193,17 +194,19 @@ class Survey extends Component {
         this.setState({ loading: 'Sending answer...' });
 
         if(Object.keys(errors).length) {
-            Log.error(`handleUpdateAnswers: Errors found!`);
+            this.alert('Send answers: Errors found!', 'error');
             return;
         }
 
         const questions = survey.current();
-        if(questions.length !== answers.length) {
-            Log.error(`handleUpdateAnswers: Missing answers!`);
+        const answerIds = Object.keys(answers);
+
+        if(questions.length !== answerIds.length) {
+            this.alert('Send answers: Missing answers!', 'error');
             return;
         }
 
-        const csvFragments = answers.map(id => answers[id]);
+        const csvFragments = answerIds.map(id => answers[id]);
 
         api.updateAnswers_SEQUENTIAL(survey.sessionID, csvFragments)
         .then(responses => responses.pop()) // last
