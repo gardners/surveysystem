@@ -65,7 +65,7 @@ const { isFinite, isInteger } = Number;
  * @returns {(number|Error)}
  */
 const _number = function(val) {
-    if (typeof val !== 'number') {
+    if (typeof val !== 'number' && typeof val !== 'string') {
        return new Error ('CSV serializer: Invalid number: wrong type.');
     }
 
@@ -159,6 +159,7 @@ const _textFromArray = function(val) {
         if(item instanceof Error) {
             return item;
         }
+        // eslint-disable-next-line no-useless-escape
         ret[i] = (typeof item === 'string') ? item.replace(',' , '\,') : item;
     }
     return ret.toString();
@@ -174,7 +175,9 @@ const sanitizeValue = function(value) {
     if (typeof value == 'string') {
         // Regex for sanitizing csv string values,
         // example build: console.log(new RegExp([CSV_SEPARATOR, '\'', '"'].join(''), 'g'));
-        return value.trim().replace(new RegExp(`:'"`, 'g'), '\\$&');
+        return value.trim()
+        .replace(new RegExp(`:'"`, 'g'), '\\$&')
+        .replace(/(?:\r\n|\r|\n)/g, ' ');
     }
     return value;
 };
@@ -200,6 +203,21 @@ const model = function() {
 };
 
 const modelKeysSorted = Object.keys(model()).sort().toString();
+
+/**
+ * Create an initial answer
+ * @returns {AnswerModel}
+ */
+const create = function(question) {
+    if (question.default_value) {
+        return setValue(question, question.default_value);
+    }
+
+    return Object.assign(model(), {
+        uid : question.id,
+        unit: question.unit,
+    });
+};
 
 /**
 * Get Proptypes schema
@@ -272,6 +290,10 @@ const setValue = function(question, value) {
 
         case 'MULTICHOICE':
         case 'MULTISELECT':
+            if (typeof value === 'string'){
+                answer.text = _textFromArray(value.split(','));
+                break;
+            }
             answer.text = _textFromArray(value);
         break;
 
@@ -344,9 +366,60 @@ const setValue = function(question, value) {
     return answer;
 };
 
+/**
+ * Parses a comma-separated csv row from an mapped answer object
+ * @param {QuestionModel} question
+ * @param {mixed} value form value
+ *
+ * @returns {AnswerModel|Error}
+ */
+const getValue = function(question, answer) {
+    const { type } = question;
+
+    if(!answer) {
+        answer = create(question);
+    }
+
+    if(answer instanceof Error) {
+        console.log(`Answer: question is uncaught Error: ${answer.message}`);
+        answer = create(question);
+    }
+
+    switch(type) {
+        case 'INT':
+        case 'FIXEDPOINT':
+            return answer.value;
+        case 'MULTICHOICE':
+        case 'MULTISELECT':
+            return answer.text.split(',');
+        case 'LATLON':
+            return [answer.lat, answer.lon];
+        case 'DATETIME':
+            return answer.time_begin;
+        case 'DAYTIME':
+            return answer.time_begin;
+        case 'TIMERANGE':
+            return [answer.time_begin, answer.time_end];
+        case 'TEXT':
+        case 'HIDDEN':
+        case 'TEXTAREA':
+        case 'EMAIL':
+        case 'PASSWORD':
+        case 'CHECKBOX':
+        case 'SINGLECHOICE':
+        case 'SINGLESELECT':
+            return answer.text;
+        default:
+            console.error(`Answer: unsupported question type: ${type}`);
+            return null;
+    }
+};
+
 export default {
     model,
+    create,
     propTypes,
     serialize,
     setValue,
+    getValue,
 };

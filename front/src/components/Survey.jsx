@@ -22,9 +22,23 @@ import QuestionGroup from './survey/QuestionGroup';
 import Preloader from './Preloader';
 import ApiAlert from './ApiAlert';
 
-
 // devel
 import Dev from './Dev';
+
+const getDefaultAnswers = function(coercedQuestions) {
+    const answers = {};
+    coercedQuestions.forEach(question => {
+        if (question.default_value) {
+            const answerObj = Answer.create(question);
+            const serialized = Answer.serialize(answerObj);
+            if(serialized instanceof Error) {
+                return;
+            }
+            answers[question.id] = serialized;
+        }
+    });
+    return answers;
+};
 
 // config
 const CACHE_KEY = process.env.REACT_APP_SURVEY_CACHEKEY;
@@ -36,9 +50,9 @@ class Survey extends Component {
 
         this.state = {
             survey: new SurveyManager(surveyID, BaseUri),
-            answers: {}, // TODO consider moving answer map into SurveyManager as well
-
             loading: '',
+            answers: {},
+            errors: {},
             alerts: [],
         };
     }
@@ -57,7 +71,6 @@ class Survey extends Component {
         this.setState({
             loading: '',
             survey,
-            answers: {},
         });
         this.initNextQuestion();
     }
@@ -89,20 +102,45 @@ class Survey extends Component {
     ////
 
     handleChange(element, question, value) {
-        const { answers } = this.state;
+        const { answers, errors } = this.state;
         const { id } = question;
 
-        // Error or Answer object
-        answers[id] = Answer.setValue(value);
+        // @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
+        if(element && typeof element.validity !== 'undefined') {
+            if (!element.validity.valid) {
+                errors[id] = new Error (element.validationMessage);
+                this.setState({
+                    errors,
+                });
+                return;
+            }
+        }
+
+        const answer = Answer.setValue(question, value);
+        if (answer instanceof Error) {
+            errors[id] = answer;
+            this.setState({
+                errors,
+            });
+            return;
+        }
+
+        const serialized = Answer.serialize(answer);// can be instanceof Error
+        if (serialized instanceof Error) {
+            errors[id] = answer;
+            this.setState({
+                errors,
+            });
+            return;
+        }
+
+        errors[id] = null;
+        answers[id] = serialized;
 
         this.setState({
+            errors,
             answers,
         });
-    }
-
-    getFormErrors() {
-        const { answers } = this.state;
-        return Object.keys(answers).filter(key => answers[key] instanceof Error)
     }
 
     ////
@@ -122,8 +160,9 @@ class Survey extends Component {
         .then(() => this.setState({
             loading: '',
             survey,
-            answers: {}, // clear answers
-            alerts: [], // clear previous alerts
+            answers: getDefaultAnswers(survey.current()),
+            errors: {}, // clear errors
+            alerts: [], // clear alerts
         }))
         .then(() => LocalStorage.set(CACHE_KEY, survey))
         .catch(err => this.alert(err));
@@ -140,8 +179,9 @@ class Survey extends Component {
         .then(() => this.setState({
             loading: '',
             survey,
-            answers: {}, // clear answers
-            alerts: [], // clear previous alerts
+            answers: getDefaultAnswers(survey.current()),
+            errors: {}, // clear errors
+            alerts: [], // clear alerts
         }))
         .catch(err => this.alert(err));
     }
@@ -149,16 +189,21 @@ class Survey extends Component {
     handleUpdateAnswers(e) {
         e && e.preventDefault();
 
-        const { survey, answers } = this.state;
+        const { survey, answers, errors } = this.state;
         this.setState({ loading: 'Sending answer...' });
 
-        const errors = this.getFormErrors();
-        if(errors.length) {
-            Log.error(`handleUpdateAnswers: ${errors.length} errors found`);
+        if(Object.keys(errors).length) {
+            Log.error(`handleUpdateAnswers: Errors found!`);
             return;
         }
 
-        const csvFragments = Object.keys(answers).map(id => Answer.serialize(answers[id]));
+        const questions = survey.current();
+        if(questions.length !== answers.length) {
+            Log.error(`handleUpdateAnswers: Missing answers!`);
+            return;
+        }
+
+        const csvFragments = answers.map(id => answers[id]);
 
         api.updateAnswers_SEQUENTIAL(survey.sessionID, csvFragments)
         .then(responses => responses.pop()) // last
@@ -166,8 +211,9 @@ class Survey extends Component {
         .then(() => this.setState({
             loading: '',
             survey,
-            alerts: [], // clear previous alerts
-            answers: {}, // clear previous answers
+            answers: getDefaultAnswers(survey.current()),
+            errors: {}, // clear errors
+            alerts: [], // clear alerts
         }))
         .then(() => LocalStorage.set(CACHE_KEY, survey))
         .catch(err => this.alert(err));
@@ -193,8 +239,9 @@ class Survey extends Component {
         .then(() => this.setState({
             loading: '',
             survey,
-            alerts: [], // clear previous alerts
-            answers: {}, // clear previous answers
+            answers: getDefaultAnswers(survey.current()),
+            errors: {}, // clear errors
+            alerts: [], // clear alerts
         }))
         .then(() => LocalStorage.set(CACHE_KEY, survey))
         .catch(err => this.alert(err));
@@ -204,20 +251,18 @@ class Survey extends Component {
 
         // @see surveysystem/backend/include/survey.h, struct question
 
-        const { survey, answers } = this.state;
+        const { survey, errors, answers } = this.state;
 
         const questions = survey.current();
         const withGroups = mapQuestionGroups(questions);
-        const errors = this.getFormErrors();
 
-        const questionCount = Object.keys(questions).length;
-        const answerCount = Object.keys(answers).length;
+        const answersCount = Object.keys(answers).length;
         const errorCount = Object.keys(errors).length;
 
-        const hasQuestions = questionCount > 0;
+        const hasQuestions = questions.length > 0;
         const hasErrors = errorCount > 0;
-        const hasAnswers = answerCount > 0 ;
-        const hasAllAnswers = (answerCount === questions.length);
+        const hasAnswers = answersCount > 0 ;
+        const hasAllAnswers = (answersCount === questions.length);
         const didAnswerBefore = questions.length > 1;
         const isClosed = survey.isClosed();
 
@@ -252,7 +297,7 @@ class Survey extends Component {
                 }
 
                 <SurveyForm
-                    show={ !isClosed && questionCount > 0 && !this.state.loading }
+                    show={ !isClosed && questions.length > 0 && !this.state.loading }
                     handlePrev={ this.handleDelAnswer.bind(this) }
                     handleNext={ this.handleUpdateAnswers.bind(this) }
 
@@ -270,24 +315,27 @@ class Survey extends Component {
 
                         if(isArray(entry)) {
                             return (
-                                <div key={ index } className="list-group-item">
-                                    <QuestionGroup
-                                        handleChange={ this.handleChange.bind(this) }
-                                        questions={ entry }
-                                        answers={ this.state.answers }
-                                    />
-                                </div>
+                                <QuestionGroup
+                                    key={ index }
+                                    className="list-group-item"
+
+                                    handleChange={ this.handleChange.bind(this) }
+                                    questions={ entry }
+                                    errors={ errors }
+
+                                />
                             );
                         }
 
                         return (
-                            <div key={ index } className="list-group-item">
-                                <Question
-                                    handleChange={ this.handleChange.bind(this) }
-                                    question={ entry }
-                                    answer={ this.state.answers[entry.id] || null }
-                                />
-                            </div>
+                            <Question
+                                key={ index }
+                                className="list-group-item"
+
+                                handleChange={ this.handleChange.bind(this) }
+                                question={ entry }
+                                error={ errors[entry.id] || null }
+                            />
                         );
 
                     })

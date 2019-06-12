@@ -1,45 +1,66 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import Question from '../../Question';
+import Field from './Field';
+import QuestionModel from '../../Question';
 
-// no Inputgroup
 
 class HiddenInput extends Component {
 
-    // ! immediately invoke answer callback
-    // note: no value and validation! handleChange is invoked immediately with defaultvalue
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            value: '',
+        };
+    }
+
     componentDidMount() {
-        const { question, defaultValue } = this.props;
-        this.props.handleChange(null, question, defaultValue || 'visited' );
+        const { question } = this.props;
+        const value = question.default_value || 'visited';
+        this.setState({
+            value,
+        });
+        // ! immediately invoke answer callback, no value and validation! handleChange is invoked immediately with defaultvalue
+        this.props.handleChange(null, question, value);
     }
 
     render() {
-        const { question, defaultValue } = this.props;
+        const { value  } = this.state;
+        const { question, grouped, className } = this.props;
+        const required = false; // !
+
         return (
-            <input
-                id={ question.id }
-                name={ question.name }
-                type="hidden"
-                autoComplete="off"
-                defaultValue={ defaultValue }
-            />
+            <Field.Row className={ className } question={ question } grouped={ grouped } required={ required }>
+                <Field.Title grouped={ grouped } question={ question } required={ required } />
+                <Field.Description question={ question } grouped={ grouped } required={ required } />
+                <input
+                    id={ question.id }
+                    name={ question.name }
+                    type="hidden"
+                    autoComplete="off"
+                    value={ value }
+                />
+                { /* No Field.Unit, No Field.Error */ }
+            </Field.Row>
         );
     }
 };
 
 HiddenInput.defaultProps = {
-    required: true,
-    defaultValue: null,
+    grouped: false,
+    required: false,
 };
 
 HiddenInput.propTypes = {
     handleChange: PropTypes.func.isRequired,
-    question: Question.propTypes().isRequired,
-    // no "required"prop
+    question: QuestionModel.propTypes().isRequired,
+    value: QuestionModel.valuePropTypes(),
+    error: PropTypes.instanceOf(Error),
+    grouped: PropTypes.bool,
+    required: PropTypes.bool,
 
-    // custom
-    defaultValue: PropTypes.string,
+    className: PropTypes.string,
 };
 
 export default HiddenInput;

@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import Question from '../../Question';
+import Field from './Field';
+import QuestionModel from '../../Question';
+
 import { prettyHours, DaySeconds } from '../../Utils';
 import { matchesBreakpoint } from '../../Media';
 
@@ -89,7 +91,7 @@ TheadRow.defaultProps = {
 };
 
 TheadRow.propTypes = {
-    question: Question.propTypes().isRequired,
+    question: QuestionModel.propTypes().isRequired,
     expanded: PropTypes.bool.isRequired,
 };
 
@@ -124,7 +126,7 @@ const Row = function({ question, handleChange, value, disabled, minValue, expand
                         value={ value }
                         onChange={ handleChange }
                         disabled= { disabled }
-                        step= { step }
+                        step={ step }
                         formatLabel={value => prettyHours(value)}
                     />
                 </td>
@@ -140,7 +142,7 @@ Row.defaultProps = {
 };
 
 Row.propTypes = {
-    question: Question.propTypes().isRequired,
+    question: QuestionModel.propTypes().isRequired,
     handleChange: PropTypes.func.isRequired,
     expanded: PropTypes.bool.isRequired,
     required: PropTypes.bool,
@@ -182,6 +184,18 @@ class DaytimeSequence extends Component {
         };
     }
 
+    componentDidMount() {
+        const { questions } = this.props;
+        const values = questions.map((q) => {
+            const num = Number(q.default_value);
+            return (!isNaN(num)) ? num : 0;
+        });
+
+        this.setState({
+            values
+        });
+    }
+
     handleChange(value, question, index){
         const values = setValues(value, index, this.state.values);
         this.setState({
@@ -192,7 +206,7 @@ class DaytimeSequence extends Component {
     }
 
     render() {
-        const { questions, required, expand } = this.props;
+        const { questions, errors, required, grouped, className, expand } = this.props;
 
         if(!questions.length) {
             return (null);
@@ -202,50 +216,66 @@ class DaytimeSequence extends Component {
         const first = questions[0];
 
         return (
-            <div className="table-responsive daytimeslider">
-                <table className="table table-sm table-hover daytimeslider--table">
-                    <thead>
-                        <TheadRow
-                            question={ first }
-                            expanded={ expanded }
-                        />
-                    </thead>
-                    <tbody>
-                        {
-                            questions.map((question, index) => {
-                                const prev = prevValue(index, this.state.values);
-                                return (
-                                    <Row
-                                        key={ index }
-                                        question={ question }
-                                        handleChange={ (value) => this.handleChange(value, question, index) }
-                                        value={ this.state.values[index] }
-                                        // minValue={ minValue }
-                                        disabled={ index > 0 && !prev }
-                                        required={ required }
-                                        expanded={ expanded }
-                                    />
-                                );
-                            })
-                        }
-                    </tbody>
-                </table>
-            </div>
+            <Field.Row className={ className } question={ first } grouped={ grouped } required={ required }>
+                { /* No Field.title */ }
+                <Field.Description question={ first } grouped={ grouped } required={ required }>
+                    <Field.Unit className="badge badge-secondary ml-1" question={ first } grouped={ grouped } />
+                </Field.Description>
+
+                <div className="table-responsive daytimeslider">
+                    <table className="table table-sm table-hover daytimeslider--table">
+                        <thead>
+                            <TheadRow
+                                question={ first }
+                                expanded={ expanded }
+                            />
+                        </thead>
+                        <tbody>
+                            {
+                                questions.map((question, index) => {
+                                    const prev = prevValue(index, this.state.values);
+                                    return (
+                                        <Row
+                                            key={ index }
+                                            question={ question }
+                                            handleChange={ (value) => this.handleChange(value, question, index) }
+                                            value={ this.state.values[index] }
+                                            // minValue={ minValue }
+                                            disabled={ index > 0 && !prev }
+                                            required={ required }
+                                            expanded={ expanded }
+                                        />
+                                    );
+                                })
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                { Object.keys(errors).map(id => <Field.Error key= { id } error={ errors[id] } grouped={ grouped } />) }
+            </Field.Row>
         );
     }
 };
 
 DaytimeSequence.defaultProps = {
-    required: true,
-    expand: null,
+    grouped: false,
+    required: false,
+
+    expand: null, // null!
 };
 
 DaytimeSequence.propTypes = {
     handleChange: PropTypes.func.isRequired,
     questions: PropTypes.arrayOf(
-        Question.propTypes()
-    ),
+        QuestionModel.propTypes(),
+    ).isRequired,
+
+    errors: PropTypes.object.isRequired,
+    grouped: PropTypes.bool,
     required: PropTypes.bool,
+
+    className: PropTypes.string,
     expand: PropTypes.bool, // force contracted or expanded display
 };
 

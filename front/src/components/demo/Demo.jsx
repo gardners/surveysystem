@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 
 // form elements
-import GeoLocation from '../form/GeoLocation';
+import DeviceLocation from '../form/DeviceLocation';
 import PeriodRangeSlider from '../form/PeriodRangeSlider';
 import DayTimeSlider from '../form/DayTimeSlider';
 import CheckboxGroup from '../form/CheckboxGroup';
@@ -22,102 +22,290 @@ import EmailInput from '../form/EmailInput';
 import PasswordInput from '../form/PasswordInput';
 import DaytimeSequence from '../form/DaytimeSequence';
 
-import Answer from '../../Answer';
-import { normalizeQuestion, normalizeQuestions } from '../../Question';
+import AnswerModel from '../../Answer';
+import QuestionModel from '../../Question';
 import Question from '../survey/Question';
+import QuestionGroup from '../survey/QuestionGroup';
 
-const Pre = function(props) {
+const getDefaultAnswers = function(coercedQuestions) {
+    const answers = {};
+    coercedQuestions.forEach(question => {
+        if (question.default_value) {
+            const answerObj = AnswerModel.create(question);
+            const serialized = AnswerModel.serialize(answerObj);
+            if(serialized instanceof Error) {
+                return;
+            }
+            answers[question.id] = serialized;
+        }
+    });
+    return answers;
+};
 
-    let cls = null;
-    let { data } = props;
+/**
+ * select component
+ */
 
-    if(props.data instanceof Error) {
-        cls = 'text-danger';
-        data = data.toString();
-    }
+const components = [
+    DeviceLocation,
+    PeriodRangeSlider,
+    DayTimeSlider,
+    CheckboxGroup,
+    Checkbox,
+    RadioGroup,
+    TextInput,
+    NumberInput,
+    Textarea,
+    Select,
+    MultiSelect,
+    TimePicker,
+    RadioMatrix,
+    HiddenInput,
+    EmailInput,
+    PasswordInput,
+    DaytimeSequence,
+];
 
-    return(
-        <pre style={ { marginBottom: 0 } }className={ cls }>{ (typeof data === 'string') ? data : JSON.stringify(data) }</pre>
+const SelectComponent = function({ history, selected }) {
+    return (
+        <select value={ selected } onChange={ e => history.push(`/demo/form/${e.target.value}`) }>
+            <option value="">All components..</option>
+            { components.map(component => <option key={ component.name } value={ component.name }>{ component.name }</option>) }
+        </select>
     );
 };
 
-Pre.propTypes = {
-    data: PropTypes.any
+SelectComponent.propTypes = {
+    history: PropTypes.object.isRequired,
+    selected: PropTypes.string.isRequired,
 };
+
+/**
+ * Display serialized answer
+ */
+
+const Answers = function({ questions, answers, className }) {
+    if (!Object.keys(answers).length) {
+        return (<React.Fragment>Answer: <i className={ className }>none</i></React.Fragment>);
+    }
+    return (
+        <React.Fragment>
+            {
+                Object.keys(answers).map((id) => <div key={ id }>Answer: <span className={ className }>{ answers[id] }</span></div>)
+            }
+        </React.Fragment>
+    );
+};
+
+Answers.defaultProps = {
+    answers: {},
+};
+
+Answers.propTypes = {
+    answers: PropTypes.object,
+    questions: PropTypes.arrayOf(
+        QuestionModel.propTypes(),
+    ).isRequired,
+
+    className: PropTypes.string,
+};
+
+/**
+ * Question Component
+ */
 
 class Row extends Component {
     constructor(props) {
         super(props);
-        const { unit, default_value } = props;
+
+        this.mockError = new Error('This is a validation error!');
+
         this.state = {
-            unit,
-            default_value,
-            values: {},
+            questions: [],
+            answers: {},
+            errors: {},
         }
     }
 
     componentDidMount() {
-        const { unit, default_value } = this.props;
+        const { props } = this;
+        const Component = props.component;
+
+        const id = Component.name;
+        const title = 'Question title for ' + id
+
+        let questions;
+
+        if(props.questions.length) {
+            questions = props.questions.map(q => QuestionModel.normalize(q));
+        } else{
+            questions = [
+                QuestionModel.normalize({
+                    id,
+                    name: id,
+                    title,
+                    description: props.description || `This is the question description for question <span style="color: green">${id}</span>, it can contain HTML.`,
+                    type: props.type,
+
+                    default_value: props.default_value,
+                    choices: props.choices || [],
+                    unit: props.unit,
+                })
+            ];
+        }
+
+        const answers = getDefaultAnswers(questions);
+
         this.setState({
-            unit,
-            default_value,
+            questions,
+            answers,
+            errors: {},
         });
     }
 
     handleChange(element, question, value) {
-        const updated = this.state.values;
-        const answer = Answer.setValue(question, value);
-        updated[question.id] = Answer.serialize(answer);
+        const { answers, errors } = this.state;
+        const { id } = question;
+
+        // @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
+        if(element && typeof element.validity !== 'undefined') {
+            if (!element.validity.valid) {
+                errors[id] = new Error (element.validationMessage);
+                this.setState({
+                    errors,
+                });
+                return;
+            }
+        }
+
+        const answer = AnswerModel.setValue(question, value);
+        if (answer instanceof Error) {
+            errors[id] = answer;
+            this.setState({
+                errors,
+            });
+            return;
+        }
+
+        const serialized = AnswerModel.serialize(answer);// can be instanceof Error
+        if (serialized instanceof Error) {
+            errors[id] = answer;
+            this.setState({
+                errors,
+            });
+            return;
+        }
+
+        errors[id] = null;
+        answers[id] = serialized;
 
         this.setState({
-            values: updated,
+            errors,
+            answers,
         });
     }
 
     render() {
         const { props } = this;
+        const { questions, answers, errors } = this.state;
+
         const Component = props.component;
+
+        if (!questions.length) {
+            return (null);
+        }
 
         if (props.selected && props.selected !== Component.name) {
             return (null);
         }
 
-        const { values, unit, default_value } = this.state;
-        const hasAnswers = Object.keys(values).length > 0;
-
-        const question =  normalizeQuestion({
-            id: Component.name,
-            name: Component.name,
-            title: Component.name,
-            description: props.description || 'question description',
-            type: props.type,
-
-            default_value,
-            choices: props.choices || [],
-            unit,
-        });
-
         return (
-            <div className="card mb-1" >
-                <Question
-                    { ...props }
-                    question={ question }
-                    handleChange={ this.handleChange.bind(this) }
-                    className="card-body"
-                />
+            <div className="list-group mb-3">
+                {
+                    (questions.length > 1) ?
+                        <QuestionGroup
+                            { ...props }
+                            handleChange={ this.handleChange.bind(this) }
+                            questions={ questions }
+                            errors={ errors }
+                            required={ false}
+                            className="list-group-item"
+                        />
+                        :
+                        <Question
+                            { ...props }
+                            handleChange={ this.handleChange.bind(this) }
+                            question={ questions[0] }
+                            error={ errors[questions[0].id] || null }
+                            required={ false}
+                            grouped={ false }
+                            className="list-group-item"
+                        />
+                }
 
-                <div className="card-footer text-muted">
-                    { hasAnswers && <small className="mr-2 float-left text-info" style={ { fontFamily: 'monospace' } }>{ JSON.stringify(Object.values(values)) }</small> }
-                    <small className="mr-2 float-left">Type: { props.type }</small>
-                    <small className="mr-2 float-right">{ (props.selected !== Component.name) ? <Link to={ `/demo/form/${Component.name}` }><i className="fas fa-expand-arrows-alt"></i></Link> : <Link to="/demo/form/"><i className="fas fa-compress-arrows-alt"></i></Link> }</small>
-                    <small className="mr-2 float-right"><input type="checkbox" onChange={(e) => this.setState({ unit: (e.target.checked) ? 'example unit': '' })} /> toggle unit</small>
+                <div className="list-group-item bg-light container text-monospace" style={ { fontSize: '0.8rem' } }>
+                    <div className="row">
+                        <div className="col-md"><Answers className="text-info" questions={ questions } answers={ answers } /></div>
+                    </div>
                 </div>
+
+                <div className="list-group-item bg-light container text-monospace" style={ { fontSize: '0.8rem' } }>
+                    <div className="row">
+                        <div className="col-md">
+                            Type: { questions.map(q => <span key={ q.id } className="text-info mr-2">{ q.type }</span>) }<br />
+                            Default: { questions.map(q => <span key={ q.id } className="text-info mr-2">{ q.default_value }</span>) }
+                        </div>
+
+                        <div className="col-md">
+                            <input type="checkbox" onChange={
+                                (e) => {
+                                    const { checked } = e.target;
+                                    if (errors.length && errors[0] !== this.mockError) { // validation error
+                                        return;
+                                    }
+
+                                    const newErrors = {};
+                                    if (checked) {
+                                        questions.forEach(q => {
+                                            newErrors[q.id] = this.mockError;
+                                        });
+                                    }
+
+                                    this.setState({
+                                        errors: newErrors,
+                                    });
+                                }
+                            } /> mock error
+                            <br />
+                            <input type="checkbox" onChange={
+                                (e) => {
+                                    questions.map(q => q.unit = (e.target.checked) ? 'units': '');
+                                    this.setState({
+                                        questions,
+                                    });
+                                }
+                            } /> mock unit
+                        </div>
+                        <div className="col-md text-right">
+                            {
+                                (props.selected !== Component.name) ?
+                                    <Link to={ `/demo/form/${Component.name}` }><i className="fas fa-compress-arrows-alt"></i> hide others</Link>
+                                    :
+                                    <Link to="/demo/form/"><i className="fas fa-expand-arrows-alt"></i> show all</Link>
+                            }
+                        </div>
+                    </div>
+                </div>
+
             </div>
         );
     }
 };
 
 Row.defaultProps = {
+    unit: '',
+    default_value: '',
+    questions: [],
 };
 
 Row.propTypes = {
@@ -126,18 +314,28 @@ Row.propTypes = {
     component: PropTypes.func.isRequired,
 };
 
-const Demo = function(props){
+/**
+ * Demo
+ */
 
+const Demo = function(props){
     const selected = props.match.params.component || '';
 
     return (
         <section>
+
+            <div className="card bg-secondary text-white sticky-top mb-1">
+                <div className="card-body d-flex flex-row-reverse bd-highlight">
+                    <SelectComponent history={ props.history } selected={ selected } />
+                </div>
+            </div>
+
             <div>
                 <Row selected={ selected } type={ 'HIDDEN' }       component={ HiddenInput }       description="text with some <strong>markup</strong> html and an image: <img src='data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7'>" />
-                <Row selected={ selected } type={ 'LATLON' }       component={ GeoLocation }       withButton={ true } />
-                <Row selected={ selected } type={ 'TIMERANGE' }    component={ PeriodRangeSlider } />
-                <Row selected={ selected } type={ 'DAYTIME' }      component={ DayTimeSlider }     />
-                <Row selected={ selected } type={ 'DAYTIME' }      component={ TimePicker }        />
+                <Row selected={ selected } type={ 'LATLON' }       component={ DeviceLocation }       withButton={ true } />
+                <Row selected={ selected } type={ 'TIMERANGE' }    component={ PeriodRangeSlider } default_value="35145,53145" />
+                <Row selected={ selected } type={ 'DAYTIME' }      component={ DayTimeSlider }     default_value="35145" />
+                <Row selected={ selected } type={ 'DAYTIME' }      component={ TimePicker }        default_value="35145" />
                 <Row selected={ selected } type={ 'MULTICHOICE' }  component={ CheckboxGroup }     choices={ ['This', 'That', 'Another one' ] } default_value="That" />
                 <Row selected={ selected } type={ 'SINGLECHOICE' } component={ RadioGroup }        choices={ ['This', 'That', 'Another one' ] } />
                 <Row selected={ selected } type={ 'CHECKBOX' }     component={ Checkbox }          choices={ [ 'Unchecked!', 'Checked!'] }  default_value="Checked!" />
@@ -148,7 +346,7 @@ const Demo = function(props){
                 <Row selected={ selected } type={ 'INT' }          component={ NumberInput }       />
                 <Row selected={ selected } type={ 'TEXT' }         component={ Textarea }          />
                 <Row selected={ selected } type={ 'FIXEDPOINT' }   component={ RadioMatrix }       description="This is the <em>description</em> for this question group"
-                    questions={ normalizeQuestions([
+                    questions={ [
                         {
                             id: 'question1',
                             name: 'question1',
@@ -163,6 +361,7 @@ const Demo = function(props){
                             title: 'Row 2',
                             description: 'Row 2 text',
                             choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
+                            default_value: '4',
                         },{
                             id: 'question3',
                             name: 'question3',
@@ -170,6 +369,7 @@ const Demo = function(props){
                             title: 'Row 3',
                             description: 'Row 3 text',
                             choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
+                            default_value: '4',
                         },{
                             id: 'question4',
                             name: 'question4',
@@ -178,42 +378,42 @@ const Demo = function(props){
                             description: 'Row 4 text',
                             choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
                         }
-                    ]) }
+                    ] }
                 />
                 <Row selected={ selected } type={ 'EMAIL' }        component={ EmailInput }        />
                 <Row selected={ selected } type={ 'PASSWORD' }     component={ PasswordInput }     />
                 <Row selected={ selected } type={ 'DAYTIME' }      component={ DaytimeSequence }
-                    questions={ normalizeQuestions([
+                    questions={ [
                         {
                             id: 'question1',
                             name: 'question1',
                             type: 'DAYTIME',
                             title: 'breakfast time',
                             description: 'Row 1 text',
-                            default_value: 27000, /* 07:30:00 */
+                            default_value: '27000', /* 07:30:00 */
                         }, {
                             id: 'question2',
                             name: 'question2',
                             type: 'DAYTIME',
                             title: 'lunch time',
                             description: 'Row 2 text',
-                            default_value: 43200, /* 12:00:00 */
+                            default_value: '43200', /* 12:00:00 */
                         },{
                             id: 'question3',
                             name: 'question3',
                             type: 'DAYTIME',
                             title: 'afternoon tea time',
                             description: 'Row 3 text',
-                            default_value: 55800, /* 15:30:00 */
+                            default_value: '55800', /* 15:30:00 */
                         },{
                             id: 'question4',
                             name: 'question4',
                             type: 'DAYTIME',
                             title: 'late snack time',
                             description: 'Row 4 text',
-                            default_value: 73800, /* 20:30:00 */
+                            default_value: '73800', /* 20:30:00 */
                         }
-                    ]) }
+                    ] }
                 />
             </div>
         </section>
