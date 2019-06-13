@@ -189,8 +189,8 @@ const sanitizeValue = function(value) {
 const model = function() {
     return {
         uid : '',               // id
-        value : 0.0,            // type: number (FLOAT)
         text : '',              // type: text
+        value : 0.0,            // type: number (FLOAT)
         lat : 0.0,              // type: number (FLOAT)
         lon : 0.0,              // type: number (FLOAT)
         time_begin : 0,         // type: number (INT) UNIX timestamp in seconds
@@ -226,8 +226,8 @@ const create = function(question) {
 const propTypes = function () {
     return PropTypes.shape({
         uid: PropTypes.string,
-        value: PropTypes.number,
         text: PropTypes.string,
+        value: PropTypes.number,
         lat: PropTypes.number,
         lon: PropTypes.number,
         time_begin: PropTypes.number,

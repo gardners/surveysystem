@@ -94,12 +94,13 @@ struct answer {
   // ID of question being answered
   char *uid;
 
-  // Integer or fixed point response, also used for multi-choice
-  long long value;
-
   // Text response, including Y/N or 0-9/N response vectors for
   // multi-select and UUID
+  // #212, swap text and value to align props with serialising order
   char *text;
+
+  // Integer or fixed point response, also used for multi-choice
+  long long value;
 
   // Fixed point latitude/longitude responses.
   long long lat,lon;
