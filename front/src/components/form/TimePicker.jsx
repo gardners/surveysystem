@@ -12,7 +12,6 @@ import './TimePicker.scss';
 
 const format = 'h:mm a';
 
-
 const getSeconds = function(m) {
     const midnight = m.clone().startOf('day');
     return  m.diff(midnight, 'seconds');
@@ -42,7 +41,6 @@ class TimePicker extends Component {
     }
 
     handleChange(m) {
-        console.log(m);
         const { question, handleChange } = this.props;
         const value = m || moment().startOf('day'); // reset button provides null
 
