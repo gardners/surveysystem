@@ -805,7 +805,7 @@ static void fcgi_delanswerandfollowing(struct kreq *req)
     }
     else if (question&&question->val) {
       // No answer give, so delete all answers to the given question
-      if (session_delete_answers_by_question_uid(s,question->val,0)<0) {
+      if (session_delete_answers_by_question_uid(s,question->val,1)<0) {
 	quick_error(req,KHTTP_400,"session_delete_answers_by_question_uid() failed");
 	break;
       }      
