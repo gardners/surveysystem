@@ -227,17 +227,21 @@ class Survey extends Component {
 
         const { survey } = this.state;
         if(survey.isClosed()) {
-            Log.warn('Trying to delete answer on a finished survey');
+            this.alert('Trying to delete answer on a finished survey', 'error');
             return;
         }
-        this.setState({ loading: 'Fetching previous question...' });
 
         survey.reset();
         const inversed = survey.currentInversed();
-        const questionIds = inversed.map(question => question.id);
+        if(!inversed.length) {
+            this.alert('No question found to delete', 'error');
+            return;
+        }
+        const questionId = inversed[0];
+        this.setState({ loading: `Deleting ${inversed.length} answers...` });
 
-        api.deleteAnswers_SEQUENTIAL(survey.sessionID, questionIds)
-        .then(responses => responses.pop()) // last ?TODO multi elements mode
+        api.deleteAnswerAndFollowing(survey.sessionID, questionId)
+        .then(responses => responses.pop())
         .then(response => survey.add(response.next_questions))
         .then(() => this.setState({
             loading: '',
@@ -251,9 +255,7 @@ class Survey extends Component {
     }
 
     render() {
-
         // @see surveysystem/backend/include/survey.h, struct question
-
         const { survey, errors, answers } = this.state;
 
         const questions = survey.current();
