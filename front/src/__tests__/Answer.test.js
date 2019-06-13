@@ -475,6 +475,16 @@ describe('Answer.serialize()', () => {
         expect(Answer.serialize(a)).toBe('singleselect:0:T:0:0:0:0:0:0:u:0');
     });
 
+    test('sanitize line breaks', () => {
+        let a;
+        //positive
+        a = make_answer({ uid: 'test',
+            text: 'first line\nnew line'
+        });
+        expect(Answer.serialize(a)).toBe('test:0:first line new line:0:0:0:0:0:0::0');
+    });
+
+
 });
 
 

@@ -2,13 +2,13 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import renderer from 'react-test-renderer';
 
-import GeoLocation from '../../../components/form/GeoLocation';
+import DeviceLocation from '../../../components/form/DeviceLocation';
 
 let component;
 
 beforeAll(() => {
     component = renderer.create(
-        <GeoLocation
+        <DeviceLocation
             question={ {
                 id: 'q1',
                 name: 'q1',
@@ -36,7 +36,7 @@ it('defaults to no button: withButton = false', () => {
 
 it('renders button: withButton = true', () => {
    const comp = renderer.create(
-        <GeoLocation
+        <DeviceLocation
             question={ {
                 id: 'q1',
                 name: 'q1',
