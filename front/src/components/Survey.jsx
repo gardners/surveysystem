@@ -237,11 +237,10 @@ class Survey extends Component {
             this.alert('No question found to delete', 'error');
             return;
         }
-        const questionId = inversed[0];
+        const questionId = inversed[0].id;
         this.setState({ loading: `Deleting ${inversed.length} answers...` });
 
         api.deleteAnswerAndFollowing(survey.sessionID, questionId)
-        .then(responses => responses.pop())
         .then(response => survey.add(response.next_questions))
         .then(() => this.setState({
             loading: '',
