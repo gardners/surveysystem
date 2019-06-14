@@ -45,7 +45,7 @@ class TimePicker extends Component {
         const value = m || moment().startOf('day'); // reset button provides null
 
         this.setState({
-            value: m,
+            value,
         });
         handleChange(null, question, getSeconds(m));
     }
