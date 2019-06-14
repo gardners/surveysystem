@@ -43,7 +43,7 @@ class RadioGroup extends Component {
                 </Field.Title>
                 {
                     choices.map((choice, index) => (
-                        <div key={index} className="radio form-check form-check-inline">
+                        <div key={index} className="radio form-check">
                             <input
                                 type="radio"
                                 className="form-check-input"

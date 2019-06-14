@@ -9,7 +9,7 @@ import DaytimeSequence from '../form/DaytimeSequence';
 
 import { addClassNames } from '../../Utils';
 
-const QuestionGroup = function({ handleChange, questions, values, errors, className}) {
+const QuestionGroup = function({ handleChange, questions, errors, className}) {
 
     const commons = findQuestionGroupCommons(questions);
     const header = (commons !== 'NONE' && questions[0].type === 'HIDDEN') ? questions[0] : null;
@@ -32,15 +32,13 @@ const QuestionGroup = function({ handleChange, questions, values, errors, classN
                             <Question
                                 handleChange={ handleChange }
                                 question={ header }
-                                value={ (header) ? values[header.id] : null }
-                                error={ (header) ? errors[header.id] : null }
+                                error={ (header && errors[header.id]) ? errors[header.id] : null }
                                 grouped={ true }
                             />
                     }
                     <RadioMatrix
                         handleChange={ handleChange }
                         questions={ items }
-                        values={ values }
                         errors={ errors }
                         grouped={ true }
                     />
@@ -55,15 +53,13 @@ const QuestionGroup = function({ handleChange, questions, values, errors, classN
                             <Question
                                 handleChange={ handleChange }
                                 question={ header }
-                                value={ (header) ? values[header.id] : null }
-                                error={ (header) ? errors[header.id] : null }
+                                error={ (header && errors[header.id]) ? errors[header.id] : null }
                                 grouped={ true }
                             />
                     }
                     <DaytimeSequence
                         handleChange={ handleChange }
                         questions={ items }
-                        values={ values }
                         errors={ errors }
                         grouped={ true }
                     />
@@ -81,20 +77,17 @@ const QuestionGroup = function({ handleChange, questions, values, errors, classN
                 <Question
                     handleChange={ handleChange }
                     question={ header }
-                    value={ (header) ? values[header.id] : null }
-                    error={ (header) ? errors[header.id] : null }
+                    error={ (header && errors[header.id]) ? errors[header.id] : null }
                     grouped={ true }
                 />
         } {
             items.map((question, index) => {
-                const value = values[question.id] || null;
                 const error = errors[question.id] || null;
                 return(
                     <Question
                         key={ index }
                         handleChange={ handleChange }
                         question={ question }
-                        value={ value }
                         error={ error }
                         grouped={ true }
                     />
