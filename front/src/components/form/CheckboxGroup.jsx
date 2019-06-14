@@ -53,7 +53,7 @@ class CheckboxGroup extends Component {
                 </Field.Title>
                 {
                     choices.map((choice, index) => (
-                        <div key={index} className="radio form-check form-check-inline">
+                        <div key={index} className="radio form-check">
                             <input
                                 type="checkbox"
                                 className="form-check-input"
