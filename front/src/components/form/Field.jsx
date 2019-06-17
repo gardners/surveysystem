@@ -11,7 +11,7 @@ import InnerHtml from '../InnerHtml';
  */
 
 const Row = function({ question, className, required, grouped, children }) {
-    const cls = addClassNames(className, 'col-md-8', question.type, (required) ? 'required' : '');
+    const cls = addClassNames(className, 'col', question.type, (required) ? 'required' : '');
 
     return(
         <div className="row justify-content-center align-items-center">

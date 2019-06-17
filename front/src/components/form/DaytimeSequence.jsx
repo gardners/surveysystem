@@ -223,7 +223,7 @@ class DaytimeSequence extends Component {
                 </Field.Description>
 
                 <div className="table-responsive daytimeslider">
-                    <table className="table table-sm table-hover daytimeslider--table">
+                    <table className="table table-sm table-hover table-borderless daytimeslider--table">
                         <thead>
                             <TheadRow
                                 question={ first }
