@@ -39,13 +39,13 @@ TheadRow.propTypes = {
     expanded: PropTypes.bool.isRequired,
 };
 
-const Row = function({ question, index, value, handleChange, expanded, required }) {
+const Row = function({ question, index, value, handleChange, expanded, required, className }) {
 
     const choices = question.choices || [];
 
     if(!expanded) {
         return (
-            <tr>
+            <tr className={ className }>
                 <td className="radiomatrix--firstcol">{ question.title }</td>
                 <td>
                     <select
@@ -77,7 +77,7 @@ const Row = function({ question, index, value, handleChange, expanded, required 
 
     /* eslint-disable eqeqeq */
     return (
-        <tr>
+        <tr className={ className }>
             <td className="radiomatrix--firstcol">{ question.title }</td>
             {
                 choices.map((choice, index) => {
@@ -89,7 +89,7 @@ const Row = function({ question, index, value, handleChange, expanded, required 
                                 name={ question.name }
                                 autoComplete="off"
                                 value={ choice }
-                                checked={ choice == value /* intentionally using non-typesafe operator */ }
+                                checked={ choice == value /* intentionally using non-typesafe operator (number) */ }
                                 onChange={ (e) => handleChange(question, e.target.value) }
                                 required={ required }
                             />
@@ -113,6 +113,8 @@ Row.propTypes = {
     expanded: PropTypes.bool.isRequired,
     value: PropTypes.any,
     required: PropTypes.bool,
+
+    className: PropTypes.string,
 };
 
 class RadioMatrix extends Component {
@@ -168,7 +170,7 @@ class RadioMatrix extends Component {
                 </Field.Description>
 
                 <div className="table-responsive">
-                    <table className="table table-sm table-hover radiomatrix--table">
+                    <table className="table table-sm table-hover table-borderless table-striped radiomatrix--table">
                         <thead>
                             <TheadRow
                                 question={ first }
