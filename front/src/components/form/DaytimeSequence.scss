@@ -8,12 +8,14 @@
     max-width: 30%;
 }
 
+@import '../../styles/main.scss';
+
 ////  react-input-range overwrites
 
 $input-range-primary-color : #ffffff;
-$input-range-slider-background: #28a745;
-$input-range-slider-border: 1px solid $input-range-primary-color !default;
-$input-range-track-active-background: lighten($input-range-slider-background, 10%);
+$input-range-slider-background: $primary;
+$input-range-slider-border: $primary;
+$input-range-track-active-background: lighten($input-range-slider-background, 20%);
 
 @import 'react-input-range/src/scss/index.scss';
 
