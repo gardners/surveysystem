@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 
 import { Link } from 'react-router-dom';
 
+import { Fade } from '../Transitions';
+
 const MenuLink = function({ to, children }) {
     const regex = new RegExp(to);
     const active = regex.test(window.location.pathname);
@@ -51,9 +53,11 @@ class DropdownMenu extends Component {
                 </button>
 
                 { this.state.show &&
+                    <Fade timeout={ 50 }>
                     <div className={ `dropdown-menu ${cls}` } aria-labelledby="dropdownMenuButton">
                         { this.props.children }
                     </div>
+                    </Fade>
                 }
             </div>
         );
