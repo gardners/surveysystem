@@ -1,8 +1,17 @@
 
 # Question Definitions
 
-* backend: see `serialisers.c: serialise_question()`
-* frontend: n/a
+definition:
+
+ * `backend/include/survey.h` struct question
+
+serialization:
+
+ * `backend/src/serialisers.c: serialise_question()`
+
+corresponding frontend module:
+
+* `front/src/Question.js`
 
 Format of an question row:
 
@@ -30,13 +39,23 @@ Location: `surveys/<surveyID>/current` (can be symlinked)
 
 # Answer Definitions
 
-* backend: see `serialisers.c: serialise_answer()`
-* frontend: see `serializer` module
+definition:
+
+ * `backend/include/survey.h` struct answer
+
+serialization:
+
+* `backend/src/serialisers.c: serialise_answer()`
+
+corresponding frontend module:
+
+* `front/src/Answer.js`
+
 
 Format of an answer row:
 
 ```csv
-<uid>:<text>:<value>:<lat>:<lon>:<time_begin>:<time_end>:<time_zone_delta>:<dst_delta>:<unit>
+<uid>:<text>:<value>:<lat>:<lon>:<time_begin>:<time_end>:<time_zone_delta>:<dst_delta>:<unit>:<flag>
 ```
 
 Location: `sessions/<session-prefix>/sessionID`
@@ -52,4 +71,14 @@ Location: `sessions/<session-prefix>/sessionID`
 | **time_end**          | long long | number |             |
 | **time_zone_delta**   | int       | number |             |
 | **dst_delta**         | int       | number |             |
-| **unit**              | char[]    | string |             |
+| **unit**              | char[]    | string | unit for numeric types, see below   |
+| **flag**              | int       | string | bit flags, currently only, see below |
+
+**unit**
+
+ - Time based question times: Use `seconds` only. The returned answer unit will always be a duration in seconds since midnight (where midnight == 0)
+ - All other numeric qquestion types are free to define a human friendly unit (displayed on the frontend form) the unit will be included into the returned answer
+
+**flag**
+
+- Currently only supported flags are `answered` (0) or `deleted` (1)
