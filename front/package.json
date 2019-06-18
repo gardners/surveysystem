@@ -5,13 +5,13 @@
   "dependencies": {
     "bootstrap": "^4.3.1",
     "moment": "^2.24.0",
-    "rc-time-picker": "^3.6.4",
+    "rc-time-picker": "^3.7.1",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "react-input-range": "^1.3.0",
-    "react-router-dom": "^5.0.0",
+    "react-router-dom": "^5.0.1",
     "react-scripts": "3.0.1",
-    "react-transition-group": "^4.0.1"
+    "react-transition-group": "^4.1.1"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -38,7 +38,7 @@
     ]
   },
   "devDependencies": {
-    "@fortawesome/fontawesome-free": "^5.8.2",
+    "@fortawesome/fontawesome-free": "^5.9.0",
     "jest-localstorage-mock": "^2.4.0",
     "node-sass": "^4.12.0",
     "react-test-renderer": "^16.8.6"
