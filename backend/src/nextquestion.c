@@ -26,34 +26,51 @@ wchar_t *as_wchar(const char *s)
   else return as_wchar_out;
 }
 
-void log_python_error(void)
+int is_python_started=0;
+PyObject *nq_python_module=NULL;
+
+void log_python_error()
 {
   int retVal=0;
+  char *tb_function = "cmodule_traceback";
   do {
-    //    if (PyErr_Occurred()) {
     if (1) {
       PyObject *ptype=NULL,*pvalue=NULL,*ptraceback=NULL;
       PyErr_Fetch(&ptype,&pvalue,&ptraceback);
+      PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
       PyObject* objectsRepresentation = PyObject_Repr(ptype);
       const char* s = PyUnicode_AsUTF8(objectsRepresentation);
       LOG_WARNV("Python exception type: %s",s);
       objectsRepresentation = PyObject_Repr(pvalue);
       const char *s2 = PyUnicode_AsUTF8(objectsRepresentation);
       LOG_WARNV("Python error value: %s",s2);
-      objectsRepresentation = PyObject_Repr(ptraceback);
-      const char *s3 = PyUnicode_AsUTF8(objectsRepresentation);
-      LOG_WARNV("Python back-trace: %s",s3); 
+      
+      // Fetch a printable traceback string via an optional python callback. There seems to be no convenient way to serialise this via the bindings.
+      // Another way to do this might be to create a Python CustomError class with a traceback string injected into the message.
+      // However, this would only work if the CustomError is deliberately raised. This method might seem like an overhead but provides tracebacks for any exception type.
+      // todo: enable/disable this via a debug flag
+      if(!nq_python_module) break;
+      PyObject* callable = PyObject_GetAttrString(nq_python_module,tb_function);
+      
+      if(callable) {
+	PyObject* args = PyTuple_Pack(3,ptype,pvalue,ptraceback);
+	PyObject* result = PyObject_CallObject(callable, args);
+	Py_DECREF(args);
+	if (!result) {
+	  LOG_WARNV("Could not build Python error traceback with function (%s)",tb_function);
+	} else {
+	  LOG_WARNV("Python error traceback: %s",PyUnicode_AsUTF8(result));
+	}
+      } else {
+	LOG_WARNV("Unable to build traceback Python function (%s) missing!",tb_function);
+      }
     }
-    
   } while(0);
 
   (void)retVal;
   return;
 }
 
-
-int is_python_started=0;
-PyObject *nq_python_module=NULL;
 int setup_python(char *search_path)
 {
   int retVal=0;
@@ -367,7 +384,14 @@ int call_python_nextquestion(struct session *s,
     
     PyObject* result = PyObject_CallObject(myFunction, args);
     Py_DECREF(args);
-
+    
+    if(PyErr_Occurred()) {
+      is_error=1;
+      log_python_error();
+      LOG_ERRORV("Python function '%s' exited with an Error (PyErr_Occurred()). Check the backtrace and error messages above, in case they give you any clues.)",function_name);
+      PyErr_Clear();
+    }
+    
     if (!result) {
       is_error=1;
       log_python_error();
@@ -615,6 +639,13 @@ int get_analysis(struct session *s,const unsigned char **output)
     PyObject* result = PyObject_CallObject(myFunction, args);
     Py_DECREF(args);
 
+    if(PyErr_Occurred()) {
+      is_error=1;
+      log_python_error();
+      LOG_ERRORV("Python function '%s' exited with an Error (PyErr_Occurred()). Check the backtrace and error messages above, in case they give you any clues.)",function_name);
+      PyErr_Clear();
+    }
+    
     if (!result) {
       is_error=1;
       log_python_error();
