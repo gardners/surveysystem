@@ -92,6 +92,14 @@ Unit.propTypes = {
  */
 
 const Title = function({ question, grouped, required, display, className, children}) {
+    if(display === 'span') {
+        return(
+            <span className={ className }>
+                { question.title } { children }
+            </span>
+        );
+    }
+
     if(display === 'label') {
         return(
             <label className={ addClassNames('form-check-label', className) } htmlFor={ question.id }>
@@ -99,6 +107,7 @@ const Title = function({ question, grouped, required, display, className, childr
             </label>
         );
     }
+
     return(
         <div className={ addClassNames('mb-2', className) }>
             { question.title } { children }
@@ -117,7 +126,8 @@ Title.propTypes = {
     required: PropTypes.bool.isRequired,
     display: PropTypes.oneOf([
         '',
-        'label'
+        'label',
+        'span',
     ]),
 
     className: PropTypes.string,
