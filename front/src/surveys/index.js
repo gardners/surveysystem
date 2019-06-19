@@ -3,6 +3,7 @@ import SleepCompanion from '../Sleepcompanion';
 
 const Defaults = {
     validators {
+        // TODO, #181
     },
 };
 

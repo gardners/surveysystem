@@ -337,7 +337,7 @@ const Demo = function(props){
                 <Row selected={ selected } type={ 'DAYTIME' }      component={ DayTimeSlider }     default_value="35145" />
                 <Row selected={ selected } type={ 'DAYTIME' }      component={ TimePicker }        default_value="35145" />
                 <Row selected={ selected } type={ 'MULTICHOICE' }  component={ CheckboxGroup }     choices={ ['This', 'That', 'Another one' ] } default_value="That" />
-                <Row selected={ selected } type={ 'SINGLECHOICE' } component={ RadioGroup }        choices={ ['This', 'That', 'Another one' ] } />
+                <Row selected={ selected } type={ 'SINGLECHOICE' } component={ RadioGroup }        choices={ ['This', 'That', 'Another one' ] } default_value="Another one" />
                 <Row selected={ selected } type={ 'CHECKBOX' }     component={ Checkbox }          choices={ [ 'Unchecked!', 'Checked!'] }  default_value="Checked!" />
                 <Row selected={ selected } type={ 'TEXT' }         component={ RadioGroup }        choices={ ['Yes', 'No', 'Maybe' ] }  />
                 <Row selected={ selected } type={ 'SINGLESELECT' } component={ Select }            choices={ ['First', 'Second', 'Third' ] } />
