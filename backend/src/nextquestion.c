@@ -323,9 +323,17 @@ int call_python_nextquestion(struct session *s,
 
     LOG_INFOV("Preparing to call python function '%s' to get next question(s)",function_name);
     
+    // TODO see get_analysis() - move answers and questions py list generation in separate unit
     // Okay, we have the function object, so build the argument list and call it.
     PyObject* questions = PyList_New(s->question_count);
-    PyObject* answers = PyList_New(s->answer_count);
+    // #227 initialize answer list with the correct length (excluding ANSWER_DELETED)
+    int count_given_answers = 0;
+    for(int i=0;i<s->answer_count;i++) {
+      if (!(s->answers[i]->flags&ANSWER_DELETED)) {
+	count_given_answers++;
+      }
+    }
+    PyObject* answers = PyList_New(count_given_answers);
 
     for(int i=0;i<s->question_count;i++) {
       PyObject *item = PyUnicode_FromString(s->questions[i]->uid);
@@ -334,6 +342,7 @@ int call_python_nextquestion(struct session *s,
 	LOG_ERRORV("Error inserting question name '%s' into Python list",s->questions[i]->uid); 
       }
     }
+    
     for(int i=0;i<s->answer_count;i++)
       // Don't include deleted answers in the list fed to Python. #186
       if (!(s->answers[i]->flags&ANSWER_DELETED))
@@ -357,6 +366,7 @@ int call_python_nextquestion(struct session *s,
 	  PyObject *time_end_l = PyUnicode_FromString("time_end");
 	  PyObject *time_zone_delta_l = PyUnicode_FromString("time_zone_delta");
 	  PyObject *dst_delta_l = PyUnicode_FromString("dst_delta");
+	  
 	  int errors = PyDict_SetItem(dict,uid_l,uid);
 	  errors += PyDict_SetItem(dict,text_l,text);
 	  errors += PyDict_SetItem(dict,value_l,value);
@@ -579,9 +589,17 @@ int get_analysis(struct session *s,const unsigned char **output)
 
     LOG_INFOV("Preparing to call python function '%s' to get next question(s)",function_name);
     
+    // TODO see get_analysis() - move answers and questions py list generation in separate unit
     // Okay, we have the function object, so build the argument list and call it.
     PyObject* questions = PyList_New(s->question_count);
-    PyObject* answers = PyList_New(s->answer_count);
+    // #227 initialize answer list with the correct length (excluding ANSWER_DELETED)
+    int count_given_answers = 0;
+    for(int i=0;i<s->answer_count;i++) {
+      if (!(s->answers[i]->flags&ANSWER_DELETED)) {
+	count_given_answers++;
+      }
+    }
+    PyObject* answers = PyList_New(count_given_answers);
 
     for(int i=0;i<s->question_count;i++) {
       PyObject *item = PyUnicode_FromString(s->questions[i]->uid);
@@ -613,6 +631,7 @@ int get_analysis(struct session *s,const unsigned char **output)
 	  PyObject *time_end_l = PyUnicode_FromString("time_end");
 	  PyObject *time_zone_delta_l = PyUnicode_FromString("time_zone_delta");
 	  PyObject *dst_delta_l = PyUnicode_FromString("dst_delta");
+	  
 	  int errors = PyDict_SetItem(dict,uid_l,uid);
 	  errors += PyDict_SetItem(dict,text_l,text);
 	  errors += PyDict_SetItem(dict,value_l,value);
