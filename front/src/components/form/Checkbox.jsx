@@ -22,14 +22,15 @@ class Checkbox extends Component {
         });
     }
 
-    handleChange(e){
+    handleChange() {
         const { question, handleChange } = this.props;
         const { choices } = question;
-        const { checked } = e.target;
+        const checked = !this.state.checked;
         this.setState({
             checked,
         });
-        handleChange(e.target, question, (checked) ?  choices[1] : choices[0]);
+        // two defined choices in the following order: [OFF-value, ON-value]
+        handleChange(null, question, (checked) ? choices[1] : choices[0]);
     }
 
     render() {
@@ -39,19 +40,22 @@ class Checkbox extends Component {
             <Field.Row className={ className } question={ question } grouped={ grouped } required={ required }>
                 <Field.Description question={ question } grouped={ grouped } required={ required } />
                 <div className="form-check">
-                    <input
-                        id={ question.id }
+                    <button
+                        id={ question.id}
                         name={ question.name }
-                        type="checkbox"
-                        className="form-check-input"
-                        autoComplete="off"
-                        checked={ checked }
-                        required={ false /* single checkbox! */ }
-                        onChange={ this.handleChange.bind(this) }
-                    />
-                    <Field.Title element="label" grouped={ grouped } question={ question } required={ required }>
-                        <Field.Unit className="badge badge-secondary ml-1" question={ question } grouped={ grouped } />
-                    </Field.Title>
+                        className={ (checked) ? 'btn' : 'btn' }
+                        onClick={
+                            (e) => {
+                                e.preventDefault();
+                                this.handleChange();
+                            }
+                        }
+                    >
+                        { (checked) ? <i className="mr-2 fas fa-check-square text-primary" /> : <i className="mr-2 far fa-square text-muted" /> }
+                        <Field.Title display="span" grouped={ grouped } question={ question } required={ required }>
+                            <Field.Unit className="badge badge-secondary ml-1" question={ question } grouped={ grouped } />
+                        </Field.Title>
+                    </button>
                 </div>
                 <Field.Error error={ error } grouped={ grouped } />
             </Field.Row>

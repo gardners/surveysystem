@@ -22,14 +22,13 @@ class CheckboxGroup extends Component {
         });
     }
 
-    handleChange(e) {
-        const { value, checked } = e.target;
-        const { question, handleChange } = this.props;
-
+    handleChange(question, value) {
+        const { handleChange } = this.props;
         let { values } = this.state;
 
-        values = values.filter(v => v !== value);
-        if(checked) {
+        if(values.indexOf(value) > -1) {
+            values = values.filter(v => v !== value);
+        } else {
             values.push(value);
         }
 
@@ -37,7 +36,7 @@ class CheckboxGroup extends Component {
             values,
         });
 
-        handleChange(e.target, question, values);
+        handleChange(null, question, values);
     }
 
     render() {
@@ -51,23 +50,32 @@ class CheckboxGroup extends Component {
                 <Field.Title element="label" grouped={ grouped } question={ question } required={ required }>
                     <Field.Unit className="badge badge-secondary ml-1" question={ question } grouped={ grouped } />
                 </Field.Title>
+                <div className="list-group">
                 {
-                    choices.map((choice, index) => (
-                        <div key={index} className="radio form-check">
-                            <input
-                                type="checkbox"
-                                className="form-check-input"
-                                autoComplete="off"
+                    choices.map((choice, index) => {
+                        const checked = (values.indexOf(choice) > -1);
+                        return (
+                            <button
+                                key={ index }
+                                id={ `${question.id}[${index}]` }
                                 name={ question.name }
-                                id={ `${question.name}[${index}]` }
+                                className={ (checked) ? 'text-left list-group-item list-group-item-primary' : 'text-left list-group-item' }
                                 value={ choice }
-                                onChange={ this.handleChange.bind(this)}
-                                checked={  values.indexOf(choice) > -1 }
-                            />
-                            <label htmlFor={ `${question.name}[${index}]` } className="form-check-label">{ choice }</label>
-                        </div>
-                    ))
+                                onClick={
+                                    //
+                                    (e) => {
+                                        e.preventDefault();
+                                        this.handleChange(question, choice);
+                                    }
+                                }
+                            >
+                                { (checked) ? <i className="mr-2 fas fa-check-square text-primary" /> : <i className="mr-2 far fa-square text-muted" /> }
+                                { choice }
+                            </button>
+                        );
+                    })
                 }
+                </div>
                 <Field.Error error={ error } grouped={ grouped } />
             </Field.Row>
         );
