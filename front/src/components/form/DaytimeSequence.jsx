@@ -101,7 +101,7 @@ const Row = function({ question, handleChange, value, disabled, minValue, expand
             return (
                 <tr>
                     <td className="daytimeslider--firstcol">{ question.title }</td>
-                    <td>
+                    <td className="align-middle">
                         <TimePicker
                             key={ question.id }
                             question={ question }
@@ -119,7 +119,7 @@ const Row = function({ question, handleChange, value, disabled, minValue, expand
             <tr>
                 <td className="daytimeslider--firstcol">{ question.title }</td>
                 <td className="daytimeslider--secondcol">{ prettyHours(value) }</td>
-                <td>
+                <td className="align-middle">
                     <InputRange
                         minValue={ minValue }
                         maxValue={ DaySeconds }
