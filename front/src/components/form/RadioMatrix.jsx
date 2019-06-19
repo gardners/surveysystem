@@ -47,7 +47,7 @@ const Row = function({ question, index, value, handleChange, expanded, required,
         return (
             <tr className={ className }>
                 <td className="radiomatrix--firstcol">{ question.title }</td>
-                <td>
+                <td className="align-middle">
                     <select
                         id={ question.id }
                         name={ question.name }
@@ -81,18 +81,24 @@ const Row = function({ question, index, value, handleChange, expanded, required,
             <td className="radiomatrix--firstcol">{ question.title }</td>
             {
                 choices.map((choice, index) => {
+                    const checked= (choice == value); /* intentionally using non-typesafe operator (number) */
                     return (
-                        <td key={ index }>
-                            <input
-                                type="radio"
-                                id={ `${question.name}[${index}]` }
+                        <td key={ index } className="align-middle">
+                            <button
+                                key={ index }
+                                id={ `${question.id}[${index}]` }
                                 name={ question.name }
-                                autoComplete="off"
+                                className={ (checked) ? 'btn btn-sm text-primary' : 'btn btn-sm' }
                                 value={ choice }
-                                checked={ choice == value /* intentionally using non-typesafe operator (number) */ }
-                                onChange={ (e) => handleChange(question, e.target.value) }
-                                required={ required }
-                            />
+                                onClick={
+                                    (e) => {
+                                        e.preventDefault();
+                                        handleChange(question, choice);
+                                    }
+                                }
+                            >
+                                { (checked) ? <i className="fas fa-check-circle text-primary" /> : <i className="far fa-circle text-muted" /> }
+                            </button>
                         </td>
                     );
                 })
