@@ -19,15 +19,14 @@ class RadioGroup extends Component {
         });
     }
 
-    handleChange(e) {
-        const { value } = e.target;
+    handleChange(value) {
         const { question } = this.props;
 
         this.setState({
             value: value,
         });
 
-        this.props.handleChange(e.target, question, value);
+        this.props.handleChange(null, question, value);
     }
 
     render() {
@@ -41,23 +40,32 @@ class RadioGroup extends Component {
                 <Field.Title element="label" grouped={ grouped } question={ question } required={ required }>
                     <Field.Unit className="badge badge-secondary ml-1" question={ question } grouped={ grouped } />
                 </Field.Title>
+                <div className="list-group">
                 {
-                    choices.map((choice, index) => (
-                        <div key={index} className="radio form-check">
-                            <input
-                                type="radio"
-                                className="form-check-input"
-                                autoComplete="off"
+                    choices.map((choice, index) => {
+                        const checked = (choice === value);
+                        return (
+                            <button
+                                key={ index }
+                                id={ `${question.id}[${index}]` }
                                 name={ question.name }
-                                id={ `${question.name}[${index}]` }
+                                className={ (checked) ? 'text-left list-group-item list-group-item-primary' : 'text-left list-group-item' }
                                 value={ choice }
-                                onChange={ this.handleChange.bind(this)}
-                                checked={ choice === value }
-                            />
-                            <label htmlFor={ `${question.name}[${index}]` } className="form-check-label">{ choice }</label>
-                        </div>
-                    ))
+                                onClick={
+                                    //
+                                    (e) => {
+                                        e.preventDefault();
+                                        this.handleChange(choice);
+                                    }
+                                }
+                            >
+                                { (checked) ? <i className="mr-2 fas fa-check-circle text-primary" /> : <i className="mr-2 far fa-circle text-muted" /> }
+                                { choice }
+                            </button>
+                        );
+                    })
                 }
+                </div>
                 <Field.Error error={ error } grouped={ grouped } />
             </Field.Row>
         );
