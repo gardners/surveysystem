@@ -163,7 +163,10 @@ class SurveyManager {
             if(type === 'undefined' || type === 'function') {
                 return;
             }
-
+            if (key === 'questions') {
+                this.questions = cached.questions.map(q => normalizeQuestions(q));
+                return;
+            }
             this[key] = cached[key];
         });
 
