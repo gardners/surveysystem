@@ -380,40 +380,16 @@ const Demo = function(props){
                         }
                     ] }
                 />
-                <Row selected={ selected } type={ 'EMAIL' }        component={ EmailInput }        />
-                <Row selected={ selected } type={ 'PASSWORD' }     component={ PasswordInput }     />
-                <Row selected={ selected } type={ 'DAYTIME' }      component={ DaytimeSequence }
-                    questions={ [
-                        {
-                            id: 'question1',
-                            name: 'question1',
-                            type: 'DAYTIME',
-                            title: 'breakfast time',
-                            description: 'Row 1 text',
-                            default_value: '27000', /* 07:30:00 */
-                        }, {
-                            id: 'question2',
-                            name: 'question2',
-                            type: 'DAYTIME',
-                            title: 'lunch time',
-                            description: 'Row 2 text',
-                            default_value: '43200', /* 12:00:00 */
-                        },{
-                            id: 'question3',
-                            name: 'question3',
-                            type: 'DAYTIME',
-                            title: 'afternoon tea time',
-                            description: 'Row 3 text',
-                            default_value: '55800', /* 15:30:00 */
-                        },{
-                            id: 'question4',
-                            name: 'question4',
-                            type: 'DAYTIME',
-                            title: 'late snack time',
-                            description: 'Row 4 text',
-                            default_value: '73800', /* 20:30:00 */
-                        }
-                    ] }
+                <Row selected={ selected } type={ 'EMAIL' }             component={ EmailInput }        />
+                <Row selected={ selected } type={ 'PASSWORD' }          component={ PasswordInput }     />
+                <Row selected={ selected } type={ 'DAYTIME_SEQUENCE' }   component={ DaytimeSequence }
+                    choices={ ['Breakfast', 'Lunch', 'Afternoon Tea' , ' Late Snack'] }
+                    default_value={ [
+                        '27000', /* 07:30:00 */
+                        '43200', /* 12:00:00 */
+                        '55800', /* 15:30:00 */
+                        '73800', /* 20:30:00 */
+                    ].join(',') }
                 />
             </div>
         </section>
