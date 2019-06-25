@@ -60,7 +60,7 @@ class DaytimeInput extends Component  {
     }
 
     render () {
-        const { handleChange, namespace } = this.props;
+        const { handleSubmit, namespace } = this.props;
         const { hours, minutes, ampm, errors } = this.state;
 
         const hasErrors = Object.keys(errors).length !== 0;
@@ -132,15 +132,15 @@ class DaytimeInput extends Component  {
 
                 <div className="col-md-4">
                     <button
-                        className="btn btn-primary"
+                        className="btn btn-secondary"
                         disabled = { hasErrors }
                         onClick={ (e) => {
                             e.preventDefault();
                             const date = setDaytimeDate(hours, minutes, ampm);
                             const ts = date.getTime();
-                            handleChange((ts > 0) ? ts / 1000 : 0);
+                            handleSubmit((ts > 0) ? ts / 1000 : 0);
                         } }
-                    >Submit</button>
+                    >OK</button>
                 </div>
             </div>
         );
@@ -155,6 +155,7 @@ DaytimeInput.defaultProps = {
 DaytimeInput.propTypes = {
     seconds: PropTypes.number,
     namespace: PropTypes.string.isRequired,
+    handleSubmit: PropTypes.func.isRequired,
     minuteStep: PropTypes.number,
 };
 
@@ -202,7 +203,7 @@ class TimePicker extends Component {
 
                 <DaytimeInput
                     value={ value }
-                    handleChange={ this.handleChange.bind(this) }
+                    handleSubmit={ this.handleChange.bind(this) }
                     namespace={ question.id }
                     minuteStep={ minuteStep }
                 />

@@ -40,7 +40,7 @@ class DayTimeSlider extends Component {
         });
     }
 
-    handleChange(value){
+    handleChange(value) {
         const { question, handleChange } = this.props;
         this.setState({
             value,

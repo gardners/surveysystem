@@ -61,7 +61,7 @@ class PeriodRangeSlider extends Component {
 
     render() {
         const { value, minValue, maxValue } = this.state;
-        const { question, error, required, grouped, className, handleChangeComplete, withIcons, step } = this.props;
+        const { question, error, required, grouped, className, handleChangeComplete, step } = this.props;
 
         return (
             <Field.Row className={ className } question={ question } grouped={ grouped } required={ required }>
@@ -96,7 +96,6 @@ class PeriodRangeSlider extends Component {
 PeriodRangeSlider.defaultProps = {
     grouped: false,
     required: false,
-    withIcons: true,
 
     // react-input-range props
     step: 60, // seconds
@@ -112,7 +111,6 @@ PeriodRangeSlider.propTypes = {
     required: PropTypes.bool,
 
     className: PropTypes.string,
-    withIcons: PropTypes.bool,
 
     // react-input-range props
     step: PropTypes.number.isRequired,
