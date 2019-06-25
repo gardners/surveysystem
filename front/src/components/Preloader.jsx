@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import './preloader.scss';
+import './Preloader.scss';
 
 const Preloader = function (props) {
     const loading = props.loading || false;

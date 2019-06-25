@@ -3,12 +3,12 @@ import PropTypes from 'prop-types';
 
 import Transition from 'react-transition-group/Transition';
 
-const transitionStyles = {
-  entering: { opacity: 0 },
-  entered:  { opacity: 1 },
-};
-
 const Fade = function({ timeout, children }) {
+    const transitionStyles = {
+        entering: { opacity: 0 },
+        entered:  { opacity: 1 },
+    };
+
     const defaultStyle = {
         transition: `opacity ${timeout}ms ease-in-out`,
         opacity: 0,
