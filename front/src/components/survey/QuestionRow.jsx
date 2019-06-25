@@ -7,7 +7,7 @@ import { addClassNames } from '../../Utils';
 import InnerHtml from '../InnerHtml';
 import { sanitizeKcgiJsonString } from '../../Utils';
 
-import './question.scss';
+import './Question.scss';
 
 const QuestionRow = function({ question, className, grouped, componentName, children, debugData }) {
 
