@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import InputRange from 'react-input-range';
+import { Gutter, DaytimeIcon, DaytimeLabel } from './DaytimeSequence';
+
 import './DayTimeSlider.scss';
 
 import Field from './Field';
@@ -9,21 +11,6 @@ import QuestionModel from '../../Question';
 
 import { formatDayTime, DaySeconds } from '../../Utils';
 
-const tableStyle = {
-    display: 'table',
-    width: '100%',
-    padding: '.5em',
-    tableLayout: 'fixed',    /* For cells of equal size */
-};
-
-const cellStyle = function(percent) {
-    const textAlign = ((percent === 50) ? 'center' : (percent < 50) ? 'left' : 'right');
-    return {
-        width: '25%',
-        display: 'table-cell',
-        textAlign,
-    };
-};
 
 /**
  * range sliders for defining period secondss (seconds) within 24 hours
@@ -84,16 +71,9 @@ class PeriodRangeSlider extends Component {
                 </Field.Title>
                 <Field.Description question={ question } grouped={ grouped } required={ required } />
 
-                <div className="periodrangeslider">
-                    {
-                        withIcons &&
-                        <div className={ className } style={ tableStyle }>
-                            <div style={ cellStyle(0) }><i className="fas fa-moon"></i></div>
-                            <div style={ cellStyle(50) }><i className="fas fa-sun"></i></div>
-                            <div style={ cellStyle(100) }><i className="fas fa-moon"></i></div>
-                        </div>
-                    }
-                    <div style={ { padding: '1.5em 1em' } }>
+                <div className="row">
+                    <div className="col daytime-slider">
+                        <Gutter className="mb-4" component={ DaytimeIcon } min={ 0 } max={ DaySeconds } />
                         <InputRange
                             value={ value }
                             minValue={ minValue }
@@ -104,6 +84,7 @@ class PeriodRangeSlider extends Component {
                             formatLabel={ val => formatDayTime(val) }
                             step= { step }
                         />
+                        <Gutter className="mb-4" component={ DaytimeLabel } min={ 0 } max={ DaySeconds } />
                     </div>
                 </div>
 
