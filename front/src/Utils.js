@@ -156,6 +156,106 @@ const prettyHours = function(seconds) {
     return `${pretty} ${(seconds < 0) ? '-' : '+'}${days} ${pdays}`;
 };
 
+
+/**
+ * date timestamp parser utils
+ */
+
+// m: 00:00
+// m: 04:00
+// s: 08:00
+// s: 12:00
+// s: 16:00
+// m: 20:00
+// m: 24:00
+
+const parseDayTime = function(seconds) {
+    const date = new Date(seconds * 1000);
+    const hours24 = date.getUTCHours(); // 0 - 23
+    const mins = date.getUTCMinutes();
+
+    let hours = (hours24 > 12) ? hours24 - 12 : hours24;
+    let ampm = (hours24 < 12) ? 'am': 'pm';
+
+    if(seconds === DaySeconds) {
+        hours = 12;
+        ampm = 'pm';
+    }
+
+    return {
+        days: Math.floor(seconds / DaySeconds),
+        hours24,
+        hours,
+        mins,
+        ampm,
+    };
+};
+
+const parseDayTimeDiff = function(fromSeconds, toSeconds, withSeconds = false) {
+    const from = new Date(fromSeconds * 1000);
+    const to = new Date(toSeconds * 1000);
+
+    const diff = to - from;
+
+    let d = diff / 1000;
+    const secs = Math.floor(d % 60);
+
+    d = d / 60;
+    const mins = Math.floor(d % 60);
+
+    d = d / 60;
+    const hours = Math.floor(d % 24);
+    const days = Math.floor(d / 24);
+
+    let r = (diff < 0) ? '- ' : '+ ';
+
+    if(days) {
+        r += Math.abs(days);
+        r += (days === 1) ? ' day ': ' days ';
+    }
+
+    if(hours) {
+        r += Math.abs(hours);
+        r += (hours === 1) ? ' hour ': ' hours ';
+    }
+
+    if(mins) {
+        r += Math.abs(mins);
+        r += (mins === 1) ? ' minute ': ' minutes ';
+    }
+
+    if (withSeconds && secs) {
+        r += Math.abs(secs);
+        r += (secs === 1) ? ' second ': ' seconds ';
+    }
+
+    return r.trim();
+};
+
+const formatDayTime = function(seconds) {
+    const dt = parseDayTime(seconds);
+
+    const hh = (dt.hours < 10) ? `0${dt.hours}`: dt.hours;
+    const mm = (dt.mins < 10 ) ? `0${dt.mins}`: dt.mins
+
+    return `${hh}:${mm} ${dt.ampm}`;
+};
+
+const setDaytimeDate = function(hours12, minutes, ampm) {
+    const hours = (ampm === 'pm' && hours12 <= 12) ? hours12 + 12 : hours12;
+
+    const YYYY = '1970';
+    const MM = '01';
+    const DD = '01';
+    const HH = (hours < 10) ? `0${hours}` : hours;
+    const mm = (minutes < 10) ? `0${minutes}` : minutes;
+    const ss = '00';
+    const sss = '000';
+
+    // 1970-01-01THH:mm:ss.sssZ
+    return new Date(`${YYYY}-${MM}-${DD}T${HH}:${mm}:${ss}.${sss}Z`);
+};
+
 export {
     isScalar,
     DirtyJson,
@@ -166,4 +266,8 @@ export {
     sanitizeKcgiJsonString,
     DaySeconds,
     prettyHours,
+    parseDayTime,
+    parseDayTimeDiff,
+    formatDayTime,
+    setDaytimeDate,
 };
