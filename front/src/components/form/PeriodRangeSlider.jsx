@@ -4,13 +4,12 @@ import PropTypes from 'prop-types';
 import InputRange from 'react-input-range';
 import { Gutter, DaytimeIcon, DaytimeLabel } from './DaytimeSequence';
 
-import './DayTimeSlider.scss';
-
 import Field from './Field';
 import QuestionModel from '../../Question';
 
 import { formatDayTime, DaySeconds } from '../../Utils';
 
+import './DayTimeSlider.scss';
 
 /**
  * range sliders for defining period secondss (seconds) within 24 hours

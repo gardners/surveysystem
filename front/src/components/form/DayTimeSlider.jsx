@@ -2,31 +2,14 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import InputRange from 'react-input-range';
-
+import { Gutter, DaytimeIcon, DaytimeLabel } from './DaytimeSequence';
 
 import Field from './Field';
 import QuestionModel from '../../Question';
 
 import { formatDayTime, DaySeconds } from '../../Utils';
 
-// bg gradient
-const wrapperStyle = {};
-
-const tableStyle = {
-    display: 'table',
-    width: '100%',
-    padding: '.5em',
-    tableLayout: 'fixed',    /* For cells of equal size */
-};
-
-const cellStyle = function(percent) {
-    const textAlign = ((percent === 50) ? 'center' : (percent < 50) ? 'left' : 'right');
-    return {
-        width: '25%',
-        display: 'table-cell',
-        textAlign,
-    };
-};
+import './DayTimeSlider.scss';
 
 /**
  * range sliders for defining period secondss (seconds) within 24 hours
@@ -67,7 +50,7 @@ class DayTimeSlider extends Component {
 
     render() {
         const { value, minValue, maxValue } = this.state;
-        const { question, error, required, grouped, className, handleChangeComplete, withIcons, step } = this.props;
+        const { question, error, required, grouped, className, handleChangeComplete, step } = this.props;
 
         return (
             <Field.Row className={ className } question={ question } grouped={ grouped } required={ required }>
@@ -76,28 +59,22 @@ class DayTimeSlider extends Component {
                 </Field.Title>
                 <Field.Description question={ question } grouped={ grouped } required={ required } />
 
-                <div style={ wrapperStyle }>
-                    {
-                        withIcons &&
-                        <div className={ className } style={ tableStyle }>
-                            <div style={ cellStyle(0) }><i className="fas fa-moon"></i></div>
-                            <div style={ cellStyle(50) }><i className="fas fa-sun"></i></div>
-                            <div style={ cellStyle(100) }><i className="fas fa-moon"></i></div>
-                        </div>
-                    }
-                    <div style={ { padding: '1.5em 1em' } }>
-                        <InputRange
-                            value={ value }
-                            minValue={ minValue }
-                            maxValue={ maxValue }
+                    <div className="row">
+                        <div className="col daytime-slider">
+                            <Gutter className="mb-4" component={ DaytimeIcon } min={ 0 } max={ DaySeconds } />
+                            <InputRange
+                                value={ value }
+                                minValue={ minValue }
+                                maxValue={ maxValue }
 
-                            onChange={ this.handleChange.bind(this) }
-                            onChangeComplete={ handleChangeComplete }
-                            formatLabel={ val => formatDayTime(val) }
-                            step= { step }
-                        />
+                                onChange={ this.handleChange.bind(this) }
+                                onChangeComplete={ handleChangeComplete }
+                                formatLabel={ val => formatDayTime(val) }
+                                step= { step }
+                            />
+                            <Gutter className="mb-4" component={ DaytimeLabel } min={ 0 } max={ DaySeconds } />
+                        </div>
                     </div>
-                </div>
 
                 <Field.Error error={ error } grouped={ grouped } />
             </Field.Row>
@@ -108,7 +85,6 @@ class DayTimeSlider extends Component {
 DayTimeSlider.defaultProps = {
     grouped: false,
     required: false,
-    withIcons: true,
 
     // react-input-range props
     step: 60, // seconds
@@ -124,7 +100,6 @@ DayTimeSlider.propTypes = {
     required: PropTypes.bool,
 
     className: PropTypes.string,
-    withIcons: PropTypes.bool,
 
     // react-input-range props
     step: PropTypes.number.isRequired,

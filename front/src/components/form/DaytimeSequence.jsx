@@ -105,11 +105,16 @@ const Gutter = function({ min, max, className, component }) {
     );
 };
 
+Gutter.defaultProps = {
+    step: 6 * 3600, // 6 hours
+};
+
 Gutter.propTypes = {
     min: PropTypes.number.isRequired,
     max: PropTypes.number.isRequired,
     className: PropTypes.string,
     component: PropTypes.func.isRequired,
+    step: PropTypes.number,
 };
 
 /**
@@ -397,4 +402,4 @@ DaytimeSequence.propTypes = {
     step: PropTypes.number,
 };
 
-export default DaytimeSequence;
+export { DaytimeSequence as default, DaytimeIcon, DaytimeLabel, Gutter };
