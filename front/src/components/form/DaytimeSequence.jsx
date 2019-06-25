@@ -315,7 +315,7 @@ class DaytimeSequence extends Component {
                                                 <DaytimeInput
                                                     namespace={ question.id }
                                                     seconds={ values[index] }
-                                                    handleChange={ this.handleChange.bind(this, index) }
+                                                    handleSubmit={ this.handleSubmit.bind(this, index) }
                                                 />
                                         }
                                         </div>
