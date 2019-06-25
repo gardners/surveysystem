@@ -17,6 +17,7 @@ import EmailInput from '../form/EmailInput';
 import PasswordInput from '../form/PasswordInput';
 import Select from '../form/Select';
 import MultiSelect from '../form/MultiSelect';
+import DaytimeSequence from '../form/DaytimeSequence';
 
 import { addClassNames } from '../../Utils';
 
@@ -96,6 +97,9 @@ const getComponentByType = function(questionType = 'TEXT') {
 
         case 'SINGLESELECT':
             return Select;
+
+        case 'DAYTIME_SEQUENCE':
+            return DaytimeSequence;
 
         default:
             return TextInput;
