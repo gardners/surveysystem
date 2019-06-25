@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import Field from './Field';
 import QuestionModel from '../../Question';
 
-import { parseDayTime, parseDayTimeDiff, formatDayTime } from '../../Utils';
+import { parseDayTime, formatDayTimeDiff, formatDayTime } from '../../Utils';
 import { matchesBreakpoint } from '../../Media';
 
 import InputRange from 'react-input-range';
@@ -128,7 +128,7 @@ const ListItem = function({ index, choice, value, handleProgress, expanded, touc
                             <strong className="text-primary" >{ formatDayTime(value) }</strong>
                         </div>
                         <div className="col-md-4 text-right">
-                            <small className="text-muted">{ parseDayTimeDiff(minValue(minValue, value), value) } <DaytimeIcon seconds={ value } /></small>
+                            <small className="text-muted">{ formatDayTimeDiff(minValue(minValue, value), value) } <DaytimeIcon seconds={ value } /></small>
                         </div>
                     </div>
                 :

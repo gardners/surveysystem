@@ -7,7 +7,7 @@ import InputRange from 'react-input-range';
 import Field from './Field';
 import QuestionModel from '../../Question';
 
-import { prettyHours, DaySeconds } from '../../Utils';
+import { formatDayTime, DaySeconds } from '../../Utils';
 
 // bg gradient
 const wrapperStyle = {};
@@ -93,7 +93,7 @@ class DayTimeSlider extends Component {
 
                             onChange={ this.handleChange.bind(this) }
                             onChangeComplete={ handleChangeComplete }
-                            formatLabel={ val => prettyHours(val) }
+                            formatLabel={ val => formatDayTime(val) }
                             step= { step }
                         />
                     </div>

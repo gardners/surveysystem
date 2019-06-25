@@ -1,4 +1,4 @@
-import { isScalar, sanitizeKcgiJsonString, isArray, isObject, camelToNormal, prettyHours } from '../Utils';
+import { isScalar, sanitizeKcgiJsonString, isArray, isObject, camelToNormal } from '../Utils';
 
 const days = function(factor) {
     return factor * 86400;
@@ -72,6 +72,7 @@ describe('Misc', () => {
 });
 
 describe('Time', () => {
+    /* removed
     test('prettyHours', () => {
         expect(prettyHours(days(0) + hours(0)  + minutes(0) )).toBe('12:00:00 am');
         expect(prettyHours(days(0) + hours(11) + minutes(59))).toBe('11:59:00 am');
@@ -107,6 +108,7 @@ describe('Time', () => {
         expect(prettyHours(days(-1) - hours(23) - minutes(59))).toBe('11:59:00 pm -2 days');
         expect(prettyHours(days(-1) - hours(24) - minutes(0) )).toBe('12:00:00 am -3 days');
     });
+    */
 });
 
 describe('sanitizeKcgiJsonString', () => {

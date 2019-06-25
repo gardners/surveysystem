@@ -2,8 +2,6 @@
  * @module Utils
  */
 
-import moment from 'moment';
-
 /**
  * Checks if a value is a native Array
  * @param {*} v value
@@ -126,37 +124,6 @@ const sanitizeKcgiJsonString = function(str) {
 
 const DaySeconds = 86400; // 24 hours
 
-const prettyHours = function(seconds) {
-    let val = 0;
-    let days = (seconds < 0) ? 1 : 0;
-    let pretty = '';
-    const abs = Math.abs(seconds);
-
-    if (abs > DaySeconds) {
-        val =  (seconds < 0) ? seconds + DaySeconds : seconds - DaySeconds;
-        days += Math.floor(abs / DaySeconds);
-    } else {
-        val = seconds;
-    }
-
-    const m = moment().startOf('day');
-    if (val < 0) {
-        m.subtract(val, 'seconds');
-    } else {
-        m.add(val, 'seconds');
-    }
-
-    pretty = m.format('hh:mm:ss a');
-
-    if (days === 0) {
-        return pretty;
-    }
-
-    const pdays = (Math.abs(days) === 1) ? 'day' : 'days';
-    return `${pretty} ${(seconds < 0) ? '-' : '+'}${days} ${pdays}`;
-};
-
-
 /**
  * date timestamp parser utils
  */
@@ -169,6 +136,12 @@ const prettyHours = function(seconds) {
 // m: 20:00
 // m: 24:00
 
+/**
+ * Helper function for parsing time values from seconds
+ * @param {seconds}
+ *
+ * @returns {object}
+ */
 const parseDayTime = function(seconds) {
     const date = new Date(seconds * 1000);
     const hours24 = date.getUTCHours(); // 0 - 23
@@ -191,7 +164,7 @@ const parseDayTime = function(seconds) {
     };
 };
 
-const parseDayTimeDiff = function(fromSeconds, toSeconds, withSeconds = false) {
+const formatDayTimeDiff = function(fromSeconds, toSeconds, withSeconds = false) {
     const from = new Date(fromSeconds * 1000);
     const to = new Date(toSeconds * 1000);
 
@@ -265,9 +238,8 @@ export {
     addClassNames,
     sanitizeKcgiJsonString,
     DaySeconds,
-    prettyHours,
     parseDayTime,
-    parseDayTimeDiff,
     formatDayTime,
+    formatDayTimeDiff,
     setDaytimeDate,
 };

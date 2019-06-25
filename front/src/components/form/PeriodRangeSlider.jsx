@@ -7,7 +7,7 @@ import './DayTimeSlider.scss';
 import Field from './Field';
 import QuestionModel from '../../Question';
 
-import { prettyHours, DaySeconds } from '../../Utils';
+import { formatDayTime, DaySeconds } from '../../Utils';
 
 const tableStyle = {
     display: 'table',
@@ -64,7 +64,6 @@ class PeriodRangeSlider extends Component {
     }
 
     handleChange(value) {
-        console.log(value);
         const { question } = this.props;
 
         this.setState({
@@ -102,7 +101,7 @@ class PeriodRangeSlider extends Component {
 
                             onChange={ this.handleChange.bind(this) }
                             onChangeComplete={ handleChangeComplete }
-                            formatLabel={ val => prettyHours(val) }
+                            formatLabel={ val => formatDayTime(val) }
                             step= { step }
                         />
                     </div>
