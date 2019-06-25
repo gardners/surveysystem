@@ -1,31 +1,172 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import moment from 'moment';
-
-import RcTimePicker from 'rc-time-picker';
-import 'rc-time-picker/assets/index.css';
-
 import Field from './Field';
 import QuestionModel from '../../Question';
+import { parseDayTime, setDaytimeDate } from '../../Utils';
+
 import './TimePicker.scss';
 
-const format = 'h:mm a';
+/**
+ * Group of inputs to set a date time value in seconds
+ * - exported as a small screen option for Daytime slider components
+ */
 
-const getSeconds = function(m) {
-    const midnight = m.clone().startOf('day');
-    return  m.diff(midnight, 'seconds');
+class DaytimeInput extends Component  {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            hours: 0,
+            minutes: 0,
+            ampm: 'am',
+            errors: {},
+        };
+    }
+
+    componentDidMount() {
+        const parsed = parseDayTime(this.props.seconds);
+        this.setState({
+            hours: parsed.hours,
+            minutes: parsed.mins,
+            ampm: parsed.ampm,
+            errors: {},
+        });
+    }
+
+    componentDidUpdate(prevProps) {
+        if (prevProps.seconds !== this.props.seconds) {
+            const parsed = parseDayTime(this.props.seconds);
+            this.setState({
+                hours: parsed.hours,
+                minutes: parsed.mins,
+                ampm: parsed.ampm,
+                errors: {},
+            });
+        }
+    }
+
+    checkError(element, stateProp) {
+        const { errors } = this.state;
+        delete(errors[stateProp]);
+        // @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
+        if(element && typeof element.validity !== 'undefined') {
+            if (!element.validity.valid) {
+                errors[stateProp] = new Error(element.validationMessage);
+                return errors;
+            }
+        }
+        return errors;
+    }
+
+    render () {
+        const { handleChange, namespace } = this.props;
+        const { hours, minutes, ampm, errors } = this.state;
+
+        const hasErrors = Object.keys(errors).length !== 0;
+
+        return (
+            <div className="row">
+                <div className="col-md-3 mb-1">
+                    <input
+                        id={ `${namespace}--hours` }
+                        name={ `${namespace}--hours` }
+                        type="number"
+                        placeholder="hours"
+                        aria-label="hours"
+                        className="form-control"
+                        min={ 0 }
+                        max={ 12 }
+                        step={ 1 }
+                        value={ hours }
+                        onChange={ (e) => {
+                            const { value } = e.target;
+                            this.setState({
+                                hours: parseInt(value, 10),
+                                errors: this.checkError(e.target, 'hours'),
+                            });
+                        } }
+                    />
+                    { errors.hours && <div className="text-danger"><small>{ errors.hours.toString() }</small></div> }
+                </div>
+
+                <div className="col-md-3 mb-1">
+                    <input
+                        id={ `${namespace}--minutes` }
+                        name={ `${namespace}--minutes` }
+                        type="number"
+                        placeholder="minutes"
+                        aria-label="minutes"
+                        className="form-control"
+                        min={ 0 }
+                        max={ 60 }
+                        step={ 5 }
+                        value={ minutes }
+                        onChange={ (e) => {
+                            const { value } = e.target;
+                            this.setState({
+                                minutes: parseInt(value, 10),
+                                errors: this.checkError(e.target, 'minutes'),
+                            });
+                        } }
+                    />
+                    { errors.minutes && <div className="text-danger"><small>{ errors.minutes.toString() }</small></div> }
+                </div>
+
+                <div className="col-md-2 mb-1">
+                    <select
+                        id={ `${namespace}--minutes` }
+                        name={ `${namespace}--minutes` }
+                        value={ ampm }
+                        className="form-control"
+                        onChange={ (e) => {
+                            e.preventDefault();
+                            const { value } = e.target;
+                            this.setState({ ampm: value });
+                        } }
+                    >
+                        <option value="am">am</option>
+                        <option value="pm">pm</option>
+                    </select>
+                </div>
+
+                <div className="col-md-4">
+                    <button
+                        className="btn btn-primary"
+                        disabled = { hasErrors }
+                        onClick={ (e) => {
+                            e.preventDefault();
+                            const date = setDaytimeDate(hours, minutes, ampm);
+                            const ts = date.getTime();
+                            handleChange((ts > 0) ? ts / 1000 : 0);
+                        } }
+                    >Submit</button>
+                </div>
+            </div>
+        );
+    }
 };
 
-const setSeconds = function(sec) {
-    return moment().startOf('day').seconds(sec);
+DaytimeInput.defaultProps = {
+    seconds: 0,
+    minuteStep: 5,
 };
+
+DaytimeInput.propTypes = {
+    seconds: PropTypes.number,
+    namespace: PropTypes.string.isRequired,
+    minuteStep: PropTypes.number,
+};
+
+/**
+ * Timepicker question component
+ */
 
 class TimePicker extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            value: setSeconds(0),
+            value: 0,
         };
     }
 
@@ -33,26 +174,24 @@ class TimePicker extends Component {
         const { question } = this.props;
 
         let val = Number(question.default_value);
-        val = (!isNaN(val)) ? val : 0;
 
         this.setState({
-            value: setSeconds(val),
+            value: (!isNaN(val)) ? val : 0,
         });
     }
 
-    handleChange(m) {
+    handleChange(value) {
         const { question, handleChange } = this.props;
-        const value = m || moment().startOf('day'); // reset button provides null
 
         this.setState({
             value,
         });
-        handleChange(null, question, getSeconds(m));
+        handleChange(null, question, value);
     }
 
     render() {
         const { value } = this.state;
-        const { question, error, required, grouped, className } = this.props;
+        const { question, error, required, grouped, className, minuteStep } = this.props;
 
         return (
             <Field.Row className={ className } question={ question } grouped={ grouped } required={ required }>
@@ -61,16 +200,11 @@ class TimePicker extends Component {
                     <Field.Unit className="badge badge-secondary ml-1" question={ question } grouped={ grouped } />
                 </Field.Title>
 
-                <RcTimePicker
-                    id={ question.id }
-                    name={ question.name }
-                    showSecond={ false }
+                <DaytimeInput
                     value={ value }
-                    className="form-control"
-                    onChange={ this.handleChange.bind(this) }
-                    format={ format }
-                    use12Hours
-                    inputReadOnly
+                    handleChange={ this.handleChange.bind(this) }
+                    namespace={ question.id }
+                    minuteStep={ minuteStep }
                 />
 
                 <Field.Error error={ error } grouped={ grouped } />
@@ -82,8 +216,7 @@ class TimePicker extends Component {
 TimePicker.defaultProps = {
     grouped: false,
     required: false,
-    // rc-time-picker props
-    minuteStep: 10,
+    minuteStep: 5,
 };
 
 TimePicker.propTypes = {
@@ -94,8 +227,7 @@ TimePicker.propTypes = {
     required: PropTypes.bool,
 
     className: PropTypes.string,
-    // rc-time-picker props
     minuteStep: PropTypes.number,
 };
 
-export default TimePicker;
+export { TimePicker as default, DaytimeInput };
