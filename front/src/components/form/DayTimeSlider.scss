@@ -1,21 +1,49 @@
+@import '../../styles/main.scss';
+
 ////  react-input-range overwrites
 
-@import 'react-input-range/src/scss/index.scss';
+$input-range-primary-color : #ffffff;
+$input-range-slider-background: $primary;
+$input-range-slider-border: $primary;
+$input-range-track-active-background: lighten($input-range-slider-background, 20%);
 
-.input-range__track--background {
-    box-shadow: inset 1px 1px 2px 0px rgba(0,0,0,1);
-}
-.input-range__label {
-    font-family: inherit !important;
-}
+@import 'react-input-range/src/scss/index.scss';
 
 .input-range__label--value {
     top: -2.5rem !important;
     .input-range__label-container {
-        background-color: rgba(0,0,0,.8);
-        padding: .3rem;
-        border-radius: .3rem;
-        color: white;
+        padding: .5rem;
+        border-radius: .25rem;
+        font-family: $font-family-sans-serif;
+        font-size: $font-size-sm;
+
+        color: $tooltip-color;
+        background-color: $tooltip-bg;
+        opacity: $tooltip-opacity;
+
     }
 }
 
+.daytime-slider {
+    .input-range__label--min,
+    .input-range__label--max {
+        display: none;
+    }
+    .daytimeslider--label {
+        display: inline-block;
+        color: $text-muted;
+        font-size: $font-size-sm;
+        white-space: nowrap;
+        margin-left: -50%;
+    }
+    .daytimeslider--label .inner{
+        display: block;
+        text-align: center;
+    }
+    .daytimeslider--label .tick{
+        width: 1px;
+        height: .35rem;
+        margin-left: 50%;
+        border-left: 1px solid $text-muted;
+    }
+}
