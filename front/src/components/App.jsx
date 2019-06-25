@@ -26,7 +26,7 @@ const siteName = process.env.REACT_APP_SITE_NAME.trim();
 const App = function(props) {
     return (
         <Router>
-            <div>
+            <React.Fragment>
                 <Navigation surveys={ surveys } siteName={ siteName } surveyProvider={ surveyProvider }/>
                 <main className="container" style={{ marginTop: '60px' /*fixed header*/ }}>
                     <Switch>
@@ -44,7 +44,7 @@ const App = function(props) {
                     </Switch>
                 </main>
                 <Footer surveyProvider={ surveyProvider } />
-            </div>
+            </React.Fragment>
         </Router>
     );
 };

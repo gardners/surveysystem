@@ -53,10 +53,10 @@ class DropdownMenu extends Component {
                 </button>
 
                 { this.state.show &&
-                    <Fade timeout={ 50 }>
-                    <div className={ `dropdown-menu ${cls}` } aria-labelledby="dropdownMenuButton">
-                        { this.props.children }
-                    </div>
+                    <Fade timeout={ 100 }>
+                        <div className={ `dropdown-menu ${cls}` } aria-labelledby="dropdownMenuButton">
+                            { this.props.children }
+                        </div>
                     </Fade>
                 }
             </div>
