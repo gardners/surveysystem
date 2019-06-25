@@ -5,6 +5,7 @@
 $input-range-primary-color : #ffffff;
 $input-range-slider-background: $primary;
 $input-range-slider-border: $primary;
+$input-range-track-background: $text-muted;
 $input-range-track-active-background: lighten($input-range-slider-background, 20%);
 
 @import 'react-input-range/src/scss/index.scss';
