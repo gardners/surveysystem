@@ -30,8 +30,8 @@ class DropdownMenu extends Component {
 
     };
 
-    show(event) {
-        event.preventDefault();
+    show(e) {
+        e && e.preventDefault()
         this.setState({ show: true }, () => {
             document.addEventListener('click', this.hide);
         });
