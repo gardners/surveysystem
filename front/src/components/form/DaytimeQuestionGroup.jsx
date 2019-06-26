@@ -77,6 +77,15 @@ const maxValue = function(index, values) {
     return minValue(index, values) + (24 * 3600);
 };
 
+/*
+ * Update values array beginning from the given index,
+ * Ensure that following array values are >= the given value
+ * @param {Number} index
+ * @param {Number} value the value returned by InputRange drag event
+ * @param {Number[]} values see DaytimeSequence => state.values
+ *
+ * @returns {Number[]}
+ */
 const setValues = function(index, value, values) {
     const length = values.length;
     const prev = minValue(index, values);
@@ -102,6 +111,11 @@ class DaytimeQuestionGroup extends Component {
         };
     }
 
+    /**
+     * Map optional default values to state values
+     *
+     * @returns {void}
+     */
     componentDidMount() {
         const { questions } = this.props;
 
@@ -115,8 +129,14 @@ class DaytimeQuestionGroup extends Component {
         });
     }
 
+    /**
+     * Handler for InputRange drag event, updates state values
+     * @param {Number} index values index to update
+     * @param {Number} value
+     *
+     * @returns {void}
+     */
     handleChange(index, value) {
-        const { questions, handleChange } = this.props;
         let { values, touched } = this.state;
 
         values = setValues(index, value, values);
@@ -125,12 +145,22 @@ class DaytimeQuestionGroup extends Component {
             values,
             touched: (index > touched) ? index : touched,
         });
-
-        handleChange(null, questions[index], value);
     }
 
-    handleNext(index) {
-        let { current, touched } = this.state;
+    /**
+     * Handler for next button.
+     * Submits answer to survey.
+     * Progresses this form to the next choice
+     * @param {Number} index values index to update
+     * @param {Element} e
+     *
+     * @returns {void}
+     */
+    handleNext(index, e) {
+        e && e.preventDefault();
+
+        const { questions, handleChange } = this.props;
+        let { values, current, touched } = this.state;
 
         if (current < this.state.values.length - 1) {
             current += 1;
@@ -140,9 +170,19 @@ class DaytimeQuestionGroup extends Component {
             current,
             touched: (index > touched) ? index : touched,
         });
+
+        handleChange(null, questions[index], values[index]);
     }
 
-    handlePrev() {
+    /**
+     * Handler for prev button. Returns this form to the previous choice
+     * @param {Element} e
+     *
+     * @returns {void}
+     */
+    handlePrev(e) {
+        e && e.preventDefault();
+
         let { current } = this.state;
 
         if (current > 0) {
@@ -232,6 +272,15 @@ class DaytimeQuestionGroup extends Component {
                                                             onClick={ this.handleNext.bind(this, index) }
                                                         >
                                                             Next <i className="fas fa-angle-right" />
+                                                        </button>
+                                                }
+                                                {
+                                                    index === values.length - 1 &&
+                                                        <button
+                                                            className="btn btn-primary btn-sm ml-4"
+                                                            onClick={ this.handleNext.bind(this, index) } // for the case the handle was not moved (default_value given), otherwise the survey would display the incomplete warning and not proceed
+                                                        >
+                                                            <i className="fas fa-check" /> Confirm
                                                         </button>
                                                 }
                                             </div>

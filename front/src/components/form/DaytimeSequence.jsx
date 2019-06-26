@@ -170,9 +170,18 @@ const minValue = function(index, values) {
 };
 
 const maxValue = function(index, values) {
-    return minValue(index, values) + (24 * 3600);
+    return minValue(index, values) + (24 * 3600);// todo "period" prop
 };
 
+/*
+ * Update values array beginning from the given index,
+ * Ensure that following array values are >= the given value
+ * @param {Number} index
+ * @param {Number} value the value returned by InputRange drag event
+ * @param {Number[]} values see DaytimeSequence => state.values
+ *
+ * @returns {Number[]}
+ */
 const setValues = function(index, value, values) {
     const length = values.length;
     const prev = minValue(index, values);
@@ -198,6 +207,11 @@ class DaytimeSequence extends Component {
         };
     }
 
+    /**
+     * Map optional default values to state values
+     *
+     * @returns {void}
+     */
     componentDidMount() {
         const { question } = this.props;
         const { choices } = question;
@@ -218,13 +232,13 @@ class DaytimeSequence extends Component {
         });
     }
 
-    handleSubmit(index, value) {
-        const { question, handleChange } = this.props;
-        const { values } = this.state;
-
-        handleChange(null, question, values);
-    }
-
+    /**
+     * Handler for InputRange drag event, updates state values
+     * @param {Number} index values index to update
+     * @param {Number} value
+     *
+     * @returns {void}
+     */
     handleChange(index, value) {
         let { values, touched } = this.state;
 
@@ -236,7 +250,33 @@ class DaytimeSequence extends Component {
         });
     }
 
-    handleNext(index) {
+    /**
+     * Handler for submit (confirmation) button. Submits answer to survey
+     * @param {Number} index values index to update
+     * @param {Number} value
+     * @param {Element} e
+     *
+     * @returns {void}
+     */
+    handleSubmit(index, value, e) {
+        e && e.preventDefault();
+
+        const { question, handleChange } = this.props;
+        const { values } = this.state;
+
+        handleChange(null, question, values);
+    }
+
+    /**
+     * Handler for next button. Progresses this form to the next choice
+     * @param {Number} index values index to update
+     * @param {Element} e
+     *
+     * @returns {void}
+     */
+    handleNext(index, e) {
+        e && e.preventDefault();
+
         let { current, touched } = this.state;
 
         if (current < this.state.values.length - 1) {
@@ -249,7 +289,15 @@ class DaytimeSequence extends Component {
         });
     }
 
-    handlePrev() {
+    /**
+     * Handler for prev button. Returns this form to the previous choice
+     * @param {Element} e
+     *
+     * @returns {void}
+     */
+    handlePrev(e) {
+        e && e.preventDefault();
+
         let { current } = this.state;
 
         if (current > 0) {
