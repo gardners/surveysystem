@@ -5,6 +5,7 @@ import Question from './Question';
 import QuestionModel, { findQuestionGroupCommons } from '../../Question';
 
 import RadioMatrix from '../form/RadioMatrix';
+import DaytimeQuestionGroup from '../form/DaytimeQuestionGroup';
 
 import { addClassNames } from '../../Utils';
 
@@ -36,6 +37,27 @@ const QuestionGroup = function({ handleChange, questions, errors, className}) {
                             />
                     }
                     <RadioMatrix
+                        handleChange={ handleChange }
+                        questions={ items }
+                        errors={ errors }
+                        grouped={ true }
+                    />
+                </div>
+            );
+
+        case 'DAYTIME_SEQUENCE':
+            return (
+                <div className={ cls }>
+                    {
+                        header &&
+                            <Question
+                                handleChange={ handleChange }
+                                question={ header }
+                                error={ (header && errors[header.id]) ? errors[header.id] : null }
+                                grouped={ true }
+                            />
+                    }
+                    <DaytimeQuestionGroup
                         handleChange={ handleChange }
                         questions={ items }
                         errors={ errors }
