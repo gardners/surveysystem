@@ -1,0 +1,293 @@
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+
+import Field from './Field';
+import QuestionModel from '../../Question';
+
+import { formatDayTimeDiff, formatDayTime } from '../../Utils';
+import { matchesBreakpoint } from '../../Media';
+
+import { Gutter, DaytimeIcon, DaytimeLabel } from './DaytimeSequence';
+
+import InputRange from 'react-input-range';
+import { DaytimeInput } from './TimePicker';
+import { Fade } from '../Transitions';
+
+import './DayTimeSlider.scss';
+
+/**
+ * @var {string} MEDIA_BREAKPOINT bootstrap media query breaKpoint who triggers a d=single <Select> column instead separate columns of radio buttons
+ */
+
+const MEDIA_BREAKPOINT = 'md';
+
+/**
+ * ListItem
+ */
+
+const ListItem = function({ index, question, value, handleProgress, expanded, touched, active, children }) {
+
+    return (
+        <div className="list-group-item">
+            {
+                (index <= touched || active) ?
+                    <div className="row">
+                        <div className="col-md-4">{ question.title }</div>
+                        <div className="col-md-4 text-center">
+                            <strong className="text-primary" >{ formatDayTime(value) }</strong>
+                        </div>
+                        <div className="col-md-4 text-right">
+                            <small className="text-muted">{ formatDayTimeDiff(minValue(minValue, value), value) } <DaytimeIcon seconds={ value } /></small>
+                        </div>
+                    </div>
+                :
+                    <div className="row">
+                        <div className="col-md-4">{ question.title }</div>
+                    </div>
+            }
+            <div className="row">
+                <div className="col">
+                    { children }
+                </div>
+            </div>
+        </div>
+    );
+};
+
+ListItem.propTypes = {
+    index: PropTypes.number.isRequired,
+    question: QuestionModel.propTypes().isRequired,
+    value: PropTypes.number.isRequired,
+    minValue: PropTypes.number.isRequired,
+    handleProgress: PropTypes.func.isRequired,
+    touched: PropTypes.number.isRequired,
+    active: PropTypes.bool.isRequired,
+    expanded: PropTypes.bool.isRequired,
+};
+
+/**
+ * DaytimeSequence
+ */
+
+const minValue = function(index, values) {
+    return (index > 0) ? values[index - 1] : 0;
+};
+
+const maxValue = function(index, values) {
+    return minValue(index, values) + (24 * 3600);
+};
+
+const setValues = function(index, value, values) {
+    const length = values.length;
+    const prev = minValue(index, values);
+    // set current value
+    values[index] = (prev && value < prev) ? prev : value;
+    for (let i = index; i < length; i += 1) {
+        if(values[i] < value) {
+            values[i] = value;
+        }
+    }
+    return values;
+};
+
+class DaytimeQuestionGroup extends Component {
+
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            current: 0,
+            values: [],
+            touched: 0,
+        };
+    }
+
+    componentDidMount() {
+        const { questions } = this.props;
+
+        const values = questions.map((q) => {
+            const num = Number(q.default_value);
+            return (!isNaN(num)) ? num : 0;
+        });
+
+        this.setState({
+            values,
+        });
+    }
+
+    handleChange(index, value) {
+        const { questions, handleChange } = this.props;
+        let { values, touched } = this.state;
+
+        values = setValues(index, value, values);
+
+        this.setState({
+            values,
+            touched: (index > touched) ? index : touched,
+        });
+
+        handleChange(null, questions[index], value);
+    }
+
+    handleNext(index) {
+        let { current, touched } = this.state;
+
+        if (current < this.state.values.length - 1) {
+            current += 1;
+        }
+
+        this.setState({
+            current,
+            touched: (index > touched) ? index : touched,
+        });
+    }
+
+    handlePrev() {
+        let { current } = this.state;
+
+        if (current > 0) {
+            current -= 1;
+        }
+
+        this.setState({
+            current,
+        });
+    }
+
+    render() {
+        const { questions, errors, required, grouped, className, expand, step } = this.props;
+        const { values, current, touched } = this.state;
+
+        if (!values.length) {
+            return (null);
+        }
+
+        const expanded = (expand === null) ? matchesBreakpoint(MEDIA_BREAKPOINT) : expand;
+        const first = questions[0];
+
+        return (
+            <Field.Row className={ className } question={ first } grouped={ grouped } required={ required }>
+                { /* No Field.title */ }
+                <Field.Description question={ first } grouped={ grouped } required={ required }>
+                    <Field.Unit className="badge badge-secondary ml-1" question={ first } grouped={ grouped } />
+                </Field.Description>
+
+                <div className="list-group">
+                    {
+                        questions.map((question, index) =>
+                            (index === current) ?
+                                <ListItem
+                                    key={ index }
+
+                                    index={ index }
+                                    question={ question }
+                                    handleProgress={ () => this.handleProgress(1) }
+                                    value={ values[index] }
+                                    minValue={ minValue(index, values) }
+                                    touched={ touched }
+                                    active={ true }
+                                    expanded={ expanded }
+                                >
+                                    <Fade key={ index } timeout={ 250 }>
+                                        <div className="row p-5">
+                                        {
+                                            (expanded) ?
+                                                <div className="col daytime-slider">
+                                                    <Gutter className="mb-4" component={ DaytimeIcon } min={ minValue(index, values) } max={ maxValue(index, values) } />
+                                                    <InputRange
+                                                        minValue={ minValue(index, values) }
+                                                        maxValue={ maxValue(index, values) }
+                                                        value={ values[index] }
+                                                        onChange={ this.handleChange.bind(this, index) }
+
+                                                        step={ step }
+                                                        formatLabel={ val => formatDayTime(val) }
+                                                    />
+                                                    <Gutter className="mt-2" component={ DaytimeLabel } min={ minValue(index, values) } max={ maxValue(index, values) } />
+                                                </div>
+                                            :
+                                                <DaytimeInput
+                                                    namespace={ question.id }
+                                                    seconds={ values[index] }
+                                                    handleSubmit={ this.handleChange.bind(this, index) }
+                                                />
+                                        }
+                                        </div>
+
+                                        <div className="row">
+                                            <div className="col text-center">
+                                                {
+                                                    index > 0 &&
+                                                        <button
+                                                            className="btn btn-outline-secondary btn-sm"
+                                                            onClick={ this.handlePrev.bind(this, index) }
+                                                        >
+                                                            <i className="fas fa-angle-left" /> Back
+                                                        </button>
+                                                }
+                                                {
+                                                    index < values.length - 1 &&
+                                                        <button
+                                                            className="btn btn-outline-primary btn-sm ml-4"
+                                                            onClick={ this.handleNext.bind(this, index) }
+                                                        >
+                                                            Next <i className="fas fa-angle-right" />
+                                                        </button>
+                                                }
+                                            </div>
+                                        </div>
+
+                                    </Fade>
+                                </ListItem>
+                            :
+                                <ListItem
+                                    key={ index }
+
+                                    index={ index }
+                                    question={ question }
+                                    handleProgress={ this.handlePrev.bind(this) }
+                                    value={ values[index] }
+                                    minValue={ minValue(index, values) }
+                                    expanded={ expanded }
+                                    active= { false }
+                                    touched={ touched }
+                                />
+                        )
+                    }
+
+                </div>
+                { Object.keys(errors).map(id => <Field.Error key= { id } error={ errors[id] } grouped={ grouped } />) }
+            </Field.Row>
+        );
+    }
+};
+
+DaytimeQuestionGroup.defaultProps = {
+    grouped: false,
+    required: false,
+
+    expand: null, // null!
+
+    // react-input-range props
+    step:  15 * 60,
+};
+
+DaytimeQuestionGroup.propTypes = {
+    handleChange: PropTypes.func.isRequired,
+    questions: PropTypes.arrayOf(
+        QuestionModel.propTypes(),
+    ).isRequired,
+
+    value: QuestionModel.valuePropTypes(),
+    errors: PropTypes.object.isRequired,
+    grouped: PropTypes.bool,
+    required: PropTypes.bool,
+
+    className: PropTypes.string,
+    expand: PropTypes.bool, // force contracted or expanded display
+
+    // react-input-range props
+    step: PropTypes.number,
+};
+
+export default DaytimeQuestionGroup;

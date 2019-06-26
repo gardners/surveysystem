@@ -21,6 +21,7 @@ import HiddenInput from '../form/HiddenInput';
 import EmailInput from '../form/EmailInput';
 import PasswordInput from '../form/PasswordInput';
 import DaytimeSequence from '../form/DaytimeSequence';
+import DaytimeQuestionGroup from '../form/DaytimeQuestionGroup';
 
 import AnswerModel from '../../Answer';
 import QuestionModel from '../../Question';
@@ -64,6 +65,7 @@ const components = [
     EmailInput,
     PasswordInput,
     DaytimeSequence,
+    DaytimeQuestionGroup,
 ];
 
 const SelectComponent = function({ history, selected }) {
@@ -390,6 +392,39 @@ const Demo = function(props){
                         '55800', /* 15:30:00 */
                         '73800', /* 20:30:00 */
                     ].join(',') }
+                />
+                <Row selected={ selected } type={ 'DAYTIME' }      component={ DaytimeQuestionGroup }
+                    questions={ [
+                        {
+                            id: 'question1',
+                            name: 'question1',
+                            type: 'DAYTIME',
+                            title: 'breakfast time',
+                            description: 'This is the <em>description</em> for this <span class="text-primary">DaytimeQuestionGroup</span><br />. It displays like the <em>DaytimeSequence</em> component, except it handles a group of questions of type <span class="text-primary">DAYTIME</span>',
+                            default_value: '27000', /* 07:30:00 */
+                        }, {
+                            id: 'question2',
+                            name: 'question2',
+                            type: 'DAYTIME',
+                            title: 'lunch time',
+                            description: 'Row 2 text',
+                            default_value: '43200', /* 12:00:00 */
+                        },{
+                            id: 'question3',
+                            name: 'question3',
+                            type: 'DAYTIME',
+                            title: 'afternoon tea time',
+                            description: 'Row 3 text',
+                            default_value: '55800', /* 15:30:00 */
+                        },{
+                            id: 'question4',
+                            name: 'question4',
+                            type: 'DAYTIME',
+                            title: 'late snack time',
+                            description: 'Row 4 text',
+                            default_value: '73800', /* 20:30:00 */
+                        }
+                    ] }
                 />
             </div>
         </section>
