@@ -29,7 +29,10 @@ const HeaderNav = function({ location, surveys, surveyProvider, siteName}) {
                 <button
                     className="navbar-toggler"
                     type="button" data-toggle="collapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation"
-                    onClick={ () => toggle(document.getElementById('header-nav--collapse')) }
+                    onClick={ (e) => {
+                        e.preventDefault();
+                        toggle(document.getElementById('header-nav--collapse'));
+                    } }
                 >
                     <span className="navbar-toggler-icon"></span>
                 </button>
