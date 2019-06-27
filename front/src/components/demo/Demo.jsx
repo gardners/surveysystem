@@ -2,31 +2,19 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { Link } from 'react-router-dom';
+import Components from '../form/ComponentMap';
 
 // form elements
-import DeviceLocation from '../form/DeviceLocation';
-import PeriodRangeSlider from '../form/PeriodRangeSlider';
-import DayTimeSlider from '../form/DayTimeSlider';
-import CheckboxGroup from '../form/CheckboxGroup';
-import Checkbox from '../form/Checkbox';
-import RadioGroup from '../form/RadioGroup';
-import TextInput from '../form/TextInput';
-import NumberInput from '../form/NumberInput';
-import Textarea from '../form/Textarea';
-import Select from '../form/Select';
-import MultiSelect from '../form/MultiSelect';
-import TimePicker from '../form/TimePicker';
-import RadioMatrix from '../form/RadioMatrix';
-import HiddenInput from '../form/HiddenInput';
-import EmailInput from '../form/EmailInput';
-import PasswordInput from '../form/PasswordInput';
-import DaytimeSequence from '../form/DaytimeSequence';
-import DaytimeQuestionGroup from '../form/DaytimeQuestionGroup';
 
 import AnswerModel from '../../Answer';
 import QuestionModel from '../../Question';
 import Question from '../survey/Question';
 import QuestionGroup from '../survey/QuestionGroup';
+
+/**
+ * select component
+ * Names are stringfied so they survive component.name minification
+ */
 
 const getDefaultAnswers = function(coercedQuestions) {
     const answers = {};
@@ -43,36 +31,11 @@ const getDefaultAnswers = function(coercedQuestions) {
     return answers;
 };
 
-/**
- * select component
- */
-
-const components = [
-    DeviceLocation,
-    PeriodRangeSlider,
-    DayTimeSlider,
-    CheckboxGroup,
-    Checkbox,
-    RadioGroup,
-    TextInput,
-    NumberInput,
-    Textarea,
-    Select,
-    MultiSelect,
-    TimePicker,
-    RadioMatrix,
-    HiddenInput,
-    EmailInput,
-    PasswordInput,
-    DaytimeSequence,
-    DaytimeQuestionGroup,
-];
-
 const SelectComponent = function({ history, selected }) {
     return (
         <select value={ selected } onChange={ e => history.push(`/demo/form/${e.target.value}`) }>
             <option value="">All components..</option>
-            { components.map(component => <option key={ component.name } value={ component.name }>{ component.name }</option>) }
+            { Object.keys(Components).map(name => <option key={ name } value={ name }>{ name }</option>) }
         </select>
     );
 };
@@ -131,9 +94,8 @@ class Row extends Component {
 
     componentDidMount() {
         const { props } = this;
-        const Component = props.component;
 
-        const id = Component.name;
+        const id = props.componentName;
         const title = 'Question title for ' + id
 
         let questions;
@@ -211,13 +173,13 @@ class Row extends Component {
         const { props } = this;
         const { questions, answers, errors } = this.state;
 
-        const Component = props.component;
+        const Component = Components[props.componentName];
 
         if (!questions.length) {
             return (null);
         }
 
-        if (props.selected && props.selected !== Component.name) {
+        if (props.selected && props.selected !== props.componentName) {
             return (null);
         }
 
@@ -227,6 +189,7 @@ class Row extends Component {
                     (questions.length > 1) ?
                         <QuestionGroup
                             { ...props }
+                            componentName={ Component }
                             handleChange={ this.handleChange.bind(this) }
                             questions={ questions }
                             errors={ errors }
@@ -236,6 +199,7 @@ class Row extends Component {
                         :
                         <Question
                             { ...props }
+                            component={ Component }
                             handleChange={ this.handleChange.bind(this) }
                             question={ questions[0] }
                             error={ errors[questions[0].id] || null }
@@ -290,8 +254,8 @@ class Row extends Component {
                         </div>
                         <div className="col-md text-right">
                             {
-                                (props.selected !== Component.name) ?
-                                    <Link to={ `/demo/form/${Component.name}` }><i className="fas fa-compress-arrows-alt"></i> hide others</Link>
+                                (props.selected !== props.componentName) ?
+                                    <Link to={ `/demo/form/${props.componentName}` }><i className="fas fa-compress-arrows-alt"></i> hide others</Link>
                                     :
                                     <Link to="/demo/form/"><i className="fas fa-expand-arrows-alt"></i> show all</Link>
                             }
@@ -313,7 +277,7 @@ Row.defaultProps = {
 Row.propTypes = {
     selected: PropTypes.string.isRequired, //component.name
     type: PropTypes.string.isRequired,
-    component: PropTypes.func.isRequired,
+    componentName: PropTypes.oneOf(Object.keys(Components)).isRequired,
 };
 
 /**
@@ -333,21 +297,21 @@ const Demo = function(props){
             </div>
 
             <div>
-                <Row selected={ selected } type={ 'HIDDEN' }       component={ HiddenInput }       description="text with some <strong>markup</strong> html and an image: <img src='data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7'>" />
-                <Row selected={ selected } type={ 'LATLON' }       component={ DeviceLocation }       withButton={ true } />
-                <Row selected={ selected } type={ 'TIMERANGE' }    component={ PeriodRangeSlider } default_value="35145,53145" />
-                <Row selected={ selected } type={ 'DAYTIME' }      component={ DayTimeSlider }     default_value="35145" />
-                <Row selected={ selected } type={ 'DAYTIME' }      component={ TimePicker }        default_value="35145" />
-                <Row selected={ selected } type={ 'MULTICHOICE' }  component={ CheckboxGroup }     choices={ ['This', 'That', 'Another one' ] } default_value="That" />
-                <Row selected={ selected } type={ 'SINGLECHOICE' } component={ RadioGroup }        choices={ ['This', 'That', 'Another one' ] } default_value="Another one" />
-                <Row selected={ selected } type={ 'CHECKBOX' }     component={ Checkbox }          choices={ [ 'Unchecked!', 'Checked!'] }  default_value="Checked!" />
-                <Row selected={ selected } type={ 'TEXT' }         component={ RadioGroup }        choices={ ['Yes', 'No', 'Maybe' ] }  />
-                <Row selected={ selected } type={ 'SINGLESELECT' } component={ Select }            choices={ ['First', 'Second', 'Third' ] } />
-                <Row selected={ selected } type={ 'MULTISELECT' }  component={ MultiSelect }       choices={ ['First', 'Second', 'Third' ] } />
-                <Row selected={ selected } type={ 'TEXT' }         component={ TextInput }         />
-                <Row selected={ selected } type={ 'INT' }          component={ NumberInput }       />
-                <Row selected={ selected } type={ 'TEXT' }         component={ Textarea }          />
-                <Row selected={ selected } type={ 'FIXEDPOINT' }   component={ RadioMatrix }       description="This is the <em>description</em> for this question group"
+                <Row selected={ selected } type={ 'HIDDEN' }       componentName="HiddenInput"       description="text with some <strong>markup</strong> html and an image: <img src='data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7'>" />
+                <Row selected={ selected } type={ 'LATLON' }       componentName="DeviceLocation"    withButton={ true } />
+                <Row selected={ selected } type={ 'TIMERANGE' }    componentName="PeriodRangeSlider" default_value="35145,53145" />
+                <Row selected={ selected } type={ 'DAYTIME' }      componentName="DayTimeSlider"     default_value="35145" />
+                <Row selected={ selected } type={ 'DAYTIME' }      componentName="TimePicker"        default_value="35145" />
+                <Row selected={ selected } type={ 'MULTICHOICE' }  componentName="CheckboxGroup"     choices={ ['This', 'That', 'Another one' ] } default_value="That" />
+                <Row selected={ selected } type={ 'SINGLECHOICE' } componentName="RadioGroup"        choices={ ['This', 'That', 'Another one' ] } default_value="Another one" />
+                <Row selected={ selected } type={ 'CHECKBOX' }     componentName="Checkbox"          choices={ [ 'Unchecked!', 'Checked!'] }  default_value="Checked!" />
+                <Row selected={ selected } type={ 'TEXT' }         componentName="RadioGroup"        choices={ ['Yes', 'No', 'Maybe' ] }  />
+                <Row selected={ selected } type={ 'SINGLESELECT' } componentName="Select"            choices={ ['First', 'Second', 'Third' ] } />
+                <Row selected={ selected } type={ 'MULTISELECT' }  componentName="MultiSelect"       choices={ ['First', 'Second', 'Third' ] } />
+                <Row selected={ selected } type={ 'TEXT' }         componentName="TextInput"         />
+                <Row selected={ selected } type={ 'INT' }          componentName="NumberInput"       />
+                <Row selected={ selected } type={ 'TEXT' }         componentName="Textarea"          />
+                <Row selected={ selected } type={ 'FIXEDPOINT' }   componentName="RadioMatrix"       description="This is the <em>description</em> for this question group"
                     questions={ [
                         {
                             id: 'question1',
@@ -382,9 +346,9 @@ const Demo = function(props){
                         }
                     ] }
                 />
-                <Row selected={ selected } type={ 'EMAIL' }             component={ EmailInput }        />
-                <Row selected={ selected } type={ 'PASSWORD' }          component={ PasswordInput }     />
-                <Row selected={ selected } type={ 'DAYTIME_SEQUENCE' }   component={ DaytimeSequence }
+                <Row selected={ selected } type={ 'EMAIL' }             componentName="EmailInput" />
+                <Row selected={ selected } type={ 'PASSWORD' }          componentName="PasswordInput" />
+                <Row selected={ selected } type={ 'DAYTIME_SEQUENCE' }  componentName="DaytimeSequence"
                     choices={ ['Breakfast', 'Lunch', 'Afternoon Tea' , ' Late Snack'] }
                     default_value={ [
                         '27000', /* 07:30:00 */
@@ -393,7 +357,7 @@ const Demo = function(props){
                         '73800', /* 20:30:00 */
                     ].join(',') }
                 />
-                <Row selected={ selected } type={ 'DAYTIME' }      component={ DaytimeQuestionGroup }
+                <Row selected={ selected } type={ 'DAYTIME' }           componentName="DaytimeQuestionGroup"
                     questions={ [
                         {
                             id: 'question1',
