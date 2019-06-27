@@ -5,19 +5,13 @@ import Field from './Field';
 import QuestionModel from '../../Question';
 
 import { parseDayTime, formatDayTimeDiff, formatDayTime } from '../../Utils';
-import { matchesBreakpoint } from '../../Media';
+import { AppContext } from '../../AppContext';
 
 import InputRange from 'react-input-range';
 import { DaytimeInput } from './TimePicker';
 import { Fade } from '../Transitions';
 
 import './DayTimeSlider.scss';
-
-/**
- * @var {string} MEDIA_BREAKPOINT bootstrap media query breaKpoint who triggers a d=single <Select> column instead separate columns of radio buttons
- */
-
-const MEDIA_BREAKPOINT = 'md';
 
 /**
  * DaytimeIcon
@@ -121,7 +115,7 @@ Gutter.propTypes = {
  * ListItem
  */
 
-const ListItem = function({ index, choice, value, handleProgress, expanded, touched, active, children }) {
+const ListItem = function({ index, choice, value, handleProgress, touched, active, children }) {
 
     return (
         <div className="list-group-item">
@@ -158,7 +152,6 @@ ListItem.propTypes = {
     handleProgress: PropTypes.func.isRequired,
     touched: PropTypes.number.isRequired,
     active: PropTypes.bool.isRequired,
-    expanded: PropTypes.bool.isRequired,
 };
 
 /**
@@ -295,7 +288,7 @@ class DaytimeSequence extends Component {
      *
      * @returns {void}
      */
-    handlePrev(e) {
+    handlePrev(index, e) {
         e && e.preventDefault();
 
         let { current } = this.state;
@@ -310,14 +303,12 @@ class DaytimeSequence extends Component {
     }
 
     render() {
-        const { question, error, required, grouped, className, expand, step } = this.props;
+        const { question, error, required, grouped, className, step } = this.props;
         const { values, current, touched } = this.state;
 
         if (!values.length) {
             return (null);
         }
-
-        const expanded = (expand === null) ? matchesBreakpoint(MEDIA_BREAKPOINT) : expand;
 
         return (
             <Field.Row className={ className } question={ question } grouped={ grouped } required={ required }>
@@ -326,99 +317,103 @@ class DaytimeSequence extends Component {
                     <Field.Unit className="badge badge-secondary ml-1" question={ question } grouped={ grouped } />
                 </Field.Title>
 
-                <div className="list-group">
-                    {
-                        question.choices.map((choice, index) =>
-                            (index === current) ?
-                                <ListItem
-                                    key={ index }
+                <AppContext.Consumer>
+                {
+                    ({ breakpoint, isBreakpointAbove }) => (
+                        <div className="list-group">
+                            {
+                                question.choices.map((choice, index) =>
+                                    (index === current) ?
+                                        <ListItem
+                                            key={ index }
 
-                                    index={ index }
-                                    choice={ choice }
-                                    handleProgress={ () => this.handleProgress(1) }
-                                    value={ values[index] }
-                                    minValue={ minValue(index, values) }
-                                    touched={ touched }
-                                    active={ true }
-                                    expanded={ expanded }
-                                >
-                                    <Fade key={ index } timeout={ 250 }>
-                                        <div className="row p-5">
-                                        {
-                                            (expanded) ?
-                                                <div className="col daytime-slider">
-                                                    <Gutter className="mb-4" component={ DaytimeIcon } min={ minValue(index, values) } max={ maxValue(index, values) } />
-                                                    <InputRange
-                                                        minValue={ minValue(index, values) }
-                                                        maxValue={ maxValue(index, values) }
-                                                        value={ values[index] }
-                                                        onChange={ this.handleChange.bind(this, index) }
+                                            index={ index }
+                                            choice={ choice }
+                                            handleProgress={ () => this.handleProgress(1) }
+                                            value={ values[index] }
+                                            minValue={ minValue(index, values) }
+                                            touched={ touched }
+                                            active={ true }
+                                        >
+                                            <Fade key={ index } timeout={ 250 }>
+                                                <div className="row p-5">
+                                                {
+                                                    (isBreakpointAbove('md')) ?
+                                                        <div className="col daytime-slider">
+                                                            <Gutter className="mb-4" component={ DaytimeIcon } min={ minValue(index, values) } max={ maxValue(index, values) } />
+                                                            <InputRange
+                                                                minValue={ minValue(index, values) }
+                                                                maxValue={ maxValue(index, values) }
+                                                                value={ values[index] }
+                                                                onChange={ this.handleChange.bind(this, index) }
 
-                                                        step={ step }
-                                                        formatLabel={ val => formatDayTime(val) }
-                                                    />
-                                                    <Gutter className="mt-2" component={ DaytimeLabel } min={ minValue(index, values) } max={ maxValue(index, values) } />
+                                                                step={ step }
+                                                                formatLabel={ val => formatDayTime(val) }
+                                                            />
+                                                            <Gutter className="mt-2" component={ DaytimeLabel } min={ minValue(index, values) } max={ maxValue(index, values) } />
+                                                        </div>
+                                                    :
+                                                        <DaytimeInput
+                                                            namespace={ question.id }
+                                                            seconds={ values[index] }
+                                                            handleSubmit={ this.handleSubmit.bind(this, index) }
+                                                        />
+                                                }
                                                 </div>
-                                            :
-                                                <DaytimeInput
-                                                    namespace={ question.id }
-                                                    seconds={ values[index] }
-                                                    handleSubmit={ this.handleSubmit.bind(this, index) }
-                                                />
-                                        }
-                                        </div>
 
-                                        <div className="row">
-                                            <div className="col text-center">
-                                                {
-                                                    index > 0 &&
-                                                        <button
-                                                            className="btn btn-outline-secondary btn-sm"
-                                                            onClick={ this.handlePrev.bind(this, index) }
-                                                        >
-                                                            <i className="fas fa-angle-left" /> Back
-                                                        </button>
-                                                }
-                                                {
-                                                    index < values.length - 1 &&
-                                                        <button
-                                                            className="btn btn-outline-primary btn-sm ml-4"
-                                                            onClick={ this.handleNext.bind(this, index) }
-                                                        >
-                                                            Next <i className="fas fa-angle-right" />
-                                                        </button>
-                                                }
-                                                {
-                                                    index === values.length - 1 &&
-                                                        <button
-                                                            className="btn btn-primary btn-sm ml-4"
-                                                            onClick={ this.handleSubmit.bind(this) }
-                                                        >
-                                                            <i className="fas fa-check" /> Submit
-                                                        </button>
-                                                }
-                                            </div>
-                                        </div>
+                                                <div className="row">
+                                                    <div className="col text-center">
+                                                        {
+                                                            index > 0 &&
+                                                                <button
+                                                                    className="btn btn-outline-secondary btn-sm"
+                                                                    onClick={ this.handlePrev.bind(this, index) }
+                                                                >
+                                                                    <i className="fas fa-angle-left" /> Back
+                                                                </button>
+                                                        }
+                                                        {
+                                                            index < values.length - 1 &&
+                                                                <button
+                                                                    className="btn btn-outline-primary btn-sm ml-4"
+                                                                    onClick={ this.handleNext.bind(this, index) }
+                                                                >
+                                                                    Next <i className="fas fa-angle-right" />
+                                                                </button>
+                                                        }
+                                                        {
+                                                            index === values.length - 1 &&
+                                                                <button
+                                                                    className="btn btn-primary btn-sm ml-4"
+                                                                    onClick={ this.handleSubmit.bind(this) }
+                                                                >
+                                                                    <i className="fas fa-check" /> Submit
+                                                                </button>
+                                                        }
+                                                    </div>
+                                                </div>
 
-                                    </Fade>
-                                </ListItem>
-                            :
-                                <ListItem
-                                    key={ index }
+                                            </Fade>
+                                        </ListItem>
+                                    :
+                                        <ListItem
+                                            key={ index }
 
-                                    index={ index }
-                                    choice={ choice }
-                                    handleProgress={ this.handlePrev.bind(this) }
-                                    value={ values[index] }
-                                    minValue={ minValue(index, values) }
-                                    expanded={ expanded }
-                                    active= { false }
-                                    touched={ touched }
-                                />
-                        )
-                    }
+                                            index={ index }
+                                            choice={ choice }
+                                            handleProgress={ this.handlePrev.bind(this) }
+                                            value={ values[index] }
+                                            minValue={ minValue(index, values) }
+                                            active= { false }
+                                            touched={ touched }
+                                        />
+                                )
+                            }
+                        </div>
+                    )
+                }
+                </AppContext.Consumer>
 
-                </div>
                 <Field.Error error={ error } grouped={ grouped } />
             </Field.Row>
         );
@@ -428,8 +423,6 @@ class DaytimeSequence extends Component {
 DaytimeSequence.defaultProps = {
     grouped: false,
     required: false,
-
-    expand: null, // null!
 
     // react-input-range props
     step:  15 * 60,
@@ -444,7 +437,6 @@ DaytimeSequence.propTypes = {
     required: PropTypes.bool,
 
     className: PropTypes.string,
-    expand: PropTypes.bool, // force contracted or expanded display
 
     // react-input-range props
     step: PropTypes.number,

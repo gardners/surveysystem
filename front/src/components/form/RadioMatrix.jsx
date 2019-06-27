@@ -3,15 +3,9 @@ import PropTypes from 'prop-types';
 
 import Field from './Field';
 import QuestionModel from '../../Question';
-import { matchesBreakpoint } from '../../Media';
+import { AppContext } from '../../AppContext';
 
 import './RadioMatrix.scss';
-//TODO, required, error
-
-/**
- * @var {string} MEDIA_BREAKPOINT bootstrap media query breaKpoint who triggers a d=single <Select> column instead separate columns of radio buttons
- */
-const MEDIA_BREAKPOINT = 'md';
 
 const TheadRow = function({ question, expanded }) {
 
@@ -159,13 +153,12 @@ class RadioMatrix extends Component {
 
     render() {
         const { values } = this.state;
-        const { questions, errors, required, grouped, className, expand } = this.props;
+        const { questions, errors, required, grouped, className } = this.props;
 
         if(!questions.length) {
             return (null);
         }
 
-        const expanded = (expand === null) ? matchesBreakpoint(MEDIA_BREAKPOINT) : expand;
         const first = questions[0];
 
         return (
@@ -175,29 +168,35 @@ class RadioMatrix extends Component {
                     <Field.Unit className="badge badge-secondary ml-1" question={ first } grouped={ grouped } />
                 </Field.Description>
 
-                <div className="table-responsive">
-                    <table className="table table-sm table-hover table-borderless table-striped radiomatrix--table">
-                        <thead>
-                            <TheadRow
-                                question={ first }
-                                expanded={ expanded }
-                            />
-                        </thead>
-                        <tbody>
-                            {
-                                questions.map((question, index) => <Row
-                                    key={ index }
-                                    index={ index }
-                                    question={ question }
-                                    value={ values[question.id] }
-                                    handleChange={ this.handleChange.bind(this) }
-                                    required={ required }
-                                    expanded={ expanded }
-                                />)
-                            }
-                        </tbody>
-                    </table>
-                </div>
+                <AppContext.Consumer>
+                {
+                    ({ breakpoint, isBreakpointAbove }) => (
+                        <div className="table-responsive">
+                            <table className="table table-sm table-hover table-borderless table-striped radiomatrix--table">
+                                <thead>
+                                    <TheadRow
+                                        question={ first }
+                                        expanded={ isBreakpointAbove('md') }
+                                    />
+                                </thead>
+                                <tbody>
+                                    {
+                                        questions.map((question, index) => <Row
+                                            key={ index }
+                                            index={ index }
+                                            question={ question }
+                                            value={ values[question.id] }
+                                            handleChange={ this.handleChange.bind(this) }
+                                            required={ required }
+                                            expanded={ isBreakpointAbove('md') }
+                                        />)
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    )
+                }
+                </AppContext.Consumer>
 
                 { Object.keys(errors).map(id => <Field.Error key= { id } error={ errors[id] } grouped={ grouped } />) }
             </Field.Row>
@@ -208,8 +207,6 @@ class RadioMatrix extends Component {
 RadioMatrix.defaultProps = {
     grouped: false,
     required: false,
-
-    expand: null, // null!
 };
 
 RadioMatrix.propTypes = {
@@ -223,8 +220,6 @@ RadioMatrix.propTypes = {
     required: PropTypes.bool,
 
     className: PropTypes.string,
-    expand: PropTypes.bool, // force contracted or expanded display
 };
-
 
 export default RadioMatrix;
