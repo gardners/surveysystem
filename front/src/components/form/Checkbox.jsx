@@ -45,7 +45,7 @@ class Checkbox extends Component {
         const { checked  } = this.state;
         const { question, error, /*required,*/ grouped, className } = this.props;
 
-        // # 224
+        // # 224, don't flag this qtype as required
         const required = false;
 
         return (
