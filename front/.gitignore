@@ -31,3 +31,7 @@ _dev/*
 
 # deployment script
 deploy
+
+#external scripts
+public/*-feedback.js
+!public/template.ss-feedback.js

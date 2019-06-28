@@ -34,12 +34,6 @@ const SurveyButtons = function(props) {
 
     return (
         <div className={ props.className }>
-            <HasErrors
-                hasErrors={ props.hasErrors }
-                hasAllAnswers={ props.hasAllAnswers }
-                hasAnswers={ props.hasAnswers }
-            />
-
             <button type="submit" className="app--btn-arrow btn btn-default"
                 disabled={ !props.didAnswerBefore }
                 onClick={ props.handlePrev }>
