@@ -8,6 +8,7 @@ import Answer from '../Answer';
 
 import SurveyManager from '../SurveyManager';
 import  { mapQuestionGroups } from '../Question';
+
 import  { isArray } from '../Utils';
 
 import LocalStorage from '../storage/LocalStorage';
@@ -17,6 +18,8 @@ import Log from '../Log';
 import SurveyForm from './survey/SurveyForm';
 import Question from './survey/Question';
 import QuestionGroup from './survey/QuestionGroup';
+import FeedbackItem from './survey/FeedbackItem';
+import SurveyButtons from './survey/SurveyButtons';
 
 // misc components
 import Preloader from './Preloader';
@@ -24,6 +27,11 @@ import ApiAlert from './ApiAlert';
 
 // devel
 import Dev from './Dev';
+
+/**
+ * Create a map of default answers from an array of coerced  questions (see normalizeQuestions())
+ * @returns {object} a map of answers with default values
+ */
 
 const getDefaultAnswers = function(coercedQuestions) {
     const answers = {};
@@ -40,6 +48,9 @@ const getDefaultAnswers = function(coercedQuestions) {
     return answers;
 };
 
+const EXT = window.SS || {};
+const getInstantFeedback = EXT.getInstantFeedback || function() { return []; };
+
 // config
 const CACHE_KEY = process.env.REACT_APP_SURVEY_CACHEKEY;
 
@@ -54,6 +65,7 @@ class Survey extends Component {
             answers: {},
             errors: {},
             alerts: [],
+            feedback: [],
         };
     }
 
@@ -102,7 +114,7 @@ class Survey extends Component {
     ////
 
     handleChange(element, question, value) {
-        const { answers, errors } = this.state;
+        const { survey, questions, answers, errors } = this.state;
         const { id } = question;
 
         delete(errors[id]);
@@ -136,12 +148,19 @@ class Survey extends Component {
             return;
         }
 
+        // set answer
         answers[id] = serialized;
+
+        // fetch optional custom feedback for this screen
+
+        const feedback = getInstantFeedback(survey.surveyID, question.id, questions, answers);
 
         this.setState({
             errors,
             answers,
+            feedback,
         });
+
     }
 
     ////
@@ -164,6 +183,7 @@ class Survey extends Component {
             answers: getDefaultAnswers(survey.current()),
             errors: {}, // clear errors
             alerts: [], // clear alerts
+            feedback: [], // clear feedback
         }))
         .then(() => LocalStorage.set(CACHE_KEY, survey))
         .catch(err => this.alert(err));
@@ -183,6 +203,7 @@ class Survey extends Component {
             answers: getDefaultAnswers(survey.current()),
             errors: {}, // clear errors
             alerts: [], // clear alerts
+            feedback: [], // clear feedback
         }))
         .catch(err => this.alert(err));
     }
@@ -217,6 +238,7 @@ class Survey extends Component {
             answers: getDefaultAnswers(survey.current()),
             errors: {}, // clear errors
             alerts: [], // clear alerts
+            feedback: [], // clear feedback
         }))
         .then(() => LocalStorage.set(CACHE_KEY, survey))
         .catch(err => this.alert(err));
@@ -248,6 +270,7 @@ class Survey extends Component {
             answers: getDefaultAnswers(survey.current()),
             errors: {}, // clear errors
             alerts: [], // clear alerts
+            feedback: [], // clear feedback
         }))
         .then(() => LocalStorage.set(CACHE_KEY, survey))
         .catch(err => this.alert(err));
@@ -255,7 +278,7 @@ class Survey extends Component {
 
     render() {
         // @see surveysystem/backend/include/survey.h, struct question
-        const { survey, errors, answers } = this.state;
+        const { survey, errors, answers, feedback } = this.state;
 
         const questions = survey.current();
         const withGroups = mapQuestionGroups(questions);
@@ -302,48 +325,62 @@ class Survey extends Component {
 
                 <SurveyForm
                     show={ !isClosed && questions.length > 0 && !this.state.loading }
-                    handlePrev={ this.handleDelAnswer.bind(this) }
-                    handleNext={ this.handleUpdateAnswers.bind(this) }
-
-                    hasQuestions={ hasQuestions }
-                    hasErrors={ hasErrors }
-                    hasAnswers={ hasAnswers }
-                    hasAllAnswers={ hasAllAnswers }
-                    didAnswerBefore= { didAnswerBefore }
-
                     className="list-group"
-                    rowClassName="list-group-item"
                 >
-                {
-                    withGroups.map((entry, index) => {
+                    {
+                        withGroups.map((entry, index) => {
 
-                        if(isArray(entry)) {
+                            if(isArray(entry)) {
+                                return (
+                                    <QuestionGroup
+                                        key={ index }
+                                        className="list-group-item"
+
+                                        handleChange={ this.handleChange.bind(this) }
+                                        questions={ entry }
+                                        errors={ errors }
+
+                                    />
+                                );
+                            }
+
                             return (
-                                <QuestionGroup
+                                <Question
                                     key={ index }
                                     className="list-group-item"
 
                                     handleChange={ this.handleChange.bind(this) }
-                                    questions={ entry }
-                                    errors={ errors }
-
+                                    question={ entry }
+                                    error={ errors[entry.id] || null }
                                 />
                             );
-                        }
 
-                        return (
-                            <Question
-                                key={ index }
-                                className="list-group-item"
+                        })
+                    }
 
-                                handleChange={ this.handleChange.bind(this) }
-                                question={ entry }
-                                error={ errors[entry.id] || null }
-                            />
-                        );
+                    {
+                        feedback.map((item, index) => <FeedbackItem key={ index } status={ item.status } className="list-group-item" classNamePrefix="list-group-item-">{ item.message }</FeedbackItem>)
+                    }
 
-                    })
-                }
+                    {
+                        hasErrors && <FeedbackItem className="list-group-item list-group-item-danger">Please fix errors above</FeedbackItem>
+                    }
+
+                    {
+                        !hasAllAnswers && <FeedbackItem className="list-group-item list-group-item-warning">Please answer all questions</FeedbackItem>
+                    }
+
+                    <SurveyButtons
+                        className="list-group-item"
+                        handlePrev={ this.handleDelAnswer.bind(this) }
+                        handleNext={ this.handleUpdateAnswers.bind(this) }
+
+                        hasQuestions={ hasQuestions }
+                        hasErrors={ hasErrors }
+                        hasAnswers={ hasAnswers }
+                        hasAllAnswers={ hasAllAnswers }
+                        didAnswerBefore={ didAnswerBefore }
+                    />
                 </SurveyForm>
 
                 <Dev.Pretty label="survey" data={ survey } open={ false }/>

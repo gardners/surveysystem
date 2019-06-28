@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import Transition from 'react-transition-group/Transition';
 
-const Fade = function({ timeout, children }) {
+const Fade = function({ timeout, className, children }) {
     const transitionStyles = {
         entering: { opacity: 0 },
         entered:  { opacity: 1 },
@@ -17,7 +17,7 @@ const Fade = function({ timeout, children }) {
     return (
         <Transition in={ true } timeout={ timeout } appear>
             {
-                state => <div style={ { ...defaultStyle, ...transitionStyles[state] } }>{ children }</div>
+                state => <div className={ className } style={ { ...defaultStyle, ...transitionStyles[state] } }>{ children }</div>
             }
         </Transition>
   );
@@ -25,10 +25,12 @@ const Fade = function({ timeout, children }) {
 
 Fade.defaultProps = {
     timeout: 300,
+    className: '',
 };
 
 Fade.propTypes = {
     timeout: PropTypes.number,
+    className: PropTypes.string,
 };
 
 export { Fade };
