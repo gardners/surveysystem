@@ -16,7 +16,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const themeParam = urlParams.get('theme');
 const theme = (themeParam) ? themeParam : (process.env.REACT_APP_SITE_THEME) ? process.env.REACT_APP_SITE_THEME : 'default';
 
-// workaround for dynamic imports
+// webpack dynamic imports
 import(`./styles/${theme}/index.scss`).then(() => {
     /* ... */
 });
