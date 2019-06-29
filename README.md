@@ -62,19 +62,20 @@ Note that the following section reflects the *current state* of development and 
 
 ### Paths and queries
 
-| Path           | Action                                        | Method | Format           | Query params            | Returns |
-| ---            | ---                                           | ---    | ---              | ---                     |  ---       |
-| **Session**    |                                               |        |                  |                         |         |
-| `newsession`   | create a new survey session                   | GET    | application/text | `?surveyid`             | session id |
-| `delsession`   | delete current session                        | GET    | application/text | `?sessionid`            | -       |
-| **Survey**     |                                               |        |                  |                         |         |
-| `nextquestion` | get next questions                            | GET    | application/json | `?sessionid`            | `{ next_questions }`<br> array of question objects |
-| `addanswer`    | provide answer and get next questions         | GET(!) | application/json | `?sessionid&answer`     | `{ next_questions }`<br> array of question objects |
-| `updateanswer` | alias for addanswer                           | GET(!) | application/json | `?sessionid&answer`     | `{ next_questions }`<br> array of question objects |
-| `delanswer`    | remove last answer from record and repeat     | GET    | application/json | `?sessionid&questionid` | `{ next_questions }`<br> array of *updated* question objects |
-| `analyse`      | fetch analysis of a completed survey          | GET    | application/json | `?sessionid`            | `{ feedback, report}`<br> survey analysis |
-| **System**     |                                               |        |                  |                         |         |
-| `accesstest`   | check system health (filesystem)              | GET    | application/text | -                       | - |
-| `fastcgitest`  | check survey access (fastcgi)                 | GET    | application/text | -                       | - |
+| Path                    | Action                                                                  | Method | Format           | Query params            | Returns |
+| ---                     | ---                                                                     | ---    | ---              | ---                     |  ---       |
+| **Session**             |                                                                         |        |                  |                         |         |
+| `newsession`            | create a new survey session                                             | GET    | application/text | `?surveyid`             | session id |
+| `delsession`            | delete current session                                                  | GET    | application/text | `?sessionid`            | -       |
+| **Survey**              |                                                                         |        |                  |                         |         |
+| `nextquestion`          | get next questions                                                      | GET    | application/json | `?sessionid`            | `{ next_questions }`<br> array of question objects |
+| `addanswer`             | provide a single answer and get next questions                          | GET(!) | application/json | `?sessionid&answer`     | `{ next_questions }`<br> array of question objects |
+| `updateanswer`          | alias for addanswer                                                     | GET(!) | application/json | `?sessionid&answer`     | `{ next_questions }`<br> array of question objects |
+| `delanswer`             | remove a specific answer and get next questions                         | GET    | application/json | `?sessionid&questionid` | `{ next_questions }`<br> array of *updated* question objects |
+| `delanswerandfollowing` | remove all answers up to a specified question id and get next questions | GET    | application/json | `?sessionid&questionid` | `{ next_questions }`<br> array of *updated* question objects |
+| `analyse`               | fetch analysis of a completed survey                                    | GET    | application/json | `?sessionid`            | `{ feedback, report}`<br> survey analysis |
+| **System**              |                                                                         |        |                  |                         |         |
+| `accesstest`            | check system (filesystem)                                       | GET    | application/text | -                       | - |
+| `fastcgitest`           | check survey access (fastcgi)                                           | GET    | application/text | -                       | - |
 
 The survey model is sequential. `addanswer`, `updateanswer` are required to submit the answers for question ids in the exact same order as they were recieved. Similar with `delanswer` requests, where question ids have to be submitted in reverse order.
