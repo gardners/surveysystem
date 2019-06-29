@@ -16,10 +16,17 @@ class Checkbox extends Component {
     }
 
     componentDidMount() {
-        const { question } = this.props;
+        const { question, handleChange } = this.props;
+        const { default_value, choices } = question;
+
+        // two defined choices in the following order: [OFF-value, ON-value]
+        const checked = default_value && choices.indexOf(default_value) === 1;
         this.setState({
-            checked: question.default_value === question.choices[1],
+            checked,
         });
+
+        // !immediately invoke answer callback, toggle question types must setting answer values on init, regardless if a default_value was set
+        handleChange(null, question, (checked) ? choices[1] : choices[0]);
     }
 
     handleChange() {
@@ -29,13 +36,18 @@ class Checkbox extends Component {
         this.setState({
             checked,
         });
+
         // two defined choices in the following order: [OFF-value, ON-value]
         handleChange(null, question, (checked) ? choices[1] : choices[0]);
     }
 
     render() {
         const { checked  } = this.state;
-        const { question, error, required, grouped, className } = this.props;
+        const { question, error, /*required,*/ grouped, className } = this.props;
+
+        // # 224, don't flag this qtype as required
+        const required = false;
+
         return (
             <Field.Row className={ className } question={ question } grouped={ grouped } required={ required }>
                 <Field.Description question={ question } grouped={ grouped } required={ required } />
