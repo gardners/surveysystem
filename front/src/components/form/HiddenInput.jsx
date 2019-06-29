@@ -21,6 +21,7 @@ class HiddenInput extends Component {
         this.setState({
             value,
         });
+
         // ! immediately invoke answer callback, no value and validation! handleChange is invoked immediately with defaultvalue
         this.props.handleChange(null, question, value);
     }
@@ -28,7 +29,9 @@ class HiddenInput extends Component {
     render() {
         const { value  } = this.state;
         const { question, grouped, className } = this.props;
-        const required = false; // !
+
+        // # 224, don't flag this qtype as required
+        const required = false;
 
         return (
             <Field.Row className={ className } question={ question } grouped={ grouped } required={ required }>
