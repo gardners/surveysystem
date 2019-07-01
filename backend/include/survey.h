@@ -35,7 +35,8 @@ struct question {
 #define QTYPE_FIXEDPOINT_SEQUENCE 18 // answer->text (comma separated): instruction an ascending sequence of FIXEDPOINT values, labels are defined in q.choices. (unit: *)
 #define QTYPE_DAYTIME_SEQUENCE    19 // answer->text (comma separated): instruction an ascending sequence of DAYTIME values (comma separated), labels are defined in q.choices. (unit: seconds)
 #define QTYPE_DATETIME_SEQUENCE   20 // answer->text (comma separated): instruction an ascending sequence of DATETIME values (comma separated), labels are defined in q.choices (unit: seconds)
-#define QTYPE_UUID                21
+#define QTYPE_DURATION24          21 // answer->value: instruction time period in seconds maximum 24 hours (86400 seconds), TODO enable min_value and max_value support, which would make this type redundant in favour of a more generic QTYPE_DURATION type.
+#define QTYPE_UUID                22
   // Formatting and other flags
   int flags;
   // Format integer input as times for questions like
