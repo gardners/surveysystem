@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 
 // apis
 import api from '../api';
-import Log from '../Log';
 import { normalizeAnalysis } from '../Analysis';
 
 import ApiAlert from './ApiAlert';
@@ -75,8 +74,6 @@ class Analysis extends Component {
         if(severity !== 'error' && message instanceof Error) {
             severity = 'error';
         }
-
-        Log.add(message, severity);
         alerts.push(message);
 
         this.setState({

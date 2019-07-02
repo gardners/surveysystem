@@ -18,6 +18,7 @@ import PasswordInput from '../form/PasswordInput';
 import Select from '../form/Select';
 import MultiSelect from '../form/MultiSelect';
 import DaytimeSequence from '../form/DaytimeSequence';
+import Duration24Input from '../form/Duration24Input';
 
 import { addClassNames } from '../../Utils';
 
@@ -100,6 +101,9 @@ const getComponentByType = function(questionType = 'TEXT') {
 
         case 'DAYTIME_SEQUENCE':
             return DaytimeSequence;
+
+        case 'DURATION24':
+            return Duration24Input;
 
         default:
             return TextInput;
