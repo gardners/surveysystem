@@ -45,19 +45,30 @@ class NumberInput extends Component {
                 <Field.Title element="label" grouped={ grouped } question={ question } required={ required }>
                     <Field.Unit className="badge badge-secondary ml-1" question={ question } grouped={ grouped } />
                 </Field.Title>
-                <input
-                    id={ question.id }
-                    name={ question.name }
-                    type="number"
-                    className="form-control"
-                    autoComplete="off"
-                    required={ required }
-                    value={ value }
-                    min={ minValue }
-                    max={ maxValue }
-                    step={ step }
-                    onChange={ this.handleChange.bind(this) }
-                />
+                <div className="input-group">
+                    <div className="input-group-prepend d-none d-sm-block">
+                        <span className="input-group-text">Number</span>
+                    </div>
+                    <input
+                        id={ question.id }
+                        name={ question.name }
+                        type="number"
+                        className="form-control"
+                        autoComplete="off"
+                        required={ required }
+                        value={ value }
+                        min={ minValue }
+                        max={ maxValue }
+                        step={ step }
+                        onChange={ this.handleChange.bind(this) }
+                    />
+                    {
+                        question.unit &&
+                        <div className="input-group-append d-none d-sm-block">
+                            <span className="input-group-text">{ question.unit }</span>
+                        </div>
+                    }
+                </div>
                 <Field.Error error={ error } grouped={ grouped } />
             </Field.Row>
         );

@@ -39,6 +39,10 @@ class PasswordInput extends Component {
                 <Field.Title element="label" grouped={ grouped } question={ question } required={ required }>
                     <Field.Unit className="badge badge-secondary ml-1" question={ question } grouped={ grouped } />
                 </Field.Title>
+                <div className="input-group">
+                    <div className="input-group-prepend d-none d-sm-block">
+                        <span className="input-group-text">password</span>
+                    </div>
                     <input
                         id={ question.id }
                         name={ question.name }
@@ -49,6 +53,7 @@ class PasswordInput extends Component {
                         value={ value }
                         onChange={ this.handleChange.bind(this) }
                     />
+                </div>
                 <Field.Error error={ error } grouped={ grouped } />
             </Field.Row>
         );

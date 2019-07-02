@@ -39,6 +39,7 @@ class TextInput extends Component {
                 <Field.Title element="label" grouped={ grouped } question={ question } required={ required }>
                     <Field.Unit className="badge badge-secondary ml-1" question={ question } grouped={ grouped } />
                 </Field.Title>
+                <div className="input-group">
                     <input
                         id={ question.id }
                         name={ question.name }
@@ -49,6 +50,13 @@ class TextInput extends Component {
                         value={ value }
                         onChange={ this.handleChange.bind(this) }
                     />
+                    {
+                        question.unit &&
+                        <div className="input-group-append d-none d-sm-block">
+                            <span className="input-group-text">{ question.unit }</span>
+                        </div>
+                    }
+                </div>
                 <Field.Error error={ error } grouped={ grouped } />
             </Field.Row>
         );
