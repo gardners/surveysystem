@@ -317,6 +317,7 @@ const setValue = function(question, value) {
     switch(type) {
         case 'INT':
         case 'FIXEDPOINT':
+        case 'DURATION24':
             // number
             answer.value = _number(value);
         break;

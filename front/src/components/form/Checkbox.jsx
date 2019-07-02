@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 import Field from './Field';
 import QuestionModel from '../../Question';
 
-
 class Checkbox extends Component {
 
     constructor(props) {
