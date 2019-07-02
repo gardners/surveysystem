@@ -390,6 +390,7 @@ const Demo = function(props){
                         }
                     ] }
                 />
+                <Row selected={ selected } type={ 'DURATION24' }          componentName="Duration24Input" />
             </div>
         </section>
     );
