@@ -1,4 +1,3 @@
-import Log from './Log';
 import { normalizeQuestions } from './Question';
 
 /**
@@ -154,7 +153,7 @@ class SurveyManager {
      */
     merge(cached) {
         if(!this.canMerge(cached)) {
-            Log.warn(`SessionManager.merge: surveyID:sessionID supplied values doesn't match ${this.surveyID}:${this.sessionID}`);
+            console.warn(`SessionManager.merge: surveyID:sessionID supplied values doesn't match ${this.surveyID}:${this.sessionID}`);
             return false;
         }
 
