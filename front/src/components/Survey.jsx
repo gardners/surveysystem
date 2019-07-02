@@ -12,7 +12,6 @@ import  { mapQuestionGroups } from '../Question';
 import  { isArray } from '../Utils';
 
 import LocalStorage from '../storage/LocalStorage';
-import Log from '../Log';
 
 // form components
 import SurveyForm from './survey/SurveyForm';
@@ -99,8 +98,6 @@ class Survey extends Component {
         if(severity !== 'error' && message instanceof Error) {
             severity = 'error';
         }
-
-        Log.add(message, severity);
         alerts.push(message);
 
         this.setState({
