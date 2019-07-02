@@ -3,24 +3,25 @@
  * (note that component names are being minified during build)
  */
 
-import DeviceLocation from '../form/DeviceLocation';
-import PeriodRangeSlider from '../form/PeriodRangeSlider';
-import DayTimeSlider from '../form/DayTimeSlider';
-import CheckboxGroup from '../form/CheckboxGroup';
-import Checkbox from '../form/Checkbox';
-import RadioGroup from '../form/RadioGroup';
-import TextInput from '../form/TextInput';
-import NumberInput from '../form/NumberInput';
-import Textarea from '../form/Textarea';
-import Select from '../form/Select';
-import MultiSelect from '../form/MultiSelect';
-import TimePicker from '../form/TimePicker';
-import RadioMatrix from '../form/RadioMatrix';
-import HiddenInput from '../form/HiddenInput';
-import EmailInput from '../form/EmailInput';
-import PasswordInput from '../form/PasswordInput';
-import DaytimeSequence from '../form/DaytimeSequence';
-import DaytimeQuestionGroup from '../form/DaytimeQuestionGroup';
+import DeviceLocation from './DeviceLocation';
+import PeriodRangeSlider from './PeriodRangeSlider';
+import DayTimeSlider from './DayTimeSlider';
+import CheckboxGroup from './CheckboxGroup';
+import Checkbox from './Checkbox';
+import RadioGroup from './RadioGroup';
+import TextInput from './TextInput';
+import NumberInput from './NumberInput';
+import Textarea from './Textarea';
+import Select from './Select';
+import MultiSelect from './MultiSelect';
+import TimePicker from './TimePicker';
+import RadioMatrix from './RadioMatrix';
+import HiddenInput from './HiddenInput';
+import EmailInput from './EmailInput';
+import PasswordInput from './PasswordInput';
+import DaytimeSequence from './DaytimeSequence';
+import DaytimeQuestionGroup from './DaytimeQuestionGroup';
+import Duration24Input from './Duration24Input';
 
 export default {
     'DeviceLocation': DeviceLocation,
@@ -41,4 +42,5 @@ export default {
     'PasswordInput': PasswordInput,
     'DaytimeSequence': DaytimeSequence,
     'DaytimeQuestionGroup': DaytimeQuestionGroup,
+    'Duration24Input': Duration24Input,
 };

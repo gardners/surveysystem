@@ -40,17 +40,28 @@ class Select extends Component {
                 <Field.Title element="label" grouped={ grouped } question={ question } required={ required }>
                     <Field.Unit className="badge badge-secondary ml-1" question={ question } grouped={ grouped } />
                 </Field.Title>
-                <select
-                    multiple={ false }
-                    className="form-control"
-                    autoComplete="off"
-                    name={ question.name }
-                    id={ question.id }
-                    value={ value }
-                    onChange={ this.handleChange.bind(this)}
-                >
-                    { choices.map((choice, index) => <option key={ index } value={ choice }> { choice }</option>) }
-                </select>
+                <div className="input-group">
+                    <div className="input-group-prepend d-none d-sm-block">
+                        <span className="input-group-text">Select...</span>
+                    </div>
+                    <select
+                        multiple={ false }
+                        className="form-control"
+                        autoComplete="off"
+                        name={ question.name }
+                        id={ question.id }
+                        value={ value }
+                        onChange={ this.handleChange.bind(this)}
+                    >
+                        { choices.map((choice, index) => <option key={ index } value={ choice }> { choice }</option>) }
+                    </select>
+                    {
+                        question.unit &&
+                        <div className="input-group-append d-none d-sm-block">
+                            <span className="input-group-text">{ question.unit }</span>
+                        </div>
+                    }
+                </div>
                 <Field.Error error={ error } grouped={ grouped } />
             </Field.Row>
         );
