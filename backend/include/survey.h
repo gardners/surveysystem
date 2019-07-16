@@ -36,7 +36,8 @@ struct question {
 #define QTYPE_DAYTIME_SEQUENCE    19 // answer->text (comma separated): instruction an ascending sequence of DAYTIME values (comma separated), labels are defined in q.choices. (unit: seconds)
 #define QTYPE_DATETIME_SEQUENCE   20 // answer->text (comma separated): instruction an ascending sequence of DATETIME values (comma separated), labels are defined in q.choices (unit: seconds)
 #define QTYPE_DURATION24          21 // answer->value: instruction time period in seconds maximum 24 hours (86400 seconds), TODO enable min_value and max_value support, which would make this type redundant in favour of a more generic QTYPE_DURATION type.
-#define QTYPE_UUID                22
+#define QTYPE_DIALOG_DATA_CRAWLER 22 // answer->text: instruction for a dialog to give consent to accessing external data requires two defined choices in the following order: [DENIED, GRANTED], (unit: id of the data crawler module)
+#define QTYPE_UUID                23
   // Formatting and other flags
   int flags;
   // Format integer input as times for questions like
