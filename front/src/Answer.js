@@ -384,6 +384,7 @@ const setValue = function(question, value) {
         case 'CHECKBOX':
         case 'SINGLECHOICE':
         case 'SINGLESELECT':
+        case 'DIALOG_DATA_CRAWLER':
         case 'UUID': // TODO no component
             // string
             answer.text = _text(value);
