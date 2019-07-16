@@ -384,7 +384,7 @@ const setValue = function(question, value) {
         case 'CHECKBOX':
         case 'SINGLECHOICE':
         case 'SINGLESELECT':
-        case 'QTYPE_UUID': // TODO no component
+        case 'UUID': // TODO no component
             // string
             answer.text = _text(value);
         break;
