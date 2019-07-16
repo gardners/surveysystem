@@ -1,0 +1,33 @@
+description DIALOG_DATA_CRAWLER question type: Grant permission to a DIALOG_DATA_CRAWLER module in a survey
+
+# Create a dummy survey
+definesurvey qtype_dialog_data_crawler
+version 2
+Silly test survey updated
+without python
+datacrawler:Do you consent to give us access?:You will be redirected!:DIALOG_DATA_CRAWLER:0::0:0:0:0:Denied,Granted:toycollection-module
+endofsurvey
+
+# Request creation of a  new session
+request 200 newsession?surveyid=qtype_dialog_data_crawler
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session
+qtype_dialog_data_crawler/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+endofsession
+
+# Ask for next question
+request 200 nextquestion?sessionid=$SESSION
+match_string {"next_questions": [{"id": "datacrawler", "name": "datacrawler", "title": "Do you consent to give us access?", "description": "You will be redirected!", "type": "DIALOG_DATA_CRAWLER", "choices": ["Denied", "Granted"], "unit": "toycollection-module"}]}
+
+request 200 addanswer?sessionid=$SESSION&answer=datacrawler:Granted:0:0:0:0:0:0:0:toycollection-module:0
+match_string {"next_questions": []}
+
+# Make sure answer ends up in file
+verify_session
+field_unit/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+datacrawler:Granted:0:0:0:0:0:0:0:toycollection-module
+endofsession

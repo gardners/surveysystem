@@ -959,6 +959,8 @@ static void fcgi_nextquestion(struct kreq *r)
 		  case QTYPE_FIXEDPOINT_SEQUENCE: break;
 		  case QTYPE_DAYTIME_SEQUENCE: 	  break;
 		  case QTYPE_DATETIME_SEQUENCE:   break;
+		  case QTYPE_DIALOG_DATA_CRAWLER: break;
+		  
 		  default:
 		    LOG_ERRORV("Unknown question type #%d in session '%s'",q[i]->type,session_id);
 		    break;
@@ -980,6 +982,7 @@ static void fcgi_nextquestion(struct kreq *r)
 	case QTYPE_FIXEDPOINT_SEQUENCE:
 	case QTYPE_DAYTIME_SEQUENCE:
 	case QTYPE_DATETIME_SEQUENCE:
+	case QTYPE_DIALOG_DATA_CRAWLER:
 	  
 	  kjson_arrayp_open(&req,"choices");
 	  int len=strlen(q[i]->choices);
