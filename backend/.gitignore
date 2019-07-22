@@ -12,3 +12,6 @@ sessions/*
 
 surveys/*
 !surveys/.gitkeep
+
+# external modules
+queue/*
