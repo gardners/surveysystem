@@ -336,7 +336,6 @@ class Survey extends Component {
                                         handleChange={ this.handleChange.bind(this) }
                                         questions={ entry }
                                         errors={ errors }
-
                                     />
                                 );
                             }

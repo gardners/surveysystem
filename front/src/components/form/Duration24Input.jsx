@@ -61,8 +61,8 @@ class Duration24Input extends Component {
     }
 
     render() {
-        const { value, minValue, maxValue } = this.state;
-        const { question, error, required, grouped, className, step } = this.props;
+        const { value } = this.state;
+        const { question, error, required, grouped, className } = this.props;
 
         const hours = Math.floor(value / 3600);
         const minutes = Math.floor(value % 3600 / 60);

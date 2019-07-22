@@ -22,6 +22,7 @@ import PasswordInput from './PasswordInput';
 import DaytimeSequence from './DaytimeSequence';
 import DaytimeQuestionGroup from './DaytimeQuestionGroup';
 import Duration24Input from './Duration24Input';
+import DialogDataCrawler from '../form/DialogDataCrawler';
 
 export default {
     'DeviceLocation': DeviceLocation,
@@ -43,4 +44,5 @@ export default {
     'DaytimeSequence': DaytimeSequence,
     'DaytimeQuestionGroup': DaytimeQuestionGroup,
     'Duration24Input': Duration24Input,
+    'DialogDataCrawler': DialogDataCrawler,
 };
