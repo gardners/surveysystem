@@ -207,9 +207,9 @@ const _serializedNumberArraySequence = function(val) {
 const sanitizeValue = function(value) {
     if (typeof value == 'string') {
         // Regex for sanitizing csv string values,
-        // example build: console.log(new RegExp([CSV_SEPARATOR, '\'', '"'].join(''), 'g'));
+        // example build: console.log(new RegExp([':', '\'', '"'].join(''), 'g'));
         return value.trim()
-        .replace(new RegExp(`:'"`, 'g'), '\\$&')
+        .replace(/\:|'|"/g, '\\$&')
         .replace(/(?:\r\n|\r|\n)/g, ' ');
     }
     return value;

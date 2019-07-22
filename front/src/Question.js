@@ -53,6 +53,7 @@ const normalize = function(raw) {
  */
 const serialize = function(question) {
     const normalized = normalize(question);
+    console.log(Object.keys(normalized).map(key => sanitizeValue(normalized[key])).join(':'));
     return Object.keys(normalized).map(key => sanitizeValue(normalized[key])).join(':');
 };
 
