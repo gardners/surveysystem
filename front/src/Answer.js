@@ -384,7 +384,8 @@ const setValue = function(question, value) {
         case 'CHECKBOX':
         case 'SINGLECHOICE':
         case 'SINGLESELECT':
-        case 'QTYPE_UUID': // TODO no component
+        case 'DIALOG_DATA_CRAWLER':
+        case 'UUID': // TODO no component
             // string
             answer.text = _text(value);
         break;
@@ -447,6 +448,8 @@ const getValue = function(question, answer) {
         case 'CHECKBOX':
         case 'SINGLECHOICE':
         case 'SINGLESELECT':
+        case 'DIALOG_DATA_CRAWLER':
+        case 'UUID': // TODO no component
             return answer.text;
         default:
             console.error(`Answer: unsupported question type: ${type}`);

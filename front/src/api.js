@@ -3,7 +3,7 @@
  */
 
 // config
-const BaseUri = process.env.REACT_APP_SURVEY_ENDPOINT;
+const BaseUri = process.env.REACT_APP_SURVEYAPI_ENDPOINT;
 
 class ApiError extends Error {
     constructor(message, response = {}) {
@@ -37,7 +37,7 @@ const Api = {
      * @returns {Promise}
      */
     createNewSession: function(surveyID) {
-        const url = BaseUri + '/surveyapi/newsession';
+        const url = BaseUri + '/newsession';
 
         return fetch(`${url}?surveyid=${surveyID}`)
             .then((response) => {
@@ -55,7 +55,7 @@ const Api = {
      * @returns {Promise} deserialized json including next questions
      */
     nextQuestion: function(sessionID) {
-        const url = BaseUri + '/surveyapi/nextquestion';
+        const url = BaseUri + '/nextquestion';
 
         return fetch(`${url}?sessionid=${sessionID}`)
             .then((response) => {
@@ -73,7 +73,7 @@ const Api = {
      * @returns {Promise} deserialized json including next questions
      */
     updateAnswer: function(sessionID, answer) {
-        const url = BaseUri + '/surveyapi/updateanswer';
+        const url = BaseUri + '/updateanswer';
 
         return fetch(`${url}?sessionid=${sessionID}&answer=${answer}`)
             .then((response) => {
@@ -90,7 +90,7 @@ const Api = {
      * @returns {Promise} deserialized json including next questions
      */
     deleteAnswer: function(sessionID, questionID) {
-        const url = BaseUri + '/surveyapi/delanswer';
+        const url = BaseUri + '/delanswer';
 
         return fetch(`${url}?sessionid=${sessionID}&questionid=${questionID}`)
             .then((response) => {
@@ -107,7 +107,7 @@ const Api = {
      * @returns {Promise} deserialized json including next questions
      */
     deleteAnswerAndFollowing: function(sessionID, questionID) {
-        const url = BaseUri + '/surveyapi/delanswerandfollowing';
+        const url = BaseUri + '/delanswerandfollowing';
 
         return fetch(`${url}?sessionid=${sessionID}&questionid=${questionID}`)
             .then((response) => {
@@ -126,7 +126,7 @@ const Api = {
      * @returns {Promise} deserialized json with evaluationdata
      */
     finishSurvey: function(sessionID) {
-        const url = BaseUri + '/surveyapi/analyse';
+        const url = BaseUri + '/analyse';
 
         return fetch(`${url}?sessionid=${sessionID}`)
         .then((response) => {
