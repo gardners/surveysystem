@@ -49,7 +49,7 @@ SelectComponent.propTypes = {
  * Display serialized answer
  */
 
-const Answers = function({ questions, answers, className }) {
+const Answers = function({ answers, className }) {
     if (!Object.keys(answers).length) {
         return (<React.Fragment>Answer: <i className={ className }>none</i></React.Fragment>);
     }
@@ -68,10 +68,36 @@ Answers.defaultProps = {
 
 Answers.propTypes = {
     answers: PropTypes.object,
+    className: PropTypes.string,
+};
+
+/**
+ * Display serialized answer
+ */
+
+const SerializedQuestions = function({ questions, className }) {
+    const style = {
+        whiteSpace: 'nowrap',
+        overflow: 'auto'
+    };
+
+    return (
+        <React.Fragment>
+            {
+                Object.keys(questions).map((id) => <div style={ style } key={ id }>Question: <span className={ className }>{ QuestionModel.serialize(questions[id]) }</span></div>)
+            }
+        </React.Fragment>
+    );
+};
+
+SerializedQuestions.defaultProps = {
+    answers: {},
+};
+
+SerializedQuestions.propTypes = {
     questions: PropTypes.arrayOf(
         QuestionModel.propTypes(),
     ).isRequired,
-
     className: PropTypes.string,
 };
 
@@ -181,6 +207,11 @@ class Row extends Component {
             return (null);
         }
 
+        const style = {
+            fontSize: '0.8rem',
+            backgroundColor: '#e9ecef',
+        };
+
         return (
             <div className="list-group mb-3">
                 {
@@ -207,13 +238,13 @@ class Row extends Component {
                         />
                 }
 
-                <div className="list-group-item bg-light container text-monospace" style={ { fontSize: '0.8rem' } }>
+                <div className="list-group-item container text-monospace" style={ style }>
                     <div className="row">
                         <div className="col-md"><Answers className="text-info" questions={ questions } answers={ answers } /></div>
                     </div>
                 </div>
 
-                <div className="list-group-item bg-light container text-monospace" style={ { fontSize: '0.8rem' } }>
+                <div className="list-group-item container text-monospace" style={ style }>
                     <div className="row">
                         <div className="col-md">
                             Type: { questions.map(q => <span key={ q.id } className="text-info mr-2">{ q.type }</span>) }<br />
@@ -261,6 +292,11 @@ class Row extends Component {
                     </div>
                 </div>
 
+                <div className="list-group-item container text-monospace" style={ style }>
+                    <div className="row">
+                        <div className="col-md"><SerializedQuestions className="col-md text-muted" questions={ questions } /></div>
+                    </div>
+                </div>
             </div>
         );
     }

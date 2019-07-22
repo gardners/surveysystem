@@ -1,5 +1,7 @@
 import PropTypes from 'prop-types';
 
+import { sanitizeValue } from './Answer';
+
 /**
  * @typedef QuestionModel
  * @type {object}
@@ -46,6 +48,15 @@ const normalize = function(raw) {
 };
 
 /**
+ * Serialize a question object
+ * @param {object} question raw question object
+ */
+const serialize = function(question) {
+    const normalized = normalize(question);
+    return Object.keys(normalized).map(key => sanitizeValue(normalized[key])).join(':');
+};
+
+/**
 * Get Proptypes schema
 * @see survey.h:: struct question
 * @returns {PropTypes}
@@ -78,6 +89,7 @@ const Question = {
     },
     model,
     normalize,
+    serialize,
 };
 
 /**
