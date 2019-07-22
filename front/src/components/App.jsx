@@ -20,11 +20,21 @@ import DemoManifest from './demo/DemoManifest';
 
 const Navigation = withRouter(HeaderNav);
 
+const {
+    REACT_APP_SURVEY_LIST,
+    REACT_APP_SURVEY_PROVIDER,
+    REACT_APP_SITE_NAME,
+} = process.env;
 // config
 
-const surveys = process.env.REACT_APP_SURVEY_LIST.split(',').map(name => name.trim());
-const surveyProvider = process.env.REACT_APP_SURVEY_PROVIDER.trim();
-const siteName = process.env.REACT_APP_SITE_NAME.trim();
+const surveys = REACT_APP_SURVEY_LIST.split(',').map(name => name.trim());
+const surveyProvider = REACT_APP_SURVEY_PROVIDER.trim();
+const siteName = REACT_APP_SITE_NAME.trim();
+
+
+////
+//
+////
 
 class App extends Component {
 
