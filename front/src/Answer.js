@@ -457,7 +457,7 @@ const getValue = function(question, answer) {
     }
 };
 
-export default {
+const Answer = {
     model,
     create,
     propTypes,
@@ -465,3 +465,5 @@ export default {
     setValue,
     getValue,
 };
+
+export { Answer as default, sanitizeValue };
