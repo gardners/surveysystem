@@ -19,6 +19,7 @@ import Select from '../form/Select';
 import MultiSelect from '../form/MultiSelect';
 import DaytimeSequence from '../form/DaytimeSequence';
 import Duration24Input from '../form/Duration24Input';
+import DialogDataCrawler from '../form/DialogDataCrawler';
 
 import { addClassNames } from '../../Utils';
 
@@ -104,6 +105,9 @@ const getComponentByType = function(questionType = 'TEXT') {
 
         case 'DURATION24':
             return Duration24Input;
+
+        case 'DIALOG_DATA_CRAWLER':
+            return DialogDataCrawler;
 
         default:
             return TextInput;
