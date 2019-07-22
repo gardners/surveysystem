@@ -96,8 +96,6 @@ class Row extends Component {
         const { props } = this;
 
         const id = props.componentName;
-        const title = 'Question title for ' + id
-
         let questions;
 
         if(props.questions.length) {
@@ -107,7 +105,7 @@ class Row extends Component {
                 QuestionModel.normalize({
                     id,
                     name: id,
-                    title,
+                    title: props.title || 'Question title for ' + id,
                     description: props.description || `This is the question description for question <span style="color: green">${id}</span>, it can contain HTML.`,
                     type: props.type,
 
@@ -391,6 +389,12 @@ const Demo = function(props){
                     ] }
                 />
                 <Row selected={ selected } type={ 'DURATION24' }          componentName="Duration24Input" />
+                <Row selected={ selected } type={ 'DIALOG_DATA_CRAWLER' } componentName="DialogDataCrawler"
+                    title="Optional access to your Fitbit Device data"
+                    description="Do you consent to give us access to your sleep data stored on your Fitbit device? <br />You will need your Fitbit account login."
+                    choices={ ['Denied', 'Agreed'] }
+                    unit="fitbit-module"
+                />
             </div>
         </section>
     );
