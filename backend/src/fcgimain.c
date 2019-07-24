@@ -1225,23 +1225,29 @@ static void fcgi_analyse(struct kreq *r)
     // log event in session meta log file
     
     char *user_name = "anonymous";
-    if (req->rawauth.d.digest.user) {
-      user_name = strdup(req->rawauth.d.digest.user);
+    if (r->rawauth.d.digest.user) {
+      user_name = strdup(r->rawauth.d.digest.user);
     }
     
     time_t now = time(0);
     char finished[25] = { '\0' };
-    if(!format_time_ISO8601(now, created, 25)) {
+    if(!format_time_ISO8601(now, finished, 25)) {
       LOG_WARNV("could not fromat ISO8601 timestamp for session %s.", session_id );
     }
   
     char user_message[1024];
-    snprintf(user_message, 1024, "finished %s by user %s", user_name, survey->val, session_id, finished, user_name);
+    snprintf(user_message, 1024, "finished %s by user %s", finished, user_name);
     
     if (session_add_userlog_message(session_id, user_message)) {
       LOG_ERRORV("Could not add user info for session %s.", session_id);
     }
-
+    
+    // store analysis with session
+    
+    if (session_add_datafile(session_id, "analysis.json", (unsigned char*) analysis)) {
+      LOG_ERRORV("Could not add analysis.json for session %s.", session_id);
+    }
+    
     quick_error(r,KHTTP_200,(const char *)analysis);
 
     LOG_INFO("Leaving page handler.");
