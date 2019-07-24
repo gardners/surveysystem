@@ -846,3 +846,46 @@ int session_delete_answer(struct session *ses,struct answer *a, int deleteFollow
   } while(0);
   return retVal;
 }
+
+/*
+  Log a message line into session user log.
+  Should the logging fail, the process will not break and issue warnings to the log
+  Note that the session needed to be created previously, otherwise the session dir would not be accessible!
+ */
+int session_add_userlog_message(char *session_id, char *message)
+{
+  
+  int retVal = 0;
+  FILE *fp = NULL;
+  
+  do {
+    char session_path[1024];
+    char session_path_suffix[1024];
+    char session_prefix[5];
+    
+    for (int i = 0; i < 4; i++) {
+      session_prefix[i] = session_id[i];
+    }
+    session_prefix[4] = 0;
+  
+    snprintf(session_path_suffix, 1024, "sessions/%s/%s.user", session_prefix, session_id);
+    if (generate_path(session_path_suffix, session_path, 1024)) {
+      LOG_WARNV("generate_path('%s') failed to build path for userlog, session '%s'", session_path_suffix, session_id);
+    }
+
+    fp = fopen(session_path, "a");
+    if (!fp) {
+      LOG_WARNV("Could not create or open userlog file '%s' for write", session_path);
+    }
+
+    fprintf(fp, "%s\n", message);
+    fclose(fp); 
+    fp = NULL;
+  }  while(0);
+  
+  if (fp) {
+    fclose(fp);
+  }
+  
+  return retVal;
+}

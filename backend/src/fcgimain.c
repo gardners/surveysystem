@@ -18,6 +18,7 @@
 #include "survey.h"
 #include "serialisers.h"
 #include "question_types.h"
+#include "timeutils.h"
 
 #define          CHECKPOINT() { fprintf(stderr,"%s:%d:%s():pid=%d: Checkpoint\n",__FILE__,__LINE__,__FUNCTION__,getpid()); }
 
@@ -472,6 +473,26 @@ static void fcgi_newsession(struct kreq *req)
       break;
     }    
     
+    // create session meta log file, log user and creation time
+    
+    char *user_name = "anonymous";
+    if (req->rawauth.d.digest.user) {
+      user_name = strdup(req->rawauth.d.digest.user);
+    }
+    
+    time_t now = time(0);
+    char created[25] = { '\0' };
+    if(!format_time_ISO8601(now, created, 25)) {
+      LOG_WARNV("could not fromat ISO8601 timestamp for session %s.", session_id );
+    }
+  
+    char user_message[1024];
+    snprintf(user_message, 1024, "username %s\nsurveyid %s\nsessionid %s\ncreated %s by user %s", user_name, survey->val, session_id, created, user_name);
+    
+    if (session_add_userlog_message(session_id, user_message)) {
+      LOG_ERRORV("Could not add user info for session %s.", session_id);
+    }
+    
     begin_200(req);
 
     // Write some stuff in reply
@@ -865,6 +886,26 @@ static void fcgi_delsession(struct kreq *r)
       LOG_ERRORV("delete_session('%s') failed",session_id);
     }
 
+    // log event in session meta log file
+    
+    char *user_name = "anonymous";
+    if (r->rawauth.d.digest.user) {
+      user_name = strdup(r->rawauth.d.digest.user);
+    }
+    
+    time_t now = time(0);
+    char deleted[25] = { '\0' };
+    if(!format_time_ISO8601(now, deleted, 25)) {
+      LOG_WARNV("could not fromat ISO8601 timestamp for session %s.", session_id );
+    }
+  
+    char user_message[1024];
+    snprintf(user_message, 1024, "deleted %s by user %s", deleted, user_name);
+    
+    if (session_add_userlog_message(session_id, user_message)) {
+      LOG_ERRORV("Could not add user info for session %s.", session_id);
+    }
+    
     quick_error(r,KHTTP_200,"Session deleted.");
     
     LOG_INFO("Leaving page handler.");
@@ -1180,6 +1221,27 @@ static void fcgi_analyse(struct kreq *r)
       quick_error(r,KHTTP_500,"Could not retrieve analysis (empty result).");
       LOG_ERRORV("get_analysis('%s') returned empty result",session_id);
     }
+    
+    // log event in session meta log file
+    
+    char *user_name = "anonymous";
+    if (req->rawauth.d.digest.user) {
+      user_name = strdup(req->rawauth.d.digest.user);
+    }
+    
+    time_t now = time(0);
+    char finished[25] = { '\0' };
+    if(!format_time_ISO8601(now, created, 25)) {
+      LOG_WARNV("could not fromat ISO8601 timestamp for session %s.", session_id );
+    }
+  
+    char user_message[1024];
+    snprintf(user_message, 1024, "finished %s by user %s", user_name, survey->val, session_id, finished, user_name);
+    
+    if (session_add_userlog_message(session_id, user_message)) {
+      LOG_ERRORV("Could not add user info for session %s.", session_id);
+    }
+
     quick_error(r,KHTTP_200,(const char *)analysis);
 
     LOG_INFO("Leaving page handler.");
