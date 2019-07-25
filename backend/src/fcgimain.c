@@ -1183,7 +1183,7 @@ static void fcgi_fastcgitest(struct kreq *req)
 
 static void fcgi_analyse(struct kreq *r)
 {
-  //  enum kcgi_err    er;
+  enum kcgi_err    er;
   int retVal=0;
   
   do {
@@ -1248,7 +1248,13 @@ static void fcgi_analyse(struct kreq *r)
       LOG_ERRORV("Could not add analysis.json for session %s.", session_id);
     }
     
-    quick_error(r,KHTTP_200,(const char *)analysis);
+    // Write some stuff in reply
+    begin_200(r);
+        
+    er = khttp_puts(r, (const char *)analysis);
+    if (er != KCGI_OK) {
+      LOG_ERROR("khttp_puts() failed");
+    }
 
     LOG_INFO("Leaving page handler.");
     
