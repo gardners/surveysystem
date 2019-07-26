@@ -1154,7 +1154,7 @@ int main(int argc,char **argv)
   require_test_file("lighttpd-error.log", 0777);
 
   // Make sure we have a test log directory
-  mkdir("testlogs",0755);
+  mkdir("testlog",0755);
 
   stop_lighttpd(1);
   fprintf(stderr,"About to request config gets pulled together\n");
