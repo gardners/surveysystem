@@ -849,7 +849,6 @@ int session_delete_answer(struct session *ses,struct answer *a, int deleteFollow
 
 /*
   Log a message line into session user log.
-  Should the logging fail, the process will not break and issue warnings to the log
   Note that the session needed to be created previously, otherwise the session dir would not be accessible!
  */
 int session_add_userlog_message(char *session_id, char *message)
@@ -870,12 +869,12 @@ int session_add_userlog_message(char *session_id, char *message)
   
     snprintf(session_path_suffix, 1024, "sessions/%s/%s.user", session_prefix, session_id);
     if (generate_path(session_path_suffix, session_path, 1024)) {
-      LOG_WARNV("generate_path('%s') failed to build path for userlog, session '%s'", session_path_suffix, session_id);
+      LOG_ERRORV("generate_path('%s') failed to build path for userlog, session '%s'", session_path_suffix, session_id);
     }
 
     fp = fopen(session_path, "a");
     if (!fp) {
-      LOG_WARNV("Could not create or open userlog file '%s' for write", session_path);
+      LOG_ERRORV("Could not create or open userlog file '%s' for write", session_path);
     }
 
     fprintf(fp, "%s\n", message);
@@ -912,12 +911,12 @@ int session_add_datafile(char *session_id, char *filename_suffix, unsigned char 
   
     snprintf(session_path_suffix, 1024, "sessions/%s/%s.%s", session_prefix, session_id, filename_suffix);
     if (generate_path(session_path_suffix, session_path, 1024)) {
-      LOG_WARNV("generate_path('%s') failed to build path for udata file, session '%s'", session_path_suffix, session_id);
+      LOG_ERRORV("generate_path('%s') failed to build path for udata file, session '%s'", session_path_suffix, session_id);
     }
 
     fp = fopen(session_path, "w");
     if (!fp) {
-      LOG_WARNV("Could not create or open data file '%s' for write", session_path);
+      LOG_ERRORV("Could not create or open data file '%s' for write", session_path);
     }
 
     fprintf(fp, "%s\n", data);
