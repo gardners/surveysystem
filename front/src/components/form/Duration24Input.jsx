@@ -16,6 +16,8 @@ class Duration24Input extends Component {
 
         this.state = {
             value: 0,
+            minValue: 0,
+            maxvalue:  DaySeconds,
         };
     }
 
@@ -88,7 +90,7 @@ class Duration24Input extends Component {
                         { hourOpts.map(val => <option key={ val } value={ val }>{ val }</option>) }
                         </select>
                         <div className="input-group-append">
-                            <label className="input-group-text" for={ `${question.id}--hours`}>hours</label>
+                            <label className="input-group-text" htmlFor={ `${question.id}--hours`}>hours</label>
                         </div>
                     </div>
 
