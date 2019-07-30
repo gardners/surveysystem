@@ -180,7 +180,7 @@ const formatDayTimeDiff = function(fromSeconds, toSeconds, withSeconds = false) 
     const hours = Math.floor(d % 24);
     const days = Math.floor(d / 24);
 
-    let r = (diff < 0) ? '- ' : '+ ';
+    let r = (diff === 0) ? '0' : (diff < 0) ? '- ' : '+ ';
 
     if(days) {
         r += Math.abs(days);
