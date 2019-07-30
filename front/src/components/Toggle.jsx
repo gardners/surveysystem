@@ -17,10 +17,10 @@ class Toggle extends Component{
     }
 
     render() {
-
         const { open } = this.state;
         const [ header, ...contents ] = this.props.children;
         const cls = (!open) ? `d-print-block d-none` : '';
+
         return(
             <div className={ this.props.className }>
                 <div role="menuitem" className="d-block text-primary" onClick={ this.toggle.bind(this) }>
