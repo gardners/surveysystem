@@ -77,15 +77,16 @@ Answers.propTypes = {
 
 const SerializedQuestions = function({ questions, className }) {
     const style = {
-        whiteSpace: 'nowrap',
-        overflow: 'auto'
+        fontSize: '0.85em',
     };
+    const contents = Object.keys(questions).map((id) => QuestionModel.serialize(questions[id]));
 
     return (
         <React.Fragment>
-            {
-                Object.keys(questions).map((id) => <div style={ style } key={ id }>Question: <span className={ className }>{ QuestionModel.serialize(questions[id]) }</span></div>)
-            }
+            <div className="mb-1">Questions:</div>
+            <pre style={ style }>
+                { contents.join("\n") }
+            </pre>
         </React.Fragment>
     );
 };
