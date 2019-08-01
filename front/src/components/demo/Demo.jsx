@@ -431,6 +431,7 @@ const Demo = function(props){
                     description="Do you consent to give us access to your sleep data stored on your Fitbit device? <br />You will need your Fitbit account login."
                     choices={ ['Denied', 'Agreed'] }
                     unit="fitbit-module"
+                    sessionID="demosession"
                 />
             </div>
         </section>
