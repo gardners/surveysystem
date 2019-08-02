@@ -5,7 +5,7 @@ import Field from './Field';
 import QuestionModel from '../../Question';
 
 import { formatDayTimeDiff, formatDayTime } from '../../Utils';
-import { AppContext } from '../../AppContext';
+import { AppContext } from '../../Context';
 
 import { Gutter, DaytimeIcon, DaytimeLabel } from './DaytimeSequence';
 
