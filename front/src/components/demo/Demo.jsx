@@ -11,6 +11,9 @@ import QuestionModel from '../../Question';
 import Question from '../survey/Question';
 import QuestionGroup from '../survey/QuestionGroup';
 
+// context
+import { SurveyContext } from '../../Context';
+
 /**
  * select component
  * Names are stringfied so they survive component.name minification
@@ -323,117 +326,124 @@ const Demo = function(props){
     const selected = props.match.params.component || '';
 
     return (
-        <section>
+// context
+        <SurveyContext.Provider value={ {
+            surveyID: 'DEMO-SURVEY-ID',
+            sessionID: 'DEMO-SESSION-ID',
+        } }>
+            <section>
 
-            <div className="card bg-secondary text-white sticky-top mb-1">
-                <div className="card-body d-flex flex-row-reverse bd-highlight">
-                    <SelectComponent history={ props.history } selected={ selected } />
+                <div className="card bg-secondary text-white sticky-top mb-1">
+                    <div className="card-body d-flex flex-row-reverse bd-highlight">
+                        <SelectComponent history={ props.history } selected={ selected } />
+                    </div>
                 </div>
-            </div>
 
-            <div>
-                <Row selected={ selected } type={ 'HIDDEN' }       componentName="HiddenInput"       description="text with some <strong>markup</strong> html and an image: <img src='data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7'>" />
-                <Row selected={ selected } type={ 'LATLON' }       componentName="DeviceLocation"    withButton={ true } />
-                <Row selected={ selected } type={ 'TIMERANGE' }    componentName="PeriodRangeSlider" default_value="35145,53145" />
-                <Row selected={ selected } type={ 'DAYTIME' }      componentName="DayTimeSlider"     default_value="35145" />
-                <Row selected={ selected } type={ 'DAYTIME' }      componentName="TimePicker"        default_value="35145" />
-                <Row selected={ selected } type={ 'MULTICHOICE' }  componentName="CheckboxGroup"     choices={ ['This', 'That', 'Another one' ] } default_value="That" />
-                <Row selected={ selected } type={ 'SINGLECHOICE' } componentName="RadioGroup"        choices={ ['This', 'That', 'Another one' ] } default_value="Another one" />
-                <Row selected={ selected } type={ 'CHECKBOX' }     componentName="Checkbox"          choices={ [ 'Unchecked!', 'Checked!'] }  default_value="Checked!" />
-                <Row selected={ selected } type={ 'TEXT' }         componentName="RadioGroup"        choices={ ['Yes', 'No', 'Maybe' ] }  />
-                <Row selected={ selected } type={ 'SINGLESELECT' } componentName="Select"            choices={ ['First', 'Second', 'Third' ] } />
-                <Row selected={ selected } type={ 'MULTISELECT' }  componentName="MultiSelect"       choices={ ['First', 'Second', 'Third' ] } />
-                <Row selected={ selected } type={ 'TEXT' }         componentName="TextInput"         />
-                <Row selected={ selected } type={ 'INT' }          componentName="NumberInput"       />
-                <Row selected={ selected } type={ 'TEXT' }         componentName="Textarea"          />
-                <Row selected={ selected } type={ 'FIXEDPOINT' }   componentName="RadioMatrix"       description="This is the <em>description</em> for this question group"
-                    questions={ [
-                        {
-                            id: 'question1',
-                            name: 'question1',
-                            type: 'FIXEDPOINT',
-                            title: 'Row 1',
-                            description: 'Row 1 text',
-                            choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
-                        }, {
-                            id: 'question2',
-                            name: 'question2',
-                            type: 'FIXEDPOINT',
-                            title: 'Row 2',
-                            description: 'Row 2 text',
-                            choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
-                            default_value: '4',
-                        },{
-                            id: 'question3',
-                            name: 'question3',
-                            type: 'FIXEDPOINT',
-                            title: 'Row 3',
-                            description: 'Row 3 text',
-                            choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
-                            default_value: '4',
-                        },{
-                            id: 'question4',
-                            name: 'question4',
-                            type: 'FIXEDPOINT',
-                            title: 'Row 4',
-                            description: 'Row 4 text',
-                            choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
-                        }
-                    ] }
-                />
-                <Row selected={ selected } type={ 'EMAIL' }             componentName="EmailInput" />
-                <Row selected={ selected } type={ 'PASSWORD' }          componentName="PasswordInput" />
-                <Row selected={ selected } type={ 'DAYTIME_SEQUENCE' }  componentName="DaytimeSequence"
-                    choices={ ['Breakfast', 'Lunch', 'Afternoon Tea' , ' Late Snack'] }
-                    default_value={ [
-                        '27000', /* 07:30:00 */
-                        '43200', /* 12:00:00 */
-                        '55800', /* 15:30:00 */
-                        '73800', /* 20:30:00 */
-                    ].join(',') }
-                />
-                <Row selected={ selected } type={ 'DAYTIME' }           componentName="DaytimeQuestionGroup"
-                    questions={ [
-                        {
-                            id: 'question1',
-                            name: 'question1',
-                            type: 'DAYTIME',
-                            title: 'breakfast time',
-                            description: 'This is the <em>description</em> for this <span class="text-primary">DaytimeQuestionGroup</span><br />. It displays like the <em>DaytimeSequence</em> component, except it handles a group of questions of type <span class="text-primary">DAYTIME</span>',
-                            default_value: '27000', /* 07:30:00 */
-                        }, {
-                            id: 'question2',
-                            name: 'question2',
-                            type: 'DAYTIME',
-                            title: 'lunch time',
-                            description: 'Row 2 text',
-                            default_value: '43200', /* 12:00:00 */
-                        },{
-                            id: 'question3',
-                            name: 'question3',
-                            type: 'DAYTIME',
-                            title: 'afternoon tea time',
-                            description: 'Row 3 text',
-                            default_value: '55800', /* 15:30:00 */
-                        },{
-                            id: 'question4',
-                            name: 'question4',
-                            type: 'DAYTIME',
-                            title: 'late snack time',
-                            description: 'Row 4 text',
-                            default_value: '73800', /* 20:30:00 */
-                        }
-                    ] }
-                />
-                <Row selected={ selected } type={ 'DURATION24' }          componentName="Duration24Input" />
-                <Row selected={ selected } type={ 'DIALOG_DATA_CRAWLER' } componentName="DialogDataCrawler"
-                    title="Optional access to your Fitbit Device data"
-                    description="Do you consent to give us access to your sleep data stored on your Fitbit device? <br />You will need your Fitbit account login."
-                    choices={ ['Denied', 'Agreed'] }
-                    unit="fitbit-module"
-                />
-            </div>
-        </section>
+                <div>
+                    <Row selected={ selected } type={ 'HIDDEN' }       componentName="HiddenInput"       description="text with some <strong>markup</strong> html and an image: <img src='data:image/gif;base64,R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7'>" />
+                    <Row selected={ selected } type={ 'LATLON' }       componentName="DeviceLocation"    withButton={ true } />
+                    <Row selected={ selected } type={ 'TIMERANGE' }    componentName="PeriodRangeSlider" default_value="35145,53145" />
+                    <Row selected={ selected } type={ 'DAYTIME' }      componentName="DayTimeSlider"     default_value="35145" />
+                    <Row selected={ selected } type={ 'DAYTIME' }      componentName="TimePicker"        default_value="35145" />
+                    <Row selected={ selected } type={ 'MULTICHOICE' }  componentName="CheckboxGroup"     choices={ ['This', 'That', 'Another one' ] } default_value="That" />
+                    <Row selected={ selected } type={ 'SINGLECHOICE' } componentName="RadioGroup"        choices={ ['This', 'That', 'Another one' ] } default_value="Another one" />
+                    <Row selected={ selected } type={ 'CHECKBOX' }     componentName="Checkbox"          choices={ [ 'Unchecked!', 'Checked!'] }  default_value="Checked!" />
+                    <Row selected={ selected } type={ 'TEXT' }         componentName="RadioGroup"        choices={ ['Yes', 'No', 'Maybe' ] }  />
+                    <Row selected={ selected } type={ 'SINGLESELECT' } componentName="Select"            choices={ ['First', 'Second', 'Third' ] } />
+                    <Row selected={ selected } type={ 'MULTISELECT' }  componentName="MultiSelect"       choices={ ['First', 'Second', 'Third' ] } />
+                    <Row selected={ selected } type={ 'TEXT' }         componentName="TextInput"         />
+                    <Row selected={ selected } type={ 'INT' }          componentName="NumberInput"       />
+                    <Row selected={ selected } type={ 'TEXT' }         componentName="Textarea"          />
+                    <Row selected={ selected } type={ 'FIXEDPOINT' }   componentName="RadioMatrix"       description="This is the <em>description</em> for this question group"
+                        questions={ [
+                            {
+                                id: 'question1',
+                                name: 'question1',
+                                type: 'FIXEDPOINT',
+                                title: 'Row 1',
+                                description: 'Row 1 text',
+                                choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
+                            }, {
+                                id: 'question2',
+                                name: 'question2',
+                                type: 'FIXEDPOINT',
+                                title: 'Row 2',
+                                description: 'Row 2 text',
+                                choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
+                                default_value: '4',
+                            },{
+                                id: 'question3',
+                                name: 'question3',
+                                type: 'FIXEDPOINT',
+                                title: 'Row 3',
+                                description: 'Row 3 text',
+                                choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
+                                default_value: '4',
+                            },{
+                                id: 'question4',
+                                name: 'question4',
+                                type: 'FIXEDPOINT',
+                                title: 'Row 4',
+                                description: 'Row 4 text',
+                                choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
+                            }
+                        ] }
+                    />
+                    <Row selected={ selected } type={ 'EMAIL' }             componentName="EmailInput" />
+                    <Row selected={ selected } type={ 'PASSWORD' }          componentName="PasswordInput" />
+                    <Row selected={ selected } type={ 'DAYTIME_SEQUENCE' }  componentName="DaytimeSequence"
+                        choices={ ['Breakfast', 'Lunch', 'Afternoon Tea' , ' Late Snack'] }
+                        default_value={ [
+                            '27000', /* 07:30:00 */
+                            '43200', /* 12:00:00 */
+                            '55800', /* 15:30:00 */
+                            '73800', /* 20:30:00 */
+                        ].join(',') }
+                    />
+                    <Row selected={ selected } type={ 'DAYTIME' }           componentName="DaytimeQuestionGroup"
+                        questions={ [
+                            {
+                                id: 'question1',
+                                name: 'question1',
+                                type: 'DAYTIME',
+                                title: 'breakfast time',
+                                description: 'This is the <em>description</em> for this <span class="text-primary">DaytimeQuestionGroup</span><br />. It displays like the <em>DaytimeSequence</em> component, except it handles a group of questions of type <span class="text-primary">DAYTIME</span>',
+                                default_value: '27000', /* 07:30:00 */
+                            }, {
+                                id: 'question2',
+                                name: 'question2',
+                                type: 'DAYTIME',
+                                title: 'lunch time',
+                                description: 'Row 2 text',
+                                default_value: '43200', /* 12:00:00 */
+                            },{
+                                id: 'question3',
+                                name: 'question3',
+                                type: 'DAYTIME',
+                                title: 'afternoon tea time',
+                                description: 'Row 3 text',
+                                default_value: '55800', /* 15:30:00 */
+                            },{
+                                id: 'question4',
+                                name: 'question4',
+                                type: 'DAYTIME',
+                                title: 'late snack time',
+                                description: 'Row 4 text',
+                                default_value: '73800', /* 20:30:00 */
+                            }
+                        ] }
+                    />
+                    <Row selected={ selected } type={ 'DURATION24' }          componentName="Duration24Input" />
+                    <Row selected={ selected } type={ 'DIALOG_DATA_CRAWLER' } componentName="DialogDataCrawler"
+                        title="Optional access to your Fitbit Device data"
+                        description="Do you consent to give us access to your sleep data stored on your Fitbit device? <br />You will need your Fitbit account login."
+                        choices={ ['Denied', 'Agreed'] }
+                        unit="fitbit-module"
+                        sessionID="demosession"
+                    />
+                </div>
+            </section>
+        </SurveyContext.Provider>
     );
 };
 
