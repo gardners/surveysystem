@@ -9,7 +9,7 @@ import DaytimeQuestionGroup from '../form/DaytimeQuestionGroup';
 
 import { addClassNames } from '../../Utils';
 
-const QuestionGroup = function({ handleChange, questions, errors, className}) {
+const QuestionGroup = function({ handleChange, questions, errors, className }) {
 
     const commons = findQuestionGroupCommons(questions);
     const header = (commons !== 'NONE' && questions[0].type === 'HIDDEN') ? questions[0] : null;

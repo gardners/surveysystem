@@ -108,7 +108,7 @@ class Duration24Input extends Component {
                         { minuteOpts.map(val => <option key={ val } value={ val }>{ val }</option>) }
                         </select>
                         <div className="input-group-append">
-                            <label className="input-group-text" for={ `${question.id}--minutes`}>mins</label>
+                            <label className="input-group-text" htmlFor={ `${question.id}--minutes`}>mins</label>
                         </div>
                     </div>
                 </div>
