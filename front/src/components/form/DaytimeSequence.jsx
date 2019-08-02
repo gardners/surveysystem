@@ -5,7 +5,7 @@ import Field from './Field';
 import QuestionModel from '../../Question';
 
 import { parseDayTime, formatDayTimeDiff, formatDayTime } from '../../Utils';
-import { AppContext } from '../../AppContext';
+import { AppContext } from '../../Context';
 
 import InputRange from 'react-input-range';
 import { DaytimeInput } from './TimePicker';

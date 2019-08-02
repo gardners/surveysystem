@@ -1,6 +1,11 @@
 import PropTypes from 'prop-types';
 
 import { sanitizeValue } from './Answer';
+import { isArray } from './Utils';
+
+////
+/// Question model (nextquestions json)
+////
 
 /**
  * @typedef QuestionModel
@@ -47,14 +52,78 @@ const normalize = function(raw) {
     return q;
 };
 
+////
+/// Question serialization model (experimental)
+////
+
+/**
+ * @typedef QuestionSerializationModel
+ * @type {object}
+ * @property {string} id - required
+ * @property {string} title - required
+ * @property {string} description - required
+ * @property {string} type - required
+ * @property {number} flags - required
+ * @property {string} default_value - required
+ * @property {number} min_value - required
+ * @property {number} max_value - required
+ * @property {number} decimal_places - required
+ * @property {number} num_choices - required
+ * @property {string[]|number[]} choices - optional
+ * @property {string} unit - required
+ */
+
+/**
+ * Create an empty  question serialization object,
+ * @see survey.h  struct question
+ *
+ * @returns {QuestionModel}
+ */
+const serializationModel = function() {
+    return {
+        uid: '',
+        question_text: '',
+        question_html: '',
+        type: '',
+        flags: 0,
+        default_value: '',
+        min_value: 0,
+        max_value: 0,
+        decimal_places: 2,
+        num_choices: [],
+        choices: [],
+        unit: '',
+    };
+};
+
 /**
  * Serialize a question object
  * @param {object} question raw question object
  */
 const serialize = function(question) {
-    const normalized = normalize(question);
-    return Object.keys(normalized).map(key => sanitizeValue(normalized[key])).join(':');
+    const model = serializationModel();
+
+    const { choices } = question;
+
+    model.uid = sanitizeValue(question.id);
+    model.question_text = sanitizeValue(question.title);
+    model.question_html = sanitizeValue(question.description);
+    model.type = sanitizeValue(question.type);
+    // model.flags = 0; // use default  TODO not supplied by backend yet
+    model.default_value = sanitizeValue(question.default_value);
+    model.min_value = (typeof question.min_value === 'number') ? question.min_value : Number(question.min_value);
+    model.max_value = (typeof question.max_value === 'number') ? question.max_value : Number(question.max_value);
+    // model.decimal_places = 0; // use default  TODO not supplied by backend yet
+    model.num_choices = (isArray(choices)) ? choices.length : choices.split(',').length;
+    model.choices = (isArray(choices)) ? sanitizeValue(choices.join(',')) : sanitizeValue(choices);
+    model.unit = sanitizeValue(question.unit);
+
+    return Object.keys(model).map(key => sanitizeValue(model[key])).join(':');
 };
+
+////
+// Question module
+////
 
 /**
 * Get Proptypes schema
