@@ -6,6 +6,6 @@ export const AppContext = React.createContext({
 });
 
 export const SurveyContext = React.createContext({
-    session_id: '',
-    survey_id: '',
+    sessionID: '',
+    surveyID: '',
 });

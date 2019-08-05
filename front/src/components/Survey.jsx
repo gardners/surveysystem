@@ -82,8 +82,7 @@ class Survey extends Component {
         this.setState({
             loading: '',
             survey,
-        });
-        this.initNextQuestion();
+        }, () => this.initNextQuestion());
     }
 
     /**
@@ -274,6 +273,7 @@ class Survey extends Component {
     }
 
     render() {
+
         // @see surveysystem/backend/include/survey.h, struct question
         const { survey, errors, answers, feedback } = this.state;
 
@@ -322,7 +322,7 @@ class Survey extends Component {
 
                 <SurveyContext.Provider value={ {
                     surveyID: survey.surveyID,
-                    sessionD: survey.sessionD,
+                    sessionID: survey.sessionID,
                 } }>
                     <SurveyForm
                         show={ !isClosed && questions.length > 0 && !this.state.loading }
