@@ -205,6 +205,7 @@ const _serializedNumberArraySequence = function(val) {
  * @returns {(string|number|boolean|null)}
  */
 const sanitizeValue = function(value) {
+    /* eslint-disable no-useless-escape */
     if (typeof value == 'string') {
         // Regex for sanitizing csv string values,
         // example build: console.log(new RegExp([':', '\'', '"'].join(''), 'g'));
@@ -212,6 +213,7 @@ const sanitizeValue = function(value) {
         .replace(/\:|'|"/g, '\\$&')
         .replace(/(?:\r\n|\r|\n)/g, ' ');
     }
+     /* eslint-enable no-useless-escape */
     return value;
 };
 
