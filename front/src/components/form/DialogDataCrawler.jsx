@@ -15,45 +15,49 @@ const { REACT_APP_MODULES_ENDPOINT } = process.env;
  * @see https://github.com/RoboSparrow/fitbit-queue/blob/master/server.js
  */
 
-const buildModuleLink = function(question, session_id) {
+const buildModuleLink = function(question, sessionID) {
     const { id, unit, choices } = question;
     let { href } = window.location;
 
-    if(!session_id) {
+    if(!sessionID) {
+        console.error('no session id');
         return null; // wait until props update
     }
 
     if (!isArray(choices) || !choices.length) {
-        return new Error(`Invalid question (${id}). Choices missing or empty.`);
+        console.error(`Invalid question (${id}). Choices missing or empty.`);
+        return null;
     }
 
     href = (href.indexOf('?') === -1) ? `${href}?progress=finished` : `${href}&progress=finished`;
     const state = JSON.stringify({
-        session_id,
+        session_id: sessionID,
         href,
     });
 
+    // insert additional units here
     switch (unit) {
         case 'fitbit-module':
             return REACT_APP_MODULES_ENDPOINT + '/fibit/login?t=' + Date.now() + '&state=' + encodeURIComponent(state);
+
         default:
-            return new Error(`(${id}) Unrecognised module: ${unit}. This is an internal error. Please proceed with the survey.`);
+            console.error(`(${id}) Unrecognised module: ${unit}. This is an internal error. Please proceed with the survey.`);
+            return null;
     }
 };
 
 const Module = function({ question, sessionID, progress, accept, reject }) {
 
     const moduleLink = buildModuleLink(question, sessionID);
-    const withModule = moduleLink && !(moduleLink instanceof Error);
 
     return (
             <React.Fragment>
             {
-                (withModule && ['finished', 'rejected'].indexOf(progress) === -1) &&
+                (moduleLink && ['finished', 'rejected'].indexOf(progress) === -1) &&
                     <div className="row">
                         <div className="col text-center">
                             <p>
-                                <a className="btn btn-primary" href={ moduleLink }>Yes</a>
+                                <a className="btn btn-success" href={ moduleLink }>Yes</a>
                             </p>
                             <small>I'm happy to provide my data</small>
                         </div>
@@ -145,7 +149,7 @@ class DialogDataCrawler extends Component {
             <SurveyContext.Consumer>
             {
                 ({ sessionID }) => (
-                    <Field.Row className={ className } question={ question } grouped={ grouped } required={ required }>{ console.log(sessionID) }
+                    <Field.Row className={ className } question={ question } grouped={ grouped } required={ required }>
                         <Field.Title grouped={ grouped } question={ question } required={ required } />
                         { (['finished', 'rejected'].indexOf(progress) === -1) && <Field.Description question={ question } grouped={ grouped } required={ required } /> }
                         <input
