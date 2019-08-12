@@ -300,7 +300,7 @@ class Survey extends Component {
                     (this.state.alerts.length) ?
                         <React.Fragment>
                             Unfortunately we encountered an error sending your data.
-                            { this.state.alerts.map((entry, index) => <ApiAlert key={ index } message={ entry } />) }
+                            { this.state.alerts.map((entry, index) => <ApiAlert key={ index } error={ entry } />) }
                         </React.Fragment> : null
                 }
 
