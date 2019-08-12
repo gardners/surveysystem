@@ -13,6 +13,7 @@ const question = {
     description: 'q1',
     type: 'TEXT',
     unit: '',
+    default_value: 'teststring',
 };
 
 const mockCallback = jest.fn((element, question, value) => {
@@ -23,7 +24,6 @@ beforeAll(() => {
     component = renderer.create(
         <HiddenInput
             question={ question }
-            defaultValue="teststring"
             handleChange={ mockCallback } />,
     );
 });
@@ -42,4 +42,10 @@ it('handleChange callback is invoked on mount', () => {
     expect(mockCallback.mock.calls[0][2]).toBe("teststring");
     // returns defaultValue as value
     expect(mockCallback.mock.results[0].value).toBe("teststring");
+});
+
+it('form element renders default value', () => {
+    const instance = component.root;
+    const input = instance.find(node => node.type === 'input');
+    expect(input.props.value).toEqual('teststring');
 });

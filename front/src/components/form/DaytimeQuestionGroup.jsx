@@ -33,9 +33,9 @@ const ListItem = function({ index, question, value, minValue, handleProgress, to
                         <div className="col-md-4 text-right">
                         {
                             (index === 0) ?
-                                <small className="text-muted"><DaytimeIcon seconds={ value } /></small>
+                                <small className="text-muted"><DaytimeIcon value={ value } /></small>
                             :
-                                <small className="text-muted">{ formatDayTimeDiff(minValue, value) } <DaytimeIcon seconds={ value } /></small>
+                                <small className="text-muted">{ formatDayTimeDiff(minValue, value) } <DaytimeIcon value={ value } /></small>
                         }
                         </div>
                     </div>
@@ -274,7 +274,7 @@ class DaytimeQuestionGroup extends Component {
                                                     :
                                                         <DaytimeInput
                                                             namespace={ question.id }
-                                                            seconds={ values[index] }
+                                                            value={ values[index] }
                                                             handleSubmit={ this.handleChange.bind(this, index) }
                                                         />
                                                 }
