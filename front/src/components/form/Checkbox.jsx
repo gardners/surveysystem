@@ -54,7 +54,7 @@ class Checkbox extends Component {
                     <button
                         id={ question.id}
                         name={ question.name }
-                        className={ (checked) ? 'btn' : 'btn' }
+                        className="btn"
                         onClick={
                             (e) => {
                                 e.preventDefault();

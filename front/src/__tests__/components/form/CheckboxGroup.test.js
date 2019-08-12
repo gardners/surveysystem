@@ -17,6 +17,7 @@ beforeAll(() => {
                 type: 'TEXT',
                 choices: [ 'choice1', 'choice2' ],
                 unit: '',
+                default_value: 'choice2',
             } }
             handleChange= { () => {} } />,
     );
@@ -29,9 +30,19 @@ it('renders without crashing', () => {
 
 it('renders inut[type=checkbox] components as children', () => {
     const instance = component.root;
-    const boxes = instance.findAll(node => node.type === 'input' &&  node.props.type === "checkbox");
+    const boxes = instance.findAll(node => node.type === 'button');
     const values = boxes.map(node => node.props.value);
 
     expect(values.toString()).toEqual('choice1,choice2');
     expect(boxes.length).toEqual(2);
+});
+
+it('form element renders default value', () => { 
+    const instance = component.root;
+    const boxes = instance.findAll(node => node.type === 'button');
+    
+    // selected button
+    expect(boxes[1].props.value).toEqual('choice2');
+    const fa = boxes[1].find(node => node.type === 'i');
+    expect(fa.props.className).toContain('fa-check-square');
 });
