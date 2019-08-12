@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { ApiError } from '../api';
+import Toggle from './Toggle';
 
 class ApiAlert extends Component {
     constructor(props) {
@@ -23,19 +24,41 @@ class ApiAlert extends Component {
             return(null);
         }
 
-        const { message } = this.props;
-        const isErr = (message instanceof Error);
-
-        const status = (message instanceof ApiError) ? message.status : 0;
-        const statusText = (message instanceof ApiError) ? message.statusText : '';
-        const url = (message instanceof ApiError) ? message.url : '';
+        const { error } = this.props;
+        
+        let reason =  (error instanceof Error) ? error.message : String(error);
+        let details = '';
+        let url = '';
+        let status = '';
+        let statusText = '';
+        
+        // @see fcgmain.c: quick_error()
+        try {
+            const json = JSON.parse(reason);
+            reason = json.message || reason;
+            details = json.trace || '';
+        } catch (e) {
+            // nothing
+        }
+        
+        // @see api.js
+        if (error instanceof ApiError) {
+            ({ url, status, statusText} = error);
+        }
 
         return (
             <div className="alert alert-danger" role="alert">
                 <button type="button" className="close" data-dismiss="alert" aria-label="Close" onClick= { this.toggle.bind(this) }><span aria-hidden="true">&times;</span></button>
-                { statusText && <h4 className="alert-heading">{ statusText } ({ status })</h4> }
-                <div><small>{ (isErr) ? message.toString() : message }</small></div>
-                { (url) ? <small><hr /> • { url }</small> : null }
+
+                <div><strong>SurveyError:</strong> { reason }</div>
+                <Toggle classNameToggle="d-block text-default" className="p-2">
+                    More info..
+                    <ul style={ { fontSize: '.85em' } }>
+                        { statusText && <li><strong>status:</strong> { statusText } ({ status })</li> }
+                        { url && <li><strong>url:</strong> { url }</li> }
+                        { details && <li><strong>details:</strong> { details }</li> }
+                    </ul>
+                </Toggle>
             </div>
         );
     }
@@ -46,7 +69,7 @@ ApiAlert.defaultProps = {
 };
 
 ApiAlert.propTypes = {
-    message:  PropTypes.oneOfType([
+    error:  PropTypes.oneOfType([
         PropTypes.instanceOf(Error),
         PropTypes.string,
     ]).isRequired,
