@@ -209,9 +209,12 @@ const sanitizeValue = function(value) {
     if (typeof value == 'string') {
         // Regex for sanitizing csv string values,
         // example build: console.log(new RegExp([':', '\'', '"'].join(''), 'g'));
+        
+        /* eslint-disable no-useless-escape */
         return value.trim()
         .replace(/\:|'|"/g, '\\$&')
         .replace(/(?:\r\n|\r|\n)/g, ' ');
+        /* eslint-enable no-useless-escape */
     }
      /* eslint-enable no-useless-escape */
     return value;

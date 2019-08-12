@@ -92,7 +92,7 @@ class Analysis extends Component {
                 <section>
                      <h1>Analysis</h1>
                      Unfortunately we encountered an error retrieving your data.
-                    { this.state.alerts.map((entry, index) => <ApiAlert key={ index } message={ entry } />) }
+                    { this.state.alerts.map((entry, index) => <ApiAlert key={ index } error={ entry } />) }
                      <button onClick={ () => window.location.reload() } className="btn btn-secondary">Reload</button>&nbsp;
                      <Link to={ `/survey/${surveyID}` } className="btn bn-lg btn-secondary">Back to survey</Link>
                 </section>
