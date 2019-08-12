@@ -25,7 +25,7 @@ class DaytimeInput extends Component  {
     }
 
     componentDidMount() {
-        const parsed = parseDayTime(this.props.seconds);
+        const parsed = parseDayTime(this.props.value);
         this.setState({
             hours: parsed.hours,
             minutes: parsed.mins,
@@ -35,8 +35,8 @@ class DaytimeInput extends Component  {
     }
 
     componentDidUpdate(prevProps) {
-        if (prevProps.seconds !== this.props.seconds) {
-            const parsed = parseDayTime(this.props.seconds);
+        if (prevProps.value !== this.props.value) {
+            const parsed = parseDayTime(this.props.value);
             this.setState({
                 hours: parsed.hours,
                 minutes: parsed.mins,
@@ -148,12 +148,12 @@ class DaytimeInput extends Component  {
 };
 
 DaytimeInput.defaultProps = {
-    seconds: 0,
+    value: 0,
     minuteStep: 5,
 };
 
 DaytimeInput.propTypes = {
-    seconds: PropTypes.number,
+    value: PropTypes.number,
     namespace: PropTypes.string.isRequired,
     handleSubmit: PropTypes.func.isRequired,
     minuteStep: PropTypes.number,

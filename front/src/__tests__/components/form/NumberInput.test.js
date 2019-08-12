@@ -16,6 +16,7 @@ beforeAll(() => {
                 description: 'q1',
                 type: 'INT',
                 unit: '',
+                default_value: '99',
             } }
             handleChange= { () => {} } />,
     );
@@ -24,4 +25,11 @@ beforeAll(() => {
 it('renders without crashing', () => {
     const tree = component.toJSON();
     expect(tree).toMatchSnapshot();
+});
+
+
+it('form element renders default value', () => {
+    const instance = component.root;
+    const input = instance.find(node => node.type === 'input');
+    expect(input.props.value).toEqual(99);
 });
