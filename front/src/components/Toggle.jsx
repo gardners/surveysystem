@@ -23,7 +23,7 @@ class Toggle extends Component{
         const cls = (!open) ? `d-print-block d-none` : '';
         return(
             <div className={ this.props.className }>
-                <div role="menuitem" className="d-block text-primary" onClick={ this.toggle.bind(this) }>
+                <div role="menuitem" className={ this.props.classNameToggle } onClick={ this.toggle.bind(this) }>
                     { (!open) ? <i className="fas fa-caret-down d-inline-block d-print-none"></i> : <i className="fas fa-caret-up d-inline-block  d-print-none"></i> }<div className="d-inline-block ml-2">{ header }</div>
                 </div>
                 <div className={ cls }>{ contents }</div>
@@ -35,12 +35,13 @@ class Toggle extends Component{
 
 Toggle.defaultProps = {
     open: false,
-
+    classNameToggle: 'd-block text-primary',
 };
 
 Toggle.propTypes = {
     open: PropTypes.bool,
     className: PropTypes.string,
+    classNameToggle: PropTypes.string,
 };
 
 export default Toggle;
