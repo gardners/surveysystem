@@ -15,8 +15,9 @@ beforeAll(() => {
                 title: 'q1',
                 description: 'q1',
                 type: 'TEXT',
-                choices: [ 'choice1', 'choice2' ],
+                choices: [ 'choice1', 'choice2', 'choice3' ],
                 unit: '',
+                default_value: 'choice1,choice3',
             } }
             handleChange= { () => {} } />,
     );
@@ -32,6 +33,12 @@ it('renders options from question.choices', () => {
     const options = instance.findAllByType('option');
     const values = options.map(node => node.props.value);
 
-    expect(values.toString()).toEqual('choice1,choice2');
-    expect(options.length).toEqual(2);
+    expect(values.toString()).toEqual('choice1,choice2,choice3');
+    expect(options.length).toEqual(3);
+});
+
+it('form element renders default value', () => {
+    const instance = component.root;
+    const input = instance.find(node => node.type === 'select'); 
+    expect(input.props.value.toString()).toEqual('choice1,choice3');
 });
