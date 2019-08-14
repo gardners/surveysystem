@@ -5,7 +5,7 @@ import Field from './Field';
 import QuestionModel from '../../Question';
 
 import { parseDayTime, formatDayTimeDiff, formatDayTime } from '../../Utils';
-import { AppContext } from '../../AppContext';
+import { AppContext } from '../../Context';
 
 import InputRange from 'react-input-range';
 import { DaytimeInput } from './TimePicker';
@@ -17,9 +17,9 @@ import './DayTimeSlider.scss';
  * DaytimeIcon
  */
 
-const DaytimeIcon = function({ seconds, style }) {
+const DaytimeIcon = function({ value, style }) {
 
-    const dt = parseDayTime(seconds);
+    const dt = parseDayTime(value);
     const icon = (dt.hours24 < 8 || dt.hours24 > 18) ? 'moon' : 'sun';
 
     return (<i className = { `fas fa-${icon}` } style={ style } />);
@@ -30,7 +30,7 @@ DaytimeIcon.defaultProps = {
 };
 
 DaytimeIcon.propTypes = {
-    seconds: PropTypes.number.isRequired,
+    value: PropTypes.number.isRequired,
     style: PropTypes.object,
 };
 
@@ -38,12 +38,12 @@ DaytimeIcon.propTypes = {
  * DaytimeLabel
  */
 
-const DaytimeLabel = function({ seconds }) {
+const DaytimeLabel = function({ value }) {
     return (
         <span className="daytimeslider--label">
             <span className="inner tick" />
             <span className="inner text">
-                { formatDayTime(seconds) }
+                { formatDayTime(value) }
             </span>
         </span>
     );
@@ -54,7 +54,7 @@ DaytimeLabel.defaultProps = {
 };
 
 DaytimeLabel.propTypes = {
-    seconds: PropTypes.number.isRequired,
+    value: PropTypes.number.isRequired,
     style: PropTypes.object,
 };
 
@@ -89,7 +89,7 @@ const Gutter = function({ min, max, className, component }) {
                             left: ((index / (length - 1)) * 100) + '%' ,
                         };
                         return (
-                            <span key={ index } style={ style } ><Component seconds={ step } style={ { marginLeft: '-50%' } } /></span>
+                            <span key={ index } style={ style } ><Component value={ step } style={ { marginLeft: '-50%' } } /></span>
                         );
                     })
                 }
@@ -127,7 +127,7 @@ const ListItem = function({ index, choice, value, handleProgress, touched, activ
                             <strong className="text-primary" >{ formatDayTime(value) }</strong>
                         </div>
                         <div className="col-md-4 text-right">
-                            <small className="text-muted">{ formatDayTimeDiff(minValue(minValue, value), value) } <DaytimeIcon seconds={ value } /></small>
+                            <small className="text-muted">{ formatDayTimeDiff(minValue(minValue, value), value) } <DaytimeIcon value={ value } /></small>
                         </div>
                     </div>
                 :
@@ -355,7 +355,7 @@ class DaytimeSequence extends Component {
                                                     :
                                                         <DaytimeInput
                                                             namespace={ question.id }
-                                                            seconds={ values[index] }
+                                                            value={ values[index] }
                                                             handleSubmit={ this.handleSubmit.bind(this, index) }
                                                         />
                                                 }

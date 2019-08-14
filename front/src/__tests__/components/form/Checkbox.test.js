@@ -12,8 +12,9 @@ const question = {
     title: 'q1',
     description: 'q1',
     type: 'CHECKBOX',
-    choices: [ 'uncheckedVal', 'checkedVal' ],
+    choices: [ 'unchecked', 'checked' ],
     unit: '',
+    default_value: 'checked',
 };
 
 beforeAll(() => {
@@ -29,4 +30,9 @@ it('renders without crashing', () => {
     expect(tree).toMatchSnapshot();
 });
 
-// TODO test  handleChange supplying first choice
+it('form element renders default value', () => { 
+    const instance = component.root;
+    const input = instance.find(node => node.type === 'button'); //
+    const fa = input.find(node => node.type === 'i');
+    expect(fa.props.className).toContain('fa-check-square');
+});

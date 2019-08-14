@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import Field from './Field';
 import QuestionModel from '../../Question';
-import { AppContext } from '../../AppContext';
+import { AppContext } from '../../Context';
 
 import './RadioMatrix.scss';
 
