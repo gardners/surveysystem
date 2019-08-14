@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 
 // apis
-import api from '../api';
+import Api from '../Api';
 import { normalizeAnalysis } from '../Analysis';
 
 import ApiAlert from './ApiAlert';
@@ -53,7 +53,7 @@ class Analysis extends Component {
             loading: 'Fetching evaluation...',
         });
 
-        api.getAnalysis(sessionID)
+        Api.getAnalysis(sessionID)
         .then(evaluation => this.setState({
             evaluation,
             loading: '',
