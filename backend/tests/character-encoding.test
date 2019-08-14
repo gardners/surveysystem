@@ -24,9 +24,9 @@ endofsession
 request 200 nextquestion?sessionid=$SESSION
 match_string {"next_questions": [{"id": "characterencoding", "name": "characterencoding", "title": "Select one from the ‘following’", "description": "Description for ‘following’", "type": "SINGLECHOICE", "choices": ["`31`", "`42ö`", "ümlaut"], "unit": ""}]}
 
-request 200 addanswer?sessionid=$SESSION&answer=characterencoding:Ford:0:0:0:0:0:0:0::0
+request 200 addanswer?sessionid=$SESSION&answer=characterencoding:96ö:0:0:0:0:0:0:0::0
 # Make sure answer ends up in file
 verify_session
 field_unit/ee0a452e61f1a1a6f11084f9af7cbf2ac69cb728
-characterencoding:`42ö`:0:0:0:0:0:0:0::0
+characterencoding:96ö:0:0:0:0:0:0:0::0
 endofsession

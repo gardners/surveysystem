@@ -18,6 +18,7 @@
 #include "survey.h"
 #include "serialisers.h"
 #include "question_types.h"
+#include "timeutils.h"
 
 #define          CHECKPOINT() { fprintf(stderr,"%s:%d:%s():pid=%d: Checkpoint\n",__FILE__,__LINE__,__FUNCTION__,getpid()); }
 
@@ -207,17 +208,7 @@ static const char *const pages[PAGE__MAX] = {
   "fastcgitest",
   "analyse"
 };
-  
-void dump_errors_kcgi(struct kreq *req)
-{
-  for(int i=0;i<error_count;i++) {
-    char msg[1024];
-    snprintf(msg,1024,"%s<br>\n",error_messages[i]);
-    khttp_puts(req,msg);
-  }
-  return;
-}
-
+ 
 void usage(void)
 {
   fprintf(stderr,
@@ -332,7 +323,7 @@ void quick_error(struct kreq *req,int e,const char *msg)
     
     // Emit mime-type
     er = khttp_head(req, kresps[KRESP_CONTENT_TYPE], 
-		    "%s", kmimetypes[req->mime]);
+		    "%s", kmimetypes[KMIME_APP_JSON]);
     if (KCGI_HUP == er) {
       fprintf(stderr, "khttp_head: interrupt\n");
       continue;
@@ -351,12 +342,25 @@ void quick_error(struct kreq *req,int e,const char *msg)
       break;
     }
     
+    struct kjsonreq jsonreq;
+    kjson_open(&jsonreq, req); 
+    kcgi_writer_disable(req); 
+    kjson_obj_open(&jsonreq);
+    
     // Write some stuff in reply
-    er = khttp_puts(req, msg);
-    if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
-
+    kjson_putstringp(&jsonreq, "message", msg);
+    
     // Display error log as well.
-    dump_errors_kcgi(req);
+    kjson_stringp_open(&jsonreq, "trace");
+    for(int i = 0; i < error_count; i++) {
+      char line[1024];
+      snprintf(line, 1024, "%s\n", error_messages[i]);
+      kjson_string_puts(&jsonreq, line);
+    }
+    kjson_string_close(&jsonreq); 
+    
+    kjson_obj_close(&jsonreq); 
+    kjson_close(&jsonreq);
     
   } while(0);
 
@@ -457,24 +461,42 @@ static void fcgi_newsession(struct kreq *req)
     struct kpair *survey = req->fieldmap[KEY_SURVEYID];
     if (!survey) {
       // No survey ID, so return 400
-      quick_error(req,KHTTP_400,"surveyid missing");
       LOG_ERROR("surveyid missing from query string");
+      quick_error(req, KHTTP_400, "Surveyid missing.");
+      break;
     }
 
     char session_id[1024];
     if (create_session(survey->val,session_id)) {
-      begin_500(req);
-      er = khttp_puts(req, "<h1>500 Internal Error. Session could not be created.</h1>\n");
-      if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
-      er = khttp_puts(req, "Error log:<br>\n");
-      if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
-      dump_errors_kcgi(req);
+      quick_error(req, KHTTP_500, "Session could not be created.");
+      LOG_ERROR("create_session() failed");
       break;
     }    
     
+    // create session meta log file, log user and creation time
+    
+    char *user_name = "anonymous";
+    if (req->rawauth.d.digest.user) {
+      user_name = strdup(req->rawauth.d.digest.user);
+    }
+    
+    time_t now = time(0);
+    char created[25] = { '\0' };
+    if(!format_time_ISO8601(now, created, 25)) {
+      LOG_WARNV("could not fromat ISO8601 timestamp for session %s.", session_id );
+    }
+  
+    char user_message[1024];
+    snprintf(user_message, 1024, "username %s\nsurveyid %s\nsessionid %s\ncreated %s by user %s", user_name, survey->val, session_id, created, user_name);
+    
+    if (session_add_userlog_message(session_id, user_message)) {
+      quick_error(req, KHTTP_500, "Error handling session user data.");
+      LOG_ERRORV("Could not add user info for session %s.", session_id);
+      break;
+    }
+    
+    // reply
     begin_200(req);
-
-    // Write some stuff in reply
     er = khttp_puts(req, session_id);
     if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
     LOG_INFO("Leaving page handler");
@@ -496,60 +518,83 @@ static void fcgi_addanswer(struct kreq *req)
     struct kpair *session = req->fieldmap[KEY_SESSIONID];
     if (!session) {
       // No session ID, so return 400
-      quick_error(req,KHTTP_400,"sessionid missing");
-      LOG_ERROR("sessionid missing from query string");
+      quick_error(req,KHTTP_400,"Sessionid missing.");
+      LOG_ERROR("Sessionid missing. from query string");
+      break;
     }
+    
     if (!session->val) {
       quick_error(req,KHTTP_400,"sessionid is blank");
       LOG_ERROR("sessionid is blank");
+      break;
     }
+    
     char *session_id=session->val;
-
-    if (lock_session(session_id)) LOG_ERRORV("Failed to lock session '%s'",session_id);    
+    
+    // joerg: break if session could not be updated
+    if (lock_session(session_id)) {
+      quick_error(req,KHTTP_500,"Failed to lock session");
+      LOG_ERRORV("failed to lock session '%s'",session_id);
+      break;
+    }
     
     struct session *s=load_session(session_id);
+    
     if (!s) {
       quick_error(req,KHTTP_400,"Could not load specified session. Does it exist?");
       LOG_ERRORV("Could not load session '%s'",session_id);
+      break;
     }
 
     struct kpair *answer = req->fieldmap[KEY_ANSWER];
     if (!answer) {
       // No answer, so return 400
-      quick_error(req,KHTTP_400,"answer missing");
+      quick_error(req,KHTTP_400,"Answer missing.");
       LOG_ERROR("answer is missing");
+      break;
     }
+    
     if (!answer->val) {
-      quick_error(req,KHTTP_400,"answer is blank");
+      quick_error(req,KHTTP_400,"Answer is blank.");
+      LOG_ERROR("answer is blank");
       break;
     }
 
     // Deserialise answer
     struct answer *a=calloc(sizeof(struct answer),1);
     if (!a) {
-      quick_error(req,KHTTP_500,"calloc() of answer structure failed.");
+      quick_error(req,KHTTP_500, "Error allocating answer.");
+      LOG_ERROR("calloc() of answer structure failed.");
+      break;
     }
 
     if (deserialise_answer(answer->val,a)) {
       free_answer(a); a=NULL;
-      quick_error(req,KHTTP_400,"Could not deserialise answer");
+      quick_error(req,KHTTP_400,"Could not deserialise answer.");
+      LOG_ERROR("deserialise_answer() failed.");
       break;
     }
 
     if (session_add_answer(s,a)) {
       free_answer(a); a=NULL;
-      quick_error(req,KHTTP_400,"session_add_answer() failed");
+      quick_error(req,KHTTP_400,"Invalid answer, could not add to session.");
+      LOG_ERROR("session_add_answer() failed.");
       break;
     }
+    
     if (a) free_answer(a);
     a=NULL;
     
-    if (save_session(s)) LOG_ERRORV("save_session('%s') failed",session_id);
+    // joerg: break if session could not be updated
+    if (save_session(s)) {
+      quick_error(req,KHTTP_500,"Unable to update session.");
+      LOG_ERRORV("save_session('%s') failed",session_id);
+      break;
+    }
 
     
     // All ok, so tell the caller the next question to be answered
     fcgi_nextquestion(req);
-
     LOG_INFO("Leaving page handler.");
     
   } while(0);
@@ -568,72 +613,100 @@ static void fcgi_updateanswer(struct kreq *req)
     LOG_INFO("Entering page handler.");
 
     struct kpair *session = req->fieldmap[KEY_SESSIONID];
+    
     if (!session) {
       // No session ID, so return 400
-      quick_error(req,KHTTP_400,"sessionid missing");
+      quick_error(req,KHTTP_400,"Sessionid missing.");
+      LOG_ERROR("Sessionid missing. from query string");
       break;
     }
+    
     if (!session->val) {
       quick_error(req,KHTTP_400,"sessionid is blank");
+      LOG_ERROR("sessionid is blank");
       break;
     }
+    
     char *session_id=session->val;
 
-    if (lock_session(session_id)) LOG_ERRORV("Failed to lock session '%s'",session_id);    
+    // joerg: break if session could not be updated
+    if (lock_session(session_id)) {
+      quick_error(req,KHTTP_500,"Failed to lock session");
+      LOG_ERRORV("failed to lock session '%s'",session_id);
+      break;
+    }
     
     struct session *s=load_session(session_id);
+    
     if (!s) {
       quick_error(req,KHTTP_400,"Could not load specified session. Does it exist?");
+      LOG_ERRORV("Could not load session '%s'",session_id);
       break;
     }
 
     struct kpair *answer = req->fieldmap[KEY_ANSWER];
     if (!answer) {
       // No answer, so return 400
-      quick_error(req,KHTTP_400,"answer missing");
+      quick_error(req,KHTTP_400,"Answer missing.");
+      LOG_ERROR("answer is missing");
       break;
     }
+    
     if (!answer->val) {
-      quick_error(req,KHTTP_400,"answer is blank");
+      quick_error(req,KHTTP_400,"Answer is blank.");
+      LOG_ERROR("answer is blank");
       break;
     }
 
     // Deserialise answer
     struct answer *a=calloc(sizeof(struct answer),1);
     if (!a) {
-      quick_error(req,KHTTP_500,"calloc() of answer structure failed.");
+      quick_error(req,KHTTP_500, "Error allocating answer.");
+      LOG_ERROR("calloc() of answer structure failed.");
+      break;
     }
+    
     if (deserialise_answer(answer->val,a)) {
-      quick_error(req,KHTTP_400,"Could not deserialise answer");
+      free_answer(a); a=NULL;
+      quick_error(req,KHTTP_400,"Could not deserialise answer.");
+      LOG_ERROR("deserialise_answer() failed.");
       break;
     }
-
+    
     if (!a) {
-      quick_error(req,KHTTP_400,"Deserialised answer is null");
+      quick_error(req,KHTTP_400,"Required Answer value is blank.");
+      LOG_ERROR("deserialise_answer() failed. (answer is null)");
       break;
     }
+    
     if (session_delete_answers_by_question_uid(s,a->uid,0)<0) {
       if (a) free_answer(a);
       a=NULL;
-      quick_error(req,KHTTP_400,"session_delete_answers_by_question_uid() failed");
+      // TODO could be both 400 or 500 (storage, serialization, not in session)
+      quick_error(req,KHTTP_400,"Answer does not match existing session records.");
+      LOG_ERROR("session_delete_answers_by_question_uid() failed");
       break;
     }
+    
     if (session_add_answer(s,a)) {
       if (a) free_answer(a);
       a=NULL;
-      quick_error(req,KHTTP_400,"session_add_answer() failed");
+      quick_error(req,KHTTP_400,"Invalid answer, could not add to session.");
+      LOG_ERROR("session_add_answer() failed.");
       break;
     }
+    
+    if (a) free_answer(a);
+    a=NULL;
+
     if (save_session(s)) {
-      if (a) free_answer(a);
-      a=NULL;
-      quick_error(req,KHTTP_400,"save_session() failed");
+      quick_error(req,KHTTP_500,"Unable to update session.");
       LOG_ERRORV("save_session('%s') failed",session_id);
+      break;
     }
     
     // All ok, so tell the caller the next question to be answered
     fcgi_nextquestion(req);
-
     LOG_INFO("Leaving page handler.");
     
   } while(0);
@@ -652,84 +725,123 @@ static void fcgi_delanswer(struct kreq *req)
     LOG_INFO("Entering page handler.");
 
     struct kpair *session = req->fieldmap[KEY_SESSIONID];
+
     if (!session) {
       // No session ID, so return 400
-      quick_error(req,KHTTP_400,"sessionid missing");
+      quick_error(req,KHTTP_400,"Sessionid missing.");
+      LOG_ERROR("Sessionid missing. from query string");
       break;
     }
+    
     if (!session->val) {
       quick_error(req,KHTTP_400,"sessionid is blank");
+      LOG_ERROR("sessionid is blank");
       break;
     }
+    
     char *session_id=session->val;
-    if (lock_session(session_id)) LOG_ERRORV("Failed to lock session '%s'",session_id);    
+    
+    if (lock_session(session_id)) {
+      quick_error(req,KHTTP_500,"Failed to lock session");
+      LOG_ERRORV("failed to lock session '%s'",session_id);
+      break;
+    }
+    
     struct session *s=load_session(session_id);
+    
     if (!s) {
       quick_error(req,KHTTP_400,"Could not load specified session. Does it exist?");
+      LOG_ERRORV("Could not load session '%s'",session_id);
       break;
     }
 
     struct kpair *question = req->fieldmap[KEY_QUESTIONID];
     struct kpair *answer = req->fieldmap[KEY_ANSWER];
+    
     if ((!answer)&&(!question)) {
       // No answer, so return 400
-      quick_error(req,KHTTP_400,"answer missing");
+      quick_error(req,KHTTP_400,"Question or Answer missing.");
+      LOG_ERROR("question or answer is missing");
       break;
     }
+    
     if (answer&&(!answer->val)) {
-      quick_error(req,KHTTP_400,"answer is blank");
+      quick_error(req,KHTTP_400,"Answer is blank.");
+      LOG_ERROR("answer is blank");
       break;
     }
+    
     if (question&&(!question->val)) {
-      quick_error(req,KHTTP_400,"question is blank");
+      quick_error(req,KHTTP_400,"Question is blank.");
+      LOG_ERROR("question is blank");
       break;
     }
+    
     if (answer&&question) {
-      quick_error(req,KHTTP_400,"You cannot provide both a question ID and and answer when deleting answer(s) to a question");
+      quick_error(req,KHTTP_400,"You cannot provide both a question ID and and answer when deleting answer(s) to a question.");
+      LOG_ERROR("Yinvalid - provided both a question ID and and answer for deletion.");
       break;
     }
 
-    // We have an answer -- so delete the specific answer
     if (answer&&answer->val) {
+      
+      /* 
+       * We have an answer -- so delete the specific answer 
+       */
+       
       // Deserialise answer
       struct answer *a=calloc(sizeof(struct answer),1);
       if (!a) {
-	quick_error(req,KHTTP_500,"calloc() of answer structure failed.");
+	quick_error(req,KHTTP_500, "Error allocating answer.");
+	LOG_ERROR("calloc() of answer structure failed.");
+	break;
       }
 
       if (deserialise_answer(answer->val,a)) {
 	if (a) free_answer(a);
 	a=NULL;
-	quick_error(req,KHTTP_400,"deserialise_answer() failed");
+	quick_error(req,KHTTP_400,"Could not deserialise answer.");
+	LOG_ERROR("deserialise_answer() failed.");
 	break;
       }
+      
       // We have an answer, so try to delete it.
       if (session_delete_answer(s,a,0)) {
 	if (a) free_answer(a);
 	a=NULL;
-	quick_error(req,KHTTP_400,"session_delete_answer() failed");
+	// TODO could be both 400 or 500 (storage, serialization, not in session)
+	quick_error(req,KHTTP_400,"Answer fmarked for deletion does not match existing session records.");
+	LOG_ERROR("session_delete_answer() failed");
 	break;
       }
     }
     else if (question&&question->val) {
-      // No answer give, so delete all answers to the given question
+      
+      /* 
+       * We have a question -- so delete all answers to the given question 
+       */
+       
       if (session_delete_answers_by_question_uid(s,question->val,0)<0) {
-	quick_error(req,KHTTP_400,"session_delete_answers_by_question_uid() failed");
+	// TODO could be both 400 or 500 (storage, serialization, not in session)
+	quick_error(req,KHTTP_400,"Answer does not match existing session records.");
+	LOG_ERROR("session_delete_answers_by_question_uid() failed");
 	break;
       }      
     }
     else {
-      quick_error(req,KHTTP_400,"Either a question ID or an answer must be providd");
+      quick_error(req,KHTTP_400,"Either a question ID or an answer must be provided");
+      LOG_ERROR("either a question ID or an answer must be provided");
       break;
     }
+    
     if (save_session(s)) {
-      quick_error(req,KHTTP_400,"save_session() failed");
+      quick_error(req,KHTTP_500,"Unable to update session.");
       LOG_ERRORV("save_session('%s') failed",session_id);
+      break;
     }
     
     // All ok, so tell the caller the next question to be answered
     fcgi_nextquestion(req);
-
     LOG_INFO("Leaving page handler.");
     
   } while(0);
@@ -747,81 +859,123 @@ static void fcgi_delanswerandfollowing(struct kreq *req)
     LOG_INFO("Entering page handler.");
 
     struct kpair *session = req->fieldmap[KEY_SESSIONID];
+
     if (!session) {
       // No session ID, so return 400
-      quick_error(req,KHTTP_400,"sessionid missing");
+      quick_error(req,KHTTP_400,"Sessionid missing.");
+      LOG_ERROR("Sessionid missing. from query string");
       break;
     }
+    
     if (!session->val) {
       quick_error(req,KHTTP_400,"sessionid is blank");
+      LOG_ERROR("sessionid is blank");
       break;
     }
+    
     char *session_id=session->val;
-    if (lock_session(session_id)) LOG_ERRORV("Failed to lock session '%s'",session_id);    
+    
+    if (lock_session(session_id)) {
+      quick_error(req,KHTTP_500,"Failed to lock session");
+      LOG_ERRORV("failed to lock session '%s'",session_id);
+      break;
+    }
+    
     struct session *s=load_session(session_id);
+    
     if (!s) {
       quick_error(req,KHTTP_400,"Could not load specified session. Does it exist?");
+      LOG_ERRORV("Could not load session '%s'",session_id);
       break;
     }
 
     struct kpair *question = req->fieldmap[KEY_QUESTIONID];
     struct kpair *answer = req->fieldmap[KEY_ANSWER];
+
     if ((!answer)&&(!question)) {
       // No answer, so return 400
-      quick_error(req,KHTTP_400,"answer missing");
+      quick_error(req,KHTTP_400,"Question or Answer missing.");
+      LOG_ERROR("question or answer is missing");
       break;
     }
+    
     if (answer&&(!answer->val)) {
-      quick_error(req,KHTTP_400,"answer is blank");
+      quick_error(req,KHTTP_400,"Answer is blank.");
+      LOG_ERROR("answer is blank");
       break;
     }
+    
     if (question&&(!question->val)) {
-      quick_error(req,KHTTP_400,"question is blank");
+      quick_error(req,KHTTP_400,"Question is blank.");
+      LOG_ERROR("question is blank");
       break;
     }
+    
     if (answer&&question) {
-      quick_error(req,KHTTP_400,"You cannot provide both a question ID and and answer when deleting answer(s) to a question");
+      quick_error(req,KHTTP_400,"You cannot provide both a question ID and and answer when deleting answer(s) to a question.");
+      LOG_ERROR("Yinvalid - provided both a question ID and and answer for deletion.");
       break;
     }
 
-    // We have an answer -- so delete the specific answer
     if (answer&&answer->val) {
+
+      /* 
+       * We have an answer -- so delete the specific answer 
+       */
+      
       // Deserialise answer
       struct answer *a=calloc(sizeof(struct answer),1);
       if (!a) {
-	quick_error(req,KHTTP_500,"calloc() of answer structure failed.");
-      }
-      if (deserialise_answer(answer->val,a)) {
-	quick_error(req,KHTTP_400,"deserialise_answer() failed");
+	quick_error(req,KHTTP_500, "Error allocating answer.");
+	LOG_ERROR("calloc() of answer structure failed.");
 	break;
       }
-      // We have an answer, so try to delete it.
-      if (session_delete_answer(s,a,1)) {
+      
+      if (deserialise_answer(answer->val,a)) {
 	if (a) free_answer(a);
 	a=NULL;
-	quick_error(req,KHTTP_400,"session_delete_answer() failed");
+	quick_error(req,KHTTP_400,"Could not deserialise answer.");
+	LOG_ERROR("deserialise_answer() failed.");
+	break;
+      }
+      
+      // We have an answer, so try to delete it.
+      if (session_delete_answer(s,a,0)) {
+	if (a) free_answer(a);
+	a=NULL;
+	// TODO could be both 400 or 500 (storage, serialization, not in session)
+	quick_error(req,KHTTP_400,"Answer fmarked for deletion does not match existing session records.");
+	LOG_ERROR("session_delete_answer() failed");
 	break;
       }
     }
     else if (question&&question->val) {
-      // No answer give, so delete all answers to the given question
-      if (session_delete_answers_by_question_uid(s,question->val,0)<0) {
-	quick_error(req,KHTTP_400,"session_delete_answers_by_question_uid() failed");
-	break;
-      }      
+      
+      /* 
+       * We have a question -- so delete all answers to the given question 
+       */
+       
+      if (session_delete_answers_by_question_uid(s,question->val,0) < 1) {
+	      // TODO could be both 400 or 500 (storage, serialization, not in session)
+	      quick_error(req,KHTTP_400,"Answer does not match existing session records.");
+	      LOG_ERROR("session_delete_answers_by_question_uid() failed");
+	      break;
+      }   
     }
     else {
-      quick_error(req,KHTTP_400,"Either a question ID or an answer must be providd");
+      quick_error(req,KHTTP_400,"Either a question ID or an answer must be provided");
+      LOG_ERROR("either a question ID or an answer must be provided");
       break;
     }
+    
     if (save_session(s)) {
-      quick_error(req,KHTTP_400,"save_session() failed");
+      quick_error(req,KHTTP_500,"Unable to update session.");
       LOG_ERRORV("save_session('%s') failed",session_id);
+      break;
     }
     
     // All ok, so tell the caller the next question to be answered
     fcgi_nextquestion(req);
-
     LOG_INFO("Leaving page handler.");
     
   } while(0);
@@ -831,43 +985,81 @@ static void fcgi_delanswerandfollowing(struct kreq *req)
 }
 
 
-static void fcgi_delsession(struct kreq *r)
+static void fcgi_delsession(struct kreq *req)
 {
-  //  enum kcgi_err    er;
+  enum kcgi_err    er;
   int retVal=0;
   
   do {
 
     LOG_INFO("Entering page handler.");
     
-    struct kpair *session = r->fieldmap[KEY_SESSIONID];
+    struct kpair *session = req->fieldmap[KEY_SESSIONID];
+
     if (!session) {
       // No session ID, so return 400
-      quick_error(r,KHTTP_400,"sessionid missing");
+      quick_error(req,KHTTP_400,"Sessionid missing.");
+      LOG_ERROR("Sessionid missing. from query string");
       break;
     }
+    
     if (!session->val) {
-      quick_error(r,KHTTP_400,"sessionid is blank");
+      quick_error(req,KHTTP_400,"sessionid is blank");
+      LOG_ERROR("sessionid is blank");
       break;
     }
+
     char *session_id=session->val;
 
-    if (lock_session(session_id)) LOG_ERRORV("Failed to lock session '%s'",session_id);
-    
-    struct session *s=load_session(session_id);
-    if (!s) {
-      quick_error(r,KHTTP_400,"Could not load specified session. Does it exist?");
+    if (lock_session(session_id)) {
+      quick_error(req,KHTTP_500,"Failed to lock session");
+      LOG_ERRORV("failed to lock session '%s'",session_id);
       break;
     }
+    
+    struct session *s=load_session(session_id);
+
+    if (!s) {
+      quick_error(req,KHTTP_400,"Could not load specified session. Does it exist?");
+      LOG_ERRORV("Could not load session '%s'",session_id);
+      break;
+    }
+    
     free(s);
+    
     if (delete_session(session_id)) {
-      quick_error(r,KHTTP_400,"Could not delete session. Does it exist?");
+      quick_error(req,KHTTP_400,"Could not delete session. Does it exist?");
       LOG_ERRORV("delete_session('%s') failed",session_id);
+      break;
     }
 
-    quick_error(r,KHTTP_200,"Session deleted.");
+    // log event in session meta log file
     
-    LOG_INFO("Leaving page handler.");
+    char *user_name = "anonymous";
+    if (req->rawauth.d.digest.user) {
+      user_name = strdup(req->rawauth.d.digest.user);
+    }
+    
+    time_t now = time(0);
+    char deleted[25] = { '\0' };
+    if(!format_time_ISO8601(now, deleted, 25)) {
+      LOG_WARNV("could not fromat ISO8601 timestamp for session %s.", session_id );
+    }
+  
+    char user_message[1024];
+    snprintf(user_message, 1024, "deleted %s by user %s", deleted, user_name);
+    
+    if (session_add_userlog_message(session_id, user_message)) {
+      quick_error(req, KHTTP_500, "Error handling session user data.");
+      LOG_ERRORV("Could not add user info for session %s.", session_id);
+      break;
+    }
+    
+    // reply
+    begin_200(req);
+    er = khttp_puts(req, "Session deleted");
+    if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
+    LOG_INFO("Leaving page handler");
     
   } while(0);
 
@@ -875,7 +1067,7 @@ static void fcgi_delsession(struct kreq *r)
   return;  
 }
 
-static void fcgi_nextquestion(struct kreq *r)
+static void fcgi_nextquestion(struct kreq *req)
 {
   //  enum kcgi_err    er;
   int retVal=0;
@@ -884,47 +1076,67 @@ static void fcgi_nextquestion(struct kreq *r)
 
     LOG_INFO("Entering page handler.");
 
-    struct kpair *session = r->fieldmap[KEY_SESSIONID];
+    struct kpair *session = req->fieldmap[KEY_SESSIONID];
     if (!session) {
       // No session ID, so return 400
-      quick_error(r,KHTTP_400,"sessionid missing");
+      quick_error(req,KHTTP_400,"Sessionid missing.");
+      LOG_ERROR("Sessionid missing. from query string");
       break;
     }
+    
     if (!session->val) {
-      quick_error(r,KHTTP_400,"sessionid is blank");
+      quick_error(req,KHTTP_400,"sessionid is blank");
+      LOG_ERROR("sessionid is blank");
       break;
     }
+    
     char *session_id=session->val;
+    
+    // joerg: added lock here. It may be an edge case, however a user could run a session on two devices/browser tabs
+    if (lock_session(session_id)) {
+      quick_error(req,KHTTP_500,"Failed to lock session");
+      LOG_ERRORV("failed to lock session '%s'",session_id);
+      break;
+    }
 
     struct session *s=load_session(session_id);
+    
     if (!s) {
-      quick_error(r,KHTTP_400,"Could not load specified session. Does it exist?");
+      quick_error(req,KHTTP_400,"Could not load specified session. Does it exist?");
+      LOG_ERRORV("Could not load session '%s'",session_id);
       break;
     }
+    
     struct question *q[1024];
     int next_question_count=0;
-    if (get_next_questions(s,q,1024,&next_question_count))
-      LOG_ERRORV("get_next_questions('%s') failed",session_id);
     
-    struct kjsonreq req;
-    kjson_open(&req, r); 
-    kcgi_writer_disable(r); 
-    khttp_head(r, kresps[KRESP_STATUS], 
+    if (get_next_questions(s,q,1024,&next_question_count)) {
+      quick_error(req,KHTTP_500,"Could not lget neext questions.");
+      LOG_ERRORV("get_next_questions('%s') failed",session_id);
+    }
+    
+    // json response
+    
+    struct kjsonreq resp;
+    kjson_open(&resp, req); 
+    kcgi_writer_disable(req); 
+    khttp_head(req, kresps[KRESP_STATUS], 
 	       "%s", khttps[KHTTP_200]); 
-    khttp_head(r, kresps[KRESP_CONTENT_TYPE], 
-	       "%s", kmimetypes[r->mime]); 
-    khttp_body(r);
-    kjson_obj_open(&req);
-    kjson_putint(&req, next_question_count); 
-    kjson_arrayp_open(&req,"next_questions");
+    khttp_head(req, kresps[KRESP_CONTENT_TYPE], 
+	       "%s", kmimetypes[KMIME_APP_JSON]); 
+    khttp_body(req);
+    
+    kjson_obj_open(&resp);
+    kjson_putint(&resp, next_question_count); 
+    kjson_arrayp_open(&resp,"next_questions");
     for(int i=0;i<next_question_count;i++) {
       // Output each question
-      kjson_obj_open(&req);
-      kjson_putstringp(&req,"id",q[i]->uid);
-      kjson_putstringp(&req,"name",q[i]->uid);
-      kjson_putstringp(&req,"title",q[i]->question_text);
-      kjson_putstringp(&req,"description",q[i]->question_html);
-      kjson_putstringp(&req,"type",question_type_names[q[i]->type]);
+      kjson_obj_open(&resp);
+      kjson_putstringp(&resp,"id",q[i]->uid);
+      kjson_putstringp(&resp,"name",q[i]->uid);
+      kjson_putstringp(&resp,"title",q[i]->question_text);
+      kjson_putstringp(&resp,"description",q[i]->question_html);
+      kjson_putstringp(&resp,"type",question_type_names[q[i]->type]);
       // Provide default value if question not previously answered,
       // else provide the most recent deleted answer for this question. #186
       {
@@ -965,7 +1177,7 @@ static void fcgi_nextquestion(struct kreq *r)
 		    LOG_ERRORV("Unknown question type #%d in session '%s'",q[i]->type,session_id);
 		    break;
 		  }
-		  kjson_putstringp(&req,"default_value",rendered);
+		  kjson_putstringp(&resp,"default_value",rendered);
 	      }
 	  }
       }
@@ -984,7 +1196,7 @@ static void fcgi_nextquestion(struct kreq *r)
 	case QTYPE_DATETIME_SEQUENCE:
 	case QTYPE_DIALOG_DATA_CRAWLER:
 	  
-	  kjson_arrayp_open(&req,"choices");
+	  kjson_arrayp_open(&resp,"choices");
 	  int len=strlen(q[i]->choices);
 	  if (len) {
 	    for(int j=0;q[i]->choices[j];) {
@@ -1005,25 +1217,25 @@ static void fcgi_nextquestion(struct kreq *r)
 		} 
 	      // #74 skip empty values
 	      if (q[i]->choices[j]!=',') {
-		kjson_putstring(&req,choice);
+		kjson_putstring(&resp,choice);
 	      }
 	      j+=cl;
 	      if (q[i]->choices[j+cl]==',') j++;
 	    }
 	  }
-	  kjson_array_close(&req);
+	  kjson_array_close(&resp);
 	  break;
 	default:
 	  break;
 	}
       // #72 unit field
-      kjson_putstringp(&req,"unit",q[i]->unit);
+      kjson_putstringp(&resp,"unit",q[i]->unit);
       
-      kjson_obj_close(&req);
+      kjson_obj_close(&resp);
     }
-    kjson_array_close(&req); 
-    kjson_obj_close(&req); 
-    kjson_close(&req);
+    kjson_array_close(&resp); 
+    kjson_obj_close(&resp); 
+    kjson_close(&resp);
 
     LOG_INFO("Leaving page handler.");
     
@@ -1140,50 +1352,101 @@ static void fcgi_fastcgitest(struct kreq *req)
 }
 
 
-static void fcgi_analyse(struct kreq *r)
+static void fcgi_analyse(struct kreq *req)
 {
-  //  enum kcgi_err    er;
+  enum kcgi_err    er;
   int retVal=0;
   
   do {
 
     LOG_INFO("Entering page handler.");
 
-    struct kpair *session = r->fieldmap[KEY_SESSIONID];
+    struct kpair *session = req->fieldmap[KEY_SESSIONID];
+
     if (!session) {
       // No session ID, so return 400
-      quick_error(r,KHTTP_400,"sessionid missing");
+      quick_error(req,KHTTP_400,"Sessionid missing.");
+      LOG_ERROR("Sessionid missing. from query string");
       break;
     }
+    
     if (!session->val) {
-      quick_error(r,KHTTP_400,"sessionid is blank");
+      quick_error(req,KHTTP_400,"sessionid is blank");
+      LOG_ERROR("sessionid is blank");
       break;
     }
+    
     char *session_id=session->val;
 
-    struct session *s=load_session(session_id);
-    if (!s) {
-      quick_error(r,KHTTP_400,"Could not load specified session. Does it exist?");
+    // joerg: added lock here. It may be an edge case, however a user could run a session on two devices/browser tabs
+    if (lock_session(session_id)) {
+      quick_error(req,KHTTP_500,"Failed to lock session");
+      LOG_ERRORV("failed to lock session '%s'",session_id);
       break;
     }
+
+    struct session *s=load_session(session_id);
+    
+    if (!s) {
+      quick_error(req,KHTTP_400,"Could not load specified session. Does it exist?");
+      LOG_ERRORV("Could not load session '%s'",session_id);
+      break;
+    }
+
     const unsigned char *analysis=NULL;
     // string is returned from python in a way that we don't have to deallocate it here
     if (get_analysis(s,&analysis)) {
-      quick_error(r,KHTTP_500,"Could not retrieve analysis.");
+      quick_error(req,KHTTP_500,"Could not retrieve analysis.");
       LOG_ERRORV("get_analysis('%s') failed",session_id);
+      break;
     }
-    if (!analysis) {
-      quick_error(r,KHTTP_500,"Could not retrieve analysis (NULL result).");
-      LOG_ERRORV("get_analysis('%s') returned NULL result",session_id);
-    }
-    if (!analysis[0]) {
-      quick_error(r,KHTTP_500,"Could not retrieve analysis (empty result).");
-      LOG_ERRORV("get_analysis('%s') returned empty result",session_id);
-    }
-    quick_error(r,KHTTP_200,(const char *)analysis);
-
-    LOG_INFO("Leaving page handler.");
     
+    if (!analysis) {
+      quick_error(req,KHTTP_500,"Could not retrieve analysis (NULL).");
+      LOG_ERRORV("get_analysis('%s') returned NULL result",session_id);
+      break;
+    }
+    
+    if (!analysis[0]) {
+      quick_error(req,KHTTP_500,"Could not retrieve analysis (empty result).");
+      LOG_ERRORV("get_analysis('%s') returned empty result",session_id);
+      break;
+    }
+    
+    // log event in session meta log file
+    
+    char *user_name = "anonymous";
+    if (req->rawauth.d.digest.user) {
+      user_name = strdup(req->rawauth.d.digest.user);
+    }
+    
+    time_t now = time(0);
+    char finished[25] = { '\0' };
+    if(!format_time_ISO8601(now, finished, 25)) {
+      LOG_WARNV("could not fromat ISO8601 timestamp for session %s.", session_id );
+    }
+  
+    char user_message[1024];
+    snprintf(user_message, 1024, "finished %s by user %s", finished, user_name);
+    
+    if (session_add_userlog_message(session_id, user_message)) {
+      quick_error(req, KHTTP_500, "Error handling session user data.");
+      LOG_ERRORV("Could not add user info for session %s.", session_id);
+      break;
+    }
+    
+    // store analysis with session
+    
+    if (session_add_datafile(session_id, "analysis.json", (unsigned char*) analysis)) {
+      LOG_ERRORV("Could not add analysis.json for session %s.", session_id);
+      // do not break here
+    }
+    
+    // reply
+    begin_200(req);
+    er = khttp_puts(req, "Session deleted");
+    if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
+    LOG_INFO("Leaving page handler");
   } while(0);
 
   (void)retVal;

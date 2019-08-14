@@ -838,6 +838,10 @@ int run_test(char *dir, char *test_file)
 
         session_line[0]=0; fgets(session_line,8192,s);
         comparison_line[0]=0; fgets(comparison_line,8192,in);
+        
+        int verify_errors=0;
+        int verify_line=0;
+        
         while(1) {
           tdelta=gettime_us()-start_time; tdelta/=1000;
           if (comparison_line[0]&&strcmp(comparison_line,"endofsession")) {
@@ -851,6 +855,16 @@ int run_test(char *dir, char *test_file)
             while (len&&(session_line[len-1]=='\r'||session_line[len-1]=='\n')) session_line[--len]=0;
             fprintf(log,">>> %s\n",session_line);
           } else fprintf(log,">>>>>> END OF SESSION FILE\n");
+          
+          // compare session line, we are relying on the string terminations set above
+          if(verify_line>0) { // TODO for now(!) we ignore the header line with the hashed session id
+            if((session_line[0] && comparison_line[0]) && strcmp(comparison_line,"endofsession")) {
+                if(strcmp(session_line,comparison_line)) {
+                    // fprintf(log, "    - MISMATCH <<< %s >>> %s (line %d)\n",session_line,comparison_line, verify_line); // debug
+                    verify_errors++;
+                }
+            }
+          }
 
           if (session_line[0]&&(!strcmp("endofsession",comparison_line))) {
             // End of comparison list before end of session file
@@ -867,12 +881,21 @@ int run_test(char *dir, char *test_file)
           }
 
           if (!strcmp("endofsession",comparison_line)) break;
-
+          
+          verify_line++;
           session_line[0]=0; fgets(session_line,8192,s);
           comparison_line[0]=0; fgets(comparison_line,8192,in);
         }
 
         fclose(s);
+        
+        // fail if session contents mismatch
+        if(verify_errors) {
+            fprintf(log,"T+%4.3fms : FAIL : verifysession: %d lines in session file do not match!.\n",tdelta, verify_errors);
+            goto fail;
+        } else {
+            fprintf(log,"T+%4.3fms : verifysession: session file matches comparasion.\n",tdelta);
+        }
       }
       else if (line[0]==0) {
         // Ignore blank lines
@@ -1154,7 +1177,7 @@ int main(int argc,char **argv)
   require_test_file("lighttpd-error.log", 0777);
 
   // Make sure we have a test log directory
-  mkdir("testlogs",0755);
+  mkdir("testlog",0755);
 
   stop_lighttpd(1);
   fprintf(stderr,"About to request config gets pulled together\n");
