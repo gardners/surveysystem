@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 
 // data
-import api, { BaseUri } from '../api';
+import Api, { BaseUri } from '../Api';
 import  { mapQuestionGroups } from '../Question';
 import  { isArray } from '../Utils';
 import LocalStorage from '../storage/LocalStorage';
@@ -169,9 +169,9 @@ class Survey extends Component {
         const { survey } = this.state;
         this.setState({ loading: 'Initializing survey...' });
 
-        api.createNewSession(survey.surveyID)
+        Api.createNewSession(survey.surveyID)
         .then(sessID => survey.init(sessID))
-        .then(() => api.nextQuestion(survey.sessionID))
+        .then(() => Api.nextQuestion(survey.sessionID))
         .then(response => survey.add(response.next_questions))
         .then(() => this.setState({
             loading: '',
@@ -191,7 +191,7 @@ class Survey extends Component {
         const { survey } = this.state;
         this.setState({ loading: 'Initializing survey...' });
 
-        api.nextQuestion(survey.sessionID)
+        Api.nextQuestion(survey.sessionID)
         .then(response => survey.add(response.next_questions))
         .then(() => this.setState({
             loading: '',
@@ -225,7 +225,7 @@ class Survey extends Component {
 
         const csvFragments = answerIds.map(id => answers[id]);
 
-        api.updateAnswers_SEQUENTIAL(survey.sessionID, csvFragments)
+        Api.updateAnswers_SEQUENTIAL(survey.sessionID, csvFragments)
         .then(responses => responses.pop()) // last
         .then(response => survey.add(response.next_questions))
         .then(() => this.setState({
@@ -258,7 +258,7 @@ class Survey extends Component {
         const questionId = inversed[0].id;
         this.setState({ loading: `Deleting ${inversed.length} answers...` });
 
-        api.deleteAnswerAndFollowing(survey.sessionID, questionId)
+        Api.deleteAnswerAndFollowing(survey.sessionID, questionId)
         .then(response => survey.add(response.next_questions))
         .then(() => this.setState({
             loading: '',

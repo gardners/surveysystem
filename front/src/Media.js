@@ -77,7 +77,6 @@ const isBreakpointAbove = function(bp) {
     return order.indexOf(breakpoint) >= order.indexOf(bp);
 };
 
-
 export {
     DEFAULT_BREAKPOINT,
     testMediaBreakpoint,

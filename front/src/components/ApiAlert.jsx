@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { ApiError } from '../api';
+import { ApiError } from '../Api';
 import Toggle from './Toggle';
 
 class ApiAlert extends Component {
@@ -41,7 +41,7 @@ class ApiAlert extends Component {
             // nothing
         }
         
-        // @see api.js
+        // @see Api.js
         if (error instanceof ApiError) {
             ({ url, status, statusText} = error);
         }
