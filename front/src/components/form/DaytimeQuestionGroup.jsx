@@ -5,7 +5,7 @@ import Field from './Field';
 import QuestionModel from '../../Question';
 
 import { formatDayTimeDiff, formatDayTime } from '../../Utils';
-import { AppContext } from '../../AppContext';
+import { AppContext } from '../../Context';
 
 import { Gutter, DaytimeIcon, DaytimeLabel } from './DaytimeSequence';
 
@@ -19,7 +19,7 @@ import './DayTimeSlider.scss';
  * ListItem
  */
 
-const ListItem = function({ index, question, value, handleProgress, touched, active, children }) {
+const ListItem = function({ index, question, value, minValue, handleProgress, touched, active, children }) {
 
     return (
         <div className="list-group-item">
@@ -31,7 +31,12 @@ const ListItem = function({ index, question, value, handleProgress, touched, act
                             <strong className="text-primary" >{ formatDayTime(value) }</strong>
                         </div>
                         <div className="col-md-4 text-right">
-                            <small className="text-muted">{ formatDayTimeDiff(minValue(minValue, value), value) } <DaytimeIcon seconds={ value } /></small>
+                        {
+                            (index === 0) ?
+                                <small className="text-muted"><DaytimeIcon value={ value } /></small>
+                            :
+                                <small className="text-muted">{ formatDayTimeDiff(minValue, value) } <DaytimeIcon value={ value } /></small>
+                        }
                         </div>
                     </div>
                 :
@@ -88,6 +93,26 @@ const setValues = function(index, value, values) {
         if(values[i] < value) {
             values[i] = value;
         }
+    }
+    return values;
+};
+
+/*
+ * Update values array beginning from the given index,
+ * Ensure that following array reset to the given value
+ * @param {Number} index
+ * @param {Number} value the value returned by InputRange drag event
+ * @param {Number[]} values see DaytimeSequence => state.values
+ *
+ * @returns {Number[]}
+ */
+const setValuesNext = function(index, value, values) {
+    const length = values.length;
+    const prev = minValue(index, values);
+    // set current value
+    values[index] = (prev && value < prev) ? prev : value;
+    for (let i = index; i < length; i += 1) {
+        values[i] = value;
     }
     return values;
 };
@@ -159,9 +184,12 @@ class DaytimeQuestionGroup extends Component {
             current += 1;
         }
 
+        values = setValuesNext(index, values[index], values);
+
         this.setState({
+            values,
             current,
-            touched: (index > touched) ? index : touched,
+            touched: (index >= touched) ? index : touched,
         });
 
         handleChange(null, questions[index], values[index]);
@@ -176,14 +204,18 @@ class DaytimeQuestionGroup extends Component {
     handlePrev(index, e) {
         e && e.preventDefault();
 
-        let { current } = this.state;
+        let { current, values } = this.state;
 
         if (current > 0) {
             current -= 1;
         }
 
+        values = setValues(index, 0, values);
+
         this.setState({
+            values,
             current,
+            touched: current,
         });
     }
 
@@ -242,7 +274,7 @@ class DaytimeQuestionGroup extends Component {
                                                     :
                                                         <DaytimeInput
                                                             namespace={ question.id }
-                                                            seconds={ values[index] }
+                                                            value={ values[index] }
                                                             handleSubmit={ this.handleChange.bind(this, index) }
                                                         />
                                                 }
@@ -269,7 +301,7 @@ class DaytimeQuestionGroup extends Component {
                                                                 </button>
                                                         }
                                                         {
-                                                            index === values.length - 1 &&
+                                                            (index === values.length - 1 && touched <  values.length - 1) &&
                                                                 <button
                                                                     className="btn btn-primary btn-sm ml-4"
                                                                     onClick={ this.handleNext.bind(this, index) } // for the case the handle was not moved (default_value given), otherwise the survey would display the incomplete warning and not proceed
@@ -296,6 +328,7 @@ class DaytimeQuestionGroup extends Component {
                                         />
                                 )
                             }
+                            { JSON.stringify(values, null, 4) }
                         </div>
                     )
                 }

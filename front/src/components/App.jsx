@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { BrowserRouter as Router, Route, Switch, Redirect, withRouter } from 'react-router-dom';
 
 import { DEFAULT_BREAKPOINT, testMediaBreakpoint, isBreakpointAbove } from '../Media';
-import { AppContext } from '../AppContext';
+import { AppContext } from '../Context';
 
 // scaffolding
 import HeaderNav from './HeaderNav';

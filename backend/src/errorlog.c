@@ -40,7 +40,7 @@ int remember_error(const char *severity,const char *file,const int line, const c
     if (error_count>=MAX_ERRORS) {
       fprintf(stderr,"Too many errors encountered.  Error trace:\n");
       dump_errors(stderr);
-      exit(-1);
+      clear_errors();
     }
 
     va_list argp;

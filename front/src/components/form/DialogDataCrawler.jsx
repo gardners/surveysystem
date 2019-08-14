@@ -1,44 +1,105 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import LocalStorage from '../../storage/LocalStorage';
-
 import Field from './Field';
 import QuestionModel from '../../Question';
 import { isArray } from '../../Utils';
 
+import { SurveyContext } from '../../Context';
+
 // config
-const {
-    REACT_APP_SURVEY_CACHEKEY,
-    REACT_APP_MODULES_ENDPOINT,
-} = process.env;
+const { REACT_APP_MODULES_ENDPOINT } = process.env;
 
 /**
+ * Build a module queue link
  * @see https://github.com/RoboSparrow/fitbit-queue/blob/master/server.js
  */
-const getModule = function(question) {
-    const { id, unit, choices } = question;
 
-    const survey = LocalStorage.get(REACT_APP_SURVEY_CACHEKEY);
+const buildModuleLink = function(question, sessionID) {
+    const { id, unit, choices } = question;
+    let { href } = window.location;
+
+    if(!sessionID) {
+        console.error('no session id');
+        return null; // wait until props update
+    }
 
     if (!isArray(choices) || !choices.length) {
-        return new Error(`Invalid question (${id}). Choices missing or empty.`);
+        console.error(`Invalid question (${id}). Choices missing or empty.`);
+        return null;
     }
 
+    href = (href.indexOf('?') === -1) ? `${href}?progress=finished` : `${href}&progress=finished`;
     const state = JSON.stringify({
-        session_id: survey.sessionID,
-        href: window.location.href,
+        session_id: sessionID,
+        href,
     });
 
+    // insert additional units here
     switch (unit) {
         case 'fitbit-module':
-            return {
-                name: 'FitBit Sleep data',
-                href: REACT_APP_MODULES_ENDPOINT + '/fibit/login?t=' + Date.now() + '&state=' + encodeURIComponent(state),
-            }
+            return REACT_APP_MODULES_ENDPOINT + '/fibit/login?t=' + Date.now() + '&state=' + encodeURIComponent(state);
+
         default:
-            return new Error(`(${id}) Unrecognised module: ${unit}. This is an internal error. Please proceed with the survey.`);
+            console.error(`(${id}) Unrecognised module: ${unit}. This is an internal error. Please proceed with the survey.`);
+            return null;
     }
+};
+
+const Module = function({ question, sessionID, progress, accept, reject }) {
+
+    const moduleLink = buildModuleLink(question, sessionID);
+
+    return (
+            <React.Fragment>
+            {
+                (moduleLink && ['finished', 'rejected'].indexOf(progress) === -1) &&
+                    <div className="row">
+                        <div className="col text-center">
+                            <p>
+                                <a className="btn btn-success" href={ moduleLink }>Yes</a>
+                            </p>
+                            <small>I'm happy to provide my data</small>
+                        </div>
+                        <div className="col text-center">
+                            <p>
+                                <button className="btn btn-outline-secondary" onClick={ reject }>No</button>
+                            </p>
+                            <small>I'm skipping this</small>
+                        </div>
+                    </div>
+            }
+            {
+                (progress === 'finished') &&
+                    <div className="row">
+                        <div className="col text-center text-success mb-2 mt-2">
+                            <strong><i className="fas fa-check-circle"></i> Thank you!</strong>
+                        </div>
+                    </div>
+            }
+            {
+                (['finished', 'rejected'].indexOf(progress) !== -1) &&
+                    <div className="row">
+                        <div className="col text-center">
+                            <i>Go to next question</i>
+                        </div>
+                    </div>
+            }
+            <Field.Error error={ (moduleLink instanceof Error) ? moduleLink : null } grouped= { false }/>
+        </React.Fragment>
+    );
+};
+
+Module.defaultProps = {
+    sessionID: '',
+    progress: '',
+};
+
+Module.propTypes = {
+    question: QuestionModel.propTypes().isRequired,
+    sessionID: PropTypes.string,
+    progress: PropTypes.string,
+    reject: PropTypes.func.isRequired,
 };
 
 class DialogDataCrawler extends Component {
@@ -49,55 +110,65 @@ class DialogDataCrawler extends Component {
         this.state = {
             progress: '',
             value: 'skipped',
-            module: null,
         };
     }
 
     componentDidMount() {
-        const { question } = this.props;
-        const module = getModule(question);
+        const params = new URLSearchParams(window.location.search);
+        const progress = params.get('progress'); // bar
 
-        // supply either the neutral value (denied) or the error
-        const value = (module instanceof Error) ? module.toString() : question.choices[0];
+        // TODO: listening to sessionID, so move to componentdidupdate?
+        const { question } = this.props;
+
+        // supply either the neutral value (denied) or the error string
+        const value = question.choices[0];
         this.setState({
-            value,
-            module,
+            progress,
         });
 
         // Immediately invoke answer callback, in order to allow the user to progress without proceeding
         this.props.handleChange(null, question, value);
+    }
 
+    reject () {
+        const { question } = this.props;
+        this.setState({
+            progress: 'rejected',
+            value: question.choices[0]
+        });
     }
 
     render() {
-        const { progress, value, module } = this.state;
+        const { progress, value } = this.state;
         const { question, grouped, className } = this.props;
 
         // # 224, don't flag this qtype as required
         const required = false;
-        const withModule = module && !(module instanceof Error);
-        const showButton = progress !== 'finished' && withModule;
 
         return (
-            <Field.Row className={ className } question={ question } grouped={ grouped } required={ required }>
-                <Field.Title grouped={ grouped } question={ question } required={ required } />
-                <Field.Description question={ question } grouped={ grouped } required={ required } />
-                <input
-                    id={ question.id }
-                    name={ question.name }
-                    type="hidden"
-                    autoComplete="off"
-                    value={ value }
-                />
-                {
-                    (showButton) ?
-                        <a className="btn btn-primary btn-sm" href={ module.href }>
-                            <strong>Yes</strong>, <small>I am happy to provide my data</small>
-                        </a>
-                        : <p><strong><i className="fas fa-check-circle"></i> Thank you!</strong></p>
-                }
-                <Field.Error error={ (module instanceof Error) ? module : null } grouped={ grouped } />
-            </Field.Row>
+            <SurveyContext.Consumer>
+            {
+                ({ sessionID }) => (
+                    <Field.Row className={ className } question={ question } grouped={ grouped } required={ required }>
+                        <Field.Title grouped={ grouped } question={ question } required={ required } />
+                        { (['finished', 'rejected'].indexOf(progress) === -1) && <Field.Description question={ question } grouped={ grouped } required={ required } /> }
+                        <input
+                            id={ question.id }
+                            name={ question.name }
+                            type="hidden"
+                            autoComplete="off"
+                            value={ value }
+                        />
+                        <Module
+                            question={ question }
+                            sessionID={ sessionID }
+                            progress={ progress }
+                            reject={ this.reject.bind(this) }
+                        />
+                    </Field.Row>
+                )
+            }
+            </SurveyContext.Consumer>
         );
     }
 };

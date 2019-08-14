@@ -16,6 +16,7 @@ beforeAll(() => {
                 description: 'q1',
                 type: 'FIXEDPOINT',
                 unit: '',
+                default_value: 'default_value is ignored for this component',
             } }
             handleChange= { () => {} } />
     );
@@ -26,31 +27,17 @@ it('renders without crashing', () => {
     expect(tree).toMatchSnapshot();
 });
 
-it('defaults to no button: withButton = false', () => {
+it('defaults to withButton=true', () => {
     const instance = component.root;
-    expect(instance.props.withButton).toEqual(false);
-
-    const btns = instance.findAllByType('button');
-    expect(btns.length).toEqual(0);
-});
-
-it('renders button: withButton = true', () => {
-   const comp = renderer.create(
-        <DeviceLocation
-            question={ {
-                id: 'q1',
-                name: 'q1',
-                title: 'q1',
-                description: 'q1',
-                type: 'FIXEDPOINT',
-                unit: '',
-            } }
-            withButton={ true }
-            handleChange= { () => {} } />
-    );
-    const instance = comp.root;
     expect(instance.props.withButton).toEqual(true);
 
     const btns = instance.findAllByType('button');
     expect(btns.length).toEqual(1);
+});
+
+it('form element renders default value', () => {
+    const instance = component.root;
+    const input = instance.find(node => node.type === 'input');
+    // default_value is ignored for this component
+    expect(input.props.value).toEqual('');
 });

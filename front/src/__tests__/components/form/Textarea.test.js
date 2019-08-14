@@ -16,8 +16,8 @@ beforeAll(() => {
                 description: 'q1',
                 type: 'TEXT',
                 unit: '',
+                default_value: 'teststring',
             } }
-            placeholder="teststring"
             handleChange= { () => {} } />,
     );
 });
@@ -27,11 +27,8 @@ it('renders without crashing', () => {
     expect(tree).toMatchSnapshot();
 });
 
-it('renders inut[type=radio] components as children', () => {
+it('form element renders default value', () => { 
     const instance = component.root;
-    const textarea = instance.findByType('textarea');
-    const placeholder = textarea.props.placeholder;
-
-    expect(textarea.type).toEqual('textarea');
-    expect(placeholder).toEqual('teststring');
+    const input = instance.find(node => node.type === 'textarea');
+    expect(input.props.value).toEqual('teststring'); 
 });

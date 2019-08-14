@@ -950,15 +950,16 @@ static void fcgi_delanswerandfollowing(struct kreq *req)
       }
     }
     else if (question&&question->val) {
+      
       /* 
        * We have a question -- so delete all answers to the given question 
        */
        
-      if (session_delete_answers_by_question_uid(s,question->val,0)<0) {
-	// TODO could be both 400 or 500 (storage, serialization, not in session)
-	quick_error(req,KHTTP_400,"Answer does not match existing session records.");
-	LOG_ERROR("session_delete_answers_by_question_uid() failed");
-	break;
+      if (session_delete_answers_by_question_uid(s,question->val,0) < 1) {
+	      // TODO could be both 400 or 500 (storage, serialization, not in session)
+	      quick_error(req,KHTTP_400,"Answer does not match existing session records.");
+	      LOG_ERROR("session_delete_answers_by_question_uid() failed");
+	      break;
       }   
     }
     else {

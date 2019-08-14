@@ -16,9 +16,9 @@ beforeAll(() => {
                 description: 'q1',
                 type: 'TEXT',
                 unit: '',
+                default_value: 'teststring'
             } }
-            placeholder="teststring"
-            handleChange= { () => {} } />,
+            handleChange= { () => {} } />, 
     );
 });
 
@@ -27,11 +27,8 @@ it('renders without crashing', () => {
     expect(tree).toMatchSnapshot();
 });
 
-it('renders inut[type=radio] components as children', () => {
+it('form element renders default value', () => {
     const instance = component.root;
-    const input = instance.findByType('input');
-    const placeholder = input.props.placeholder;
-
-    expect(input.type).toEqual('input');
-    expect(placeholder).toEqual('teststring');
+    const input = instance.find(node => node.type === 'input');
+    expect(input.props.value).toEqual('teststring');
 });

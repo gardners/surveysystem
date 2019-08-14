@@ -16,8 +16,8 @@ beforeAll(() => {
                 description: 'q1',
                 type: 'FIXEDPOINT',
                 unit: '',
+                default_value: 'test@test.test',
             } }
-            placeholder="teststring"
             handleChange= { () => {} } />
     );
 });
@@ -27,8 +27,8 @@ it('renders without crashing', () => {
     expect(tree).toMatchSnapshot();
 });
 
-it('input child renders placeholder', () => {
+it('form element renders default value', () => { 
     const instance = component.root;
     const input = instance.find(node => node.type === 'input');
-    expect(input.props.placeholder).toEqual('teststring');
+    expect(input.props.value).toEqual('test@test.test');
 });
