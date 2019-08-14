@@ -19,7 +19,8 @@ STATICHEADERS=	Makefile \
 		$(INCDIR)/survey.h \
 		$(INCDIR)/sha1.h \
 		$(INCDIR)/code_instrumentation.h \
-		$(INCDIR)/serialisers.h
+		$(INCDIR)/serialisers.h \
+		$(INCDIR)/timeutils.h
 
 STATICSRCS=	$(SRCDIR)/serialisers.c \
 		$(SRCDIR)/sha1.c \
@@ -29,7 +30,8 @@ STATICSRCS=	$(SRCDIR)/serialisers.c \
 		$(SRCDIR)/nextquestion.c \
 		$(SRCDIR)/code_instrumentation.c \
 		$(SRCDIR)/filelocks.c \
-		$(SRCDIR)/errorlog.c
+		$(SRCDIR)/errorlog.c \
+		$(SRCDIR)/timeutils.c
 
 GENERATEDHEADERS=$(INCDIR)/question_types.h
 GENERATEDSRCS=	$(SRCDIR)/question_types.c
@@ -43,7 +45,8 @@ COREOBJS=	$(SRCDIR)/errorlog.o \
 		$(SRCDIR)/serialisers.o \
 		$(SRCDIR)/code_instrumentation.o \
 		$(SRCDIR)/filelocks.o \
-		$(SRCDIR)/question_types.o 
+		$(SRCDIR)/question_types.o \
+		$(SRCDIR)/timeutils.o 
 
 TESTOBJS=	$(COREOBJS) \
 		$(SRCDIR)/test_serialisers.o

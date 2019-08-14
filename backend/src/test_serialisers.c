@@ -31,142 +31,142 @@ struct question_serialiser_test qst[]={
    "dummyuid:"
    "What is the answer to life, the universe and everything?:"
    "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:100:0:1:",
+   "INT:0:42:0:100:0:1::",
    {"dummyuid",
     "What is the answer to life, the universe and everything?",
     "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,1,""}},
+    QTYPE_INT,0,"42",0,100,0,1,"",""}},
 
   // Only valid question types should be accepted
   {"Illegal question type fails",SHOULD_FAIL,DIRECTION_DESERIALISE,
    "dummyuid:"
    "What is the answer to life, the universe and everything?:"
    "<div>What is the answer to life, the universe and everything?</div>:"
-   "FISH:0:42:0:100:0:1:",
+   "FISH:0:42:0:100:0:1::",
    {"dummyuid",
     "What is the answer to life, the universe and everything?",
     "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,1,""}},
+    QTYPE_INT,0,"42",0,100,0,1,"",""}},
 
   {"Negative numbers are accepted",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
    "dummyuid:"
    "What is the answer to life, the universe and everything?:"
    "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:-100:0:-1:",
+   "INT:0:42:0:-100:0:-1::",
    {"dummyuid",
     "What is the answer to life, the universe and everything?",
     "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,-100,0,-1,""}},
+    QTYPE_INT,0,"42",0,-100,0,-1,"",""}},
 
   {"Minus sign can appear only at beginning of a number",SHOULD_FAIL,DIRECTION_DESERIALISE,
    "dummyuid:"
    "What is the answer to life, the universe and everything?:"
    "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:10-0:0:-1:",
+   "INT:0:42:0:10-0:0:-1::",
    {"dummyuid",
     "What is the answer to life, the universe and everything?",
     "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1,""}},
+    QTYPE_INT,0,"42",0,100,0,-1,"",""}},
 
   {"Missing fields results in failure",SHOULD_FAIL,DIRECTION_DESERIALISE,
    "dummyuid:"
    "What is the answer to life, the universe and everything?:"
    "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:10-0:0:",
+   "INT:0:42:0:10-0:0::",
    {"dummyuid",
     "What is the answer to life, the universe and everything?",
     "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1,""}},
+    QTYPE_INT,0,"42",0,100,0,-1,"",""}},
 
   {"Missing fields results in failure",SHOULD_FAIL,DIRECTION_DESERIALISE,
    "dummyuid:"
    "What is the answer to life, the universe and everything?:"
    "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:10-0:0:",
+   "INT:0:42:0:10-0:0::",
    {"dummyuid",
     "What is the answer to life, the universe and everything?",
     "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1,""}},
+    QTYPE_INT,0,"42",0,100,0,-1,"",""}},
 
   {"Extra fields results in failure",SHOULD_FAIL,DIRECTION_DESERIALISE,
    "dummyuid:"
    "What is the answer to life, the universe and everything?:"
    "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:10-0:0:-1::-1",
+   "INT:0:42:0:10-0:0:-1:::-1",
    {"dummyuid",
     "What is the answer to life, the universe and everything?",
     "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1,""}},
+    QTYPE_INT,0,"42",0,100,0,-1,"",""}},
 
   {"\\t escape is accepted in strings",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
    "dummyuid:"
    "\tWhat is the answer to life, the universe and everything?:"
    "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:100:0:-1:",
+   "INT:0:42:0:100:0:-1::",
    {"dummyuid",
     "\tWhat is the answer to life, the universe and everything?",
     "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1,""}},
+    QTYPE_INT,0,"42",0,100,0,-1,"",""}},
   
   {"\\r escape is accepted in strings",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
    "dummyuid:"
    "\rWhat is the answer to life, the universe and everything?:"
    "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:100:0:-1:",
+   "INT:0:42:0:100:0:-1::",
    {"dummyuid",
     "\rWhat is the answer to life, the universe and everything?",
     "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1,""}},
+    QTYPE_INT,0,"42",0,100,0,-1,"",""}},
   
   {"\\n escape is accepted in strings",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
    "dummyuid:"
    "\nWhat is the answer to life, the universe and everything?:"
    "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:100:0:-1:",
+   "INT:0:42:0:100:0:-1::",
    {"dummyuid",
     "\nWhat is the answer to life, the universe and everything?",
     "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1,""}},
+    QTYPE_INT,0,"42",0,100,0,-1,"",""}},
   
   {"\\: escape is accepted in strings",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
    "dummyuid:"
    "\\:What is the answer to life, the universe and everything?:"
    "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:100:0:-1:",
+   "INT:0:42:0:100:0:-1::",
    {"dummyuid",
     ":What is the answer to life, the universe and everything?",
     "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1,""}},
+    QTYPE_INT,0,"42",0,100,0,-1,"",""}},
   
   {"\\\\ escape is accepted in strings",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
    "dummyuid:"
    "\\\\What is the answer to life, the universe and everything?:"
    "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:100:0:-1:",
+   "INT:0:42:0:100:0:-1::",
    {"dummyuid",
     "\\What is the answer to life, the universe and everything?",
     "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1,""}},
+    QTYPE_INT,0,"42",0,100,0,-1,"",""}},
   
   {"Multiple escape is accepted in strings",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
    "dummyuid:"
    "\\\\\r\n\t\\:What is the answer to life, the universe and everything?:"
    "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:100:0:-1:",
+   "INT:0:42:0:100:0:-1::",
    {"dummyuid",
     "\\\r\n\t:What is the answer to life, the universe and everything?",
     "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1,""}},  
+    QTYPE_INT,0,"42",0,100,0,-1,"",""}},  
 
   {"numchoices should match number of colon separated items in choices field",SHOULD_FAIL,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
    "dummyuid:"
    "\\\\\r\n\t\\:What is the answer to life, the universe and everything?:"
    "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:100:0:1:",
+   "INT:0:42:0:100:0:1:this,that:",
    {"dummyuid",
     "\\\r\n\t:What is the answer to life, the universe and everything?",
     "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_MULTICHOICE,0,"42",0,100,0,1,"this\\:that"}},  
+    QTYPE_MULTICHOICE,0,"42",0,100,0,1,"this,that",""}},  
 
   
   {NULL,-1,-1,NULL,{NULL}}
@@ -177,6 +177,8 @@ int main(int argc,char **argv)
   int retVal=0;
   
   do {
+    
+    setenv("SURVEY_HOME", ".", 0);
 
     int fail=0;
     int pass=0;
