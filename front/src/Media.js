@@ -42,31 +42,31 @@ const testMediaBreakpoint = function(callback) {
 
     m = window.matchMedia(`(min-width: ${xl}px`);
     if (m && m.matches) {
-        register('xl',callback);
+        register('xl', callback);
         return;
     }
 
     m = window.matchMedia(`(min-width: ${lg}px`);
     if (m && m.matches) {
-        register('lg',callback);
+        register('lg', callback);
         return;
     }
 
     m = window.matchMedia(`(min-width: ${md}px`);
     if (m && m.matches) {
-        register('md',callback);
+        register('md', callback);
         return;
     }
 
     m = window.matchMedia(`(min-width: ${sm}px`);
     if (m && m.matches) {
-        register('sm',callback);
+        register('sm', callback);
         return;
     }
 
     m = window.matchMedia(`(min-width: ${xs}px`);
     if (m && m.matches) {
-        register('xs',callback);
+        register('xs', callback);
         return;
     }
 
