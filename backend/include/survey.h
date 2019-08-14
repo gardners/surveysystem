@@ -158,5 +158,8 @@ void free_answer(struct answer *a);
 
 int validate_session_id(char *session_id);
 
+int session_add_userlog_message(char *session_id, char *message);
+int session_add_datafile(char *session_id, char *filename_suffix, unsigned char *data);
+
 int lock_session(char *session_id);
 int release_my_session_locks(void);
