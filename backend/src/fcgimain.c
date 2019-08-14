@@ -1111,7 +1111,7 @@ static void fcgi_nextquestion(struct kreq *req)
     int next_question_count=0;
     
     if (get_next_questions(s,q,1024,&next_question_count)) {
-      quick_error(req,KHTTP_500,"Could not lget neext questions.");
+      quick_error(req,KHTTP_500,"Could not get next questions.");
       LOG_ERRORV("get_next_questions('%s') failed",session_id);
     }
     
