@@ -67,12 +67,12 @@ class Modal extends React.Component {
     }
 
     render() {
-        const { title, shouldCloseOnOverlayClick, buttonText, children } = this.props;
+        const { title, shouldCloseOnOverlayClick, buttonText, buttonClassName, children } = this.props;
         const { open } = this.state;
 
         return (
             <React.Fragment>
-                <button type="button" className="btn btn-primary btn-sm" onClick={ this.openModal.bind(this) }>{ buttonText() }</button>
+                <button className={ buttonClassName } onClick={ this.openModal.bind(this) }>{ buttonText() }</button>
                 <ReactModal
                     closeTimeoutMS={ 500 }
                     isOpen={ open }
@@ -103,6 +103,7 @@ class Modal extends React.Component {
 Modal.defaultProps = {
     title: '',
     subtitle: '',
+    buttonClassName: 'btn btn-primary btn-sm',
     shouldCloseOnOverlayClick: true,
     shouldCloseOnEsc: true,
     onAfterOpen: function() {},
@@ -111,6 +112,7 @@ Modal.defaultProps = {
 
 Modal.propTypes = {
     buttonText: PropTypes.func.isRequired,
+    buttonClassName: PropTypes.string,
     title: PropTypes.string,
     shouldCloseOnOverlayClick: PropTypes.bool,
     shouldCloseOnEsc: PropTypes.bool,
