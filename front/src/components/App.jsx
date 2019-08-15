@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Switch, Redirect, withRouter } from 're
 
 import { DEFAULT_BREAKPOINT, testMediaBreakpoint, isBreakpointAbove } from '../Media';
 import { AppContext } from '../Context';
+import LocalStorage from '../storage/LocalStorage';
 
 // scaffolding
 import HeaderNav from './HeaderNav';
@@ -21,16 +22,21 @@ import DemoManifest from './demo/DemoManifest';
 const Navigation = withRouter(HeaderNav);
 
 const {
-    REACT_APP_SURVEY_LIST,
     REACT_APP_SURVEY_PROVIDER,
     REACT_APP_SITE_NAME,
+    REACT_APP_SURVEY_CACHEKEY,
+    REACT_APP_SURVEY_LIST,
 } = process.env;
 // config
 
-const surveys = REACT_APP_SURVEY_LIST.split(',').map(name => name.trim());
 const surveyProvider = REACT_APP_SURVEY_PROVIDER.trim();
 const siteName = REACT_APP_SITE_NAME.trim();
 
+// get surveys TODO: context
+const surveyIds = REACT_APP_SURVEY_LIST.split(',').map(name => name.trim());
+
+// inital check for stored survey session TODO: context
+const lastSession = LocalStorage.get(REACT_APP_SURVEY_CACHEKEY);
 
 ////
 //
@@ -41,10 +47,10 @@ class App extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            value: {
+            appContext: {
                 breakpoint: DEFAULT_BREAKPOINT,
                 isBreakpointAbove,
-            }
+            },
         }
         window.addEventListener('resize', this.onWindowResize.bind(this));
     }
@@ -53,26 +59,27 @@ class App extends Component {
         testMediaBreakpoint(bp => {
             if(bp !== this.state.breakpoint) {
                 this.setState({
-                    breakpoint: bp,
+                    appContext: {
+                        breakpoint: bp,
+                        isBreakpointAbove,
+                    },
                 });
             }
         });
     }
 
     render() {
-        const { value } = this.state;
+        const { appContext } = this.state;
+        const currentSurveyId = (lastSession) ? lastSession.surveyID : '';
 
         return (
             <Router>
-                <AppContext.Provider value={ value }>
-                    <Navigation surveys={ surveys } siteName={ siteName } surveyProvider={ surveyProvider }/>
+                <AppContext.Provider value={ appContext }>
+                    <Navigation siteName={ siteName } surveyProvider={ surveyProvider }/>
                     <main className="container" style={{ marginTop: '60px' /*fixed header*/ }}>
                         <Switch>
-                            <Route exact path="/" render={ props => (surveys.length) ? <Redirect to={ `/survey/${surveys[0]}` } /> : <Surveys /> } />
-                            {
-                                surveys.length > 1 &&
-                                    <Route path="/surveys" render={ () => <Surveys surveys={ surveys } surveyProvider={ surveyProvider } /> } />
-                            }
+                            <Route exact path="/" render={ props => (currentSurveyId) ? <Redirect to={ `/surveys` } /> : <Surveys /> } />
+                            <Route path="/surveys" render={ () => <Surveys surveyIds={ surveyIds } /> } />
                             <Route path="/demo/form/:component?" component={ Demo } />
                             <Route path="/demo/analyse" component={ DemoAnalysis } />
                             <Route path="/demo/manifest" component={ DemoManifest } />

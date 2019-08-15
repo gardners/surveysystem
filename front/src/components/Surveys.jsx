@@ -1,71 +1,140 @@
-import React from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { Link } from 'react-router-dom';
 
 import LocalStorage from '../storage/LocalStorage';
+import SurveyList from '../SurveyList';
+import ApiAlert from './ApiAlert';
 
-const CACHE_KEY = process.env.REACT_APP_SURVEY_CACHEKEY;
+const { REACT_APP_SURVEY_CACHEKEY } = process.env;
 
 const formatDate = function(timestamp) {
     return (timestamp) ? new Date(timestamp).toLocaleString() : 'n/a';
 };
 
-const Surveys = function({ surveyProvider, surveys }) {
-
-    const cache = LocalStorage.get(CACHE_KEY);
-    const cachedSurveyID = (cache) ? cache.surveyID : '';
-    let created = (cache && typeof cache.created !== 'undefined') ? cache.created : 0;
-    let modified = (cache && typeof cache.modified !== 'undefined') ? cache.modified : 0;
+const SurveyItem = function({ survey, session, isCurrent }) {
+    
+    const created = (session && typeof session.created !== 'undefined') ? session.created : 0;
+    const modified = (session && typeof session.modified !== 'undefined') ? session.modified : 0;
+    const sessionID = (session && typeof session.sessionID !== 'undefined') ? session.sessionID : '';
 
     return (
         <React.Fragment>
-            <h1>{ surveyProvider } <small>Surveys</small></h1>
-
-            <div className="row card-deck">
-                { surveys.map((survey, index) =>
-                    <div className="card" key={ index }>
-                        <div className="card-header">
-                            <h2 className="card-title">{ survey }</h2>
-                        </div>
-                        <div className="card-body">
-                            {
-                                (cachedSurveyID === survey) ?
-                                    <React.Fragment>
-                                        <p className="card-text">
-                                            <small>session ID: { cache.sessionID }</small><br/>
-                                            <small>created: { formatDate(created) }</small><br/>
-                                            <small>last access: { formatDate(modified) }</small>
-                                        </p>
-                                    </React.Fragment>
-                                :
-                                    <p className="card-text">
-                                        <small>Start survey</small>
-                                    </p>
-                            }
-                        </div>
-                        <div className="card-footer">
-                            {
-                                (cachedSurveyID === survey) ?
-                                    <React.Fragment>
-                                        <Link to={ `/survey/${survey}/${cache.sessionID}` } className="btn btn-primary">Continue</Link>
-                                        <Link to={ `/survey/${survey}/new` } onClick={ () => LocalStorage.delete(CACHE_KEY) } className="btn btn-s">Restart</Link>
-                                    </React.Fragment>
-                                :
-                                    <Link to={ `/survey/${survey}` } className="btn btn-primary">Start</Link>
-                            }
-                        </div>
-                    </div>
-                ) }
+            <h3>{ (survey.name) ?  survey.name : survey.id }</h3>
+            { (survey.title) ?  <p><strong>{ survey.title }</strong></p> : null } 
+            { (survey.description) ?  <p>{ survey.description }</p> : null }
+            <table className="mb-3">
+                <tbody>
+                    { (survey.organisation) ?  <tr><td className="pr-3">organisation:</td><td>{ survey.organisation }</td></tr> : null }
+                    { (survey.email) ?  <tr><td className="pr-3">contact:</td><td><a href={ `mailto: ${survey.email}`} >{ survey.email }</a></td></tr> : null }
+                </tbody>
+            </table>
+            <table className="mb-3" style={ { fontSize: '.8em' } }>
+                <tbody>
+                    { (sessionID) ?  <tr><td className="pr-3">sessionID:</td><td>{ sessionID }</td></tr> : null }
+                    { (created) ?  <tr><td className="pr-3">started:</td><td>{ formatDate(created) }</td></tr> : null }
+                    { (modified) ?  <tr><td className="pr-3">last access:</td><td>{ formatDate(modified) }</td></tr> : null }
+                </tbody>
+            </table>
+            <div className="mb-3">
+                {
+                    (session) ?
+                        <React.Fragment>
+                            <Link to={ `/survey/${survey.id}/${session.sessionID}` } className="btn btn-lg btn-primary">Continue Survey</Link>
+                            <Link to={ `/survey/${survey.id}/new` } onClick={ () => LocalStorage.delete(REACT_APP_SURVEY_CACHEKEY) } className="btn btn-sm btn-link">Restart Survey</Link>
+                        </React.Fragment>
+                    :
+                        <Link to={ `/survey/${survey.id}` } className="btn btn-lg btn-primary">Start Survey</Link>
+                }
             </div>
         </React.Fragment>
     );
+};
 
+SurveyItem.defaultProps = {
+    session: null,
+    isCurrent: false,
+};
+
+SurveyItem.propTypes = {
+    survey: SurveyList.itemPropTypes().isRequired,
+    session: PropTypes.object,
+    isCurrent: PropTypes.bool,
+};
+
+class Surveys  extends Component {
+    
+    constructor(props) {
+        super(props);
+        this.state = {
+            surveys: [],
+            error: null,
+        }
+    }
+    
+    componentDidMount() {
+        const { surveyIds } = this.props;
+        SurveyList.getAll(surveyIds)
+        .then(surveys => this.setState({ surveys }))
+        .catch(error => this.setState({ error }));
+    }
+    
+    render () {
+        const { surveys, error } = this.state;
+
+        const currentSession = LocalStorage.get(REACT_APP_SURVEY_CACHEKEY); 
+        let currentSurvey = null;
+        const availableSurveys = [];
+        
+        surveys.forEach(survey => {
+            if (currentSession && currentSession.surveyID == survey.id) {
+                currentSurvey = survey;
+                return;
+            }
+            availableSurveys.push(survey);
+        });
+        
+        return (
+            <React.Fragment>
+                <h1>Our Surveys</h1>
+                { error && <ApiAlert error ={ error } /> }
+                {
+                    (currentSurvey) ? 
+                        <React.Fragment>
+                            <div className="mb-3">Your current survey:</div>
+                            <ul className="list-group mb-3">
+                                <li className="list-group-item list-group-item-primary">
+                                    <SurveyItem survey={ currentSurvey } session={ currentSession } isCurrent={ true } />
+                                </li>
+                            </ul>
+                        </React.Fragment>
+                    : null
+                }
+                
+                <div className="mb-3">Available Surveys:</div>
+                <ul className="list-group mb-3">
+                { 
+                    availableSurveys.map((survey, index) =>
+                        <li key={ index } className="list-group-item">
+                            <SurveyItem survey={ survey } />
+                        </li>
+                    )
+                }
+                </ul>
+            </React.Fragment>
+        );
+    }
+};
+
+Surveys.defaultProps = {
+    surveyIds: [],
 };
 
 Surveys.propTypes = {
-    surveys: PropTypes.arrayOf(PropTypes.string).isRequired,
-    surveyProvider: PropTypes.string.isRequired,
+    surveyIds: PropTypes.arrayOf(
+        PropTypes.string,
+    ),
 };
 
 export default Surveys;
