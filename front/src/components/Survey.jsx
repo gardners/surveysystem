@@ -14,6 +14,7 @@ import SurveyManager from '../SurveyManager';
 import { SurveyContext } from '../Context';
 
 // form components
+import SurveySection from './survey/SurveySection';
 import SurveyForm from './survey/SurveyForm';
 import Question from './survey/Question';
 import QuestionGroup from './survey/QuestionGroup';
@@ -291,11 +292,10 @@ class Survey extends Component {
         const isClosed = survey.isClosed();
 
         return (
-            <section>
-                <Dev.SurveyBar survey = { survey } />
-                <h1>{ survey.surveyID }</h1>
-
+            <SurveySection survey={ survey }>
+                <Dev.SurveyBar survey={ survey } />
                 <Preloader loading={ this.state.loading } message={ this.state.loading }/>
+                
                 {
                     (this.state.alerts.length) ?
                         <React.Fragment>
@@ -303,7 +303,7 @@ class Survey extends Component {
                             { this.state.alerts.map((entry, index) => <ApiAlert key={ index } error={ entry } />) }
                         </React.Fragment> : null
                 }
-
+    
                 {
                     /* show if survey is finished but not closed yet */
                     (isClosed) ?
@@ -312,14 +312,14 @@ class Survey extends Component {
                                 <h2 className="card-title"> <i className="fas fa-check-circle"></i> Survey completed.</h2>
                             </div>
                             <div className="card-body">
-
+    
                                 <p className="card-text">Thank you for your time!</p>
                                 <Link className="btn btn-default btn-primary" to={ `/analyse/${survey.surveyID}/${survey.sessionID}` }>Finish Survey</Link>
                             </div>
                         </div>
                     : null
                 }
-
+    
                 <SurveyContext.Provider value={ {
                     surveyID: survey.surveyID,
                     sessionID: survey.sessionID,
@@ -330,51 +330,51 @@ class Survey extends Component {
                     >
                         {
                             withGroups.map((entry, index) => {
-
+    
                                 if(isArray(entry)) {
                                     return (
                                         <QuestionGroup
                                             key={ index }
                                             className="list-group-item"
-
+    
                                             handleChange={ this.handleChange.bind(this) }
                                             questions={ entry }
                                             errors={ errors }
                                         />
                                     );
                                 }
-
+    
                                 return (
                                     <Question
                                         key={ index }
                                         className="list-group-item"
-
+    
                                         handleChange={ this.handleChange.bind(this) }
                                         question={ entry }
                                         error={ errors[entry.id] || null }
                                     />
                                 );
-
+    
                             })
                         }
-
+    
                         {
                             feedback.map((item, index) => <FeedbackItem key={ index } status={ item.status } className="list-group-item" classNamePrefix="list-group-item-">{ item.message }</FeedbackItem>)
                         }
-
+    
                         {
                             hasErrors && <FeedbackItem className="list-group-item list-group-item-danger">Please fix errors above</FeedbackItem>
                         }
-
+    
                         {
                             !hasAllAnswers && <FeedbackItem className="list-group-item list-group-item-warning">Please answer all questions</FeedbackItem>
                         }
-
+    
                         <SurveyButtons
                             className="list-group-item"
                             handlePrev={ this.handleDelAnswer.bind(this) }
                             handleNext={ this.handleUpdateAnswers.bind(this) }
-
+    
                             hasQuestions={ hasQuestions }
                             hasErrors={ hasErrors }
                             hasAnswers={ hasAnswers }
@@ -388,8 +388,7 @@ class Survey extends Component {
                 <Dev.Pretty label="questions" data={ questions } open={ false }/>
                 <Dev.Pretty label="answers" data={ answers } open={ false }/>
                 <Dev.Pretty label="errors" data={ errors } open={ false }/>
-
-            </section>
+            </SurveySection>
         );
     }
 }
