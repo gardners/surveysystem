@@ -7,6 +7,8 @@ import { Link } from 'react-router-dom';
 import ThemePicker from './ThemePicker';
 import { DropdownMenu, MenuLink } from './bootstrap/DropdownMenu';
 
+import logo from '../assets/logo.png';
+
 // toggles navbar collapse
 // element.classList support is ie > 10, we ned this to work always!
 const toggle = function(el){
@@ -25,7 +27,7 @@ const HeaderNav = function({ location, surveyIds, surveyProvider, siteName}) {
     return (
         <header>
             <nav className="navbar navbar-expand-md navbar-dark fixed-top bg-dark shadow-sm">
-                <Link to="/" className="navbar-brand align-items-center">{ siteName }</Link>
+                <Link to="/" className="navbar-brand align-items-center"><img src={ logo } className="mr-3" alt="logo" height="30" />{ siteName }</Link>
 
                 <button
                     className="navbar-toggler"
@@ -40,13 +42,14 @@ const HeaderNav = function({ location, surveyIds, surveyProvider, siteName}) {
 
                 <div className="collapse navbar-collapse" id="header-nav--collapse">
                     <ul className="navbar-nav mr-auto">
-                        <li className={ (/^\/surveys/.test(location.pathname)) ? 'nav-item active' : 'nav-item' }>
-                            <Link className="nav-link" to="/surveys">Surveys</Link>
-                        </li>
+
                     </ul>
 
                     <ul className="navbar-nav mt-2 mt-md-0">
                         <li className="nav-item">
+                            <Link className={ (/^\/surveys/.test(location.pathname)) ? 'btn btn-light' : 'btn btn-secondary' } to="/surveys">Surveys</Link>
+                        </li>
+                        <li className="nav-item ml-3">
                             <DropdownMenu title="Demos">
                                 <MenuLink to="/demo/form">Form Elements</MenuLink>
                                 <MenuLink to="/demo/analyse">Analysis</MenuLink>
