@@ -26,6 +26,13 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# assets
+assets/logo.png
+
+# survey config
+config-surveys/*
+!config-surveys/foo/*
+
 # scratch area for development
 _dev/*
 
