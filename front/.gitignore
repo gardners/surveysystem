@@ -26,14 +26,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-
 # scratch area for development
 _dev/*
 
 # deployment script
 deploy
 
-# external scripts
-public/*-feedback.js
-!public/template.ss-feedback.js
 
