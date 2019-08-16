@@ -1,0 +1,3 @@
+# external scripts
+*-feedback.js
+!template.ss-feedback.js
