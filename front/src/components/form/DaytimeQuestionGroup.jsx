@@ -328,7 +328,6 @@ class DaytimeQuestionGroup extends Component {
                                         />
                                 )
                             }
-                            { JSON.stringify(values, null, 4) }
                         </div>
                     )
                 }
