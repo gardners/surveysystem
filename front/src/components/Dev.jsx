@@ -1,11 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import LocalStorage from '../storage/LocalStorage';
 import RestartSurveyButton from './survey/RestartSurveyButton';
 
-// config
-const CACHE_KEY = process.env.REACT_APP_SURVEY_CACHEKEY;
 const NODE_ENV = process.env.NODE_ENV;
 
 class Pretty extends Component {

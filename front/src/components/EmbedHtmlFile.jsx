@@ -26,7 +26,7 @@ class EmbedHtmlFile extends Component {
         }))
         .catch((err) => this.setState({
             loading: false,
-            error: err //new Error(`Not found: Unable to import content for ${title}`),
+            error: new Error(`Not found: Unable to import content for ${title}`),
         }));
     }
 

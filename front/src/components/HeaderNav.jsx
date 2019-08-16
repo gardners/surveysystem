@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 
 import { Link } from 'react-router-dom';
 
-import ThemePicker from './ThemePicker';
+// import ThemePicker from './ThemePicker';
 import { DropdownMenu, MenuLink } from './bootstrap/DropdownMenu';
 
 import logo from '../assets/logo.png';
@@ -23,7 +23,7 @@ const toggle = function(el){
 };
 
 const HeaderNav = function({ location, surveyIds, surveyProvider, siteName}) {
-    
+
     return (
         <header>
             <nav className="navbar navbar-expand-md navbar-dark fixed-top bg-dark shadow-sm">
@@ -49,13 +49,17 @@ const HeaderNav = function({ location, surveyIds, surveyProvider, siteName}) {
                         <li className="nav-item">
                             <Link className={ (/^\/surveys/.test(location.pathname)) ? 'btn btn-light' : 'btn btn-secondary' } to="/surveys">Surveys</Link>
                         </li>
-                        <li className="nav-item ml-3">
-                            <DropdownMenu title="Demos">
-                                <MenuLink to="/demo/form">Form Elements</MenuLink>
-                                <MenuLink to="/demo/analyse">Analysis</MenuLink>
-                                <MenuLink to="/demo/manifest">Manifest</MenuLink>
-                            </DropdownMenu>
-                        </li>
+                        {
+                            (process.env.NODE_ENV !== 'production') ?
+                                <li className="nav-item ml-3">
+                                    <DropdownMenu title="Demos">
+                                        <MenuLink to="/demo/form">Form Elements</MenuLink>
+                                        <MenuLink to="/demo/analyse">Analysis</MenuLink>
+                                        <MenuLink to="/demo/manifest">Manifest</MenuLink>
+                                    </DropdownMenu>
+                                </li>
+                            : null
+                        }
                         { /*<li className="nav-item ml-2">
                             <ThemePicker className="form-control" />
                         </li> */}
