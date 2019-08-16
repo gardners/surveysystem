@@ -12,9 +12,8 @@ import '@fortawesome/fontawesome-free/css/regular.min.css';
 import '@fortawesome/fontawesome-free/css/fontawesome.min.css';
 
 // theme
-const urlParams = new URLSearchParams(window.location.search);
-const themeParam = urlParams.get('theme');
-const theme = (themeParam) ? themeParam : (process.env.REACT_APP_SITE_THEME) ? process.env.REACT_APP_SITE_THEME : 'default';
+const { REACT_APP_SITE_THEME } = process.env;
+const theme = (REACT_APP_SITE_THEME) ? REACT_APP_SITE_THEME : 'default';
 
 // webpack dynamic imports
 import(`./styles/${theme}/index.scss`).then(() => {
