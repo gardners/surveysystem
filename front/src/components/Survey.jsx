@@ -292,7 +292,7 @@ class Survey extends Component {
         const isClosed = survey.isClosed();
 
         return (
-            <SurveySection survey={ survey }>
+            <SurveySection session={ survey }>
                 <Dev.SurveyBar survey={ survey } />
                 <Preloader loading={ this.state.loading } message={ this.state.loading }/>
                 
