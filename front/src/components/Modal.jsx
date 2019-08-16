@@ -15,10 +15,13 @@ const customStyles = {
         transform: 'translate(-50%, -50%)',
 
         minWidth: '60%',
+        maxWidth: '95%',
+        maxHeight: '95%',
         /* @see node_modules/bootstrap/scss/bootstrap*/
         padding: '0', // $modal-inner-padding
         borderRadius: '.3rem', //$modal-content-border-radius
-        border: '1px solid rgba(0, 0, 0, .2)' // $modal-content-border-color, $modal-content-border-width
+        border: '1px solid rgba(0, 0, 0, .2)', // $modal-content-border-color, $modal-content-border-width
+        overflow: 'auto',
     },
     overlay: {
         backgroundColor: 'rgba(0, 0, 0, 0.75)'
