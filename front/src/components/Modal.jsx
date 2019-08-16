@@ -15,10 +15,13 @@ const customStyles = {
         transform: 'translate(-50%, -50%)',
 
         minWidth: '60%',
+        maxWidth: '95%',
+        maxHeight: '95%',
         /* @see node_modules/bootstrap/scss/bootstrap*/
         padding: '0', // $modal-inner-padding
         borderRadius: '.3rem', //$modal-content-border-radius
-        border: '1px solid rgba(0, 0, 0, .2)' // $modal-content-border-color, $modal-content-border-width
+        border: '1px solid rgba(0, 0, 0, .2)', // $modal-content-border-color, $modal-content-border-width
+        overflow: 'auto',
     },
     overlay: {
         backgroundColor: 'rgba(0, 0, 0, 0.75)'
@@ -67,12 +70,12 @@ class Modal extends React.Component {
     }
 
     render() {
-        const { title, shouldCloseOnOverlayClick, buttonText, children } = this.props;
+        const { title, shouldCloseOnOverlayClick, buttonText, buttonClassName, children } = this.props;
         const { open } = this.state;
 
         return (
             <React.Fragment>
-                <button type="button" className="btn btn-primary btn-sm" onClick={ this.openModal.bind(this) }>{ buttonText() }</button>
+                <button className={ buttonClassName } onClick={ this.openModal.bind(this) }>{ buttonText() }</button>
                 <ReactModal
                     closeTimeoutMS={ 500 }
                     isOpen={ open }
@@ -103,6 +106,7 @@ class Modal extends React.Component {
 Modal.defaultProps = {
     title: '',
     subtitle: '',
+    buttonClassName: 'btn btn-primary btn-sm',
     shouldCloseOnOverlayClick: true,
     shouldCloseOnEsc: true,
     onAfterOpen: function() {},
@@ -111,6 +115,7 @@ Modal.defaultProps = {
 
 Modal.propTypes = {
     buttonText: PropTypes.func.isRequired,
+    buttonClassName: PropTypes.string,
     title: PropTypes.string,
     shouldCloseOnOverlayClick: PropTypes.bool,
     shouldCloseOnEsc: PropTypes.bool,
