@@ -1,5 +1,7 @@
 import PropTypes from 'prop-types';
 
+const { PUBLIC_URL } = process.env;
+
 const coerce = function(id, data) {
      return {
         id,
@@ -8,11 +10,14 @@ const coerce = function(id, data) {
         description: data.description || '',
         organisation: data.organisation || '',
         email: data.email || '',
+        phone: data.phone || '',
+        pages: data.pages || [],
     };
 };
 
 const getById = function(id) {
-    return import(`./config-surveys/${id}/survey.json`)
+    return fetch(`${PUBLIC_URL}/surveys/${id}/survey.json`)
+    .then(response => response.json())
     .then(data => coerce(id, data));
 };
 
@@ -33,6 +38,7 @@ const itemPropTypes = function () {
         description: PropTypes.string,
         organisation: PropTypes.string,
         email: PropTypes.string,
+        pages: PropTypes.array,
     });
 };
 
