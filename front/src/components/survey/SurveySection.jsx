@@ -2,16 +2,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import SurveyManager from '../../SurveyManager';
-import SurveyList from '../../SurveyList';
-import Modal from '../Modal';
+import SurveyHeader from './SurveyHeader';
 
-const SurveySection = function({ survey, children }) {
-  const info = SurveyList.getById(survey.surveyID);
-  const name = (info.name) ? info.name : survey.surveyID;
-  
+const SurveySection = function({ session, children }) {
+
   return (
       <section>
-          <h1>{ name }</h1>
+          <SurveyHeader session={ session }/>
           { children }
       </section>
   );
@@ -19,7 +16,7 @@ const SurveySection = function({ survey, children }) {
 };
 
 SurveySection.propTypes = {
-    survey: PropTypes.instanceOf(SurveyManager).isRequired,
+    session: PropTypes.instanceOf(SurveyManager).isRequired,
 };
 
 export default SurveySection;
