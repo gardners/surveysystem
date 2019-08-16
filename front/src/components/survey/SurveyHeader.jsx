@@ -36,7 +36,7 @@ class SurveyHeader extends Component {
                 <h1>{ (survey) ? survey.name : session.surveyID }</h1>
                 {
                     (survey) ?
-                        <ul className="nav mb-3">
+                        <ul className="nav">
                             <li className="nav-item">
                                 <Modal
                                     title="About this survey"

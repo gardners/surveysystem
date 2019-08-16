@@ -292,103 +292,108 @@ class Survey extends Component {
         const isClosed = survey.isClosed();
 
         return (
-            <SurveySection session={ survey }>
+            <React.Fragment>
                 <Dev.SurveyBar survey={ survey } />
-                <Preloader loading={ this.state.loading } message={ this.state.loading }/>
-                
-                {
-                    (this.state.alerts.length) ?
-                        <React.Fragment>
-                            Unfortunately we encountered an error sending your data.
-                            { this.state.alerts.map((entry, index) => <ApiAlert key={ index } error={ entry } />) }
-                        </React.Fragment> : null
-                }
-    
-                {
-                    /* show if survey is finished but not closed yet */
-                    (isClosed) ?
-                        <div className="card">
-                            <div className="card-header">
-                                <h2 className="card-title"> <i className="fas fa-check-circle"></i> Survey completed.</h2>
+
+                <SurveySection session={ survey }>
+
+                    <Preloader loading={ this.state.loading } message={ this.state.loading }/>
+
+                    {
+                        (this.state.alerts.length) ?
+                            <React.Fragment>
+                                Unfortunately we encountered an error sending your data.
+                                { this.state.alerts.map((entry, index) => <ApiAlert key={ index } error={ entry } />) }
+                            </React.Fragment> : null
+                    }
+
+                    {
+                        /* show if survey is finished but not closed yet */
+                        (isClosed) ?
+                            <div className="card">
+                                <div className="card-header">
+                                    <h2 className="card-title"> <i className="fas fa-check-circle"></i> Survey completed.</h2>
+                                </div>
+                                <div className="card-body">
+
+                                    <p className="card-text">Thank you for your time!</p>
+                                    <Link className="btn btn-default btn-primary" to={ `/analyse/${survey.surveyID}/${survey.sessionID}` }>Finish Survey</Link>
+                                </div>
                             </div>
-                            <div className="card-body">
-    
-                                <p className="card-text">Thank you for your time!</p>
-                                <Link className="btn btn-default btn-primary" to={ `/analyse/${survey.surveyID}/${survey.sessionID}` }>Finish Survey</Link>
-                            </div>
-                        </div>
-                    : null
-                }
-    
-                <SurveyContext.Provider value={ {
-                    surveyID: survey.surveyID,
-                    sessionID: survey.sessionID,
-                } }>
-                    <SurveyForm
-                        show={ !isClosed && questions.length > 0 && !this.state.loading }
-                        className="list-group"
-                    >
-                        {
-                            withGroups.map((entry, index) => {
-    
-                                if(isArray(entry)) {
+                        : null
+                    }
+
+                    <SurveyContext.Provider value={ {
+                        surveyID: survey.surveyID,
+                        sessionID: survey.sessionID,
+                    } }>
+                        <SurveyForm
+                            show={ !isClosed && questions.length > 0 && !this.state.loading }
+                            className="list-group"
+                        >
+                            {
+                                withGroups.map((entry, index) => {
+
+                                    if(isArray(entry)) {
+                                        return (
+                                            <QuestionGroup
+                                                key={ index }
+                                                className="list-group-item"
+
+                                                handleChange={ this.handleChange.bind(this) }
+                                                questions={ entry }
+                                                errors={ errors }
+                                            />
+                                        );
+                                    }
+
                                     return (
-                                        <QuestionGroup
+                                        <Question
                                             key={ index }
                                             className="list-group-item"
-    
+
                                             handleChange={ this.handleChange.bind(this) }
-                                            questions={ entry }
-                                            errors={ errors }
+                                            question={ entry }
+                                            error={ errors[entry.id] || null }
                                         />
                                     );
-                                }
-    
-                                return (
-                                    <Question
-                                        key={ index }
-                                        className="list-group-item"
-    
-                                        handleChange={ this.handleChange.bind(this) }
-                                        question={ entry }
-                                        error={ errors[entry.id] || null }
-                                    />
-                                );
-    
-                            })
-                        }
-    
-                        {
-                            feedback.map((item, index) => <FeedbackItem key={ index } status={ item.status } className="list-group-item" classNamePrefix="list-group-item-">{ item.message }</FeedbackItem>)
-                        }
-    
-                        {
-                            hasErrors && <FeedbackItem className="list-group-item list-group-item-danger">Please fix errors above</FeedbackItem>
-                        }
-    
-                        {
-                            !hasAllAnswers && <FeedbackItem className="list-group-item list-group-item-warning">Please answer all questions</FeedbackItem>
-                        }
-    
-                        <SurveyButtons
-                            className="list-group-item"
-                            handlePrev={ this.handleDelAnswer.bind(this) }
-                            handleNext={ this.handleUpdateAnswers.bind(this) }
-    
-                            hasQuestions={ hasQuestions }
-                            hasErrors={ hasErrors }
-                            hasAnswers={ hasAnswers }
-                            hasAllAnswers={ hasAllAnswers }
-                            didAnswerBefore={ didAnswerBefore }
-                        />
-                    </SurveyForm>
-                </SurveyContext.Provider>
+
+                                })
+                            }
+
+                            {
+                                feedback.map((item, index) => <FeedbackItem key={ index } status={ item.status } className="list-group-item" classNamePrefix="list-group-item-">{ item.message }</FeedbackItem>)
+                            }
+
+                            {
+                                hasErrors && <FeedbackItem className="list-group-item list-group-item-danger">Please fix errors above</FeedbackItem>
+                            }
+
+                            {
+                                !hasAllAnswers && <FeedbackItem className="list-group-item list-group-item-warning">Please answer all questions</FeedbackItem>
+                            }
+
+                            <SurveyButtons
+                                className="list-group-item pt-4 pb-4"
+                                handlePrev={ this.handleDelAnswer.bind(this) }
+                                handleNext={ this.handleUpdateAnswers.bind(this) }
+
+                                hasQuestions={ hasQuestions }
+                                hasErrors={ hasErrors }
+                                hasAnswers={ hasAnswers }
+                                hasAllAnswers={ hasAllAnswers }
+                                didAnswerBefore={ didAnswerBefore }
+                            />
+                        </SurveyForm>
+                    </SurveyContext.Provider>
+                </SurveySection>
 
                 <Dev.Pretty label="survey" data={ survey } open={ false }/>
                 <Dev.Pretty label="questions" data={ questions } open={ false }/>
                 <Dev.Pretty label="answers" data={ answers } open={ false }/>
                 <Dev.Pretty label="errors" data={ errors } open={ false }/>
-            </SurveySection>
+
+            </React.Fragment>
         );
     }
 }
