@@ -2,17 +2,22 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import SurveyManager from '../../SurveyManager';
+
 import SurveyHeader from './SurveyHeader';
+import RestartSurveyButton from './RestartSurveyButton';
 
 const SurveySection = function({ session, children }) {
 
   return (
-      <section>
-          <SurveyHeader session={ session }/>
-          { children }
-      </section>
+    <section>
+        <SurveyHeader session={ session }/>
+        { children }
+        <pre className="text-right" style={ { fontSize: '.85em' } }>
+            session: { (session) ? session.sessionID : '' } <RestartSurveyButton className="btn btn-sm btn-link">Restart survey</RestartSurveyButton>
+        </pre>
+    </section>
   );
-  
+
 };
 
 SurveySection.propTypes = {

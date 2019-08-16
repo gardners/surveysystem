@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import LocalStorage from '../storage/LocalStorage';
+import RestartSurveyButton from './survey/RestartSurveyButton';
 
 // config
 const CACHE_KEY = process.env.REACT_APP_SURVEY_CACHEKEY;
@@ -57,33 +58,13 @@ Pretty.propTypes = {
     open: PropTypes.bool,
 };
 
-const ClearCachedSurveyButton = function(props) {
-
-    if(!LocalStorage.get(CACHE_KEY)) {
-        return (null);
-    }
-
-    return(
-        <span role="menuitem" className={ props.className } onClick={ () => {
-            // no e.preventDefault(); we DO want to refresh here
-            LocalStorage.delete(CACHE_KEY);
-            window.location.reload();
-        } }>Clear LocalStorage</span>
-    );
-};
-
-ClearCachedSurveyButton.propTypes = {
-    className: PropTypes.string,
-};
-
 const SurveyBar = function(props) {
     const { survey } = props;
 
     // don't display in production mode
-    // TODO enable
-    // if (NODE_ENV === 'production') {
-    //     return (null);
-    // }
+    if (NODE_ENV === 'production') {
+        return (null);
+    }
 
     if(!survey) {
         return (null);
@@ -92,7 +73,7 @@ const SurveyBar = function(props) {
     return(
         <pre className={ props.className }>
             session: { survey.sessionID }, env: { process.env.NODE_ENV }
-            { <ClearCachedSurveyButton className="text-primary ml-2" /> }
+            { <RestartSurveyButton className="btn  btn-link btn-sm">Clear LocalStorage</RestartSurveyButton> }
         </pre>
     );
 };
