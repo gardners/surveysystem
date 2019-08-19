@@ -955,7 +955,7 @@ static void fcgi_delanswerandfollowing(struct kreq *req)
        * We have a question -- so delete all answers to the given question 
        */
        
-      if (session_delete_answers_by_question_uid(s,question->val,0) < 1) {
+      if (session_delete_answers_by_question_uid(s,question->val,1)<0) {
 	      // TODO could be both 400 or 500 (storage, serialization, not in session)
 	      quick_error(req,KHTTP_400,"Answer does not match existing session records.");
 	      LOG_ERROR("session_delete_answers_by_question_uid() failed");
@@ -1113,6 +1113,7 @@ static void fcgi_nextquestion(struct kreq *req)
     if (get_next_questions(s,q,1024,&next_question_count)) {
       quick_error(req,KHTTP_500,"Could not get next questions.");
       LOG_ERRORV("get_next_questions('%s') failed",session_id);
+      break;
     }
     
     // json response
@@ -1443,8 +1444,38 @@ static void fcgi_analyse(struct kreq *req)
     }
     
     // reply
-    begin_200(req);
-    er = khttp_puts(req, "Session deleted");
+    er = khttp_head(req, kresps[KRESP_STATUS], 
+		    "%s", khttps[KHTTP_200]);
+    if (KCGI_HUP == er) {
+      fprintf(stderr, "khttp_head: interrupt\n");
+      continue;
+    } else if (KCGI_OK != er) {
+      fprintf(stderr, "khttp_head: error: %d\n", er);
+      break;
+    }
+    
+    // Emit mime-type
+    er =  khttp_head(req, kresps[KRESP_CONTENT_TYPE], 
+	       "%s", kmimetypes[KMIME_APP_JSON]); 
+    if (KCGI_HUP == er) {
+      fprintf(stderr, "khttp_head: interrupt\n");
+      continue;
+    } else if (KCGI_OK != er) {
+      fprintf(stderr, "khttp_head: error: %d\n", er);
+      break;
+    }
+
+    // Begin sending body
+    er = khttp_body(req);
+    if (KCGI_HUP == er) {
+      fprintf(stderr, "khttp_body: interrupt\n");
+      continue;
+    } else if (KCGI_OK != er) {
+      fprintf(stderr, "khttp_body: error: %d\n", er);
+      break;
+    }
+    
+    er = khttp_puts(req, (const char *)analysis);
     if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
     LOG_INFO("Leaving page handler");
   } while(0);
