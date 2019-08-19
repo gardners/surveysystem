@@ -999,6 +999,7 @@ char *config_template=
   "  (( \"host\" => \"127.0.0.1\",\n"
   "     \"port\" => %d,\n"
   "     \"bin-path\" => \"%s/surveyfcgi\",\n"
+  "     \"max-procs\" => 1,\n"
   "     \"bin-environment\" => (\n"
   "     \"SURVEY_HOME\" => \"%s\",\n"
   "     \"SURVEY_PYTHON_DIR\" => \"%s\"\n"
