@@ -294,6 +294,9 @@ int dump_logs(char *dir,FILE *log)
 
 int run_test(char *dir, char *test_file)
 {
+  // #198 flush errors accumulated by previous tests
+  clear_errors();
+  
   int retVal=0;
   FILE *in=NULL;
   FILE *log=NULL;
