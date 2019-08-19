@@ -15,7 +15,7 @@ class EmbedHtmlFile extends Component {
     }
 
     componentDidMount() {
-        const { src, title } = this.props;
+        const { src } = this.props;
 
         fetch(src)
         .then(response => response.text())
@@ -31,12 +31,12 @@ class EmbedHtmlFile extends Component {
     }
 
     render () {
-        const { title } = this.props;
+        const { title, showTitle } = this.props;
         const { contents, loading, error } = this.state;
 
         return (
             <React.Fragment>
-                <h1>{ title }</h1>
+                { showTitle && <h1>{ title }</h1> }
                 { loading && <div className="text-primary text-center m-2 p-2" style={ { fontSize: '2em' } }><i className="fas fa-circle-notch fa-spin"></i>{ loading }</div> }
                 { error && <div className="text-danger m-2 p-2">{ error.toString() }</div> }
                 { contents && <InnerHtml htmlContent={ contents } /> }
@@ -47,11 +47,13 @@ class EmbedHtmlFile extends Component {
 
 EmbedHtmlFile.defaultProps = {
     src: '',
+    showTitle: true,
 };
 
 EmbedHtmlFile.propTypes = {
    title: PropTypes.string.isRequired,
    src: PropTypes.string,
+   showTitle: PropTypes.bool,
 };
 
 export default EmbedHtmlFile;
