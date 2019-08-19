@@ -50,11 +50,15 @@ class SurveyHeader extends Component {
                                         (page, index) =>
                                             <Modal
                                                 key={ index }
-                                                title=""
+                                                title={ page.title }
                                                 buttonClassName="btn btn-link btn-sm mr-3"
                                                 buttonText={ () => page.title || '' }
                                             >
-                                                <EmbedHtmlFile title={ page.title || '' } src={ (page.src) ? `${PUBLIC_URL}/surveys/${survey.id}/${page.src}` :  '' } />
+                                                <EmbedHtmlFile
+                                                    title={ page.title || '' }
+                                                    src={ (page.src) ? `${PUBLIC_URL}/surveys/${survey.id}/${page.src}` :  '' }
+                                                    showTitle={ false }
+                                                    />
                                             </Modal>
                                     )
                                 }
