@@ -1444,8 +1444,38 @@ static void fcgi_analyse(struct kreq *req)
     }
     
     // reply
-    begin_200(req);
-    er = khttp_puts(req, "Session deleted");
+    er = khttp_head(req, kresps[KRESP_STATUS], 
+		    "%s", khttps[KHTTP_200]);
+    if (KCGI_HUP == er) {
+      fprintf(stderr, "khttp_head: interrupt\n");
+      continue;
+    } else if (KCGI_OK != er) {
+      fprintf(stderr, "khttp_head: error: %d\n", er);
+      break;
+    }
+    
+    // Emit mime-type
+    er =  khttp_head(req, kresps[KRESP_CONTENT_TYPE], 
+	       "%s", kmimetypes[KMIME_APP_JSON]); 
+    if (KCGI_HUP == er) {
+      fprintf(stderr, "khttp_head: interrupt\n");
+      continue;
+    } else if (KCGI_OK != er) {
+      fprintf(stderr, "khttp_head: error: %d\n", er);
+      break;
+    }
+
+    // Begin sending body
+    er = khttp_body(req);
+    if (KCGI_HUP == er) {
+      fprintf(stderr, "khttp_body: interrupt\n");
+      continue;
+    } else if (KCGI_OK != er) {
+      fprintf(stderr, "khttp_body: error: %d\n", er);
+      break;
+    }
+    
+    er = khttp_puts(req, (const char *)analysis);
     if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
     LOG_INFO("Leaving page handler");
   } while(0);
