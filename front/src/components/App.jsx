@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Route, Switch, Redirect, withRouter } from 're
 
 import { DEFAULT_BREAKPOINT, testMediaBreakpoint, isBreakpointAbove } from '../Media';
 import { AppContext } from '../Context';
-import LocalStorage from '../storage/LocalStorage';
 
 // scaffolding
 import HeaderNav from './HeaderNav';
@@ -24,19 +23,11 @@ const Navigation = withRouter(HeaderNav);
 const {
     REACT_APP_SURVEY_PROVIDER,
     REACT_APP_SITE_NAME,
-    REACT_APP_SURVEY_CACHEKEY,
-    REACT_APP_SURVEY_LIST,
 } = process.env;
 // config
 
 const surveyProvider = REACT_APP_SURVEY_PROVIDER.trim();
 const siteName = REACT_APP_SITE_NAME.trim();
-
-// get surveys TODO: context
-const surveyIds = REACT_APP_SURVEY_LIST.split(',').map(name => name.trim());
-
-// inital check for stored survey session TODO: context
-const lastSession = LocalStorage.get(REACT_APP_SURVEY_CACHEKEY);
 
 ////
 //
@@ -70,7 +61,6 @@ class App extends Component {
 
     render() {
         const { appContext } = this.state;
-        const currentSurveyId = (lastSession) ? lastSession.surveyID : '';
 
         return (
             <Router>
@@ -78,8 +68,8 @@ class App extends Component {
                     <Navigation siteName={ siteName } surveyProvider={ surveyProvider }/>
                     <main className="container" style={{ marginTop: '60px' /*fixed header*/ }}>
                         <Switch>
-                            <Route exact path="/" render={ props => (currentSurveyId) ? <Redirect to={ `/surveys` } /> : <Surveys /> } />
-                            <Route path="/surveys" render={ () => <Surveys surveyIds={ surveyIds } /> } />
+                            <Route exact path="/" render={ props => <Redirect to={ `/surveys` } /> } />
+                            <Route path="/surveys" component={ Surveys } />
                             <Route path="/demo/form/:component?" component={ Demo } />
                             <Route path="/demo/analyse" component={ DemoAnalysis } />
                             <Route path="/demo/manifest" component={ DemoManifest } />

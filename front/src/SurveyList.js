@@ -1,6 +1,9 @@
 import PropTypes from 'prop-types';
 
-const { PUBLIC_URL } = process.env;
+const {
+    PUBLIC_URL,
+    REACT_APP_SURVEY_LIST,
+} = process.env;
 
 const coerce = function(id, data) {
      return {
@@ -21,8 +24,9 @@ const getById = function(id) {
     .then(data => coerce(id, data));
 };
 
-const getAll = function(ids) {
-    return Promise.all(ids.map(id => getById(id)));
+const getAll = function() {
+    const surveyIds = REACT_APP_SURVEY_LIST.split(',').map(name => name.trim());
+    return Promise.all(surveyIds.map(id => getById(id)));
 };
 
 
