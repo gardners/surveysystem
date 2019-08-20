@@ -40,7 +40,6 @@ SurveyItemButtons.propTypes = {
     isCurrent: PropTypes.bool,
 };
 
-
 const SurveyItem = function({ survey, session, isCurrent, withButtons }) {
 
     const created = (session && typeof session.created !== 'undefined') ? session.created : 0;
@@ -138,29 +137,29 @@ class Surveys extends Component {
                     : null
                 }
 
-                <div className="mb-3">Available Surveys:</div>
-                <ul className="list-group mb-3">
                 {
-                    availableSurveys.map((survey, index) =>
-                        <li key={ index } className="list-group-item">
-                            <SurveyItem survey={ survey } />
-                        </li>
-                    )
+                    (availableSurveys.length) ?
+                        <React.Fragment>
+                            <div className="mb-3">Available Surveys:</div>
+                            <ul className="list-group mb-3">
+                            {
+                                availableSurveys.map((survey, index) =>
+                                    <li key={ index } className="list-group-item">
+                                        <SurveyItem survey={ survey } />
+                                    </li>
+                                )
+                            }
+                            </ul>
+                        </React.Fragment>
+                    : null
                 }
-                </ul>
             </React.Fragment>
         );
     }
 };
 
-Surveys.defaultProps = {
-    surveyIds: [],
-};
+Surveys.defaultProps = {};
 
-Surveys.propTypes = {
-    surveyIds: PropTypes.arrayOf(
-        PropTypes.string,
-    ),
-};
+Surveys.propTypes = {};
 
 export { Surveys as default, SurveyItem };
