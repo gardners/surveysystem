@@ -23,7 +23,6 @@ const cellStyle = {
     width: '25%',
 };
 
-
 class Analysis extends Component {
 
     constructor(props) {
