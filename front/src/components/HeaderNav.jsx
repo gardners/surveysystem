@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 
 import { Link } from 'react-router-dom';
 
-// import ThemePicker from './ThemePicker';
 import { DropdownMenu, MenuLink } from './bootstrap/DropdownMenu';
 
 import logo from '../assets/logo.png';
@@ -60,9 +59,6 @@ const HeaderNav = function({ location, surveyIds, surveyProvider, siteName}) {
                                 </li>
                             : null
                         }
-                        { /*<li className="nav-item ml-2">
-                            <ThemePicker className="form-control" />
-                        </li> */}
                     </ul>
                 </div>
             </nav>

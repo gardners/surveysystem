@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import RestartSurveyButton from './survey/RestartSurveyButton';
 
-const NODE_ENV = process.env.NODE_ENV;
+const { NODE_ENV } = process.env;
 
 class Pretty extends Component {
 
