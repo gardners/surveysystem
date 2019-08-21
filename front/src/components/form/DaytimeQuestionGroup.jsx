@@ -301,17 +301,16 @@ class DaytimeQuestionGroup extends Component {
                                                                 </button>
                                                         }
                                                         {
-                                                            (index === values.length - 1 && touched <  values.length - 1) &&
+                                                            index === values.length - 1 &&
                                                                 <button
                                                                     className="btn btn-primary btn-sm ml-4"
                                                                     onClick={ this.handleNext.bind(this, index) } // for the case the handle was not moved (default_value given), otherwise the survey would display the incomplete warning and not proceed
                                                                 >
-                                                                    <i className="fas fa-check" /> Confirm
+                                                                    <i className="fas fa-check" /> OK
                                                                 </button>
                                                         }
                                                     </div>
                                                 </div>
-
                                             </Fade>
                                         </ListItem>
                                     :
