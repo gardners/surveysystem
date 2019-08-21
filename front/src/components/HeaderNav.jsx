@@ -1,7 +1,5 @@
 //Basic HeaderNav made with bootstrap
 import React from 'react';
-import PropTypes from 'prop-types';
-
 import { Link } from 'react-router-dom';
 
 import { DropdownMenu, MenuLink } from './bootstrap/DropdownMenu';
@@ -21,12 +19,20 @@ const toggle = function(el){
     el.className += ' show';
 };
 
-const HeaderNav = function({ location, surveyIds, surveyProvider, siteName}) {
+const {
+    REACT_APP_SURVEY_PROVIDER,
+    REACT_APP_SITE_NAME,
+} = process.env;
+
+const surveyProvider = REACT_APP_SURVEY_PROVIDER.trim();
+const siteName = REACT_APP_SITE_NAME.trim();
+
+const HeaderNav = function({ location }) {
 
     return (
         <header>
             <nav className="navbar navbar-expand-md navbar-dark fixed-top bg-dark shadow-sm">
-                <Link to="/" className="navbar-brand align-items-center"><img src={ logo } className="mr-3" alt="logo" height="30" />{ siteName }</Link>
+                <Link to="/" className="navbar-brand align-items-center"><img src={ logo } className="mr-3" title={ surveyProvider } alt="logo" height="30" />{ siteName }</Link>
 
                 <button
                     className="navbar-toggler"
@@ -64,14 +70,6 @@ const HeaderNav = function({ location, surveyIds, surveyProvider, siteName}) {
             </nav>
         </header>
     );
-};
-
-HeaderNav.defaultProps = {
-};
-
-HeaderNav.propTypes = {
-    surveyProvider: PropTypes.string.isRequired,
-    siteName: PropTypes.string.isRequired,
 };
 
 export default HeaderNav;

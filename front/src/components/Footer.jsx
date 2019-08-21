@@ -1,20 +1,21 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 
-const version = process.env.REACT_APP_VERSION  || '';
+const {
+    REACT_APP_SURVEY_PROVIDER,
+    REACT_APP_VERSION,
+} = process.env;
 
-const Footer = function({ surveyProvider }) {
+const Footer = function() {
+    const version = REACT_APP_VERSION || '';
     return (
-        <footer className="row">
-            <div className="col text-center p-3">
-            { `© ${surveyProvider} ${new Date().getFullYear()}` }{ version && <small className="text-muted ml-2">v{ version }</small> }
+        <footer className="container">
+            <div className="row">
+                <div className="col text-center p-3">
+                { `© ${REACT_APP_SURVEY_PROVIDER} ${new Date().getFullYear()}` }{ version && <small className="text-muted ml-2">v{ version || '' }</small> }
+                </div>
             </div>
         </footer>
     );
 }
-
-Footer.propTypes = {
-    surveyProvider: PropTypes.string.isRequired,
-};
 
 export default Footer;

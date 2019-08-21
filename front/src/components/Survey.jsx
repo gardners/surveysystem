@@ -250,14 +250,16 @@ class Survey extends Component {
             return;
         }
 
+        // set survey to last step and
+        // request deletion of all answers until, and including the foiirst question of the last step
         survey.reset();
-        const inversed = survey.currentInversed();
-        if(!inversed.length) {
+        const prev = survey.current();
+        if(!prev.length) {
             this.alert('No question found to delete', 'error');
             return;
         }
-        const questionId = inversed[0].id;
-        this.setState({ loading: `Deleting ${inversed.length} answers...` });
+        const questionId = prev[0].id;
+        this.setState({ loading: `Deleting ${prev.length} answers...` });
 
         Api.deleteAnswerAndFollowing(survey.sessionID, questionId)
         .then(response => survey.add(response.next_questions))
