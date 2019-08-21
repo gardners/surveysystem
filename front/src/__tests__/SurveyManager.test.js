@@ -407,41 +407,6 @@ describe('SurveyManager', () => {
         expect(curr[1]).toMatchObject({ id: 6 });
     });
 
-    test('currentInversed()', () => {
-        let inversed;
-
-        const that = new SurveyManager('test', 'uri');
-        that.init('123');
-        that.add([{ id: 'something' }]);
-        that.add([{ id: 1 }, { id: 2 }, { id: 3 }]);
-
-        inversed = that.currentInversed();
-        expect(inversed === that.current()).toBe(false);
-        expect(inversed.length).toBe(3);
-        expect(inversed[0]).toMatchObject({ id: 3 });
-        expect(inversed[1]).toMatchObject({ id: 2 });
-        expect(inversed[2]).toMatchObject({ id: 1 });
-
-        // add another set
-
-        that.add([{ id: 3 }, { id: 4 }, { id: 5 }]);
-        inversed = that.currentInversed();
-        expect(inversed === that.current()).toBe(false);
-        expect(inversed.length).toBe(3);
-        expect(inversed[0]).toMatchObject({ id: 5 });
-        expect(inversed[1]).toMatchObject({ id: 4 });
-        expect(inversed[2]).toMatchObject({ id: 3 });
-
-        // reset
-
-        that.reset();
-        inversed = that.currentInversed();
-        expect(inversed === that.current()).toBe(false);
-        expect(inversed.length).toBe(3);
-        expect(inversed[0]).toMatchObject({ id: 3 });
-        expect(inversed[1]).toMatchObject({ id: 2 });
-        expect(inversed[2]).toMatchObject({ id: 1 });
-    });
 });
 
 describe('SurveyManager.canMerge', () => {

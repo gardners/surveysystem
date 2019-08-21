@@ -225,17 +225,6 @@ class SurveyManager {
         return (this.questions.length) ? this.questions[this.questions.length - 1] : [];
     }
 
-    currentInversed() {
-        const current = this.current();
-        let index = current.length - 1;
-        const inversed = [];
-        while (index >= 0) {
-            inversed.push(current[index]);
-            index -= 1;
-        }
-        return inversed;
-    }
-
 }
 
 export { SurveyManager as default, questionIDs, matchQuestionIds };
