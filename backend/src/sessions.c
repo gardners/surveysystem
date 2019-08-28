@@ -493,8 +493,9 @@ int load_survey_questions(struct session *ses)
     ses->survey_description=strdup(line);
     if (!ses->survey_description) LOG_ERRORV("strdup('%s') failed when loading survey file '%s'",line,survey_path);
 
-    // Only allow generic implementation of next question picker if explicitly allowed
-    ses->allow_generic=0;
+    // version 1: Only allow generic implementation of next question picker if explicitly allowed
+    ses->nextquestions_flag=NEXTQUESTIONS_FLAG_PYTHON;
+    
     if (format_version>1) {
       // Check for pythondir and without python directives
       line[0]=0;
@@ -503,7 +504,7 @@ int load_survey_questions(struct session *ses)
       // Trim CR and LF chars from description
       trim_crlf(line);
       if (!strcasecmp(line,"without python")) {
-        ses->allow_generic=1;
+        ses->nextquestions_flag=NEXTQUESTIONS_FLAG_GENERIC;
         ses->pythondir[0]=0;
       } else if (sscanf(line,"pythondir=%[^\n]",ses->pythondir)==1) {
 	 // We are using python, and have recorded a python library directory to add to the search path.
