@@ -69,6 +69,12 @@ class Survey extends Component {
         };
     }
 
+    /**
+     * Sends a message or an Error to this.state.alerts
+     * This method ist tpically used by the request api in case of response or network errors
+     * @param {Error} error
+     * @returns {void}
+     */
     componentDidMount() {
         const { survey } = this.state;
 
@@ -110,6 +116,18 @@ class Survey extends Component {
     // form processing
     ////
 
+    /**
+     * Callback for question form elements,
+     * - receive,
+     * - validate
+     * - serialize answer,
+     * - store serialized answer in this.state.answers
+     *
+     * @param {HTMLElement|null} element
+     * @param {Question} question
+     * @param {mixed} value
+     * @returns {void}
+     */
     handleChange(element, question, value) {
         const { survey, questions, answers, errors } = this.state;
         const { id } = question;
@@ -164,11 +182,21 @@ class Survey extends Component {
     // form submissions
     ////
 
+    /**
+     * Create a new session
+     *
+     * @param {Event}
+     * @returns {void}
+     */
     initNewSession(e) {
         e && e.preventDefault();
 
         const { survey } = this.state;
         this.setState({ loading: 'Initializing survey...' });
+
+        // 1. request a new session id
+        // 2. initialize a new survey insatance
+        // 3. fetch the first question set andd add it to survey instance
 
         Api.createNewSession(survey.surveyID)
         .then(sessID => survey.init(sessID))
@@ -186,11 +214,20 @@ class Survey extends Component {
         .catch(err => this.alert(err));
     }
 
+    /**
+     * Initialize a previously cached session
+     *
+     * @param {Event}
+     * @returns {void}
+     */
     initNextQuestion(e) {
         e && e.preventDefault();
 
         const { survey } = this.state;
         this.setState({ loading: 'Initializing survey...' });
+
+        // 1. fetch the current question set, providing a previoiusly cached sessionid
+        // 2. add question set to survey instance, (survey.add() will internally evaluate if the new question set matches the old one - based on ids - and skip adding in thast case)
 
         Api.nextQuestion(survey.sessionID)
         .then(response => survey.add(response.next_questions))
@@ -205,6 +242,12 @@ class Survey extends Component {
         .catch(err => this.alert(err));
     }
 
+    /**
+     * Submit answers
+     *
+     * @param {Event}
+     * @returns {void}
+     */
     handleUpdateAnswers(e) {
         e && e.preventDefault();
 
@@ -224,6 +267,10 @@ class Survey extends Component {
             return;
         }
 
+        // 1. collect answers csv fragment strings from state
+        // 2. send answers (step by step)
+        // 3. the last next_questions[] response will be the new survey form state, add it to survey instance
+
         const csvFragments = answerIds.map(id => answers[id]);
 
         Api.updateAnswers_SEQUENTIAL(survey.sessionID, csvFragments)
@@ -241,6 +288,12 @@ class Survey extends Component {
         .catch(err => this.alert(err));
     }
 
+    /**
+     * Delete last answers, fetch updated question set (now with default values!) and set this as the current question set
+     *
+     * @param {Event}
+     * @returns {void}
+     */
     handleDelAnswer(e) {
         e && e.preventDefault();
 
@@ -250,8 +303,10 @@ class Survey extends Component {
             return;
         }
 
-        // set survey to last step and
-        // request deletion of all answers until, and including the foiirst question of the last step
+        // 1. set survey to last step a, this sets survey.current() to the question set received before
+        // 2. request deletion of all answers until, and including the foiirst question of the last step
+        // 3. replace survey.current() with received questions (includes default_values)
+
         survey.reset();
         const prev = survey.current();
         if(!prev.length) {
@@ -262,7 +317,7 @@ class Survey extends Component {
         this.setState({ loading: `Deleting ${prev.length} answers...` });
 
         Api.deleteAnswerAndFollowing(survey.sessionID, questionId)
-        .then(response => survey.add(response.next_questions))
+        .then(response => survey.replaceCurrent(response.next_questions))
         .then(() => this.setState({
             loading: '',
             survey,
