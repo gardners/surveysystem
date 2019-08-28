@@ -12,9 +12,9 @@ import InnerHtml from '../InnerHtml';
 
 const Row = function({ question, className, required, grouped, children }) {
     const cls = addClassNames(className, 'col', question.type, (required) ? 'required' : '');
-
+    const rowPadding = (grouped) ? 'pt-4 pb-4 ' : '';
     return(
-        <div className="row pt-4 pb-4 justify-content-center align-items-center">
+        <div className={ `row ${rowPadding}justify-content-center align-items-center` }>
             <div className={ cls }>
                 { children }
             </div>

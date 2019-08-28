@@ -85,6 +85,7 @@ const parseQuestionManifest = function(survey) {
         const title = fields[1];
         const description = fields[2];
         const type = fields[3];
+        const default_value = fields[5];
         const unit = fields[11];
 
         const question = {
@@ -92,6 +93,7 @@ const parseQuestionManifest = function(survey) {
             name,
             title,
             description,
+            default_value,
             type,
             unit
         };
@@ -155,7 +157,7 @@ class DemoManifest extends Component {
                                         <QuestionGroup
                                             handleChange={ () => true }
                                             questions={ entry }
-                                            answers={ this.state.answers }
+                                            answers={ null }
                                         />
                                     </div>
                                 );
@@ -164,9 +166,9 @@ class DemoManifest extends Component {
                             return (
                                 <div key={ index } className="list-group-item">
                                     <Question
-                                        handleChange={ this.handleChange.bind(this) }
+                                        handleChange={  () => true }
                                         question={ entry }
-                                        answer={ this.state.answers[entry.id] || null }
+                                        answer={ null }
                                     />
                                 </div>
                             );

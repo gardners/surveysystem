@@ -40,7 +40,6 @@ SurveyItemButtons.propTypes = {
     isCurrent: PropTypes.bool,
 };
 
-
 const SurveyItem = function({ survey, session, isCurrent, withButtons }) {
 
     const created = (session && typeof session.created !== 'undefined') ? session.created : 0;
@@ -137,6 +136,7 @@ class Surveys extends Component {
                         </React.Fragment>
                     : null
                 }
+
                 {
                     (availableSurveys.length) ?
                         <React.Fragment>
@@ -158,14 +158,8 @@ class Surveys extends Component {
     }
 };
 
-Surveys.defaultProps = {
-    surveyIds: [],
-};
+Surveys.defaultProps = {};
 
-Surveys.propTypes = {
-    surveyIds: PropTypes.arrayOf(
-        PropTypes.string,
-    ),
-};
+Surveys.propTypes = {};
 
 export { Surveys as default, SurveyItem };
