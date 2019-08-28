@@ -12,7 +12,7 @@ question2:How boring was question 1?:How boring was question 1?:TEXT:0:I don't k
 endofsurvey
 
 # Create python module
-# nexquestion is commented out
+# note that nexquestion is commented out!
 python
 """
 def nextquestion(questions, answers):
