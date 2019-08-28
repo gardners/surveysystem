@@ -199,6 +199,35 @@ class SurveyManager {
     }
 
     /**
+     * Replace current questions with new questions
+     * This should be only used in conjunction with Api.delanswerandfollwing() responses,
+     * Typically the question matches the same as the current() question set (after calling reset() before), but now contains default_values.
+     * However due to the dynamic nature of the survey it have to be that way which may be a problem. Thus we hard replace instead try to merge. We have to trust the controller script here to handle this responsibly
+     *
+     * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
+     * @returns {boolean} whether question was areplaced
+     */
+    replaceCurrent(questions) {
+        if(this.isClosed()) {
+            return false;
+        }
+
+        if(!questions.length) {
+            this.close();
+            return false;
+        }
+
+        if (!this.questions.length) {
+            this.questions.push(normalizeQuestions(questions));
+        } else {
+            this.questions[this.questions.length - 1] = normalizeQuestions(questions);
+        }
+
+        this.modified = Date.now();
+        return true;
+    }
+
+    /**
      * Clears this.questions and adds current set of QuestionItems
      * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
      * @returns {boolean} whether question was added
