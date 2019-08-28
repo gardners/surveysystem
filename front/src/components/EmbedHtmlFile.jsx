@@ -15,7 +15,7 @@ class EmbedHtmlFile extends Component {
     }
 
     componentDidMount() {
-        const { src } = this.props;
+        const { src, title } = this.props;
 
         fetch(src)
         .then(response => response.text())

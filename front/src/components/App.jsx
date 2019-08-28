@@ -18,20 +18,7 @@ import Demo from './demo/Demo';
 import DemoAnalysis from './demo/DemoAnalysis';
 import DemoManifest from './demo/DemoManifest';
 
-const Navigation = withRouter(HeaderNav);
-
-const {
-    REACT_APP_SURVEY_PROVIDER,
-    REACT_APP_SITE_NAME,
-    REACT_APP_SURVEY_LIST,
-} = process.env;
-// config
-
-const surveyProvider = REACT_APP_SURVEY_PROVIDER.trim();
-const siteName = REACT_APP_SITE_NAME.trim();
-
-// get surveys TODO: context
-const surveyIds = REACT_APP_SURVEY_LIST.split(',').map(name => name.trim());
+const Header = withRouter(HeaderNav);
 
 ////
 //
@@ -69,11 +56,11 @@ class App extends Component {
         return (
             <Router>
                 <AppContext.Provider value={ appContext }>
-                    <Navigation siteName={ siteName } surveyProvider={ surveyProvider }/>
+                    <Header />
                     <main className="container" style={{ marginTop: '60px' /*fixed header*/ }}>
                         <Switch>
-                            <Route exact path="/" render={ () => <Redirect to={ `/surveys` } /> } />
-                            <Route path="/surveys" render={ () => <Surveys surveyIds={ surveyIds } /> } />
+                            <Route exact path="/" render={ props => <Redirect to={ `/surveys` } /> } />
+                            <Route path="/surveys" component={ Surveys } />
                             <Route path="/demo/form/:component?" component={ Demo } />
                             <Route path="/demo/analyse" component={ DemoAnalysis } />
                             <Route path="/demo/manifest" component={ DemoManifest } />
@@ -82,7 +69,7 @@ class App extends Component {
                             <Route path="*" component={ Page404 } />
                         </Switch>
                     </main>
-                    <Footer surveyProvider={ surveyProvider } />
+                    <Footer />
                 </AppContext.Provider>
             </Router>
         );
