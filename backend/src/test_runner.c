@@ -45,9 +45,10 @@
 #define LIGHTY_GROUP "www-data"
 
 char test_dir[1024];
+int tests = 0;
 
 int configure_and_start_lighttpd(char *test_dir);
-int stop_lighttpd(int verbose);
+int stop_lighttpd();
 
 int fix_ownership(char *dir)
 {
@@ -1018,20 +1019,19 @@ char *config_template=
 
 
 time_t last_config_time=0;
-int first_time=0;
 int configure_and_start_lighttpd(char *test_dir)
 {
   int retVal=0;
 
   do {
     // kill open ports
-    stop_lighttpd(0);
+    stop_lighttpd();
     // Create config file
     char conf_data[16384];
     char cwd[1024];
     int cwdlen=1024;
 
-    fprintf(stderr,"Pulling configuration together...\n");
+    if (!tests) fprintf(stderr,"Pulling configuration together...\n");
     
     // Make sure at least 10 seconds passes between restarts of the back end, so that we don't get
     // spurious errors.
@@ -1047,7 +1047,7 @@ int configure_and_start_lighttpd(char *test_dir)
       chmod(conf_data,0777);
     }
 
-    fprintf(stderr,"Created breakage.log\n");
+    if (!tests) fprintf(stderr,"Created breakage.log\n");
     
     char python_dir[4096];
     if(!realpath("python", python_dir)) {
@@ -1077,29 +1077,29 @@ int configure_and_start_lighttpd(char *test_dir)
     fprintf(f,"%s",conf_data);
     fclose(f);
 
-    fprintf(stderr,"Config file created.\n");
+    if (!tests) fprintf(stderr,"Config file created.\n");
     
     char cmd[2048];
     snprintf(cmd,2048,"sudo cp %s/lighttpd.conf /etc/lighttpd/lighttpd.test.conf",test_dir);
-    fprintf(stderr,"Running '%s'\n",cmd);
+    if (!tests) fprintf(stderr,"Running '%s'\n",cmd);
     if (system(cmd)) {
       LOG_ERRORV("system() call to install lighttpd.conf failed: %s",strerror(errno));
     }
 
     snprintf(cmd,2048, "sudo cp surveyfcgi %s/surveyfcgi",test_dir);
-    fprintf(stderr,"Running '%s'\n",cmd);
+    if (!tests) fprintf(stderr,"Running '%s'\n",cmd);
     if (system(cmd)) {
       LOG_ERRORV("system() call to copy surveyfcgi failed: %s", strerror(errno));
     }
 
     snprintf(cmd,2048, "sudo lighttpd -f /etc/lighttpd/lighttpd.test.conf");
-    fprintf(stderr,"Running '%s'\n",cmd);
+    if (!tests) fprintf(stderr,"Running '%s'\n",cmd);
     if (system(cmd)) {
       LOG_ERRORV("system() call to start lighttpd failed: %s",strerror(errno));
     }
-
-    snprintf(cmd, 2048, "curl --verbose -s -o /dev/null -f http://localhost:%d/surveyapi/fastcgitest", HTTP_PORT);
-    fprintf(stderr,"Running '%s'\n",cmd);
+    
+    snprintf(cmd, 2048, "curl -s -o /dev/null -f http://localhost:%d/surveyapi/fastcgitest", HTTP_PORT);
+    if (!tests) fprintf(stderr,"Running '%s'\n",cmd);
     int v=0;
     while((v=system(cmd))!=0) {
       fprintf(stderr,"cmd returned code %d\n",v);
@@ -1111,21 +1111,17 @@ int configure_and_start_lighttpd(char *test_dir)
       sleep(2);
       continue;
     }
-    if (first_time) fprintf(stderr,"lighttpd is now responding to requests.\n");
+    if (!tests) fprintf(stderr,"lighttpd is now responding to requests.\n");
+    if (!tests) fprintf(stderr,"All done.\n");
 
-    fprintf(stderr,"All done.\n");
-    
-    first_time=0;
   } while(0);
 
   return 0;
 }
 
-int stop_lighttpd(int verbose)
+int stop_lighttpd()
 {
-   if (verbose) {
-       fprintf(stderr,"Stop lighttpd on port %d...\n", HTTP_PORT);
-   }
+  if (!tests) fprintf(stderr,"Stop lighttpd on port %d...\n", HTTP_PORT);
 
   FILE *fp;
   char lsof_cmd[2048];
@@ -1134,12 +1130,12 @@ int stop_lighttpd(int verbose)
   size_t hits = 0;
   
   snprintf(lsof_cmd, 2048, "sudo lsof -t -i:%d", HTTP_PORT);
-  if (verbose) fprintf(stderr,"Got lsof output\n");
+  if (!tests) fprintf(stderr,"Got lsof output\n");
   fp = popen(lsof_cmd, "r");
   while (fgets(pidc, sizeof(pidc), fp) != NULL) {
     hits++;
     snprintf(kill_cmd,2048,"sudo kill %s", pidc);
-    if (verbose) fprintf(stderr," - running: %s\n", kill_cmd);
+    if (!tests) fprintf(stderr," - running: %s\n", kill_cmd);
     if (system(kill_cmd)) {
       fprintf(stderr,"system() call to stop lighttpd failed (kill %s)\n", pidc);
       exit(-3);
@@ -1148,13 +1144,13 @@ int stop_lighttpd(int verbose)
   fclose(fp);
 
   if(!hits) {
-    if (verbose) fprintf(stderr,"No pid to kill.\n");
+    if (!tests) fprintf(stderr,"No pid to kill.\n");
     return 0;
   }
-  if (verbose) fprintf(stderr,"Considering my options...\n");
+  if (!tests) fprintf(stderr,"Considering my options...\n");
 
   sleep(1);
-  if (verbose) fprintf(stderr,"Done.\n");
+  if (!tests) fprintf(stderr,"Done.\n");
   return 0;
 }
 
@@ -1182,7 +1178,7 @@ int main(int argc,char **argv)
   // Make sure we have a test log directory
   mkdir("testlog",0755);
 
-  stop_lighttpd(1);
+  stop_lighttpd();
   fprintf(stderr,"About to request config gets pulled together\n");
   // Make config file pointing to the temp_dir, and start the server
   if (configure_and_start_lighttpd(test_dir)) exit(-3);
@@ -1193,7 +1189,7 @@ int main(int argc,char **argv)
   int fails=0;
   int errors=0;
   int fatals=0;
-  int tests=0;
+
   for(int i=1;i<argc;i++) {
     switch (run_test(test_dir,argv[i])) {
     case 0: passes++; break;
@@ -1213,7 +1209,7 @@ int main(int argc,char **argv)
   }
 #endif
 
-  stop_lighttpd(1); // remove for debugging
+  stop_lighttpd(); // remove for debugging
   fprintf(stderr,"\n");
   fprintf(stderr,"Summary: %d/%d tests passed (%d failed, %d errors, %d fatalities during tests)\n",
           passes,tests,fails,errors,fatals);
