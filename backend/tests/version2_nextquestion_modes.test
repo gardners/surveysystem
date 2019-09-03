@@ -34,7 +34,8 @@ verify_session
 without_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 endofsession
 
-request 200 addanswer?sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0:
+# should not invoke python and return next question
+request 200 addanswer?sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0::0
 match_string {"next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "unit": ""}]}
 
 # Check that we are offered the next question to answer
@@ -42,7 +43,7 @@ match_string {"next_questions": [{"id": "question2", "name": "question2", "title
 # Make sure answer ends up in file
 verify_session
 without_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
-question1:Hello World:0:0:0:0:0:0:0:
+question1:Hello World:0:0:0:0:0:0:0::0
 endofsession
 
 #!---------------------
@@ -79,7 +80,7 @@ verify_session
 with_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 endofsession
 
-request 200 addanswer?sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0:
+request 200 addanswer?sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0::0
 match_string {"next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "unit": ""}]}
 
 # Check that we are offered the next question to answer
@@ -87,5 +88,5 @@ match_string {"next_questions": [{"id": "question3", "name": "question3", "title
 # Make sure answer ends up in file
 verify_session
 with_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
-question1:Hello World:0:0:0:0:0:0:0:
+question1:Hello World:0:0:0:0:0:0:0::0
 endofsession

@@ -521,13 +521,14 @@ int get_next_questions(struct session *s,
     if (!next_question_count) LOG_ERROR("next_question_count is null");
     if ((*next_question_count)>=MAX_QUESTIONS) LOG_ERROR("Too many questions in list.");
 
-
-    int r=call_python_nextquestion(s,next_questions,max_next_questions,next_question_count);
-    if (r==-99) { retVal=-1; break; }
-    if (!r) { retVal=0; break; }
+    if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_PYTHON) {
+      int r=call_python_nextquestion(s,next_questions,max_next_questions,next_question_count);
+      if (r==-99) { retVal=-1; break; }
+      if (!r) { retVal=0; break; }
+    }
     // PGS: Disabled generic implementation of nextquestion, since if you have a python version and it can't be loaded
     // for some reason we should NOT fall back, because it may expose questions and IP in a survey that should not be revealed. 
-    if (s->allow_generic) {
+    if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_GENERIC) {
       retVal=get_next_questions_generic(s,next_questions,max_next_questions,next_question_count); 
     } else {
       LOG_ERROR("Could not call python nextquestion function.");

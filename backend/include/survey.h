@@ -131,8 +131,13 @@ struct session {
   char *survey_id;   // <survey name>/<hash>
   char *survey_description;
   char *session_id;
+  
+  // #184, add nextquestion provider mode flag
+  unsigned int nextquestions_flag;
+  #define NEXTQUESTIONS_FLAG_GENERIC 1
+  #define NEXTQUESTIONS_FLAG_PYTHON 2
   char pythondir[8192];
-  unsigned int allow_generic;
+  
   struct question *questions[MAX_QUESTIONS];
   struct answer *answers[MAX_QUESTIONS];
   int answer_count;
