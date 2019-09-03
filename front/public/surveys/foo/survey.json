@@ -1,0 +1,15 @@
+{
+    "id": "foo",
+    "name": "Foo Survey",
+    "title": "The Foo Survey",
+    "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ",
+    "organisation": "Foobar Inc.",
+    "email": "support@foobar.com",
+    "pages": [{
+        "title": "Online Consent Disclaimer",
+        "src": "online-constent-disclaimer.html"
+    }, {
+        "title": "Privacy Policy",
+        "src": "privacy-statement.html"
+    }]
+}
