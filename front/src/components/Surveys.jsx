@@ -5,14 +5,23 @@ import { Link } from 'react-router-dom';
 
 import LocalStorage from '../storage/LocalStorage';
 import SurveyList from '../SurveyList';
-import ApiAlert from './ApiAlert';
 
-const { REACT_APP_SURVEY_CACHEKEY } = process.env;
+import ApiAlert from './ApiAlert';
+import Modal from './Modal';
+import EmbedHtmlFile from './EmbedHtmlFile';
+
+const {
+    REACT_APP_SURVEY_CACHEKEY,
+    PUBLIC_URL
+} = process.env;
 
 const formatDate = function(timestamp) {
     return (timestamp) ? new Date(timestamp).toLocaleString() : 'n/a';
 };
 
+/**
+ * Renders session action buttons for a survey
+ */
 const SurveyItemButtons = function({ survey, session, isCurrent }) {
     return (
         <React.Fragment>
@@ -40,6 +49,10 @@ SurveyItemButtons.propTypes = {
     isCurrent: PropTypes.bool,
 };
 
+/**
+ * Renders a single survey item
+ */
+
 const SurveyItem = function({ survey, session, isCurrent, withButtons }) {
 
     const created = (session && typeof session.created !== 'undefined') ? session.created : 0;
@@ -51,10 +64,33 @@ const SurveyItem = function({ survey, session, isCurrent, withButtons }) {
             <h3>{ (survey.name) ?  survey.name : survey.id }</h3>
             { (survey.title) ?  <p><strong>{ survey.title }</strong></p> : null }
             { (survey.description) ?  <p>{ survey.description }</p> : null }
+            { (survey.organisation) ?  <p>Organisation: { survey.organisation }</p> : null }
             <p>
-                { (survey.organisation) ?  <React.Fragment>{ survey.organisation }<br/></React.Fragment> : null }
-                { (survey.email) ?  <React.Fragment><i className="fas fa-envelope mr-4"></i><a href={ `mailto: ${survey.email}`} >{ survey.email }</a><br/></React.Fragment> : null }
-                { (survey.phone) ?  <React.Fragment><i className="fas fa-phone mr-4"></i>{ survey.phone }</React.Fragment> : null }
+                <ul className="list-unstyled pl-2">
+
+                    { (survey.email) ?  <li><i className="fas fa-envelope ml-2 mr-2"></i><a href={ `mailto: ${survey.email}`} >{ survey.email }</a></li> : null }
+                    { (survey.phone) ?  <li><i className="fas fa-phone ml-2 mr-2"></i>{ survey.phone }</li> : null }
+                    {
+                        survey.pages.map(
+                            (page, index) =>
+                                <li>
+                                    <i className="fas fa-external-link-alt ml-2 mr-2"></i>
+                                    <Modal
+                                        key={ index }
+                                        title={ page.title }
+                                        buttonClassName="btn btn-link btn-sm p-0"
+                                        buttonText={ () => page.title || '' }
+                                    >
+                                        <EmbedHtmlFile
+                                            title={ page.title || '' }
+                                            src={ (page.src) ? `${PUBLIC_URL}/surveys/${survey.id}/${page.src}` :  '' }
+                                            showTitle={ false }
+                                            />
+                                    </Modal>
+                                </li>
+                        )
+                    }
+                </ul>
             </p>
             <table className="mb-3" style={ { fontSize: '.8em' } }>
                 <tbody>
@@ -87,7 +123,9 @@ SurveyItem.propTypes = {
     withButtons: PropTypes.bool,
 };
 
-
+/**
+ * Renders a display of all available survey items
+ */
 class Surveys extends Component {
 
     constructor(props) {
