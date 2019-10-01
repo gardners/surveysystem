@@ -15,7 +15,7 @@ The structure is relatively simple:
 * `python/nextquestion.py` - Python functions to select next question.  Functions should be named `nextquestion_<survey_name>_<SHA1 hash>`.  If no such function exists, then `nextquestion_<survey_name>` is tried, and failing that `nextquestion`.
 * `sessions/<session uuid prefix>/<session uuid>` - Files containing each live session.  The prefix subdirectories are used to
 prevent any given directory becoming too long, and slowing down the retrieval of a given survey.
-* logs/YYYY/MM/DD/YYYY-MM-DD-HH.log` - Log files of all activity
+* `logs/YYYY/MM/DD/YYYY-MM-DD-HH.log` - Log files of all activity
 
 Stale sessions can simply be deleted via the file system, and surveys added or updated or deleted similarly easily.
 
@@ -75,7 +75,7 @@ Note that the following section reflects the *current state* of development and 
 | `delanswerandfollowing` | remove all answers up to a specified question id and get next questions | GET    | application/json | `?sessionid&questionid` | `{ next_questions }`<br> array of *updated* question objects |
 | `analyse`               | fetch analysis of a completed survey                                    | GET    | application/json | `?sessionid`            | `{ feedback, report}`<br> survey analysis |
 | **System**              |                                                                         |        |                  |                         |         |
-| `accesstest`            | check system (filesystem)                                       | GET    | application/text | -                       | - |
+| `accesstest`            | check system (filesystem)                                               | GET    | application/text | -                       | - |
 | `fastcgitest`           | check survey access (fastcgi)                                           | GET    | application/text | -                       | - |
 
-The survey model is sequential. `addanswer`, `updateanswer` are required to submit the answers for question ids in the exact same order as they were recieved. Similar with `delanswer` requests, where question ids have to be submitted in the exact reverse order.
+The survey model is sequential. `/surveyapi/addanswer`, `/surveyapi/updateanswer` are required to submit the answers for question ids in the exact same order as they were recieved. Similar with `delanswer` requests, where question ids have to be submitted in the exact reverse order.
