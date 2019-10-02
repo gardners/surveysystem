@@ -1,4 +1,4 @@
-# surveysystem
+# Surveysystem
 System for on-line and off-grid survey preparation and submissions
 
 
@@ -10,16 +10,16 @@ and perform analysis on the data it collects.
 
 The structure is relatively simple:
 
-* **surveys/survey_name/current** - The current definition of a survey called "survey_name".
-* **surveys/survey_name/<SHA1 hash>** - Older definitions of a survey, named after the SHA1 hash of the survey definition
-* **python/nextquestion.py** - Python functions to select next question.  Functions should be named `nextquestion_<survey_name>_<SHA1 hash>`.  If no such function exists, then `nextquestion_<survey_name>` is tried, and failing that `nextquestion`.
-* **sessions/<session uuid prefix>/<session uuid>** - Files containing each live session.  The prefix subdirectories are used to
+* `surveys/survey_name/current` - The current definition of a survey called "survey_name".
+* `surveys/survey_name/<SHA1 hash>` - Older definitions of a survey, named after the SHA1 hash of the survey definition
+* `python/nextquestion.py` - Python functions to select next question.  Functions should be named `nextquestion_<survey_name>_<SHA1 hash>`.  If no such function exists, then `nextquestion_<survey_name>` is tried, and failing that `nextquestion`.
+* `sessions/<session uuid prefix>/<session uuid>` - Files containing each live session.  The prefix subdirectories are used to
 prevent any given directory becoming too long, and slowing down the retrieval of a given survey.
-* **logs/YYYY/MM/DD/YYYY-MM-DD-HH.log** - Log files of all activity
+* `logs/YYYY/MM/DD/YYYY-MM-DD-HH.log` - Log files of all activity
 
 Stale sessions can simply be deleted via the file system, and surveys added or updated or deleted similarly easily.
 
-All data lives in $SURVEY_HOME. The SURVEY_HOME environment variable must be defined.
+All data lives in *SURVEY_HOME* The *SURVEY_HOME* environment variable *must* be defined.
 
 # Installation (backend)
 
@@ -50,9 +50,9 @@ sudo chmod 777 surveysystem/backend/testlog
 
 # Overview
 
-![](docs/architecture.png)
+![surveysystem architecture](docs/architecture.png)
 
-## REST Api
+## REST API
 
 Note that the following section reflects the *current state* of development and will be subject to future changes.
 
@@ -75,7 +75,7 @@ Note that the following section reflects the *current state* of development and 
 | `delanswerandfollowing` | remove all answers up to a specified question id and get next questions | GET    | application/json | `?sessionid&questionid` | `{ next_questions }`<br> array of *updated* question objects |
 | `analyse`               | fetch analysis of a completed survey                                    | GET    | application/json | `?sessionid`            | `{ feedback, report}`<br> survey analysis |
 | **System**              |                                                                         |        |                  |                         |         |
-| `accesstest`            | check system (filesystem)                                       | GET    | application/text | -                       | - |
+| `accesstest`            | check system (filesystem)                                               | GET    | application/text | -                       | - |
 | `fastcgitest`           | check survey access (fastcgi)                                           | GET    | application/text | -                       | - |
 
-The survey model is sequential. `addanswer`, `updateanswer` are required to submit the answers for question ids in the exact same order as they were recieved. Similar with `delanswer` requests, where question ids have to be submitted in reverse order.
+The survey model is sequential. `/surveyapi/addanswer`, `/surveyapi/updateanswer` are required to submit the answers for question ids in the exact same order as they were recieved. Similar with `delanswer` requests, where question ids have to be submitted in the exact reverse order.
