@@ -293,6 +293,68 @@ int dump_logs(char *dir,FILE *log)
 
 }
 
+/**
+ * Compares survey session line with a comparsion string
+ * - the number of delimitors (Note, this includes escaped delimiters in fields, i.e "\:") 
+ * - string matches between delimitors
+ * - custom validation via <KEYWORDS>
+ * Note that this function is not very practical in terms of deserializing lines due to ignoring escaped delimiters
+ *  
+ * Return values:
+ *    0: OK, columns match
+ *   -1: text compare error
+ *   -2: session line too short (column count)
+ *   -3: session line too long (column count)
+ *   -4: session field <UTIME> is invalid (must be within the past hour from now)
+ */
+int compare_session_line(char *session_line, char *comparison_line) {
+  // do not mutate arg strings
+  char *left_line = strdup(session_line);
+  char *right_line = strdup(comparison_line);
+  
+  char *left_ptr; 
+  char *right_ptr;
+  
+  char *left = strtok_r(left_line, ":", &left_ptr);
+  char *right = strtok_r(right_line, ":", &right_ptr);
+  
+  while(right) {
+    
+    // match number of columns: session line too short
+    if(!left) {
+      return -2;
+    }
+    
+    // validate <UTIME> keyword (unix timestamp)
+    if(!strcmp(right, "<UTIME>")) {
+      int now = (int) time(NULL); 
+      int then = atoi(left);
+      
+      if (now < then || now - then > 8600) {
+        return -4;
+      } 
+      
+      return 0;
+    } 
+    
+    // compare column text
+    if(strcmp(left, right)) { 
+      return -1;
+    } 
+
+    left = strtok_r(NULL, ":", &left_ptr);
+    right = strtok_r(NULL, ":", &right_ptr);
+    
+  }
+  
+  // match number of columns: session line too long
+  if (left) {
+    return -3;
+  }
+  
+  return 0;
+}
+
 int run_test(char *dir, char *test_file)
 {
   // #198 flush errors accumulated by previous tests
@@ -863,10 +925,33 @@ int run_test(char *dir, char *test_file)
           // compare session line, we are relying on the string terminations set above
           if(verify_line>0) { // TODO for now(!) we ignore the header line with the hashed session id
             if((session_line[0] && comparison_line[0]) && strcmp(comparison_line,"endofsession")) {
-                if(strcmp(session_line,comparison_line)) {
-                    // fprintf(log, "    - MISMATCH <<< %s >>> %s (line %d)\n",session_line,comparison_line, verify_line); // debug
-                    verify_errors++;
-                }
+              verify_errors = compare_session_line(session_line, comparison_line);
+              
+              switch (verify_errors) {
+                case 0:
+                  // ok, do nothing
+                break;
+                
+                case -1:
+                  fprintf(log, "  MISMATCH : compare_session_line() field mismatch (line %d, code %d): \"%s\" != \"%s\"\n",  verify_line, verify_errors, session_line, comparison_line);
+                break;
+                  
+                case -2: 
+                  fprintf(log, "  MISMATCH : compare_session_line() session line too short (columns) (line %d, code %d): \"%s\" != \"%s\"\n",  verify_line, verify_errors, session_line, comparison_line);
+                break;
+                
+                case -3: 
+                  fprintf(log, "  MISMATCH : compare_session_line() session line too long (columns) (line %d, code %d): \"%s\" != \"%s\"\n",  verify_line, verify_errors, session_line, comparison_line);
+                break;
+                
+                case -4: 
+                  fprintf(log, "  MISMATCH : compare_session_line() <UTIME> invalid (line %d, code %d): \"%s\" != \"%s\"\n",  verify_line, verify_errors, session_line, comparison_line);
+                break;
+                
+                default:
+                  fprintf(log, "  MISMATCH : compare_session_line() unknown return code (line %d, code %d): \"%s\" != \"%s\"\n",  verify_line, verify_errors, session_line, comparison_line);
+              }
+              
             }
           }
 
