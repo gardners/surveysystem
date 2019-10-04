@@ -25,13 +25,13 @@ match_string {"next_questions": [{"id": "meals", "name": "meals", "title": "Your
 
 #! ------- answer question -------
 
-request 200 addanswer?sessionid=$SESSION&answer=meals:27000,43200,66600,75600:0:0:0:0:0:0:0:seconds:0
+request 200 addanswer?sessionid=$SESSION&answer=meals:27000,43200,66600,75600:0:0:0:0:0:0:0:seconds
 match_string {"next_questions": []}
 
 # Make sure answer ends up in file
 verify_session
 field_unit/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
-meals:27000,43200,66600,75600:0:0:0:0:0:0:0:seconds:0
+meals:27000,43200,66600,75600:0:0:0:0:0:0:0:seconds:0:<UTIME>
 endofsession
 
 #! ------- delete question -------
@@ -42,5 +42,5 @@ match_string {"next_questions": [{"id": "meals", "name": "meals", "title": "Your
 # Make sure answer ends up in file
 verify_session
 field_unit/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
-meals:27000,43200,66600,75600:0:0:0:0:0:0:0:seconds:1
+meals:27000,43200,66600,75600:0:0:0:0:0:0:0:seconds:1:<UTIME>
 endofsession
