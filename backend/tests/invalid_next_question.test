@@ -16,8 +16,8 @@ endofsurvey
 python
 """
 def nextquestion(questions, answers):
-        print (questions, answers)
-        return ["question2"]
+    print (questions, answers)
+    return ["question2"]
 """
 endofpython
 
