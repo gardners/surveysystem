@@ -330,7 +330,7 @@ int compare_session_line(char *session_line, char *comparison_line) {
       int now = (int) time(NULL); 
       int then = atoi(left);
       
-      if (now < then || now - then > 8600) {
+      if (now <= 0 || now < then || now - then > 8600) {
         return -4;
       } 
       
