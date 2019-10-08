@@ -62,10 +62,10 @@ const SurveyItem = function({ survey, session, isCurrent, withButtons }) {
     return (
         <React.Fragment>
             <h3>{ (survey.name) ?  survey.name : survey.id }</h3>
-            { (survey.title) ?  <p><strong>{ survey.title }</strong></p> : null }
-            { (survey.description) ?  <p>{ survey.description }</p> : null }
-            { (survey.organisation) ?  <p>Organisation: { survey.organisation }</p> : null }
-            <p>
+            { (survey.title) ?  <div className="mb-3"><strong>{ survey.title }</strong></div> : null }
+            { (survey.description) ?  <div className="mb-3">{ survey.description }</div> : null }
+            { (survey.organisation) ?  <div className="mb-3">Organisation: { survey.organisation }</div> : null }
+            <div className="mb-3">
                 <ul className="list-unstyled pl-2">
 
                     { (survey.email) ?  <li><i className="fas fa-envelope ml-2 mr-2"></i><a href={ `mailto: ${survey.email}`} >{ survey.email }</a></li> : null }
@@ -73,7 +73,7 @@ const SurveyItem = function({ survey, session, isCurrent, withButtons }) {
                     {
                         survey.pages.map(
                             (page, index) =>
-                                <li>
+                                <li key={ index }>
                                     <i className="fas fa-external-link-alt ml-2 mr-2"></i>
                                     <Modal
                                         key={ index }
@@ -91,7 +91,7 @@ const SurveyItem = function({ survey, session, isCurrent, withButtons }) {
                         )
                     }
                 </ul>
-            </p>
+            </div>
             <table className="mb-3" style={ { fontSize: '.8em' } }>
                 <tbody>
                     { (sessionID) ?  <tr><td className="pr-3">sessionID:</td><td>{ sessionID }</td></tr> : null }
