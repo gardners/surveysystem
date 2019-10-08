@@ -616,8 +616,8 @@ struct session *load_session(char *session_id)
       if (ses->answer_count>=MAX_QUESTIONS) LOG_ERRORV("Too many answers in session file '%s' (increase MAX_QUESTIONS?)",session_path);
       ses->answers[ses->answer_count]=calloc(sizeof(struct answer),1);
       if (!ses->answers[ses->answer_count]) LOG_ERRORV("calloc(%d,1) failed while reading session file '%s' ",sizeof(struct answer),session_path);
-      if (deserialise_answer(line,ses->answers[ses->answer_count]))
-    LOG_ERRORV("Failed to deserialise answer '%s' from session file '%s'",line,session_path);
+      // #162 load complete answer, including protected fields
+      if (deserialise_answer(line, ANSWER_FIELDS_PROTECTED, ses->answers[ses->answer_count])) LOG_ERRORV("Failed to deserialise answer '%s' from session file '%s'",line,session_path);
       ses->answer_count++;
 
     } while(line[0]);
@@ -712,22 +712,25 @@ int session_add_answer(struct session *ses,struct answer *a)
 {
   int retVal=0;
   int undeleted=0;
+  
   do {
+    // #162 add/update stored timestamp
+    a->stored = (long long) time(NULL);
+    
     // Add answer to list of answers
     if (!ses) LOG_ERROR("Session structure is NULL");
     if (!a) LOG_ERROR("Asked to add null answer to session");
 
     // Don't allow answers to questions that don't exist
     int question_number=0;
-    for(question_number=0;question_number<ses->question_count;
-    question_number++)
-      if (!strcmp(ses->questions[question_number]->uid,
-          a->uid)) break;
-    if (question_number==ses->question_count)
-      LOG_ERRORV("There is no such question '%s'",a->uid);
-
+    for(question_number=0; question_number < ses->question_count; question_number++) {
+      if (!strcmp(ses->questions[question_number]->uid, a->uid)) break;
+    }
+    
+    if (question_number==ses->question_count) LOG_ERRORV("There is no such question '%s'",a->uid);    
+    
     // Don't allow multiple answers to the same question
-    for(int i=0;i<ses->answer_count;i++)
+    for(int i=0; i < ses->answer_count; i++) {
       if (!strcmp(ses->answers[i]->uid,a->uid)) {
 	if (ses->answers[i]->flags&ANSWER_DELETED) {
 	  // Answer exists, but was deleted, so we can just update the values
@@ -735,13 +738,12 @@ int session_add_answer(struct session *ses,struct answer *a)
 	  free(ses->answers[i]);
 	  ses->answers[i]=copy_answer(a);
 	  undeleted=1;
-	} else
-	  {
+	} else {
 	    LOG_ERRORV("Question '%s' has already been answered in session '%s'. Delete old answer before adding a new one",a->uid,ses->session_id);
-	  }
-	
-	
+	}
       }
+    }
+    
     if (retVal) break;
 
     if (ses->answer_count>=MAX_QUESTIONS) LOG_ERRORV("Too many answers in session '%s' (increase MAX_QUESTIONS?)",ses->session_id);
@@ -784,6 +786,10 @@ int session_delete_answers_by_question_uid(struct session *ses,char *uid, int de
 	  LOG_INFOV("Deleted from session '%s' answer '%s'.",ses->session_id,serialised_answer);
 	  
 	  ses->answers[i]->flags |= ANSWER_DELETED;
+	  
+	  // #162 add/update stored timestamp
+	  ses->answers[i]->stored = (long long) time(NULL);
+    
 	  deletions++;
 	  
 	  // Mark all following answers deleted, if required
@@ -812,6 +818,9 @@ int session_delete_answer(struct session *ses,struct answer *a, int deleteFollow
   int retVal=0;
   int deletions=0;
   do {
+    // #162 add/update stored timestamp
+    a->stored = (long long) time(NULL);
+    
     if (!ses) LOG_ERROR("Session structure is NULL");
     if (!a) LOG_ERRORV("Asked to remove null answer from session '%s'",ses->session_id?ses->session_id:"(null)");
 
