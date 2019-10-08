@@ -48,7 +48,6 @@ const { isFinite, isInteger } = Number;
  * @property {number} time_zone_delta - timeperiod timzone offset in seconds, type: number (INT)
  * @property {number} dst_delta - distance(?), type: number (INT)
  * @property {string} unit - answer unit
- * @property {number} flag - Bitmask ANSWERED|DELETED
 
  * @see backend/src/question_types.c
  * @see backend/src/deserialise_parse_field.c
@@ -62,7 +61,7 @@ const { isFinite, isInteger } = Number;
 
 
 /**
- * Parse and validate a number
+ * Parse and validate a number value
  * @param {any} val
  *
  * @returns {(number|Error)}
@@ -80,7 +79,7 @@ const _number = function(val) {
 };
 
 /**
- * Parse and validate a number
+ * Parse and validate a longitude position
  * @param {any} val
  *
  * @returns {(number|Error)}
@@ -97,7 +96,7 @@ const _longitude = function(val) {
 };
 
 /**
- * Parse and validate a number
+ * Parse and validate a latitude position
  * @param {any} val
  *
  * @returns {(number|Error)}
@@ -114,7 +113,7 @@ const _latitude = function(val) {
 };
 
 /**
- * Parse and validate a number
+ * Parse and validate a timestamp value
  * @param {any} val
  *
  * @returns {(number|Error)}
@@ -131,8 +130,7 @@ const _timestamp = function(val) {
 };
 
 /**
- * Parse and validate a number
- * @param {any} val
+ * Parse and validate a text value
  *
  * @returns {(number|Error)}
  */
@@ -144,7 +142,7 @@ const _text = function(val) {
 };
 
 /**
- * Parse ,validate and serialize an array of strings
+ * Parse, validate and serialize an array of strings
  * @param {any} val
  *
  * @returns {(number|Error)}
@@ -169,7 +167,7 @@ const _serializedStringArray = function(val) {
 };
 
 /**
- * Parse and validate a number
+ * Parse and validate an ascending sequence of numbers
  * @param {any} val
  *
  * @returns {(number|Error)}
@@ -209,7 +207,7 @@ const sanitizeValue = function(value) {
     if (typeof value == 'string') {
         // Regex for sanitizing csv string values,
         // example build: console.log(new RegExp([':', '\'', '"'].join(''), 'g'));
-        
+
         /* eslint-disable no-useless-escape */
         return value.trim()
         .replace(/\:|'|"/g, '\\$&')
@@ -236,7 +234,6 @@ const model = function() {
         time_zone_delta : 0,    // type: number (INT) seconds
         dst_delta : 0,          // type: number (INT) => unit
         unit: '',               // type: text
-        flag: 0,                // bitmask
     };
 };
 
@@ -273,7 +270,6 @@ const propTypes = function () {
         time_zone_delta: PropTypes.number,
         dst_delta: PropTypes.number,
         unit: PropTypes.string,
-        flag: PropTypes.number,
     });
 };
 
