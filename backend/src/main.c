@@ -40,7 +40,7 @@ int main(int argc,char **argv)
       if (!s) LOG_ERRORV("load_session('%s') failed",session_id);
       struct answer a;
       bzero(&a,sizeof(struct answer));
-      if (deserialise_answer(serialised_answer,&a)) LOG_ERRORV("deserialise_answer('%s') failed",serialised_answer);
+      if (deserialise_answer(serialised_answer, ANSWER_FIELDS_PUBLIC, &a)) LOG_ERRORV("deserialise_answer('%s') failed",serialised_answer);
       if (!s) LOG_ERRORV("load_session('%s') failed",session_id);
       if (session_add_answer(s,&a)) LOG_ERRORV("session_add_answer('%s','%s') failed",session_id,serialised_answer);
       if (save_session(s)) LOG_ERRORV("save_session('%s') failed",session_id);
@@ -54,7 +54,7 @@ int main(int argc,char **argv)
       if (!s) LOG_ERRORV("load_session('%s') failed",session_id);
       struct answer a;
       bzero(&a,sizeof(struct answer));
-      if (deserialise_answer(serialised_answer,&a)) LOG_ERRORV("deserialise_answer('%s') failed",serialised_answer);
+      if (deserialise_answer(serialised_answer, ANSWER_FIELDS_PUBLIC, &a)) LOG_ERRORV("deserialise_answer('%s') failed",serialised_answer);
       if (!s) LOG_ERRORV("load_session('%s') failed",session_id);
       if (session_delete_answers_by_question_uid(s,a.uid,0)<0) LOG_ERRORV("session_delete_answers_by_question_uid('%s','%s') failed",session_id,serialised_answer);
       if (session_add_answer(s,&a)) LOG_ERRORV("session_add_answer('%s','%s') failed",session_id,serialised_answer);
@@ -85,7 +85,7 @@ int main(int argc,char **argv)
       if (strstr(serialised_answer,":")) {
 	struct answer a;
 	bzero(&a,sizeof(struct answer));
-	if (deserialise_answer(serialised_answer,&a)) LOG_ERRORV("deserialise_answer('%s') failed",serialised_answer);
+	if (deserialise_answer(serialised_answer, ANSWER_FIELDS_PUBLIC, &a)) LOG_ERRORV("deserialise_answer('%s') failed",serialised_answer);
 	if (session_delete_answer(s,&a,0)) LOG_ERRORV("session_delete_answer('%s','%s') failed",session_id,serialised_answer);
       } else {
 	if (session_delete_answers_by_question_uid(s,serialised_answer,0)) LOG_ERRORV("session_delete_answers_by_question_uid('%s','%s') failed",session_id,serialised_answer);
