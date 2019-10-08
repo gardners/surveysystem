@@ -93,6 +93,11 @@ struct question {
 };
 
 struct answer {
+  
+  /* 
+   * Answer values (writable by REST API)
+   */
+  
   // ID of question being answered
   char *uid;
 
@@ -120,10 +125,23 @@ struct answer {
   int dst_delta;
   // #72 unit field
   char *unit;
+  
+  /* 
+   * Control fields (writable by backend only, readable by backend and nextquestion controllers
+   */
 
   // #186 flags
   int flags;
+  
+  // #162 answer storage timestamp
+  long long stored;
+  
 #define ANSWER_DELETED 1
+};
+
+enum answer_visibility {
+  ANSWER_FIELDS_PUBLIC,
+  ANSWER_FIELDS_PROTECTED,
 };
 
 #define MAX_QUESTIONS 8192

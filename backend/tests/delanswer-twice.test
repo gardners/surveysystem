@@ -19,12 +19,12 @@ request 200 newsession?surveyid=del_answer_twice
 extract_sessionid
 
 #! ------- answer question -------
-request 200 addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0::0
+request 200 addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0:
 match_string {"next_questions": []}
 
 verify_session
 del_answer_twice/0b39e0c93f1b338433b8a8773d57f738dd405e17
-question1:Answer 1:0:0:0:0:0:0:0::0
+question1:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #! ------- delanswer question first time-------
@@ -33,7 +33,7 @@ match_string {"next_questions": [{"id": "question1", "name": "question1", "title
 
 verify_session
 del_answer_twice/0b39e0c93f1b338433b8a8773d57f738dd405e17
-question1:Answer 1:0:0:0:0:0:0:0::1
+question1:Answer 1:0:0:0:0:0:0:0::1:<UTIME>
 endofsession
 
 #! ------- delanswer question second time-------
@@ -42,6 +42,6 @@ match_string {"next_questions": [{"id": "question1", "name": "question1", "title
 
 verify_session
 del_answer_twice/0b39e0c93f1b338433b8a8773d57f738dd405e17
-question1:Answer 1:0:0:0:0:0:0:0::1
+question1:Answer 1:0:0:0:0:0:0:0::1:<UTIME>
 endofsession
 

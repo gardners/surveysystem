@@ -121,9 +121,9 @@ int kvalid_answer(struct kpair *kp) {
       LOG_ERROR("Could not calloc() answer structure.");
     }
     
-    // XXX Remember deserialised answer and keep it in memory to save parsing twice?
+    // TODO XXX Remember deserialised answer and keep it in memory to save parsing twice? alternatively just basic validation by counting delimiters
     
-    if (deserialise_answer(kp->val,a)) {
+    if (deserialise_answer(kp->val, ANSWER_FIELDS_PUBLIC, a)) {
       free_answer(a);
       LOG_ERROR("deserialise_answer() failed");
     } else {
@@ -568,7 +568,7 @@ static void fcgi_addanswer(struct kreq *req)
       break;
     }
 
-    if (deserialise_answer(answer->val,a)) {
+    if (deserialise_answer(answer->val, ANSWER_FIELDS_PUBLIC, a)) {
       free_answer(a); a=NULL;
       quick_error(req,KHTTP_400,"Could not deserialise answer.");
       LOG_ERROR("deserialise_answer() failed.");
@@ -666,7 +666,7 @@ static void fcgi_updateanswer(struct kreq *req)
       break;
     }
     
-    if (deserialise_answer(answer->val,a)) {
+    if (deserialise_answer(answer->val, ANSWER_FIELDS_PUBLIC, a)) {
       free_answer(a); a=NULL;
       quick_error(req,KHTTP_400,"Could not deserialise answer.");
       LOG_ERROR("deserialise_answer() failed.");
@@ -797,7 +797,7 @@ static void fcgi_delanswer(struct kreq *req)
 	break;
       }
 
-      if (deserialise_answer(answer->val,a)) {
+      if (deserialise_answer(answer->val, ANSWER_FIELDS_PUBLIC, a)) {
 	if (a) free_answer(a);
 	a=NULL;
 	quick_error(req,KHTTP_400,"Could not deserialise answer.");
@@ -931,7 +931,7 @@ static void fcgi_delanswerandfollowing(struct kreq *req)
 	break;
       }
       
-      if (deserialise_answer(answer->val,a)) {
+      if (deserialise_answer(answer->val, ANSWER_FIELDS_PUBLIC, a)) {
 	if (a) free_answer(a);
 	a=NULL;
 	quick_error(req,KHTTP_400,"Could not deserialise answer.");
