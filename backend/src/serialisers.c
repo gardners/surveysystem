@@ -414,9 +414,11 @@ int serialise_answer(struct answer *a,char *out,int max_len)
     SERIALISE_STRING(a->unit);
     // #186 - Add "answer deleted" flag
     SERIALISE_INT(a->flags);
-    // Trim terminal separator character
-    SERIALISE_COMPLETE(out,len,max_len);
+    // #162 storage timestamp
+    SERIALISE_LONGLONG(a->stored);
     
+    // Trim terminal separator character
+    SERIALISE_COMPLETE(out,len,max_len); 
   } while(0);
 
   return retVal;
@@ -429,7 +431,7 @@ int serialise_answer(struct answer *a,char *out,int max_len)
   this function and serialise_answer() must be matched
   in the order and list of fields that they process.
  */
-int deserialise_answer(char *in,struct answer *a)
+int deserialise_answer(char *in, enum answer_visibility visibility, struct answer *a)
 {
   int retVal=0;
   int len=0;
@@ -447,11 +449,16 @@ int deserialise_answer(char *in,struct answer *a)
     DESERIALISE_INT(a->dst_delta);
     // #72 unit field
     DESERIALISE_STRING(a->unit);
-    // #186 add "answer deleted" flag
-    DESERIALISE_INT(a->flags);
+    
+    if (visibility > ANSWER_FIELDS_PUBLIC) {
+      // #186 add "answer deleted" flag
+      DESERIALISE_INT(a->flags);
+      // #162 storage timestamp
+      DESERIALISE_LONGLONG(a->stored);
+    }
+    
     // Check that we are at the end of the input string
     DESERIALISE_COMPLETE(out,len,max_len);
-    
   } while(0);
 
   return retVal;
@@ -511,8 +518,12 @@ int compare_answers(struct answer *q1, struct answer *q2, int mismatchIsError)
     COMPARE_LONGLONG(time_end);
     COMPARE_INT(time_zone_delta);
     COMPARE_INT(dst_delta);
-   // #72 unit field
+    // #72 unit field
     COMPARE_STRING(unit);
+    // #186 flags
+    COMPARE_INT(flags);
+    // #162 storage timestamp
+    COMPARE_LONGLONG(stored);
   } while(0);
   return retVal;
 }
