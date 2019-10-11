@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+
+####
+# flush sessions
+# lint script with `shellcheck -x <FILE>`
+####
+
+# variables
+SESSION_DIR="../sessions"
+SURVEY_DIR="../surveys"
+LOG_DIR="../logs"
+
+NOW=$(date +"%s")
+BACKUP_DIR="/tmp/backup-surveysystem/$NOW"
+
+# include utils
+source inc/utils
+
+REQUIRE_SUDO
+REQUIRE_DIR "$SESSION_DIR"
+REQUIRE_DIR "$SURVEY_DIR"
+REQUIRE_DIR "$LOG_DIR"
+
+# stat folders
+SIZE=$(du -sh "$SESSION_DIR" | awk '{print $1}')
+COUNT=$(ls -l "$SESSION_DIR" | grep ^d | wc -l)
+echo "$(BOLD "$COUNT sessions found"): $SIZE"
+
+read -p " - Backup sessions $(BOLD "(y/n) $(BLINK "?")") "  -n 1 -r DO_SESSION
+echo
+
+SIZE=$(du -sh "$SURVEY_DIR" | awk '{print $1}')
+COUNT=$(ls -l "$SURVEY_DIR" | grep ^d | wc -l)
+echo "$(BOLD "$COUNT surveys found"): $SIZE"
+
+read -p " - Backup surveys $(BOLD "(y/n) $(BLINK "?")") "  -n 1 -r DO_SURVEY
+echo
+
+SIZE=$(du -sh "$LOG_DIR" | awk '{print $1}')
+COUNT=$(ls -l "$LOG_DIR" | grep ^d | wc -l)
+echo "$(BOLD "$COUNT surveys found"): $SIZE"
+
+read -p " - Backup logs $(BOLD "(y/n) $(BLINK "?")") " -n 1 -r DO_LOG
+echo
+
+# backup dir
+mkdir -p "$BACKUP_DIR"
+REQUIRE_DIR "$BACKUP_DIR"
+
+# backup sessions
+echo ---------------
+if [ "$DO_SESSION" == "y" ]; then
+    tar -czf "$BACKUP_DIR/sessions.tar.gz" "$SESSION_DIR/" --totals
+    REQUIRE_FILE "$BACKUP_DIR/sessions.tar.gz"
+fi
+            
+# backup surveys
+if [ "$DO_SURVEY" == "y" ]; then
+    tar -czf "$BACKUP_DIR/surveys.tar.gz" "$SURVEY_DIR/" --totals
+    REQUIRE_FILE "$BACKUP_DIR/surveys.tar.gz"
+fi
+            
+# backup logs
+if [ "$DO_LOG" == "y" ]; then
+    tar -czf "$BACKUP_DIR/logs.tar.gz" "$LOG_DIR/" --totals
+    REQUIRE_FILE "$BACKUP_DIR/logs.tar.gz"
+fi
+
+# review
+echo ---------------
+echo "Backup location: $(BLUE "$BACKUP_DIR")"
+ls -lh "$BACKUP_DIR"
+
+# done
+echo ---------------
+GREEN "done"
+echo " * delete logs: rm -rfv ../logs/*/"
+echo " * delete sessions: rm -rfv ../sessions/*/"
