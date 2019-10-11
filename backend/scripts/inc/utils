@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+## display
+
+function BLINK {
+  echo -e "\e[5m${1}\e[25m"
+}
+
+function GREEN {
+  echo -e "\033[0;32m${1}\033[0m"
+}
+
+function RED {
+  echo -e "\033[0;31m${1}\033[0m"
+}
+
+function YELLOW {
+    echo -e "\033[0;33m${1}\033[0m"
+}
+
+function BLUE {
+    echo -e "\033[0;34m${1}\033[0m"
+}
+
+function BOLD {
+    echo -e "\033[1m${1}\033[0m"
+}
+
+function EXIT_ERROR {
+  echo "$(RED "[ERROR] ") ${1}"
+  exit 1
+}
+
+function EXIT_WARN {
+  echo "$(YELLOW "[WARN] ") ${1}"
+  exit 0
+}
+
+## permissions
+
+function REQUIRE_SUDO {
+  if [[ $UID != 0 ]]; then
+    EXIT_ERROR "Please run this script as sudo: sudo $0 $*"
+  fi
+}
+
+## files system
+
+function REQUIRE_DIR {
+    if [ ! -d "$1" ]; then
+        EXIT_ERROR "Directory $1 does not exist"
+    fi
+}
+
+function REQUIRE_FILE {
+    if [ ! -f "$1" ]; then
+        EXIT_ERROR "File $1 does not exist"
+    fi
+}
