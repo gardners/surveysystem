@@ -55,7 +55,7 @@ corresponding frontend module:
 Format of an answer row:
 
 ```csv
-<uid>:<text>:<value>:<lat>:<lon>:<time_begin>:<time_end>:<time_zone_delta>:<dst_delta>:<unit>:<flag>
+<uid>:<text>:<value>:<lat>:<lon>:<time_begin>:<time_end>:<time_zone_delta>:<dst_delta>:<unit>:<flag>:<stored>
 ```
 
 Location: `sessions/<session-prefix>/sessionID`
