@@ -48,9 +48,6 @@ const getDefaultAnswers = function(coercedQuestions) {
     return answers;
 };
 
-const EXT = window.SS || {};
-const getInstantFeedback = EXT.getInstantFeedback || function() { return []; };
-
 // config
 const CACHE_KEY = process.env.REACT_APP_SURVEY_CACHEKEY;
 
@@ -65,7 +62,6 @@ class Survey extends Component {
             answers: {},
             errors: {},
             alerts: [],
-            feedback: [],
         };
     }
 
@@ -166,14 +162,9 @@ class Survey extends Component {
         // set answer
         answers[id] = serialized;
 
-        // fetch optional custom feedback for this screen
-
-        const feedback = getInstantFeedback(survey.surveyID, question.id, questions, answers);
-
         this.setState({
             errors,
             answers,
-            feedback,
         });
 
     }
@@ -208,7 +199,6 @@ class Survey extends Component {
             answers: getDefaultAnswers(survey.current()),
             errors: {}, // clear errors
             alerts: [], // clear alerts
-            feedback: [], // clear feedback
         }))
         .then(() => LocalStorage.set(CACHE_KEY, survey))
         .catch(err => this.alert(err));
@@ -237,7 +227,6 @@ class Survey extends Component {
             answers: getDefaultAnswers(survey.current()),
             errors: {}, // clear errors
             alerts: [], // clear alerts
-            feedback: [], // clear feedback
         }))
         .catch(err => this.alert(err));
     }
@@ -282,7 +271,6 @@ class Survey extends Component {
             answers: getDefaultAnswers(survey.current()),
             errors: {}, // clear errors
             alerts: [], // clear alerts
-            feedback: [], // clear feedback
         }))
         .then(() => LocalStorage.set(CACHE_KEY, survey))
         .catch(err => this.alert(err));
@@ -324,7 +312,6 @@ class Survey extends Component {
             answers: getDefaultAnswers(survey.current()),
             errors: {}, // clear errors
             alerts: [], // clear alerts
-            feedback: [], // clear feedback
         }))
         .then(() => LocalStorage.set(CACHE_KEY, survey))
         .catch(err => this.alert(err));
@@ -333,7 +320,7 @@ class Survey extends Component {
     render() {
 
         // @see surveysystem/backend/include/survey.h, struct question
-        const { survey, errors, answers, feedback } = this.state;
+        const { survey, errors, answers } = this.state;
 
         const questions = survey.current();
         const withGroups = mapQuestionGroups(questions);
@@ -416,10 +403,6 @@ class Survey extends Component {
                                     );
 
                                 })
-                            }
-
-                            {
-                                feedback.map((item, index) => <FeedbackItem key={ index } status={ item.status } className="list-group-item" classNamePrefix="list-group-item-">{ item.message }</FeedbackItem>)
                             }
 
                             {
