@@ -11,7 +11,9 @@ const Footer = function() {
         <footer className="container">
             <div className="row">
                 <div className="col text-center p-3">
-                { `© ${REACT_APP_SURVEY_PROVIDER} ${new Date().getFullYear()}` }{ version && <small className="text-muted ml-2">v{ version || '' }</small> }
+                { `© ${REACT_APP_SURVEY_PROVIDER} ${new Date().getFullYear()}` }
+                <br />
+                { version && <small className="text-muted">v{ version || '' }</small> }<small className="text-muted ml-2">({ process.env.NODE_ENV })</small>
                 </div>
             </div>
         </footer>

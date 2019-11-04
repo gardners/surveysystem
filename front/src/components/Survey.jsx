@@ -125,7 +125,7 @@ class Survey extends Component {
      * @returns {void}
      */
     handleChange(element, question, value) {
-        const { survey, questions, answers, errors } = this.state;
+        const { answers, errors } = this.state;
         const { id } = question;
 
         delete(errors[id]);
