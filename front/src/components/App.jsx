@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { BrowserRouter as Router, Route, Switch, Redirect, withRouter } from 'react-router-dom';
+import { BrowserRouter, Route, Switch, Redirect, withRouter } from 'react-router-dom';
 
 import { DEFAULT_BREAKPOINT, testMediaBreakpoint, isBreakpointAbove } from '../Media';
 import { AppContext } from '../Context';
@@ -20,6 +20,7 @@ import DemoManifest from './demo/DemoManifest';
 
 const Header = withRouter(HeaderNav);
 
+const { REACT_APP_ROUTER_BASENAME } = process.env;
 ////
 //
 ////
@@ -54,10 +55,10 @@ class App extends Component {
         const { appContext } = this.state;
 
         return (
-            <Router>
+            <BrowserRouter basename={ REACT_APP_ROUTER_BASENAME }>
                 <AppContext.Provider value={ appContext }>
                     <Header />
-                    <main className="container" style={{ marginTop: '60px' /*fixed header*/ }}>
+                    <main className="container" style={ { marginTop: '60px' /*fixed header*/ } }>
                         <Switch>
                             <Route exact path="/" render={ props => <Redirect to={ `/surveys` } /> } />
                             <Route path="/surveys" component={ Surveys } />
@@ -71,7 +72,7 @@ class App extends Component {
                     </main>
                     <Footer />
                 </AppContext.Provider>
-            </Router>
+            </BrowserRouter>
         );
     }
 };
