@@ -1395,15 +1395,14 @@ static void fcgi_analyse(struct kreq *req)
     }
 
     const char *analysis=NULL;
-    // string is returned from python in a way that we don't have to deallocate it here
+    // String is allocated into heap to since we have no control over the lifetime of the Python string.
+    // You need to free it
     if (get_analysis(s,&analysis)) {
       quick_error(req,KHTTP_500,"Could not retrieve analysis.");
       LOG_ERRORV("get_analysis('%s') failed",session_id);
       break;
     }
-    
-    LOG_INFOV("[DEBUG] analysis retrieved in fcgimain: %s", analysis);
-    
+
     if (!analysis) {
       quick_error(req,KHTTP_500,"Could not retrieve analysis (NULL).");
       LOG_ERRORV("get_analysis('%s') returned NULL result",session_id);
@@ -1439,10 +1438,9 @@ static void fcgi_analyse(struct kreq *req)
     }
     
     // store analysis with session
-    LOG_INFOV("[DEBUG] analysis before handing over to session_add_datafile(): %s", analysis);
     if (session_add_datafile(session_id, "analysis.json", analysis)) {
       LOG_ERRORV("Could not add analysis.json for session %s.", session_id);
-      // do not break here
+      // do not break here on error
     }
     
     // reply
@@ -1463,6 +1461,7 @@ static void fcgi_analyse(struct kreq *req)
       fprintf(stderr, "khttp_head: interrupt\n");
       continue;
     } else if (KCGI_OK != er) {
+      if (analysis) { free((char*) analysis); }
       fprintf(stderr, "khttp_head: error: %d\n", er);
       break;
     }
@@ -1473,11 +1472,14 @@ static void fcgi_analyse(struct kreq *req)
       fprintf(stderr, "khttp_body: interrupt\n");
       continue;
     } else if (KCGI_OK != er) {
+      if (analysis) { free((char*) analysis); }
       fprintf(stderr, "khttp_body: error: %d\n", er);
       break;
     }
-    LOG_INFOV("[DEBUG] analysis before handing over to khttp_puts(): %s", analysis);
+
     er = khttp_puts(req, analysis);
+    // #288, we need to free the analysis
+    if (analysis) { free((char*) analysis); }
     if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
     LOG_INFO("Leaving page handler");
   } while(0);
