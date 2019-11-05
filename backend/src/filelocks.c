@@ -105,6 +105,12 @@ int release_my_session_locks(void)
     // Release locks and flush lock list
     for(int i=0;i<lock_count;i++) {
       if (flock(fileno(locks[i].file_handle),LOCK_UN)) LOG_ERRORV("flock('%s',LOCK_UN) failed",locks[i].path);
+      
+      // #284 close file handle
+      if (locks[i].file_handle) {
+	  fclose(locks[i].file_handle);
+      }
+      
       locks[i].file_handle=NULL;
       free(locks[i].path);
     }
