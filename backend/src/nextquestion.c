@@ -675,7 +675,7 @@ int get_analysis(struct session *s,const char **output)
     if (PyUnicode_Check(result)) {
       // Get value and put it as single response
       const char *return_string = PyUnicode_AsUTF8(result);
-      LOG_INFOV("[DEBUG] get_analysis() retieved string from PyUnicode_AsUTF8(): %s", output);
+      LOG_INFOV("[DEBUG] get_analysis() retieved string from PyUnicode_AsUTF8(): %s", return_string);
       if (!return_string) {
 	is_error=1;
 	Py_DECREF(result);
