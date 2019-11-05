@@ -538,7 +538,11 @@ int get_next_questions(struct session *s,
   return retVal;
 }
 
-int get_analysis(struct session *s,const unsigned char **output)
+/* 
+ * Fetch analysis json string via Python script
+ * #288, the parent unit is responsible for freeing *output pointer
+ */
+int get_analysis(struct session *s,const char **output)
 {
   int retVal=0;
   int is_error=0;
@@ -673,14 +677,20 @@ int get_analysis(struct session *s,const unsigned char **output)
     }
     // PyObject_Print(result,stderr,0);
     if (PyUnicode_Check(result)) {
+      
       // Get value and put it as single response
-      const char *return_string = PyUnicode_AsUTF8(result);
+      // #288, replaced PyUnicode_AsUTF8 with PyUnicode_AsUTF8AndSize
+      Py_ssize_t size;
+      const char *return_string = PyUnicode_AsUTF8AndSize(result, &size);
+      
       if (!return_string) {
 	is_error=1;
 	Py_DECREF(result);
 	LOG_ERRORV("String in reply from Python function '%s' is null",function_name);
       }
-      *output=(const unsigned char *)return_string;
+      // #288, allocate dedicated memory, managed by backend and write string
+      *output=strndup(return_string, (size_t)size);
+      // TODO should issues occur then consider hard-setting a \0 token at the last position of *output
     } else {
       Py_DECREF(result);    
       LOG_ERRORV("Return value from Python function '%s' is not a string.",function_name);

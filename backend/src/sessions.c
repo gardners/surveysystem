@@ -903,7 +903,7 @@ int session_add_userlog_message(char *session_id, char *message)
   Should the logging fail, the process will not break and issue warnings to the log
   Note that the session needed to be created previously, otherwise the session dir would not be accessible!
  */
-int session_add_datafile(char *session_id, char *filename_suffix, unsigned char *data)
+int session_add_datafile(char *session_id, char *filename_suffix, const char *data)
 {
   
   int retVal = 0;
