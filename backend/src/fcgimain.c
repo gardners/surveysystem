@@ -1394,13 +1394,15 @@ static void fcgi_analyse(struct kreq *req)
       break;
     }
 
-    const unsigned char *analysis=NULL;
+    const char *analysis=NULL;
     // string is returned from python in a way that we don't have to deallocate it here
     if (get_analysis(s,&analysis)) {
       quick_error(req,KHTTP_500,"Could not retrieve analysis.");
       LOG_ERRORV("get_analysis('%s') failed",session_id);
       break;
     }
+    
+    LOG_INFOV("[DEBUG] analysis retrieved in fcgimain: %s", analysis);
     
     if (!analysis) {
       quick_error(req,KHTTP_500,"Could not retrieve analysis (NULL).");
@@ -1437,8 +1439,8 @@ static void fcgi_analyse(struct kreq *req)
     }
     
     // store analysis with session
-    
-    if (session_add_datafile(session_id, "analysis.json", (unsigned char*) analysis)) {
+    LOG_INFOV("[DEBUG] analysis before handing over to session_add_datafile(): %s", analysis);
+    if (session_add_datafile(session_id, "analysis.json", analysis)) {
       LOG_ERRORV("Could not add analysis.json for session %s.", session_id);
       // do not break here
     }
@@ -1474,8 +1476,8 @@ static void fcgi_analyse(struct kreq *req)
       fprintf(stderr, "khttp_body: error: %d\n", er);
       break;
     }
-    
-    er = khttp_puts(req, (const char *)analysis);
+    LOG_INFOV("[DEBUG] analysis before handing over to khttp_puts(): %s", analysis);
+    er = khttp_puts(req, analysis);
     if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
     LOG_INFO("Leaving page handler");
   } while(0);

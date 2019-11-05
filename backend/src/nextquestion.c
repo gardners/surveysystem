@@ -538,7 +538,7 @@ int get_next_questions(struct session *s,
   return retVal;
 }
 
-int get_analysis(struct session *s,const unsigned char **output)
+int get_analysis(struct session *s,const char **output)
 {
   int retVal=0;
   int is_error=0;
@@ -675,12 +675,14 @@ int get_analysis(struct session *s,const unsigned char **output)
     if (PyUnicode_Check(result)) {
       // Get value and put it as single response
       const char *return_string = PyUnicode_AsUTF8(result);
+      LOG_INFOV("[DEBUG] get_analysis() retieved string from PyUnicode_AsUTF8(): %s", output);
       if (!return_string) {
 	is_error=1;
 	Py_DECREF(result);
 	LOG_ERRORV("String in reply from Python function '%s' is null",function_name);
       }
-      *output=(const unsigned char *)return_string;
+      *output=return_string;
+       LOG_INFOV("[DEBUG] get_analysis() after assigning return_string to output ref: %s", output);
     } else {
       Py_DECREF(result);    
       LOG_ERRORV("Return value from Python function '%s' is not a string.",function_name);
