@@ -166,7 +166,7 @@ struct session {
 int generate_path(char *path_in,char *path_out,int max_len);
 int get_next_questions(struct session *s,
                struct question *next_questions_out[],int max_next_questions,int *next_question_count_out);
-int get_analysis(struct session *s,const unsigned char **output);
+int get_analysis(struct session *s,const char **output);
 int create_session(char *survey_id,char *session_id_out);
 int delete_session(char *session_id);
 struct session *load_session(char *session_id);
@@ -182,7 +182,7 @@ void free_answer(struct answer *a);
 int validate_session_id(char *session_id);
 
 int session_add_userlog_message(char *session_id, char *message);
-int session_add_datafile(char *session_id, char *filename_suffix, unsigned char *data);
+int session_add_datafile(char *session_id, char *filename_suffix, const char *data);
 
 int lock_session(char *session_id);
 int release_my_session_locks(void);
