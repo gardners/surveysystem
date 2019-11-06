@@ -11,3 +11,4 @@ Utils.js
 
 # ignore custom player configs
 configs/*.js
+!configs/.gitkeep
