@@ -1,18 +1,34 @@
 #!/bin/bash
 
+## requirements
+
+# run from source directory
+cd "${0%/*}"
+
 FILES=()
+
+## workflow funcs
 
 run () {
     node ./run "$1"
 }
 
+prepare () {
+    echo -e "\e[90m Symlinking required frontend JS modules...\e[0m"
+    ln -sfnv ../front/src/Answer.js ./Answer.js
+    ln -sfnv ../front/src/Utils.js ./Utils.js
+}
+
 select_config () {
-    echo "====Player Config===="
+    echo ""
+    echo "==== Select Player Config ===="
+    echo ""
 
     for index in "${!FILES[@]}"; do
-        echo -e "\e[32m  ${index}\e[0m: ${FILES[$index]}"
+        echo -e "\e[32m ${index}\e[0m: ${FILES[$index]}"
     done
 
+    echo ""
     read -p 'Select config: ' SELECTED
 
     if ! [[ "$SELECTED" =~ ^[0-9]+$ ]]; then
@@ -30,7 +46,11 @@ select_config () {
     run "${FILES[$SELECTED]}"
 }
 
-for file in *config.js; do
+## main
+
+prepare
+
+for file in configs/*.js; do
     if [[ $file != template* ]] ; then
         FILES=("${FILES[@]}" "$file")
     fi
