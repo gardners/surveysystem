@@ -1,3 +1,12 @@
+/**
+ * ==== IMPORTANT ====
+ *
+ * #289 This script requires valid symlinks to
+ *
+ * - ../front/src/Answer.js
+ * - ../front/src/Utils.js
+ *
+ */
 const imports = require('esm')(module);
 const path = require('path');
 const fs = require('fs');
@@ -9,8 +18,8 @@ const Log = require('./log');
 const { getlastSessionEntry } = require('./session');
 
 // frontend serializer
-const AppSrcDir = path.resolve(path.join(__dirname, '../front/src'));
-const Answer = imports(`${AppSrcDir}/Answer`);
+const _libanswer = imports('./Answer');
+const Answer = (typeof _libanswer.default !== 'undefined') ? _libanswer.default : _libanswer;
 
 // api
 const Fetch = require('./fetch');
@@ -73,37 +82,38 @@ const provideSerializedAnswer = function(question, customAnswer = null) {
     }
 
     const { type, id } = question;
+    const NOW = Date.now() / 1000;
 
     switch (type) {
-
         case 'INT':
             answer = Answer.setValue(question, 42);
             break;
         case 'FIXEDPOINT':
             answer = Answer.setValue(question, Math.PI);
             break;
-
         case 'MULTICHOICE':
             answer = Answer.setValue(question, [question.choices[0]]);
             break;
-
         case 'MULTISELECT':
             answer = Answer.setValue(question, [question.choices[0]]);
             break;
-
         case 'LATLON':
             answer = Answer.setValue(question, [1.01, 2.01]);
             break;
-
-            // TODO DATETIME
-            // TODO DAYTIME slider/select
-
+        case 'DATETIME':
+            answer = Answer.setValue(question, NOW);
+            break;
+        case 'DAYTIME':
+            answer = Answer.setValue(question, 3600);
+            break;
         case 'TIMERANGE':
-            answer = Answer.setValue(question, [2.5, 3.5]);
+            answer = Answer.setValue(question, [3600, 2 * 3600]);
             break;
 
-        case 'TEXTAREA':
-            answer = Answer.setValue(question, 'textarea');
+            // TODO UPLOAD, defined but not supported by backend yet
+
+        case 'TEXT':
+            answer = Answer.setValue(question, 'some text');
             break;
         case 'CHECKBOX':
             answer = Answer.setValue(question, question.choices[1]);
@@ -111,26 +121,42 @@ const provideSerializedAnswer = function(question, customAnswer = null) {
         case 'HIDDEN':
             answer = Answer.setValue(question, 'hidden value');
             break;
+        case 'TEXTAREA':
+            answer = Answer.setValue(question, 'textarea');
+            break;
         case 'EMAIL':
             answer = Answer.setValue(question, 'email@test.com');
             break;
         case 'PASSWORD':
             answer = Answer.setValue(question, 'mypassword');
             break;
-
-        // TODO SINGLECHOICE
         case 'SINGLECHOICE':
             answer = Answer.setValue(question, question.choices[0]);
             break;
-
         case 'SINGLESELECT':
             answer = Answer.setValue(question, question.choices[0]);
             break;
+        case 'FIXEDPOINT_SEQUENCE':
+            answer = Answer.setValue(question, [0, 1.1, Math.PI]);
+            break;
+        case 'DAYTIME_SEQUENCE':
+            answer = Answer.setValue(question, [3600, 2 * 3600, 3 * 3600]);
+            break;
+        case 'DATETIME_SEQUENCE':
+            answer = Answer.setValue(question, [NOW - (2 * 86400), NOW - 86400, NOW]);
+            break;
+        case 'DURATION24':
+            answer = Answer.setValue(question, 3600);
+            break;
+        case 'DIALOG_DATA_CRAWLER':
+            answer = Answer.setValue(question, question.choices[0]); //DENIED
+            break;
 
-        case 'TEXT':
+            // QTYPE_UUID, defined but not supported by backend yet
+
         default:
             Log.error('Question type error:');
-            throw new Error(`Question id: ${id} Unknown question type ${type}`)
+            throw new Error(`Question id: ${id} Unknown question type ${type}`);
     }
 
     return Answer.serialize(answer);
@@ -244,8 +270,9 @@ const answerQuestions = function(questions) {
 
         const answer = provideSerializedAnswer(question, customAnswer);
 
-        if(typeof answer === Error) {
+        if (answer instanceof Error) {
             Log.error(answer.message);
+            /* eslint-disable-next-line no-console */
             console.log(question, answer);
             process.exit(1);
         }
@@ -319,4 +346,5 @@ Fetch.raw('/surveyapi/newsession')
     .then(() => JSONF.finish())
     .then(jsonfile => Log.success('\nSurvey analysis retrieved\n', jsonfile))
     .then(jsonfile => Log.log(`   ${Log.colors.yellow('*')} File: ${jsonfile}\n`))
-    .catch(err => Log.error(`REQUEST ERROR ${err}`, err));
+// errors
+    .catch(err => Log.error(`REQUEST ERROR\n${err}`, err));
