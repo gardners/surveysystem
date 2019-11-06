@@ -11,11 +11,11 @@ $ npm install
 
 **Setup:**
 
-copy `template.config.js` to `config.js` and
+copy `template.config.js` to `./configs/config.js` and
     -  fill in valid survey server configuration.
     - add custom answers for specified question ids in order to to overwrite the default answers.
 
-It is possible to have multiple configs by simply prefixing them, ie.e `<yourprefix>.config.js`.
+It is possible to have multiple configs by simply prefixing them, ie.e `./configs/<YOUR CUSTOM FILENAME>.js`.
 The `./player` command will pick them up and ask you to select one.
 
 **Usage:**
@@ -23,9 +23,6 @@ The `./player` command will pick them up and ask you to select one.
 ```
 # run sequence
 $ ./player
-
-# alternatively
-$ node run <yourprefix>.config.js
 ```
 
 CSV log rows
