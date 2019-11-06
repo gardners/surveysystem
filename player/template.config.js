@@ -1,5 +1,5 @@
 /**
- * Copy this file to config.js and edit your survey settings
+ * Copy this file to ./configs/<MY NAME>.js and edit your survey settings
  */
 module.exports = {
 
