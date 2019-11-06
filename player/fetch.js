@@ -1,5 +1,15 @@
 const request = require('request');
 
+const stringify = function(val) {
+    let ret;
+    try {
+        ret = JSON.stringify(val);
+    } catch (e) {
+        ret = (typeof val.toString === 'function') ? val.toString() : val;
+    }
+    return ret;
+};
+
 const Fetch = {
     SURVEYID: null,
     PROTOCOL: null,
@@ -41,7 +51,7 @@ const Fetch = {
                 }
 
                 if (res.statusCode >= 299) {
-                    reject(new Error(`[${res.statusCode}] ${res.statusMessage}: ${body}`));
+                    reject(new Error(`[${res.statusCode}] ${res.statusMessage}: ${stringify(body)}`));
                     return;
                 }
 
