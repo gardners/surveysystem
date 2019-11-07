@@ -320,7 +320,7 @@ Fetch.raw('/surveyapi/newsession')
         return Log.note(`SessionId: ${SESSIONID}`);
     })
 // initialize log file
-    .then(() => FSLOG.init(`${Config.Api.SURVEYID}.${SESSIONID}.log.csv`))
+    .then(() => FSLOG.init(`${Config.Api.SURVEYID}.${SESSIONID}.log`))
     .then((logfile) => {
         LOGFILE = logfile;
         return Log.note(`Logging into: ${LOGFILE}`, LOGFILE);
