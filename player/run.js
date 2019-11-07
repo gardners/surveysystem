@@ -1,11 +1,12 @@
 /**
  * ==== IMPORTANT ====
  *
- * #289 This script requires valid symlinks to
+ * #289 This script requires valid copies
  *
  * - ../front/src/Answer.js
  * - ../front/src/Utils.js
  *
+ * into ./. This is done by the "player" script.
  */
 const imports = require('esm')(module);
 const path = require('path');
