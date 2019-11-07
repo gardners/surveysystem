@@ -25,13 +25,8 @@ The `./player` command will pick them up and ask you to select one.
 $ ./player
 ```
 
-CSV log rows
+**Logs**
 
- * `step`:  survey progess number
- * `question id`:  question.id
- * `question type`:  question.type
- * `question title`:  question.type
- * `answer type`:  'generic' for an automatted answer ,'custom' for a custom answer provided by config
- * `submitted answer`:  the serialized answer sent to the api (csv fragment)
- * `stored answer`:  the stored answer in the backend session file, not applicable when using player on mock server
- * `next questions`  next question ids provided by the api response
+Apart from the console output the player logs all steps into the './log` folder.
+Log file names are prefixed with the matching `surveyid` and `sessionid`.
+The matching `/analysis` response is also stored in that folder.

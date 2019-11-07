@@ -3,23 +3,18 @@ const fs = require('fs');
 
 const { promisify } = require('util');
 
-const _logfile_ = path.resolve('./log/player.log.csv');
+const _logfile_ = path.resolve('./log/player.log');
 let LOGFILE = _logfile_;
 
 const appendFileAsync = promisify(fs.appendFile);
-const copyFileAsync = promisify(fs.copyFile);
-
-const SEPARATOR = ',';
 
 const sanitize = function(val) {
     const type = typeof val;
-    if (val === null || type === 'number' || type === 'boolean') {
-        return '"' + val + '"';
+    if (val === null || type === 'string' || type === 'number' || type === 'boolean') {
+        return val;
     }
-    if (type !== 'string') {
-        return JSON.stringify(val);
-    }
-    return '"' + val.replace('"', '\'') + '"';
+
+    return JSON.stringify(val);
 };
 
 const init = function(filename = '') {
@@ -31,15 +26,21 @@ const init = function(filename = '') {
 };
 
 const append = function(...args) {
-    const line = args.map(val => sanitize(val)).join(SEPARATOR) + '\n';
+    const line = args.map(val => sanitize(val)) + '\n';
     return appendFileAsync(LOGFILE, line);
 };
 
 const finish = function() {
-    const latest = path.resolve('./log/latest.log.csv');
-    // copy log file to "latest" file, so it's easy to find
-    return copyFileAsync(LOGFILE, latest)
-        .then(() => latest);
+    const latest = path.resolve('./log/latest');
+    // symlink log file to "latest" file, so it's easy to find
+    try {
+        fs.unlinkSync(latest);
+    } catch (err) {
+        /* nothing */
+    }
+
+    fs.symlinkSync(LOGFILE, latest);
+    return Promise.resolve(latest);
 };
 
 module.exports = {
