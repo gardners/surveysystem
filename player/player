@@ -14,9 +14,9 @@ run () {
 }
 
 prepare () {
-    echo -e "\e[90m Symlinking required frontend JS modules...\e[0m"
-    ln -sfnv ../front/src/Answer.js ./Answer.js
-    ln -sfnv ../front/src/Utils.js ./Utils.js
+    echo -e "\e[90m Copying required frontend JS modules...\e[0m"
+    cp -fv ../front/src/Answer.js ./Answer.js
+    cp -fv ../front/src/Utils.js ./Utils.js
 }
 
 select_config () {
