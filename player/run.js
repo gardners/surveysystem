@@ -12,7 +12,7 @@ const imports = require('esm')(module);
 const path = require('path');
 const fs = require('fs');
 
-const CSV = require('./csv');
+const FSLOG = require('./fslog');
 const JSONF = require('./jsonf');
 const Log = require('./log');
 
@@ -193,23 +193,21 @@ const nextQuestions = function() {
 
 /**
  * Handles received answer response and fetches Answer from backend session. Logs to lofileg
- * @param {object} question object
- * @param {string} answer Serialized answer
- * @param {string} answerType ("generic" or "custom")
- * @param {number} count sequence counter
+ * @param {object} response
  *
  * @returns {Promise} http request response
  */
-const handleAnswer = function(response, question, answer, answerType, count) {
+const handleResponse = function(response) {
     const nextIds = response.next_questions.map(q => q.id).toString();
-
+    FSLOG.append(`received next questions.. [${nextIds}]`);
+    FSLOG.append(` => ${JSON.stringify(response)}`);
     return getlastSessionEntry(SESSIONID)
         // workaround for mockserver, TODO
         .catch((err) => {
             return (err.code === 'ENOENT') ? 'no entry' : err;
         })
         .then((line) => {
-            CSV.append(count, question.id, question.type, question.title, answerType, answer, line, nextIds);
+            FSLOG.append(` => last entry in backend SESSION file: "${line}"`);
             return response;
         });
 };
@@ -223,12 +221,14 @@ const handleAnswer = function(response, question, answer, answerType, count) {
  *
  * @returns {Promise} http request response
  */
-const answerQuestion = function(question, answer, answerType, count) {
+const answerQuestion = function(question, answer, answerType) {
+    FSLOG.append(`sending answer... [${answerType.toUpperCase()}] qid: ${question.id}, answer: ${answer}`);
+    FSLOG.append(` => "${answer}"`);
     return Fetch.json('/surveyapi/updateAnswer', {
         sessionid: SESSIONID,
         answer,
     })
-        .then(response => handleAnswer(response, question, answer, answerType, count))
+        .then(response => handleResponse(response))
         .then(response => response);
 };
 
@@ -240,8 +240,7 @@ const answerQuestionsSequential = function(entries, count, responses = []) {
 
     const { question, answer, answerType } = entries[next];
 
-    return answerQuestion(question, answer, answerType, count)
-        .then(response => handleAnswer(response, question, answer, answerType, count))
+    return answerQuestion(question, answer, answerType)
         .then(response => Log.log(`    |   └── ${answer}`, response))
         .then((response) => {
             responses.push(response);
@@ -262,8 +261,11 @@ const answerQuestions = function(questions) {
     COUNT += 1;
     const curr = COUNT;
 
+    FSLOG.append(`\n-- STEP #${COUNT} --------------\n`);
+
     const ids = questions.map(q => q.id);
     Log.step(`${Log.colors.blue(curr)}: ${questions.length} questions to answer: ${ids.toString()}`);
+    FSLOG.append(`${questions.length} questions to answer: ${ids.toString()}`);
 
     const data = questions.map((question) => {
         const customAnswer = CustomAnswers[question.id] || null;
@@ -289,6 +291,7 @@ const answerQuestions = function(questions) {
     });
 
     Log.log(`    ├── Sending ${Log.colors.green(data.length)} answers`);
+    FSLOG.append(`sending ${data.length} answers...`);
 
     return sleep(50)
         .then(() => answerQuestionsSequential(data, curr))
@@ -316,8 +319,8 @@ Fetch.raw('/surveyapi/newsession')
         SESSIONID = sessid;
         return Log.note(`SessionId: ${SESSIONID}`);
     })
-// initialize CSV log file
-    .then(() => CSV.init(`${Config.Api.SURVEYID}.${SESSIONID}.log.csv`))
+// initialize log file
+    .then(() => FSLOG.init(`${Config.Api.SURVEYID}.${SESSIONID}.log.csv`))
     .then((logfile) => {
         LOGFILE = logfile;
         return Log.note(`Logging into: ${LOGFILE}`, LOGFILE);
@@ -329,15 +332,13 @@ Fetch.raw('/surveyapi/newsession')
         return Log.note(`Logging analysis into: ${JSONFILE}`, JSONFILE);
     })
 // csv comment
-    .then(() => CSV.append(`# Log for survey ${Config.Api.SURVEYID} config: ${configFile} session: ${SESSIONID} executed on: ${now.toLocaleString()}`))
-// csv header row
-    .then(() => CSV.append('step', 'question id', 'question type', 'question title', 'answer type', 'submitted answer', 'stored answer', 'next questions ids'))
+    .then(() => FSLOG.append(`# Log for survey ${Config.Api.SURVEYID}\n# config: ${configFile}\n# session: ${SESSIONID}\n# executed on: ${now.toLocaleString()}\n`))
 // fetch first questions
     .then(() => nextQuestions())
 // start question/answer loop
     .then(res => answerQuestions(res.next_questions))
 // finalise
-    .then(() => CSV.finish())
+    .then(() => FSLOG.finish())
     .then(res => Log.success(`\nSurvey questions finished in ${COUNT} steps\n`, res))
     .then(logfile => Log.log(`   ${Log.colors.yellow('*')} Log file: ${logfile}\n`))
 // analyse
