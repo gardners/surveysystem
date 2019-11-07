@@ -77,7 +77,7 @@ const provideSerializedAnswer = function(question, customAnswer = null) {
     let answer;
 
     if (customAnswer !== null) {
-        answer = Answer.setValue(question, 42);
+        answer = Answer.setValue(question, customAnswer);
         return Answer.serialize(answer);
     }
 
@@ -328,7 +328,7 @@ Fetch.raw('/surveyapi/newsession')
         return Log.note(`Logging analysis into: ${JSONFILE}`, JSONFILE);
     })
 // csv comment
-    .then(() => CSV.append(`# Log for survey ${Config.Api.SURVEYID} session: ${SESSIONID} executed on: ${now.toLocaleString()}`))
+    .then(() => CSV.append(`# Log for survey ${Config.Api.SURVEYID} config: ${configFile} session: ${SESSIONID} executed on: ${now.toLocaleString()}`))
 // csv header row
     .then(() => CSV.append('step', 'question id', 'question type', 'question title', 'answer type', 'submitted answer', 'stored answer', 'next questions ids'))
 // fetch first questions
