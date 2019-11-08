@@ -1,60 +1,38 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 
 // apis
 import Api from '../Api';
-import { normalizeAnalysis } from '../Analysis';
-
 import ApiAlert from './ApiAlert';
 
 // components
-import Toggle from './Toggle';
+import { EvaluationGroup } from './analysis/Evaluation';
 import Preloader from './Preloader';
 
 // devel
 import Dev from './Dev';
-
-const tableStyle = {
-    tableLayout: 'fixed',    /* For cells of equal size */
-};
-
-const cellStyle = {
-    width: '25%',
-};
 
 class Analysis extends Component {
 
     constructor(props) {
         super(props);
         this.state = {
-            evaluation: null,
+            evaluations: [],
             loading: '',
             alerts: [],
         }
     }
 
     componentDidMount() {
-        // demo
-        if (this.props.evaluation) {
-            const { evaluation } = this.props;
-            this.setState({
-                evaluation,
-                loading: '',
-                alerts: [],
-            });
-            return;
-        }
-
         const sessionID = this.props.match.params.sessionID;
 
         this.setState({
-            loading: 'Fetching evaluation...',
+            loading: 'Fetching evaluations...',
         });
 
         Api.getAnalysis(sessionID)
-        .then(evaluation => this.setState({
-            evaluation,
+        .then(evaluations => this.setState({
+            evaluations,
             loading: '',
             alerts: [],
         }))
@@ -84,7 +62,7 @@ class Analysis extends Component {
     render() {
         const surveyID = this.props.match.params.id;
         const sessionID = this.props.match.params.sessionID;
-        const { evaluation, loading, alerts } = this.state;
+        const { evaluations, loading, alerts } = this.state;
 
         if(alerts.length) {
             return (
@@ -98,7 +76,7 @@ class Analysis extends Component {
             );
         }
 
-        if(!evaluation && !loading) {
+        if(!evaluations.length && !loading) {
             return (
                 <section>
                     <h1>{ sessionID }: Analysis</h1>
@@ -118,82 +96,20 @@ class Analysis extends Component {
             );
         }
 
-        const data = normalizeAnalysis(this.state.evaluation);
-        const { category, classification, rank, recommendation, riskRating } = data;
-        const { condition, subcondition, mainText, learnMore, mainRecommendation, mandatoryTips, additionalInsights }  = data.displayResults.sleepConditions;
-
         return (
             <section>
                 <Preloader loading={ loading } message={ loading }/>
                 <h1>Analysis</h1>
-                <h2>Survey: <span className="text-success">{ surveyID }</span></h2>
 
-                <div className="table-responsive-md">
-                    <table className="table table-striped table-hover table-sm" style={ tableStyle }>
-                        <tbody>
-                            <tr>
-                                <th style={ cellStyle }>category</th>
-                                <td>{ category }</td>
-                            </tr>
-                            <tr>
-                                <th style={ cellStyle }>classification</th>
-                                <td>{ classification }</td>
-                            </tr>
-                            <tr>
-                                <th style={ cellStyle }>rank</th>
-                                <td>{ rank }</td>
-                            </tr>
-                            <tr>
-                                <th style={ cellStyle }>risk rating</th>
-                                <td>{ riskRating }</td>
-                            </tr>
-                            <tr>
-                                <th style={ cellStyle }>recommendation</th>
-                                <td>{ recommendation }</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <h3>Condition</h3>
-
-                <div className="table-responsive-md">
-                    <table className="table table-striped table-hover table-sm" style={ tableStyle }>
-                        <tbody>
-                            <tr>
-                                <th style={ cellStyle }>condition</th>
-                                <td>{ condition }</td>
-                            </tr>
-                            <tr>
-                                <th style={ cellStyle }>sub condition</th>
-                                <td>{ subcondition }</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <h3>Details</h3>
-
-                <p>{ mainText }</p>
-                <ul className="list-group list-group-flush">
-                    <Toggle className="list-group-item">Learn More { learnMore }</Toggle>
-                    <Toggle className="list-group-item">Main Recommendation { mainRecommendation }</Toggle>
-                    <Toggle className="list-group-item">Tips { mandatoryTips }</Toggle>
-                    <Toggle className="list-group-item">Additional insights { additionalInsights }</Toggle>
-                </ul>
-
-                <Dev.Pretty label="raw analyis" data={ evaluation } open={ false }/>
+                <EvaluationGroup surveyID={ surveyID } sessionID={ sessionID } evaluations={ evaluations } />
+                <Dev.Pretty label="raw analyis" data={ evaluations } open={ false }/>
             </section>
         );
     }
 }
 
-Analysis.defaultProps = {
-    evaluation: null,
-};
+Analysis.defaultProps = {};
 
-Analysis.propTypes = {
-    evaluation: PropTypes.object,
-};
+Analysis.propTypes = {};
 
 export default Analysis;
