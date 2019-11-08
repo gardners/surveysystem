@@ -25,13 +25,13 @@ class ApiAlert extends Component {
         }
 
         const { error } = this.props;
-        
+
         let reason =  (error instanceof Error) ? error.message : String(error);
         let details = '';
         let url = '';
         let status = '';
         let statusText = '';
-        
+
         // @see fcgmain.c: quick_error()
         try {
             const json = JSON.parse(reason);
@@ -40,10 +40,10 @@ class ApiAlert extends Component {
         } catch (e) {
             // nothing
         }
-        
+
         // @see Api.js
         if (error instanceof ApiError) {
-            ({ url, status, statusText} = error);
+            ({ url, status, statusText } = error);
         }
 
         return (
@@ -51,14 +51,16 @@ class ApiAlert extends Component {
                 <button type="button" className="close" data-dismiss="alert" aria-label="Close" onClick= { this.toggle.bind(this) }><span aria-hidden="true">&times;</span></button>
 
                 <div><strong>SurveyError:</strong> { reason }</div>
-                <Toggle classNameToggle="d-block text-default" className="p-2">
-                    More info..
-                    <ul style={ { fontSize: '.85em' } }>
-                        { statusText && <li><strong>status:</strong> { statusText } ({ status })</li> }
-                        { url && <li><strong>url:</strong> { url }</li> }
-                        { details && <li><strong>details:</strong> { details }</li> }
-                    </ul>
-                </Toggle>
+                {
+                    (error instanceof ApiError) &&
+                        <Toggle className="d-block text-default" className="p-2" title="More info...">
+                            <ul style={ { fontSize: '.85em' } }>
+                                { statusText && <li><strong>status:</strong> { statusText } ({ status })</li> }
+                                { url && <li><strong>url:</strong> { url }</li> }
+                                { details && <li><strong>details:</strong> { details }</li> }
+                            </ul>
+                        </Toggle>
+                }
             </div>
         );
     }

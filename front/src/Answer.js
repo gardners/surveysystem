@@ -1,5 +1,5 @@
 /**
- * @module surveyJS answer object to backend csv row parser
+ * @module answer object to backend csv row parser
  *
  */
 import PropTypes from 'prop-types';
@@ -52,7 +52,6 @@ const { isFinite, isInteger } = Number;
  * @see backend/src/question_types.c
  * @see backend/src/deserialise_parse_field.c
  */
-
 
 ////
 // Casters
@@ -357,7 +356,7 @@ const setValue = function(question, value) {
         break;
 
         case 'TIMERANGE':
-            // number in seconds
+            // array of 2 numbers in seconds
             if (!isArray(value) || value.length !== 2) {
                 answer.time_begin = new Error('CSV serializer: TIMERANGE value requires an array of two timestamps');
                 break;
@@ -368,8 +367,10 @@ const setValue = function(question, value) {
             }
         break;
 
+        case 'FIXEDPOINT_SEQUENCE':
         case 'DAYTIME_SEQUENCE':
-            // array of numbers in seconds
+        case 'DATETIME_SEQUENCE':
+            // array of n numbers in seconds
             answer.text = _serializedNumberArraySequence(value);
         break;
 
