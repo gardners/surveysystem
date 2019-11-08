@@ -18,15 +18,16 @@ class Toggle extends Component{
 
     render() {
         const { open } = this.state;
-        const [ header, ...contents ] = this.props.children;
-        const cls = (!open) ? `d-print-block d-none` : '';
+        const { titleTag: Title, title, className, titleClassName, children } = this.props;
+        const pClass = (!open) ? `d-print-block d-none` : 'd-print-block';
+        const iClass = (!open) ? 'fas fa-caret-down' : 'fas fa-caret-up';
 
         return(
-            <div className={ this.props.className }>
-                <div role="menuitem" className={ this.props.classNameToggle } onClick={ this.toggle.bind(this) }>
-                    { (!open) ? <i className="fas fa-caret-down d-inline-block d-print-none"></i> : <i className="fas fa-caret-up d-inline-block  d-print-none"></i> }<div className="d-inline-block ml-2">{ header }</div>
-                </div>
-                <div className={ cls }>{ contents }</div>
+            <div className={ className }>
+                <Title className={ titleClassName } role="menuitem" onClick={ this.toggle.bind(this) }>
+                    <i className={ iClass }/> { title }
+                </Title>
+                <div className={ pClass }>{ children }</div>
             </div>
         );
     }
@@ -35,13 +36,17 @@ class Toggle extends Component{
 
 Toggle.defaultProps = {
     open: false,
-    classNameToggle: 'd-block text-primary',
+    className: '',
+    titleClassName: 'text-primary',
+    titleTag: 'div',
 };
 
 Toggle.propTypes = {
+    title: PropTypes.string.isRequired,
+    titleTag: PropTypes.string,
     open: PropTypes.bool,
     className: PropTypes.string,
-    classNameToggle: PropTypes.string,
+    titleClassName: PropTypes.string,
 };
 
 export default Toggle;
