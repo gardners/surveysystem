@@ -93,3 +93,7 @@ www/*
 
 # scratcharea
 _dev/
+
+# static files
+static/*
+!static/.gitkeep

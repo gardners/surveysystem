@@ -22,6 +22,8 @@ todo.*
 .env.test.local
 .env.production.local
 
+.env.staging*
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
