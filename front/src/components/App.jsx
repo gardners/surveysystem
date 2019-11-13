@@ -20,7 +20,7 @@ import DemoManifest from './demo/DemoManifest';
 
 const Header = withRouter(HeaderNav);
 
-const { REACT_APP_ROUTER_BASENAME } = process.env;
+const { PUBLIC_URL } = process.env;
 ////
 //
 ////
@@ -55,7 +55,7 @@ class App extends Component {
         const { appContext } = this.state;
 
         return (
-            <BrowserRouter basename={ REACT_APP_ROUTER_BASENAME }>
+            <BrowserRouter basename={ PUBLIC_URL }>
                 <AppContext.Provider value={ appContext }>
                     <Header />
                     <main className="container" style={ { marginTop: '60px' /*fixed header*/ } }>
