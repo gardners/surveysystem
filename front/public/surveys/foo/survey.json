@@ -7,7 +7,7 @@
     "email": "support@foobar.com",
     "pages": [{
         "title": "Online Consent Disclaimer",
-        "src": "online-constent-disclaimer.html"
+        "src": "online-consent-disclaimer.html"
     }, {
         "title": "Privacy Policy",
         "src": "privacy-statement.html"
