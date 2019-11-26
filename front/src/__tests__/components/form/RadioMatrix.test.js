@@ -13,7 +13,7 @@ describe( 'expanded display', () => {
     beforeAll(() => {
         component = renderer.create(
             <AppContext.Provider value={ {
-                    isBreakpointAbove: () => true, 
+                    matchesBreakpointOrAbove: () => true,
             } }>
                 <RadioMatrix
                     questions={ [{
@@ -60,21 +60,21 @@ describe( 'expanded display', () => {
             const values = radios.map(node => node.props.value);
 
             expect(values.toString()).toEqual('choice1,choice2,choice3');
-            expect(radios.length).toEqual(3); 
+            expect(radios.length).toEqual(3);
         });
-        
+
         let fa;
         // row 1 default_value
         fa = rows[0].findAllByType('i');
         expect(fa[0].props.className).toContain('fa-circle');
         expect(fa[1].props.className).toContain('fa-check-circle');
         expect(fa[2].props.className).toContain('fa-circle');
-        
+
         // row 2 default_value
         fa = rows[1].findAllByType('i');
         expect(fa[0].props.className).toContain('fa-circle');
         expect(fa[1].props.className).toContain('fa-circle');
-        expect(fa[2].props.className).toContain('fa-check-circle'); 
+        expect(fa[2].props.className).toContain('fa-check-circle');
     });
 
 });
@@ -84,7 +84,7 @@ describe( 'contracted display', () => {
     beforeAll(() => {
         component = renderer.create(
             <AppContext.Provider value={ {
-                    isBreakpointAbove: () => false, 
+                    matchesBreakpointOrAbove: () => false,
             } }>
                 <RadioMatrix
                     questions={ [{
@@ -125,22 +125,22 @@ describe( 'contracted display', () => {
 
         const rows = tbody.findAllByType('select');
         expect(rows.length).toEqual(2);
-        
+
         let options;
         let values;
-        
+
         // row 1 values
         options = rows[0].findAllByType('option');
         values = options.map(node => node.props.value);
-    
+
         expect(values.toString()).toEqual('choice1,choice2,choice3');
         expect(options.length).toEqual(3);
         expect(rows[0].props.value).toEqual('choice2'); // default_value
-        
+
         // row 2 values
         options = rows[1].findAllByType('option');
         values = options.map(node => node.props.value);
-    
+
         expect(values.toString()).toEqual('choice1,choice2,choice3');
         expect(options.length).toEqual(3);
         expect(rows[1].props.value).toEqual('choice3'); // default_value
