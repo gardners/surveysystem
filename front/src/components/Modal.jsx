@@ -28,7 +28,7 @@ const customStyles = {
     }
 };
 
-ReactModal.setAppElement('#root');
+
 
 /**
  * @see http://reactcommunity.org/react-modal/#usage
@@ -40,6 +40,10 @@ class Modal extends React.Component {
         this.state = {
             open: false
         };
+    }
+
+    componentDidMount() {
+        ReactModal.setAppElement('#root');
     }
 
     openModal(e) {

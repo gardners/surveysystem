@@ -4,14 +4,24 @@ import { MemoryRouter } from 'react-router-dom';
 
 import Surveys from '../../components/Surveys';
 
-it('renders without crashing', () => {
+
+/**
+ * Workaround for: react-modal: No elements were found for selector #root.
+ */
+const createRoot = function() {
     const div = document.createElement('div');
+    div.id = 'root';
+    return div;
+};
+
+it('renders without crashing', () => {
+    const root = createRoot();
     ReactDOM.render(
         <MemoryRouter>
             <Surveys
                 surveys={ ['test'] }
                 surveyProvider={ 'test' }
             />
-        </MemoryRouter>, div);
-    ReactDOM.unmountComponentAtNode(div);
+        </MemoryRouter>, root);
+    ReactDOM.unmountComponentAtNode(root);
 });
