@@ -73,12 +73,12 @@ const testMediaBreakpoint = function(callback) {
     console.warn('testMediaBreakpoint: No media query breakpoint found');
 };
 
-const isBreakpointAbove = function(bp) {
+const matchesBreakpointOrAbove = function(bp) {
     return order.indexOf(breakpoint) >= order.indexOf(bp);
 };
 
 export {
     DEFAULT_BREAKPOINT,
     testMediaBreakpoint,
-    isBreakpointAbove,
+    matchesBreakpointOrAbove,
 };
