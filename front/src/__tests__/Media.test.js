@@ -1,4 +1,4 @@
-import {  getMediaBreakpoint, matchesBreakpoint } from '../Media';
+import {  DEFAULT_BREAKPOINT, testMediaBreakpoint, matchesBreakpointOrAbove } from '../Media';
 
 let deviceWidth = 0;
 
@@ -32,40 +32,79 @@ window.matchMedia = jest.fn().mockImplementation(query => {
 
 describe('window media API utils', () => {
 
-    test('getMediaBreakpoint', () => {
-        deviceWidth = 1200; // exact match
-        expect(getMediaBreakpoint()).toBe('xl');
-        deviceWidth = 1201; // above
-        expect(getMediaBreakpoint()).toBe('xl');
-        deviceWidth = 1199; // below
-        expect(getMediaBreakpoint()).toBe('lg');
-
-
-        deviceWidth = 992; // exact match
-        expect(getMediaBreakpoint()).toBe('lg');
-        deviceWidth = 993; // above
-        expect(getMediaBreakpoint()).toBe('lg');
-        deviceWidth = 991; // below
-        expect(getMediaBreakpoint()).toBe('md');
-
-        deviceWidth = 768; // exact match
-        expect(getMediaBreakpoint()).toBe('md');
-        deviceWidth = 769; // above
-        expect(getMediaBreakpoint()).toBe('md');
-        deviceWidth = 767; // below
-        expect(getMediaBreakpoint()).toBe('sm');
-
-        deviceWidth = 576; // exact match
-        expect(getMediaBreakpoint()).toBe('sm');
-        deviceWidth = 577;
-        expect(getMediaBreakpoint()).toBe('sm');
-        deviceWidth = 575; // below
-        expect(getMediaBreakpoint()).toBe('xs');
-
-        deviceWidth = 0;
-        expect(getMediaBreakpoint()).toBe('xs');
+    test('DEFAULT_BREAKPOINT', () => {
+        expect(DEFAULT_BREAKPOINT).toBe('md');
     });
 
+    test('testMediaBreakpoint', () => {
+
+        // xl
+
+        deviceWidth = 1200; // exact match
+        testMediaBreakpoint(bp => expect(bp).toBe('xl'));
+
+        deviceWidth = 1201; // above
+        testMediaBreakpoint(bp => expect(bp).toBe('xl'));
+
+        deviceWidth = 1199; // below
+        testMediaBreakpoint(bp => expect(bp).toBe('lg'));
+
+        // lg
+
+        deviceWidth = 992; // exact match
+        testMediaBreakpoint(bp => expect(bp).toBe('lg'));
+
+        deviceWidth = 993; // above
+        testMediaBreakpoint(bp => expect(bp).toBe('lg'));
+
+        deviceWidth = 991; // below
+        testMediaBreakpoint(bp => expect(bp).toBe('md'));
+
+        // md
+
+        deviceWidth = 768; // exact match
+        testMediaBreakpoint(bp => expect(bp).toBe('md'));
+
+        deviceWidth = 769; // above
+        testMediaBreakpoint(bp => expect(bp).toBe('md'));
+
+        deviceWidth = 767; // below
+        testMediaBreakpoint(bp => expect(bp).toBe('sm'));
+
+        // sm
+
+        deviceWidth = 576; // exact match
+        testMediaBreakpoint(bp => expect(bp).toBe('sm'));
+
+        deviceWidth = 577; // above
+        testMediaBreakpoint(bp => expect(bp).toBe('sm'));
+
+        deviceWidth = 575; // below
+        testMediaBreakpoint(bp => expect(bp).toBe('xs'));
+
+        // xs
+
+        deviceWidth = 0; // exact
+        testMediaBreakpoint(bp => expect(bp).toBe('xs'));
+
+        deviceWidth = 1; // above
+        testMediaBreakpoint(bp => expect(bp).toBe('xs'));
+    });
+
+    test('matchesBreakpointOrAbove', () => {
+
+        // prepare test, set register to 'md'
+        deviceWidth = 769; // one above md
+        testMediaBreakpoint(bp => expect(bp).toBe('md'));
+
+        expect(matchesBreakpointOrAbove('xl')).toBe(false);
+        expect(matchesBreakpointOrAbove('lg')).toBe(false);
+        expect(matchesBreakpointOrAbove('md')).toBe(true);
+        expect(matchesBreakpointOrAbove('sm')).toBe(true);
+        expect(matchesBreakpointOrAbove('xs')).toBe(true);
+
+    });
+/*
     test('matchesBreakpoint', () => {
         expect(matchesBreakpoint('invalid')).toBe(false);
 
@@ -108,4 +147,5 @@ describe('window media API utils', () => {
         expect(matchesBreakpoint('lg')).toBe(false);
         expect(matchesBreakpoint('xs')).toBe(false);
     });
+    */
 });

@@ -22,6 +22,15 @@ const match = {
     },
 };
 
+/**
+ * Workaround for: react-modal: No elements were found for selector #root.
+ */
+const createRoot = function() {
+    const div = document.createElement('div');
+    div.id = 'root';
+    return div;
+};
+
 describe('withXHR mock', () => {
     const oldXMLHttpRequest = window.XMLHttpRequest;
     let mockXHR = null;
@@ -36,9 +45,9 @@ describe('withXHR mock', () => {
     });
 
     it('renders without crashing', () => {
-        const div = document.createElement('div');
-        ReactDOM.render(<Survey match={ match }/>, div);
-        ReactDOM.unmountComponentAtNode(div);
+        const root = createRoot();
+        ReactDOM.render(<Survey match={ match }/>, root);
+        ReactDOM.unmountComponentAtNode(root);
     });
 });
 xit('should be implemented', () => {});

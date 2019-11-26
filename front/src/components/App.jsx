@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { BrowserRouter, Route, Switch, Redirect, withRouter } from 'react-router-dom';
 
-import { DEFAULT_BREAKPOINT, testMediaBreakpoint, isBreakpointAbove } from '../Media';
+import { DEFAULT_BREAKPOINT, testMediaBreakpoint, matchesBreakpointOrAbove } from '../Media';
 import { AppContext } from '../Context';
 
 // scaffolding
@@ -32,7 +32,7 @@ class App extends Component {
         this.state = {
             appContext: {
                 breakpoint: DEFAULT_BREAKPOINT,
-                isBreakpointAbove,
+                matchesBreakpointOrAbove,
             },
         }
         window.addEventListener('resize', this.onWindowResize.bind(this));
@@ -44,7 +44,7 @@ class App extends Component {
                 this.setState({
                     appContext: {
                         breakpoint: bp,
-                        isBreakpointAbove,
+                        matchesBreakpointOrAbove,
                     },
                 });
             }
