@@ -60,9 +60,9 @@ const run_qestiontype_answer__text__commaseparated = function(type) {
         expect(Answer.setValue(q, ['', ''])).toMatchObject({ uid, text: ',', unit });
         expect(Answer.setValue(q, [String('A'), String('B')])).toMatchObject({ uid, text: 'A,B', unit });
         expect(Answer.setValue(q, [' A ', ' B '])).toMatchObject({ uid, text: ' A , B ', unit });
-        
+
         expect(Answer.setValue(q, 'string')).toMatchObject({ uid, text: 'string', unit });
-        
+
         // negative
         expect(Answer.setValue(q, null)).toBeInstanceOf(Error);
         expect(Answer.setValue(q, undefined)).toBeInstanceOf(Error);
@@ -105,7 +105,7 @@ const run_qestiontype_answer__value = function(type, unit) {
         expect(Answer.setValue(q, Number('123'))).toMatchObject({ uid, value: 123, unit });
         expect(Answer.setValue(q, '123')).toMatchObject({ uid, value: 123, unit });
         expect(Answer.setValue(q, '')).toMatchObject({ uid, value: 0, unit });
-        
+
         // negative
         expect(Answer.setValue(q, null)).toBeInstanceOf(Error);
         expect(Answer.setValue(q, undefined)).toBeInstanceOf(Error);
@@ -379,7 +379,7 @@ describe('Answer.serialize()', () => {
         let a;
         //positive
         a = make_answer({ uid: 'test' });
-        expect(Answer.serialize(a)).toBe('test::0:0:0:0:0:0:0::0');
+        expect(Answer.serialize(a)).toBe('test::0:0:0:0:0:0:0:');
 
         // negative
         a = make_answer({ uid: '' });
@@ -430,49 +430,49 @@ describe('Answer.serialize()', () => {
         let a;
 
         a = Answer.setValue({ id: 'int', type: 'INT', unit: 'u' }, 2);
-        expect(Answer.serialize(a)).toBe('int::2:0:0:0:0:0:0:u:0');
+        expect(Answer.serialize(a)).toBe('int::2:0:0:0:0:0:0:u');
 
         a = Answer.setValue({ id: 'fixedpoint', type: 'FIXEDPOINT', unit: 'u' }, .2);
-        expect(Answer.serialize(a)).toBe('fixedpoint::0.2:0:0:0:0:0:0:u:0');
+        expect(Answer.serialize(a)).toBe('fixedpoint::0.2:0:0:0:0:0:0:u');
 
         a = Answer.setValue({ id: 'multichoice', type: 'MULTICHOICE', unit: 'u' }, ['A', 'B']);
-        expect(Answer.serialize(a)).toBe('multichoice:A,B:0:0:0:0:0:0:0:u:0');
+        expect(Answer.serialize(a)).toBe('multichoice:A,B:0:0:0:0:0:0:0:u');
 
         a = Answer.setValue({ id: 'multiselect', type: 'MULTISELECT', unit: 'u' }, ['A', 'B']);
-        expect(Answer.serialize(a)).toBe('multiselect:A,B:0:0:0:0:0:0:0:u:0');
+        expect(Answer.serialize(a)).toBe('multiselect:A,B:0:0:0:0:0:0:0:u');
 
         a = Answer.setValue({ id: 'latlon', type: 'LATLON', unit: 'overwritten' }, [2, 3]);
-        expect(Answer.serialize(a)).toBe('latlon::0:2:3:0:0:0:0:degrees:0');
+        expect(Answer.serialize(a)).toBe('latlon::0:2:3:0:0:0:0:degrees');
 
         a = Answer.setValue({ id: 'datetime', type: 'DATETIME', unit: 'overwritten' }, 2);
-        expect(Answer.serialize(a)).toBe('datetime::0:0:0:2:0:0:0:seconds:0');
+        expect(Answer.serialize(a)).toBe('datetime::0:0:0:2:0:0:0:seconds');
 
         a = Answer.setValue({ id: 'timerange', type: 'TIMERANGE', unit: 'overwritten' }, [1, 2]);
-        expect(Answer.serialize(a)).toBe('timerange::0:0:0:1:2:0:0:seconds:0');
+        expect(Answer.serialize(a)).toBe('timerange::0:0:0:1:2:0:0:seconds');
 
         a = Answer.setValue({ id: 'text', type: 'TEXT', unit: 'u' }, 'T');
-        expect(Answer.serialize(a)).toBe('text:T:0:0:0:0:0:0:0:u:0');
+        expect(Answer.serialize(a)).toBe('text:T:0:0:0:0:0:0:0:u');
 
         a = Answer.setValue({ id: 'checkbox', type: 'CHECKBOX', unit: 'u' }, 'T');
-        expect(Answer.serialize(a)).toBe('checkbox:T:0:0:0:0:0:0:0:u:0');
+        expect(Answer.serialize(a)).toBe('checkbox:T:0:0:0:0:0:0:0:u');
 
         a = Answer.setValue({ id: 'hidden', type: 'HIDDEN', unit: 'u' }, 'T');
-        expect(Answer.serialize(a)).toBe('hidden:T:0:0:0:0:0:0:0:u:0');
+        expect(Answer.serialize(a)).toBe('hidden:T:0:0:0:0:0:0:0:u');
 
         a = Answer.setValue({ id: 'textarea', type: 'TEXTAREA', unit: 'u' }, 'T');
-        expect(Answer.serialize(a)).toBe('textarea:T:0:0:0:0:0:0:0:u:0');
+        expect(Answer.serialize(a)).toBe('textarea:T:0:0:0:0:0:0:0:u');
 
         a = Answer.setValue({ id: 'email', type: 'EMAIL', unit: 'u' }, 'T');
-        expect(Answer.serialize(a)).toBe('email:T:0:0:0:0:0:0:0:u:0');
+        expect(Answer.serialize(a)).toBe('email:T:0:0:0:0:0:0:0:u');
 
         a = Answer.setValue({ id: 'password', type: 'PASSWORD', unit: 'u' }, 'T');
-        expect(Answer.serialize(a)).toBe('password:T:0:0:0:0:0:0:0:u:0');
+        expect(Answer.serialize(a)).toBe('password:T:0:0:0:0:0:0:0:u');
 
         a = Answer.setValue({ id: 'singlechoice', type: 'SINGLECHOICE', unit: 'u' }, 'T');
-        expect(Answer.serialize(a)).toBe('singlechoice:T:0:0:0:0:0:0:0:u:0');
+        expect(Answer.serialize(a)).toBe('singlechoice:T:0:0:0:0:0:0:0:u');
 
         a = Answer.setValue({ id: 'singleselect', type: 'SINGLESELECT', unit: 'u' }, 'T');
-        expect(Answer.serialize(a)).toBe('singleselect:T:0:0:0:0:0:0:0:u:0');
+        expect(Answer.serialize(a)).toBe('singleselect:T:0:0:0:0:0:0:0:u');
     });
 
     test('sanitize line breaks', () => {
@@ -481,7 +481,7 @@ describe('Answer.serialize()', () => {
         a = make_answer({ uid: 'test',
             text: 'first line\nnew line'
         });
-        expect(Answer.serialize(a)).toBe('test:first line new line:0:0:0:0:0:0:0::0');
+        expect(Answer.serialize(a)).toBe('test:first line new line:0:0:0:0:0:0:0:');
     });
 
 

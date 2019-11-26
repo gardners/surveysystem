@@ -35,7 +35,7 @@ _dev/*
 deploy
 
 # themes
-styles/*
-!styles/default/*
-!styles/main.scss
+src/styles/*
+!src/styles/default/*
+!src/styles/main.scss
 

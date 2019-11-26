@@ -170,13 +170,13 @@ class RadioMatrix extends Component {
 
                 <AppContext.Consumer>
                 {
-                    ({ breakpoint, isBreakpointAbove }) => (
+                    ({ breakpoint, matchesBreakpointOrAbove }) => (
                         <div className="table-responsive">
                             <table className="table table-sm table-hover table-borderless table-striped radiomatrix--table">
                                 <thead>
                                     <TheadRow
                                         question={ first }
-                                        expanded={ isBreakpointAbove('md') }
+                                        expanded={ matchesBreakpointOrAbove('md') }
                                     />
                                 </thead>
                                 <tbody>
@@ -188,7 +188,7 @@ class RadioMatrix extends Component {
                                             value={ values[question.id] }
                                             handleChange={ this.handleChange.bind(this) }
                                             required={ required }
-                                            expanded={ isBreakpointAbove('md') }
+                                            expanded={ matchesBreakpointOrAbove('md') }
                                         />)
                                     }
                                 </tbody>

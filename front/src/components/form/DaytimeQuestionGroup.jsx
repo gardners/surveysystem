@@ -238,7 +238,7 @@ class DaytimeQuestionGroup extends Component {
 
                 <AppContext.Consumer>
                 {
-                    ({ breakpoint, isBreakpointAbove }) => (
+                    ({ breakpoint, matchesBreakpointOrAbove }) => (
                         <div className="list-group">
                             {
                                 questions.map((question, index) =>
@@ -257,7 +257,7 @@ class DaytimeQuestionGroup extends Component {
                                             <Fade key={ index } timeout={ 250 }>
                                                 <div className="row p-5">
                                                 {
-                                                    (isBreakpointAbove('md')) ?
+                                                    (matchesBreakpointOrAbove('md')) ?
                                                         <div className="col daytime-slider">
                                                             <Gutter className="mb-4" component={ DaytimeIcon } min={ minValue(index, values) } max={ maxValue(index, values) } />
                                                             <InputRange
