@@ -53,7 +53,7 @@ class ApiAlert extends Component {
                 <div><strong>SurveyError:</strong> { reason }</div>
                 {
                     (error instanceof ApiError) &&
-                        <Toggle className="d-block text-default" className="p-2" title="More info...">
+                        <Toggle className="d-block text-default p-2" title="More info...">
                             <ul style={ { fontSize: '.85em' } }>
                                 { statusText && <li><strong>status:</strong> { statusText } ({ status })</li> }
                                 { url && <li><strong>url:</strong> { url }</li> }
