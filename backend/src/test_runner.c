@@ -63,16 +63,16 @@ int fix_ownership(char *dir)
 
 void require_test_directory(char *sub_dir, int perm) {
   char tmp[2048];
-  snprintf(tmp,2048,"%s/%s",test_dir,sub_dir);
-  if (mkdir(tmp,perm)) {
-    fprintf(stderr,"mkdir(%s, %o) failed.", tmp, perm);
-    exit(-3);
+  snprintf(tmp, 2048, "%s/%s", test_dir, sub_dir);
+  if (mkdir(tmp, perm)) {
+    if(errno != EEXIST) {
+      fprintf(stderr,"mkdir(%s, %o) failed.", tmp, perm);
+      exit(-3);
+    }
   }
   // Now make sessions directory writeable by all users
-  if (chmod(tmp,S_IRUSR|S_IWUSR|S_IXUSR|
-            S_IRGRP|S_IWGRP|S_IXGRP|
-            S_IROTH|S_IWOTH|S_IXOTH)) {
-    fprintf(stderr,"chmod(%s) failed.", tmp);
+  if (chmod(tmp,S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IWGRP|S_IXGRP|S_IROTH|S_IWOTH|S_IXOTH)) {
+    fprintf(stderr,"require_test_directory() chmod(%s) failed.", tmp);
     exit(-3);
   }
 }
@@ -83,7 +83,7 @@ void require_test_file(char *file_name, int perm) {
   
   FILE* f = fopen(tmp, "w");
   if(!f) {
-    fprintf(stderr,"fopen(%s) failed.", tmp);
+    fprintf(stderr,"require_test_file() fopen(%s) failed.", tmp);
     exit(-3);
   }
   fclose(f);
@@ -92,15 +92,17 @@ void require_test_file(char *file_name, int perm) {
   if (chmod(tmp,S_IRUSR|S_IWUSR|S_IXUSR|
             S_IRGRP|S_IWGRP|S_IXGRP|
             S_IROTH|S_IWOTH|S_IXOTH)) {
-    fprintf(stderr,"chmod(%s) failed.", tmp);
+    fprintf(stderr,"require_test_file() chmod(%s) failed.", tmp);
     exit(-3);
   }
 }
 
 void require_directory(char *dir, int perm) {
   if (mkdir(dir,perm)) {
-    fprintf(stderr,"mkdir(%s, %o) failed.", dir, perm);
-    exit(-3);
+    if(errno != EEXIST) {
+      fprintf(stderr,"mkdir(%s, %o) failed.", dir, perm);
+      exit(-3);
+    }
   }
 }
 
@@ -371,7 +373,7 @@ int run_test(char *dir, char *test_file)
 
   do {
 
-    // Erase log files from previous tests, and make directory again fresh
+    // Erase log files from previous tests, see issue #198
     char log_path[8192];
     snprintf(log_path,8192,"%s/logs",test_dir);
     recursive_delete(log_path);
@@ -1087,7 +1089,7 @@ char *config_template=
   "     \"bin-path\" => \"%s/surveyfcgi\",\n"
   "     \"bin-environment\" => (\n"
   "     \"SURVEY_HOME\" => \"%s\",\n"
-  "     \"SURVEY_PYTHON_DIR\" => \"%s\"\n"
+  "     \"SURVEY_PYTHONDIR\" => \"%s\"\n"
   "     ),\n"
   "     \"check-local\" => \"disable\",\n"
   "     \"docroot\" => \"%s/front/build\" # remote server may use \n"
@@ -1126,7 +1128,7 @@ int configure_and_start_lighttpd(char *test_dir)
 
     // Create log file in test directory, and make it globally writeable
     {
-      snprintf(conf_data,16384,"%s/breakage.log",test_dir);
+      snprintf(conf_data,16384,"%s/breakage.log", test_dir);
       FILE *f=fopen(conf_data,"w");
       if (f) fclose(f);
       chmod(conf_data,0777);
@@ -1134,11 +1136,11 @@ int configure_and_start_lighttpd(char *test_dir)
 
     if (!tests) fprintf(stderr,"Created breakage.log\n");
     
+    // point python dir ALWAYS to test dir
     char python_dir[4096];
-    if(!realpath("python", python_dir)) {
-      python_dir[0]=0;
-    }
-    
+    snprintf(python_dir, 4096, "%s/python", test_dir);
+    require_directory(python_dir, 0775);
+
     snprintf(conf_data,16384,config_template,
              test_dir,
              getcwd(cwd,cwdlen),
@@ -1154,6 +1156,7 @@ int configure_and_start_lighttpd(char *test_dir)
              getcwd(cwd,cwdlen));
     char tmp_conf_file[1024];
     snprintf(tmp_conf_file,1024,"%s/lighttpd.conf",test_dir);
+
     FILE *f=fopen(tmp_conf_file,"w");
     if (!f) {
       LOG_ERRORV("Failed to open temporary lighttpd.conf file: %s",strerror(errno));
@@ -1257,11 +1260,12 @@ int main(int argc,char **argv)
   require_test_directory("sessions", 0777);
   require_test_directory("logs", 0777);
   require_test_directory("locks", 0777);
+  // note: python dir is created when setting up lighttpd conf
   require_test_file("lighttpd-access.log", 0777);
   require_test_file("lighttpd-error.log", 0777);
 
   // Make sure we have a test log directory
-  mkdir("testlog",0755);
+  require_directory("testlog", 0755);
 
   stop_lighttpd();
   fprintf(stderr,"About to request config gets pulled together\n");
