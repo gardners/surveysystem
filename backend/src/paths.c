@@ -39,18 +39,20 @@ int generate_python_path(char *path_out, int max_len)
     char *survey_pythondir = getenv("SURVEY_PYTHONDIR");
     // if no SURVEY_PYTHONDIR defined, use python folder within SURVEY_HOME
     if (!survey_pythondir) {
-      LOG_INFOV("#### getenv no HOME_PY", survey_pythondir, path_out);
+      LOG_INFO("ENV 'SURVEY_PYTHONDIR' not defined, try using '<SURVEY_HOME>/python' instead.");
       char *survey_home = getenv("SURVEY_HOME");
       if (!survey_home) LOG_ERROR("SURVEY_HOME environment variable not set");
       
       int l = snprintf(path_out, max_len, "%s/%s", survey_home, "python");
       if (l < 1 || l >= max_len) LOG_ERROR("snprintf() failed");
     } else {
-      LOG_INFOV("#### getenv  HAS HOME_PY", survey_pythondir, path_out);
+      LOG_INFOV("ENV 'SURVEY_PYTHONDIR' found: '%s'", survey_pythondir);
       int m = snprintf(path_out, max_len, "%s", survey_pythondir);
       if (m < 1 || m >= max_len) LOG_ERROR("snprintf() failed");
     }
-    LOG_INFOV("#### getenv(\"SURVEY_PYTHONDIR\"): \"%s\", path_out: \"%s\"", survey_pythondir, path_out);
+    
+    LOG_INFOV("generated python path: '%s'", path_out);
+    
   } while(0);
   return retVal;
 }
