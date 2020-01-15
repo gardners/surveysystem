@@ -98,7 +98,6 @@ int setup_python()
       if (generate_python_path(append_cmd, 1024)) {
 	LOG_ERRORV("Failed to generate python search path using \"%s\"", append_cmd);
       }
-      LOG_INFOV("generated python path: %s", append_cmd);
       
       // Add python directory to python's search path
       if (!strstr(syspath, append_cmd)) {
