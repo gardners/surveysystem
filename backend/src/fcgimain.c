@@ -18,7 +18,7 @@
 #include "survey.h"
 #include "serialisers.h"
 #include "question_types.h"
-#include "timeutils.h"
+#include "utils.h"
 
 #define          CHECKPOINT() { fprintf(stderr,"%s:%d:%s():pid=%d: Checkpoint\n",__FILE__,__LINE__,__FUNCTION__,getpid()); }
 
