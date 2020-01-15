@@ -19,7 +19,11 @@ prevent any given directory becoming too long, and slowing down the retrieval of
 
 Stale sessions can simply be deleted via the file system, and surveys added or updated or deleted similarly easily.
 
-All data lives in *SURVEY_HOME* The *SURVEY_HOME* environment variable *must* be defined.
+## Environment Variables
+
+All data lives in `SURVEY_HOME`. The `SURVEY_HOME` environment variable **must** be defined and represents an absolute directory path to the backend dir (no trailing slash).
+Optionally you can define an external Python controller path via `SURVEY_PYTHONDIR`. This must be an absolute directory path. The backend will look for `<SURVEY_PYTHONDIR>/nextquestion.py`. This is recommended for more comples analysis requirements.
+In case this variable is not defined the backend falls back to the local `<SURVEY_HOME>/python/nextquestion.py` mentioned above
 
 # Installation (backend)
 
