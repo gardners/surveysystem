@@ -8,7 +8,7 @@ skip! description Python implementation of nextquestion can be used
 definesurvey 003_outputFromPythonShouldBeSameAsFromC
 version 2
 Silly test survey updated
-pythondir=.
+with python
 email:What is the answer to question 1?:What is the answer to question 1?:TEXT:0:I don't know:-1:-1:0:0::
 password1:How boring was question 1?:How boring was question 1?:TEXT:0:I don't know:-1:-1:0:0::
 endofsurvey
