@@ -4,7 +4,7 @@ skip! description infrastructure should check syntax in test file (in this case,
 definesurvey 009_testCheckRecordedData
 version 2
 Silly test survey updated
-pythondir=.
+with python
 email:Email Address:Email Address:TEXT:-1:email:-999:999:2:0:0::
 password1:Password:Password:TEXT:-1:password1:-999:999:2:0:0::
 password2:Confirm Password:Confirm Password:TEXT:-1:password2:-999:999:2:0:0::

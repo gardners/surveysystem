@@ -1,4 +1,4 @@
-description Version 2 without python does not invoke nextquestion
+description Version 2 python directives: "without python": next_question_generic() and "with python": call_python_nextquestion()
 
 #!---------------------
 #!Survey WITHOUT python
@@ -14,13 +14,16 @@ question2:Question 2::TEXT:0::-1:-1:0:0::
 question3:Question 3::TEXT:0::-1:-1:0:0::
 endofsurvey
 
-# Create python module, skipping question 2 for the first answer. Test passes if this is NOT invoked
+# Create unused python module. Test passes if this is NOT invoked
 python
 def nextquestion(questions, answers):
+    # note that question2 will never be returned
     if len(answers) == 0:
         return 'question3'
+    if len(answers) == 1:
+        return 'question1'
     else:
-        return 'question3'
+        return ''
 endofpython
 
 # Request creation of a  new session
@@ -33,6 +36,10 @@ extract_sessionid
 verify_session
 without_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 endofsession
+
+# Ask for first question - should return question1
+request 200 nextquestion?sessionid=$SESSION
+match_string {"next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "unit": ""}]}
 
 # should not invoke python and return next question
 request 200 addanswer?sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0:
@@ -54,19 +61,22 @@ endofsession
 definesurvey with_python
 version 2
 Silly test survey updated
-pythondir=.
+with python
 question1:Question 1::TEXT:0::-1:-1:0:0::
 question2:Question 2::TEXT:0::-1:-1:0:0::
 question3:Question 3::TEXT:0::-1:-1:0:0::
 endofsurvey
 
-# Create python module, skipping question 2 for the first answer. Test passes if this IS invoked
+# Create python module, skipping question 2. Test passes if this IS invoked
 python
 def nextquestion(questions, answers):
+    # note that question2 will never be returned
     if len(answers) == 0:
         return 'question3'
+    if len(answers) == 1:
+        return 'question1'
     else:
-        return 'question3'
+        return ''
 endofpython
 
 # Request creation of a  new session
@@ -80,13 +90,18 @@ verify_session
 with_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 endofsession
 
-request 200 addanswer?sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0:
+# Ask for "first" question - should return question3
+request 200 nextquestion?sessionid=$SESSION
 match_string {"next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "unit": ""}]}
+
+# answer first question - should return question1
+request 200 addanswer?sessionid=$SESSION&answer=question3:Hello+World:0:0:0:0:0:0:0:
+match_string {"next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "unit": ""}]}
 
 # Check that we are offered the next question to answer
 
 # Make sure answer ends up in file
 verify_session
 with_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
-question1:Hello World:0:0:0:0:0:0:0::0:<UTIME>
+question3:Hello World:0:0:0:0:0:0:0::0:<UTIME>
 endofsession

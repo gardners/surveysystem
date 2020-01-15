@@ -71,7 +71,7 @@ void log_python_error()
   return;
 }
 
-int setup_python(char *search_path)
+int setup_python()
 {
   int retVal=0;
   do {
@@ -80,15 +80,13 @@ int setup_python(char *search_path)
     // instance, and start again.
     
     if (!is_python_started) { 
-
-    if (!getenv("SURVEY_HOME")) LOG_ERROR("SURVEY_HOME environment variable not set");
-    
-    wchar_t *name=as_wchar("nextquestion");
-    if (!name) LOG_ERROR("Could not convert string 'nextquestion' to wchar_t *");
-
-    Py_SetProgramName(name);
-    Py_Initialize();
-
+      if (!getenv("SURVEY_HOME")) LOG_ERROR("SURVEY_HOME environment variable not set");
+      
+      wchar_t *name=as_wchar("nextquestion");
+      if (!name) LOG_ERROR("Could not convert string 'nextquestion' to wchar_t *");
+  
+      Py_SetProgramName(name);
+      Py_Initialize();
     }
 
     PyObject *syspath_o=PySys_GetObject("path");
@@ -96,53 +94,23 @@ int setup_python(char *search_path)
     const char *syspath = PyUnicode_AsUTF8(rep);
 
     if (!is_python_started) {
-    char append_cmd[1024];
-    snprintf(append_cmd,1024,"%s/python/", getenv("SURVEY_HOME"));
-    if (!strstr(syspath,append_cmd)) {
-      // Add python directory to python's search path
-
-      PyObject *sys_path = PySys_GetObject("path");
-      if (PyList_Append(sys_path, PyUnicode_FromString(append_cmd)))
-	{
-	  log_python_error();
-	  LOG_ERRORV("Failed to setup python search path using \"%s\"",append_cmd);
-	}
-    } else {
-      LOG_WARNV("Python sys.path already contains '%s'",append_cmd);
-    }
-    }
-  
-    // Add python dir, if it exists 
-    if (search_path&&search_path[0]) {
       char append_cmd[1024];
-      snprintf(append_cmd,1024,"%s", search_path);
-      if (!strstr(syspath,append_cmd)) {
+      if (generate_python_path(append_cmd, 1024)) {
+	LOG_ERRORV("Failed to generate python search path using \"%s\"", append_cmd);
+      }
+      
       // Add python directory to python's search path
-
-      PyObject *sys_path = PySys_GetObject("path");
-      if (PyList_Append(sys_path, PyUnicode_FromString(append_cmd)))
-        {
-          log_python_error();
-          LOG_ERRORV("Failed to setup python search path using \"%s\"",append_cmd);
-        }
-    } else {
-      LOG_WARNV("Python sys.path already contains '%s'",append_cmd);
-    } 
+      if (!strstr(syspath, append_cmd)) {
+	PyObject *sys_path = PySys_GetObject("path");
+	if (PyList_Append(sys_path, PyUnicode_FromString(append_cmd)))
+	  {
+	    log_python_error();
+	    LOG_ERRORV("Failed to setup python search path using \"%s\"", append_cmd);
+	  }
+      } else {
+	LOG_WARNV("Python sys.path already contains '%s'", append_cmd);
+      }
     }
- 
-    //    else
-    //      LOG_WARNV("Set up python search path using \"%s\"",append_cmd);
-
-#if 0
-    wchar_t path_as_wchar[4096];
-    snprintf(append_cmd,1024,"%s/python", getenv("SURVEY_HOME"));
-    int len= mbstowcs(path_as_wchar, append_cmd, 100);
-    PySys_SetPath(path_as_wchar);
-    syspath_o=PySys_GetObject("path");
-    rep = PyObject_Repr(syspath_o);
-    syspath = PyUnicode_AsUTF8(syspath_o);
-    LOG_WARNV("AFTER Python sys.path='%s'",syspath);
-#endif
     
     nq_python_module = PyImport_ImportModule("nextquestion");
 
@@ -163,7 +131,6 @@ int setup_python(char *search_path)
 	LOG_ERRORV("'import nextquestion' failed.",0);
       } else LOG_INFOV("import command '%s' appparently succeeded (result = %d).",append_cmd,res);
 
-      
       PyObject *module_name_o= PyUnicode_FromString(append_cmd);
       nq_python_module=PyImport_GetModule(module_name_o);
       if (!nq_python_module) {
@@ -190,21 +157,17 @@ int setup_python(char *search_path)
       nq_python_module=PyImport_GetModule(module_name_o);
       if (!nq_python_module) {
 	log_python_error();
-	LOG_WARNV("Using PyImport_GetModule() didn't work either",0);
-      } else LOG_WARNV("Using module __main__ with manually loaded python functions instead of import nextquestion.",0);
+	LOG_WARNV("Using PyImport_GetModule() didn't work either", 0);
+      } else LOG_WARNV("Using module __main__ with manually loaded python functions instead of import nextquestion.", 0);
 
-
-      
     }
     
     if (!nq_python_module) {
-
       PyErr_Print();
-      
       LOG_ERROR("Failed to load python module 'nextquestion'");
     }
 
-    is_python_started=1;
+    is_python_started = 1;
   } while(0);
   return retVal;
 }
@@ -280,7 +243,7 @@ int call_python_nextquestion(struct session *s,
     if ((*next_question_count)>=MAX_QUESTIONS) LOG_ERROR("Too many questions in list.");
 
     // Setup python
-    if (setup_python(s->pythondir)) {
+    if (setup_python()) {
       LOG_ERROR("Failed to initialise python.\n");
     }
     if (!nq_python_module) LOG_ERROR("Python module 'nextquestion' not loaded. Does it have an error?");
@@ -522,6 +485,7 @@ int get_next_questions(struct session *s,
     if ((*next_question_count)>=MAX_QUESTIONS) LOG_ERROR("Too many questions in list.");
 
     if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_PYTHON) {
+      LOG_INFO("NEXTQUESTIONS_FLAG_PYTHON set, calling call_python_nextquestion())");
       int r=call_python_nextquestion(s,next_questions,max_next_questions,next_question_count);
       if (r==-99) { retVal=-1; break; }
       if (!r) { retVal=0; break; }
@@ -529,6 +493,7 @@ int get_next_questions(struct session *s,
     // PGS: Disabled generic implementation of nextquestion, since if you have a python version and it can't be loaded
     // for some reason we should NOT fall back, because it may expose questions and IP in a survey that should not be revealed. 
     if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_GENERIC) {
+      LOG_INFO("NEXTQUESTIONS_FLAG_GENERIC set, calling get_next_questions_generic())");
       retVal=get_next_questions_generic(s,next_questions,max_next_questions,next_question_count); 
     } else {
       LOG_ERROR("Could not call python nextquestion function.");
@@ -551,7 +516,7 @@ int get_analysis(struct session *s,const char **output)
     if (!output) LOG_ERROR("output is NULL");
 
     // Setup python
-    if (setup_python(s->pythondir)) {
+    if (setup_python()) {
       LOG_ERROR("Failed to initialise python.\n");
     }
     if (!nq_python_module) LOG_ERROR("Python module 'nextquestion' not loaded. Does it have an error?");
