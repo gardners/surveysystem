@@ -154,7 +154,6 @@ struct session {
   unsigned int nextquestions_flag;
   #define NEXTQUESTIONS_FLAG_GENERIC 1
   #define NEXTQUESTIONS_FLAG_PYTHON 2
-  char pythondir[8192];
   
   struct question *questions[MAX_QUESTIONS];
   struct answer *answers[MAX_QUESTIONS];
@@ -164,8 +163,8 @@ struct session {
 
 
 int generate_path(char *path_in,char *path_out,int max_len);
-int get_next_questions(struct session *s,
-               struct question *next_questions_out[],int max_next_questions,int *next_question_count_out);
+int generate_python_path(char *path_out, int max_len);
+int get_next_questions(struct session *s, struct question *next_questions_out[],int max_next_questions,int *next_question_count_out);
 int get_analysis(struct session *s,const char **output);
 int create_session(char *survey_id,char *session_id_out);
 int delete_session(char *session_id);
