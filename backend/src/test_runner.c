@@ -501,68 +501,68 @@ int run_test(char *dir, char *test_file)
         fclose(s);
       }
       else if (!strcmp(line,"python")) {
-        char python_file[8192];
-        snprintf(python_file,8192,"%s/python",dir);
-        mkdir(python_file,0755);
-        if (chmod(python_file,S_IRUSR|S_IWUSR|S_IXUSR|
-                  S_IRGRP|S_IXGRP|
-                  S_IROTH|S_IXOTH)) {
-          tdelta=gettime_us()-start_time; tdelta/=1000;
-          fprintf(log,"T+%4.3fms : ERROR : Could not set permissions on python directory '%s'",tdelta,python_file);
+        // create python directory
+        char python_dir[1024];
+        snprintf(python_dir, 8192,"%s/python", dir);
+        mkdir(python_dir, 0755);
+        
+        if (chmod(python_dir, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)) {
+          tdelta = gettime_us() - start_time; tdelta /= 1000;
+          fprintf(log, "T+%4.3fms : ERROR : Could not set permissions on python directory '%s'\n", tdelta, python_dir);
           goto error;
         }
-
-        snprintf(python_file,8192,"%s/python/__init__.py",dir);
-        FILE *s=fopen(python_file,"w");
+        
+        // create python package (__ini.py__)
+        char python_ini[2048];
+        snprintf(python_ini, 2048, "%s/__init__.py", python_dir);
+        FILE *s = fopen(python_ini, "w");
         if (!s) {
-          fprintf(log,"T+%4.3fms : ERROR : Could not create python file '%s'",tdelta,python_file);
+          fprintf(log, "T+%4.3fms : ERROR : Could not create python file '%s'\n", tdelta, python_ini);
           goto error;
         }
         fclose(s);
-        if (chmod(python_file,S_IRUSR|S_IWUSR|S_IXUSR|
-                  S_IRGRP|S_IXGRP|
-                  S_IROTH|S_IXOTH)) {
-          tdelta=gettime_us()-start_time; tdelta/=1000;
-          fprintf(log,"T+%4.3fms : ERROR : Could not set permissions on python file '%s'",tdelta,python_file);
+        
+        if (chmod(python_ini, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)) {
+          tdelta = gettime_us() - start_time; tdelta /= 1000;
+          fprintf(log, "T+%4.3fms : ERROR : Could not set permissions on python file '%s'\n", tdelta, python_ini);
           goto error;
         }
-
-        snprintf(python_file,8192,"%s/python/nextquestion.py",dir);
-        s=fopen(python_file,"w");
+        
+        // create python module (nextquestion.py)
+        char python_module[2048];
+        snprintf(python_module, 8192, "%s/nextquestion.py", python_dir);
+        s = fopen(python_module, "w");
         if (!s) {
-          fprintf(log,"T+%4.3fms : ERROR : Could not create python file '%s'",tdelta,python_file);
+          fprintf(log, "T+%4.3fms : ERROR : Could not create python file '%s'\n", tdelta, python_module);
           goto error;
         }
-        line[0]=0; fgets(line,8192,in);
+        
+        // write python content from testfile
+        line[0] = 0; fgets(line, 8192, in);
         while(line[0]) {
-          int len=strlen(line);
+          int len = strlen(line);
           // Trim CR/LF from the end of the line
-          while(len&&(line[len-1]<' ')) line[--len]=0;
-
-          if (!strcmp(line,"endofpython")) break;
-
+          while(len && (line[len - 1] < ' ')) line[--len] = 0;
+          if (!strcmp(line, "endofpython")) break;
           fprintf(s,"%s\n",line);
 
-          line[0]=0; fgets(line,8192,in);
+          line[0] = 0; fgets(line, 8192, in);
         }
-
         fclose(s);
 
-        if (chmod(python_file,S_IRUSR|S_IWUSR|S_IXUSR|
-                  S_IRGRP|S_IXGRP|
-                  S_IROTH|S_IXOTH)) {
-          tdelta=gettime_us()-start_time; tdelta/=1000;
-          fprintf(log,"T+%4.3fms : ERROR : Could not set permissions on python file '%s'",tdelta,python_file);
+        if (chmod(python_module, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)) {
+          tdelta = gettime_us() - start_time; tdelta/=1000;
+          fprintf(log, "T+%4.3fms : ERROR : Could not set permissions on python file '%s'\n", tdelta, python_module);
           goto error;
         }
 
         // Compile the python
         char cmd[1024];
-        snprintf(cmd,1024,"python3.7 -m compileall %s 2>&1 >>%s",python_file,testlog);
-        int compile_result=system(cmd);
+        snprintf(cmd,1024, "python3.7 -m compileall %s 2>&1 >>%s", python_module, testlog);
+        int compile_result = system(cmd);
         if (compile_result) {
-          tdelta=gettime_us()-start_time; tdelta/=1000;
-          fprintf(log,"T+%4.3fms : FATAL : Failed to compile python module. Does the python have errors?\n",tdelta);
+          tdelta = gettime_us() - start_time; tdelta/=1000;
+          fprintf(log, "T+%4.3fms : FATAL : Failed to compile python module. Does the python have errors?\n", tdelta);
           goto fatal;
         }
 
