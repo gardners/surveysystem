@@ -16,6 +16,7 @@
 #include "errorlog.h"
 #include "question_types.h"
 #include "sha1.h"
+#include "paths.h"
 
 /*
   Verify that a session ID does not contain any illegal characters.
@@ -496,8 +497,8 @@ int load_survey_questions(struct session *ses)
     // version 1: Only allow generic implementation of next question picker if explicitly allowed
     ses->nextquestions_flag=NEXTQUESTIONS_FLAG_PYTHON;
     
-    if (format_version>1) {
-      // Check for pythondir and without python directives
+    if (format_version > 1) {
+      // Check for python directives
       line[0]=0;
       if (!fgets(line,8192,f)) LOG_ERRORV("Failed to read survey description in survey specification file '%s'",survey_path);
       if (!line[0]) LOG_ERRORV("Failed to read survey description in survey specification file '%s'",survey_path);
@@ -505,11 +506,11 @@ int load_survey_questions(struct session *ses)
       trim_crlf(line);
       if (!strcasecmp(line,"without python")) {
         ses->nextquestions_flag=NEXTQUESTIONS_FLAG_GENERIC;
-        ses->pythondir[0]=0;
-      } else if (sscanf(line,"pythondir=%[^\n]",ses->pythondir)==1) {
+      } else if (!strcasecmp(line,"with python")) {
+	 // do nothing, see above
 	 // We are using python, and have recorded a python library directory to add to the search path.
       } else {
-	LOG_ERRORV("Missing <without python|pythondir=...> directive in survey specification file '%s'",survey_path);
+	LOG_ERRORV("Missing <without python|with python> directive in survey specification file '%s'",survey_path);
       }
       
     }
