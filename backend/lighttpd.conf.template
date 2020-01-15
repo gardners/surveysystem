@@ -40,7 +40,8 @@ fastcgi.server = (
      "port" => 9000,
      "bin-path" => FASTCGI_DIR + "/surveyfcgi",
      "bin-environment" => (
-     "SURVEY_HOME" => BACKEND_DIR
+        "SURVEY_HOME" => BACKEND_DIR,
+        "SURVEY_PYTHONDIR" => BACKEND_DIR + "/python",
     ),
      "check-local" => "disable",
      "docroot" => WWW_DIR + "/front/build" # remote server may use
