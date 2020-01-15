@@ -137,10 +137,12 @@ int setup_python()
 	log_python_error();
 	LOG_WARNV("Using PyImport_GetModule() didn't work either",0);
       }
-
+    
       // And if that fails, try loading the file directly as a string.
       char python_file[8192];
-      snprintf(python_file,8192,"%s/python/nextquestion.py",getenv("SURVEY_HOME"));
+      if (generate_python_path(python_file, 8192)) {
+	LOG_ERRORV("Failed to generate python search path using \"%s\"", python_file);
+      }
       FILE *f=fopen(python_file,"r");
       if (f) {
 	char python_code[1048576]="";
