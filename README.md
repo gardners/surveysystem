@@ -12,7 +12,9 @@ The structure is relatively simple:
 
 * `surveys/survey_name/current` - The current definition of a survey called "survey_name".
 * `surveys/survey_name/<SHA1 hash>` - Older definitions of a survey, named after the SHA1 hash of the survey definition
-* `python/nextquestion.py` - Python functions to select next question.  Functions should be named `nextquestion_<survey_name>_<SHA1 hash>`.  If no such function exists, then `nextquestion_<survey_name>` is tried, and failing that `nextquestion`.
+* `python/nextquestion.py` - Python functions to select next question.
+    - Next question provider: Functions should be named `nextquestion_<survey_name>_<SHA1 hash>`.  If no such function exists, then `nextquestion_<survey_name>` is tried, and failing that `nextquestion`.
+    - Analysis provider: As above `analyse_<survey_name>_<SHA1 hash>`.  or `analyse_<survey_name>` or `analyse`.
 * `sessions/<session uuid prefix>/<session uuid>` - Files containing each live session.  The prefix subdirectories are used to
 prevent any given directory becoming too long, and slowing down the retrieval of a given survey.
 * `logs/YYYY/MM/DD/YYYY-MM-DD-HH.log` - Log files of all activity
@@ -22,8 +24,9 @@ Stale sessions can simply be deleted via the file system, and surveys added or u
 ## Environment Variables
 
 All data lives in `SURVEY_HOME`. The `SURVEY_HOME` environment variable **must** be defined and represents an absolute directory path to the backend dir (no trailing slash).
-Optionally you can define an external Python controller path via `SURVEY_PYTHONDIR`. This must be an absolute directory path. The backend will look for `<SURVEY_PYTHONDIR>/nextquestion.py`. This is recommended for more comples analysis requirements.
-In case this variable is not defined the backend falls back to the local `<SURVEY_HOME>/python/nextquestion.py` mentioned above
+
+Optionally you can define an external Python controller path via `SURVEY_PYTHONDIR`. This must be an absolute directory path. The backend will look for `<SURVEY_PYTHONDIR>/nextquestion.py`. This is recommended for more complex analysis requirements.
+If not defined the backend falls back to the local `<SURVEY_HOME>/python/nextquestion.py` (see structure)
 
 # Installation (backend)
 
