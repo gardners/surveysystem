@@ -74,5 +74,7 @@ ls -lh "$BACKUP_DIR"
 # done
 echo ---------------
 GREEN "done"
+echo "Flush system:"
 echo " * delete logs: rm -rfv ../logs/*/"
 echo " * delete sessions: rm -rfv ../sessions/*/"
+echo " * delete session locks: rm -rfv ../locks/*/"
