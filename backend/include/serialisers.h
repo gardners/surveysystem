@@ -7,5 +7,5 @@ int serialise_answer(struct answer *a,char *out,int max_len);
 int deserialise_question(char *in,struct question *q);
 int deserialise_answer(char *in, enum answer_visibility visibility, struct answer *a);
 int dump_question(FILE *f,char *msg,struct question *q);
-int dump_answerr(FILE *f,char *msg,struct answer *a);
+int dump_answer(FILE *f,char *msg,struct answer *a);
 
