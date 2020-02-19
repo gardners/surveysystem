@@ -358,6 +358,36 @@ int dump_question(FILE *f,char *msg,struct question *q)
 }
 
 /*
+  For debugging it can be helpful to dump an answer structure to
+  stdout or a file.
+*/
+int dump_answer(FILE *f, char *msg, struct answer *a)
+{
+  int retVal=0;
+  do {
+    char temp[8192];
+    fprintf(f, "%s:\n", msg);
+    escape_string(a->uid, temp, 8192);
+    fprintf(f, "  uid='%s'\n", temp);
+    escape_string(a->text, temp, 8192);
+    fprintf(f, "  text='%s'\n", temp);
+    fprintf(f, "  value=%lld\n", a->value);
+    fprintf(f, "  lat=%lld\n", a->lat);
+    fprintf(f, "  lon=%lld\n", a->lon);
+    fprintf(f, "  time_begin=%lld\n", a->time_begin);
+    fprintf(f, "  time_end=%lld\n", a->time_end);
+    fprintf(f, "  time_zone_delta=%d\n", a->time_zone_delta);
+    fprintf(f, "  dst_delta=%d\n", a->dst_delta);
+    escape_string(a->unit, temp, 8192);
+    fprintf(f, "  unit='%s'\n", temp);
+    fprintf(f, "  flags=%d\n", a->flags);
+    fprintf(f, "  stored=%lld\n", a->stored);
+  } while(0);
+
+  return retVal;
+}
+
+/*
   This should match exactly the field order and types as used
   in serialise_question(), so that it can reconstute a 
   question structure from a serialised string version of a
