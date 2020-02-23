@@ -209,7 +209,7 @@ const sanitizeValue = function(value) {
 
         /* eslint-disable no-useless-escape */
         return value.trim()
-        .replace(/\:|'|"/g, '\\$&')
+        .replace(/\\:|'|"/g, '\$&')
         .replace(/(?:\r\n|\r|\n)/g, ' ');
         /* eslint-enable no-useless-escape */
     }
