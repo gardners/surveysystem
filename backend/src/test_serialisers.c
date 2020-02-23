@@ -175,7 +175,23 @@ struct question_serialiser_test qst[]={
 int main(int argc,char **argv)
 {
   int retVal=0;
-  
+    fprintf(stderr,"=> deserialise START\n");
+    struct answer *a=calloc(sizeof(struct answer),1);
+    char *in = "SnoringLoudness:Don%27t%20know:0:0:0:0:0:0:0:";
+    fprintf(stderr,"%s\n", in);
+    int ret = deserialise_answer(in, ANSWER_FIELDS_PUBLIC, a);
+    
+    fprintf(stderr,"ret: %d\n", ret);
+    
+    if (!ret) {
+      dump_answer(stderr, "answer:", a);
+    } else{
+      fprintf(stderr,"ERROR deserialise_answer(public)\n");
+    }
+    
+    free_answer(a);
+    fprintf(stderr,"=> deserialise END\n");
+    exit(0);
   do {
     
     setenv("SURVEY_HOME", ".", 0);
