@@ -483,7 +483,25 @@ describe('Answer.serialize()', () => {
         });
         expect(Answer.serialize(a)).toBe('test:first line new line:0:0:0:0:0:0:0:');
     });
-
+    
+    test('sanitize apostrophes', () => {
+        let a;
+        //positive
+        a = make_answer({ uid: 'test',
+            text: `don't know`
+        });
+        expect(Answer.serialize(a)).toBe('test:don\'t know:0:0:0:0:0:0:0:');
+    });
+    
+    test('sanitize backslashes', () => {
+        let a;
+        //positive
+        a = make_answer({ uid: 'test',
+            text: `back\slash`
+        });
+        console.log(Answer.serialize(a));
+        expect(Answer.serialize(a)).toBe('test:backslash:0:0:0:0:0:0:0:');
+    });
 
 });
 
