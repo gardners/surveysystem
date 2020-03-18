@@ -425,7 +425,7 @@ DaytimeSequence.defaultProps = {
     required: false,
 
     // react-input-range props
-    step:  15 * 60,
+    step:  5 * 60, // 5 minutes
 };
 
 DaytimeSequence.propTypes = {
