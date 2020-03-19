@@ -349,7 +349,7 @@ int call_python_nextquestion(struct session *s,
 	  
 	  if (PyList_SetItem(answers,i,dict)) {
 	    Py_DECREF(dict);
-	    LOG_ERRORV("Error inserting question name '%s' into Python list",s->questions[i]->uid); 
+	    LOG_ERRORV("Error inserting answer name '%s' into Python list",s->answers[i]->uid); 
 	  }
 	}
     
@@ -621,7 +621,7 @@ int get_analysis(struct session *s,const char **output)
 	  
 	  if (PyList_SetItem(answers,i,dict)) {
 	    Py_DECREF(dict);
-	    LOG_ERRORV("Error inserting question name '%s' into Python list",s->questions[i]->uid); 
+	    LOG_ERRORV("Error inserting answer name '%s' into Python list",s->answers[i]->uid); 
 	  }
 	}
     
