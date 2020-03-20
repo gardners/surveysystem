@@ -50,6 +50,15 @@ int tests = 0;
 int configure_and_start_lighttpd(char *test_dir);
 int stop_lighttpd();
 
+char* py_traceback_func = 
+"def cmodule_traceback(exc_type, exc_value, exc_tb):\n"
+"   import sys, traceback\n"
+"   lines = [];\n"
+"   lines = traceback.format_exception(exc_type, exc_value, exc_tb)\n"
+"   output = '\\n'.join(lines)\n"
+"   return output\n"
+"\n";
+
 int fix_ownership(char *dir)
 {
   int retVal=0;
@@ -538,6 +547,8 @@ int run_test(char *dir, char *test_file)
           fprintf(log, "T+%4.3fms : ERROR : Could not create python file '%s'\n", tdelta, python_module);
           goto error;
         }
+        
+        fprintf(s, "%s\n", py_traceback_func);
         
         // write python content from testfile
         line[0] = 0; fgets(line, 8192, in);
