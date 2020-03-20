@@ -44,10 +44,10 @@ endofsession
 
 # Ask for next question
 request 200 nextquestion?sessionid=$SESSION
-match_string {"next_questions": [{"id": "email", "name": "email", "title": "Email Address", "description": "", "type": "EMAIL", "unit": ""}]}
+match_string {"next_questions": [{"id": "email", "name": "email", "title": "Email Address", "description": "", "type": "EMAIL", "default_value": "", "unit": ""}]}
 
 request 200 addanswer?sessionid=$SESSION&answer=email:test.email@someDomain.org:0:0:0:0:0:0:0::0
-match_string {"next_questions": [{"id": "password1", "name": "password1", "title": "Password", "description": "", "type": "PASSWORD", "unit": ""}]}
+match_string {"next_questions": [{"id": "password1", "name": "password1", "title": "Password", "description": "", "type": "PASSWORD", "default_value": "", "unit": ""}]}
 
 request 200 addanswer?sessionid=$SESSION&answer=password1:hunter123:0:0:0:0:0:0:0::0
 match_string {"next_questions": []}

@@ -21,7 +21,7 @@ endofsession
 
 # Ask for next question
 request 200 nextquestion?sessionid=$SESSION
-match_string {"next_questions": [{"id": "dates", "name": "dates", "title": "Your Life", "description": "", "type": "DATETIME_SEQUENCE", "choices": ["Birthday", "Start primary school", "Start high school"], "unit": "seconds"}]}
+match_string {"next_questions": [{"id": "dates", "name": "dates", "title": "Your Life", "description": "", "type": "DATETIME_SEQUENCE", "default_value": "", "choices": ["Birthday", "Start primary school", "Start high school"], "unit": "seconds"}]}
 
 #! ------- answer question -------
 

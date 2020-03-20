@@ -21,7 +21,7 @@ endofsession
 
 # Ask for next question
 request 200 nextquestion?sessionid=$SESSION
-match_string {"next_questions": [{"id": "sequence", "name": "sequence", "title": "Plant height?", "description": "", "type": "FIXEDPOINT_SEQUENCE", "choices": ["week 1", "week 2", "week 3"], "unit": "cm"}]}
+match_string {"next_questions": [{"id": "sequence", "name": "sequence", "title": "Plant height?", "description": "", "type": "FIXEDPOINT_SEQUENCE", "default_value": "", "choices": ["week 1", "week 2", "week 3"], "unit": "cm"}]}
 
 #! ------- answer question -------
 

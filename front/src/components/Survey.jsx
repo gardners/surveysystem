@@ -249,9 +249,14 @@ class Survey extends Component {
         }
 
         const questions = survey.current();
-        const answerIds = Object.keys(answers);
 
-        if(questions.length !== answerIds.length) {
+        // create an ordered sequence of answer ID based on the current questions array
+        const answerIds = [];
+        questions.forEach((q) => {
+            answerIds.push(q.id);
+        })
+
+        if(answerIds.length !== Object.keys(answers).length) {
             this.alert('Send answers: Missing answers!', 'error');
             return;
         }
