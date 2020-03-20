@@ -47,7 +47,7 @@
 char test_dir[1024];
 int tests = 0;
 
-int configure_and_start_lighttpd(char *test_dir);
+int configure_and_start_lighttpd(char *test_dir, int silent_flag);
 int stop_lighttpd();
 
 char* py_traceback_func = 
@@ -582,7 +582,7 @@ int run_test(char *dir, char *test_file)
         // Then restart, to clear out any old python code we had loaded before
         tdelta=gettime_us()-start_time; tdelta/=1000;
         fprintf(log,"T+%4.3fms : INFO : Restarting backend to clear loaded python code\n",tdelta);
-        if (configure_and_start_lighttpd(test_dir)) {
+        if (configure_and_start_lighttpd(test_dir, 1)) {
           tdelta=gettime_us()-start_time; tdelta/=1000;
           fprintf(log,"T+%4.3fms : FATAL : Backend restart failed\n",tdelta);
           goto fatal;
@@ -1117,7 +1117,7 @@ char *config_template=
 
 
 time_t last_config_time=0;
-int configure_and_start_lighttpd(char *test_dir)
+int configure_and_start_lighttpd(char *test_dir, int silent_flag)
 {
   int retVal=0;
 
@@ -1201,12 +1201,16 @@ int configure_and_start_lighttpd(char *test_dir)
     if (!tests) fprintf(stderr,"Running '%s'\n",cmd);
     int v=0;
     while((v=system(cmd))!=0) {
-      fprintf(stderr,"cmd returned code %d\n",v);
+      if (!silent_flag) {
+        fprintf(stderr,"cmd returned code %d\n",v);
+      }
       char log_dir[8192];
       // This should be /logs, but it doesn't exist yet, and we really only need it for the
       // ../ to get to breakage.log
       snprintf(log_dir,8192,"%s/sessions",test_dir);
-      dump_logs(log_dir,stderr);
+      if (!silent_flag) {
+        dump_logs(log_dir,stderr);
+      }
       sleep(2);
       continue;
     }
@@ -1281,7 +1285,7 @@ int main(int argc,char **argv)
   stop_lighttpd();
   fprintf(stderr,"About to request config gets pulled together\n");
   // Make config file pointing to the temp_dir, and start the server
-  if (configure_and_start_lighttpd(test_dir)) exit(-3);
+  if (configure_and_start_lighttpd(test_dir, 0)) exit(-3);
 
   fprintf(stderr,"\n");
 
