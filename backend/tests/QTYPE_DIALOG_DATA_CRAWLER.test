@@ -21,7 +21,7 @@ endofsession
 
 # Ask for next question
 request 200 nextquestion?sessionid=$SESSION
-match_string {"next_questions": [{"id": "datacrawler", "name": "datacrawler", "title": "Do you consent to give us access?", "description": "You will be redirected!", "type": "DIALOG_DATA_CRAWLER", "choices": ["Denied", "Granted"], "unit": "toycollection-module"}]}
+match_string {"next_questions": [{"id": "datacrawler", "name": "datacrawler", "title": "Do you consent to give us access?", "description": "You will be redirected!", "type": "DIALOG_DATA_CRAWLER", "default_value": "", "choices": ["Denied", "Granted"], "unit": "toycollection-module"}]}
 
 request 200 addanswer?sessionid=$SESSION&answer=datacrawler:Granted:0:0:0:0:0:0:0:toycollection-module
 match_string {"next_questions": []}

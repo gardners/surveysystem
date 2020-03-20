@@ -21,7 +21,7 @@ endofsession
 
 # Ask for next question
 request 200 nextquestion?sessionid=$SESSION
-match_string {"next_questions": [{"id": "meals", "name": "meals", "title": "Your average daily meal times", "description": "", "type": "DAYTIME_SEQUENCE", "choices": ["Breakfast", "Lunch", "Tea", "Late Snack"], "unit": "seconds"}]}
+match_string {"next_questions": [{"id": "meals", "name": "meals", "title": "Your average daily meal times", "description": "", "type": "DAYTIME_SEQUENCE", "default_value": "", "choices": ["Breakfast", "Lunch", "Tea", "Late Snack"], "unit": "seconds"}]}
 
 #! ------- answer question -------
 

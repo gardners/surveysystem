@@ -36,14 +36,14 @@ endofsession
 # Ask for next question
 request 200 nextquestion?sessionid=$SESSION
 # TODO: line 38 is what I think the answer should look like, but the output actually looks like line 39
-#match_string {"next_questions": [{"id": "email", "name": "email", "title": "How boring was question 1?", "description": "How boring was question 1?", "type": "TEXT", "unit": ""}]}
+#match_string {"next_questions": [{"id": "email", "name": "email", "title": "How boring was question 1?", "description": "How boring was question 1?", "type": "TEXT", "default_value": "", "unit": ""}]}
 match_string "email"
 
 request 200 addanswer?sessionid=$SESSION&answer=email:test.email@someDomain.org:0:0:0:0:0:0:0:
 
 # Check that we are offered the next question to answer
 # TODO: line 45 is what I think the answer should look like, but it actually looks like line 46
-#match_string {"next_questions": [{"id": "password1", "name": "question2", "title": "What is the answer to question 1?", "description": "What is the answer to question 2?", "type": "TEXT", "unit": ""}]}
+#match_string {"next_questions": [{"id": "password1", "name": "question2", "title": "What is the answer to question 1?", "description": "What is the answer to question 2?", "type": "TEXT", "default_value": "", "unit": ""}]}
 match_string "password1"
 
 # Make sure answer ends up in file
