@@ -1131,6 +1131,8 @@ static void fcgi_nextquestion(struct kreq *req)
     kjson_putint(&resp, next_question_count); 
     kjson_arrayp_open(&resp,"next_questions");
     for(int i=0;i<next_question_count;i++) {
+      // #269 add a flag indicating id default_value was set: kjson_putstringp() does not check keys and simply appends fields with the same key
+      int default_value_flag = 0;
       // Output each question
       kjson_obj_open(&resp);
       kjson_putstringp(&resp,"id",q[i]->uid);
@@ -1179,8 +1181,15 @@ static void fcgi_nextquestion(struct kreq *req)
 		    break;
 		  }
 		  kjson_putstringp(&resp,"default_value",rendered);
+		  default_value_flag = 1;
 	      }
 	  }
+      }
+      
+      // #269 add default_value if not set before
+      if (!default_value_flag) {
+	kjson_putstringp(&resp,"default_value", q[i]->default_value);
+	default_value_flag = 1;
       }
       
       switch (q[i]->type)
