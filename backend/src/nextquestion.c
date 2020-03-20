@@ -308,10 +308,10 @@ int call_python_nextquestion(struct session *s,
       }
     }
     
-    for(int i=0;i<s->answer_count;i++)
+    int listIndex = 0; // // #311, PyList increment
+    for(int i=0;i<s->answer_count;i++) {
       // Don't include deleted answers in the list fed to Python. #186
-      if (!(s->answers[i]->flags&ANSWER_DELETED))
-	{
+      if (!(s->answers[i]->flags&ANSWER_DELETED)) {
 	  PyObject *dict = PyDict_New();
 	  PyObject *uid = PyUnicode_FromString(s->answers[i]->uid);
 	  PyObject *text = PyUnicode_FromString(s->answers[i]->text);
@@ -347,11 +347,13 @@ int call_python_nextquestion(struct session *s,
 	    LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.",s->answers[i]->uid);
 	  }
 	  
-	  if (PyList_SetItem(answers,i,dict)) {
+	  if (PyList_SetItem(answers,listIndex,dict)) {
 	    Py_DECREF(dict);
-	    LOG_ERRORV("Error inserting question name '%s' into Python list",s->questions[i]->uid); 
+	    LOG_ERRORV("Error inserting answer name '%s' into Python list",s->answers[i]->uid); 
 	  }
+	  listIndex ++;
 	}
+      }
     
     //    log_python_object("Answers",answers);
     
@@ -580,6 +582,8 @@ int get_analysis(struct session *s,const char **output)
 	LOG_ERRORV("Error inserting question name '%s' into Python list",s->questions[i]->uid); 
       }
     }
+    
+    int listIndex = 0; // #311, PyList increment
     for(int i=0;i<s->answer_count;i++)
       // Don't include deleted answers in the list fed to Python. #186
       if (!(s->answers[i]->flags&ANSWER_DELETED))
@@ -619,10 +623,11 @@ int get_analysis(struct session *s,const char **output)
 	    LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.",s->answers[i]->uid);
 	  }
 	  
-	  if (PyList_SetItem(answers,i,dict)) {
+	  if (PyList_SetItem(answers,listIndex,dict)) {
 	    Py_DECREF(dict);
-	    LOG_ERRORV("Error inserting question name '%s' into Python list",s->questions[i]->uid); 
+	    LOG_ERRORV("Error inserting answer name '%s' into Python list",s->answers[i]->uid); 
 	  }
+	  listIndex++;
 	}
     
     PyObject* args = PyTuple_Pack(2,questions,answers);
