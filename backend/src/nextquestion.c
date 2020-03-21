@@ -249,6 +249,11 @@ PyObject* py_create_answer(struct answer *a)
   PyObject *time_end = PyLong_FromLongLong(a->time_end);
   PyObject *time_zone_delta = PyLong_FromLongLong(a->time_zone_delta);
   PyObject *dst_delta = PyLong_FromLongLong(a->dst_delta);
+  //# 299
+  PyObject *unit = PyUnicode_FromString(a->unit);
+  PyObject *flags = PyLong_FromLongLong(a->flags);
+  PyObject *stored = PyLong_FromLongLong(a->stored);
+  
   PyObject *uid_l = PyUnicode_FromString("uid");
   PyObject *text_l = PyUnicode_FromString("text");
   PyObject *value_l = PyUnicode_FromString("value");
@@ -258,6 +263,10 @@ PyObject* py_create_answer(struct answer *a)
   PyObject *time_end_l = PyUnicode_FromString("time_end");
   PyObject *time_zone_delta_l = PyUnicode_FromString("time_zone_delta");
   PyObject *dst_delta_l = PyUnicode_FromString("dst_delta");
+  //# 299
+  PyObject *unit_l = PyUnicode_FromString("unit");
+  PyObject *flags_l = PyUnicode_FromString("flags");
+  PyObject *stored_l = PyUnicode_FromString("stored");
   
   int errors = PyDict_SetItem(dict,uid_l,uid);
   errors += PyDict_SetItem(dict,text_l,text);
@@ -268,6 +277,10 @@ PyObject* py_create_answer(struct answer *a)
   errors += PyDict_SetItem(dict,time_end_l,time_end);
   errors += PyDict_SetItem(dict,time_zone_delta_l,time_zone_delta);
   errors += PyDict_SetItem(dict,dst_delta_l,dst_delta);
+  //# 299
+  errors += PyDict_SetItem(dict,unit_l,unit);
+  errors += PyDict_SetItem(dict,flags_l,flags);
+  errors += PyDict_SetItem(dict,stored_l,stored);
   
   if (errors) {
     Py_DECREF(dict);
