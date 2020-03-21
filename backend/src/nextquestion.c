@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -240,41 +239,41 @@ void log_python_object(char *msg,PyObject *result)
  */
 PyObject* py_create_answer(struct answer *a) 
 {
-  	  PyObject *dict = PyDict_New();
-	  PyObject *uid = PyUnicode_FromString(a->uid);
-	  PyObject *text = PyUnicode_FromString(a->text);
-	  PyObject *value = PyLong_FromLongLong(a->value);
-	  PyObject *lat = PyLong_FromLongLong(a->lat);
-	  PyObject *lon = PyLong_FromLongLong(a->lon);
-	  PyObject *time_begin = PyLong_FromLongLong(a->time_begin);
-	  PyObject *time_end = PyLong_FromLongLong(a->time_end);
-	  PyObject *time_zone_delta = PyLong_FromLongLong(a->time_zone_delta);
-	  PyObject *dst_delta = PyLong_FromLongLong(a->dst_delta);
-	  PyObject *uid_l = PyUnicode_FromString("uid");
-	  PyObject *text_l = PyUnicode_FromString("text");
-	  PyObject *value_l = PyUnicode_FromString("value");
-	  PyObject *lat_l = PyUnicode_FromString("latitude");
-	  PyObject *lon_l = PyUnicode_FromString("longitude");
-	  PyObject *time_begin_l = PyUnicode_FromString("time_begin");
-	  PyObject *time_end_l = PyUnicode_FromString("time_end");
-	  PyObject *time_zone_delta_l = PyUnicode_FromString("time_zone_delta");
-	  PyObject *dst_delta_l = PyUnicode_FromString("dst_delta");
-	  
-	  int errors = PyDict_SetItem(dict,uid_l,uid);
-	  errors += PyDict_SetItem(dict,text_l,text);
-	  errors += PyDict_SetItem(dict,value_l,value);
-	  errors += PyDict_SetItem(dict,lat_l,lat);
-	  errors += PyDict_SetItem(dict,lon_l,lon);
-	  errors += PyDict_SetItem(dict,time_begin_l,time_begin);
-	  errors += PyDict_SetItem(dict,time_end_l,time_end);
-	  errors += PyDict_SetItem(dict,time_zone_delta_l,time_zone_delta);
-	  errors += PyDict_SetItem(dict,dst_delta_l,dst_delta);
-	  
-	  if (errors) {
-	    Py_DECREF(dict);
-	    return NULL;
-	  }
-	  return dict;
+  PyObject *dict = PyDict_New();
+  PyObject *uid = PyUnicode_FromString(a->uid);
+  PyObject *text = PyUnicode_FromString(a->text);
+  PyObject *value = PyLong_FromLongLong(a->value);
+  PyObject *lat = PyLong_FromLongLong(a->lat);
+  PyObject *lon = PyLong_FromLongLong(a->lon);
+  PyObject *time_begin = PyLong_FromLongLong(a->time_begin);
+  PyObject *time_end = PyLong_FromLongLong(a->time_end);
+  PyObject *time_zone_delta = PyLong_FromLongLong(a->time_zone_delta);
+  PyObject *dst_delta = PyLong_FromLongLong(a->dst_delta);
+  PyObject *uid_l = PyUnicode_FromString("uid");
+  PyObject *text_l = PyUnicode_FromString("text");
+  PyObject *value_l = PyUnicode_FromString("value");
+  PyObject *lat_l = PyUnicode_FromString("latitude");
+  PyObject *lon_l = PyUnicode_FromString("longitude");
+  PyObject *time_begin_l = PyUnicode_FromString("time_begin");
+  PyObject *time_end_l = PyUnicode_FromString("time_end");
+  PyObject *time_zone_delta_l = PyUnicode_FromString("time_zone_delta");
+  PyObject *dst_delta_l = PyUnicode_FromString("dst_delta");
+  
+  int errors = PyDict_SetItem(dict,uid_l,uid);
+  errors += PyDict_SetItem(dict,text_l,text);
+  errors += PyDict_SetItem(dict,value_l,value);
+  errors += PyDict_SetItem(dict,lat_l,lat);
+  errors += PyDict_SetItem(dict,lon_l,lon);
+  errors += PyDict_SetItem(dict,time_begin_l,time_begin);
+  errors += PyDict_SetItem(dict,time_end_l,time_end);
+  errors += PyDict_SetItem(dict,time_zone_delta_l,time_zone_delta);
+  errors += PyDict_SetItem(dict,dst_delta_l,dst_delta);
+  
+  if (errors) {
+    Py_DECREF(dict);
+    return NULL;
+  }
+  return dict;
 }
 
 
