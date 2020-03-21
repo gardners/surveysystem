@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -233,6 +232,65 @@ void log_python_object(char *msg,PyObject *result)
   }
 }
 
+/**
+ * Creates an answer Py_Dict
+ * 
+ * the caller is responsible for derferencing the dict:  if(dict) Py_DECREF(dict);
+ */
+PyObject* py_create_answer(struct answer *a) 
+{
+  PyObject *dict = PyDict_New();
+  PyObject *uid = PyUnicode_FromString(a->uid);
+  PyObject *text = PyUnicode_FromString(a->text);
+  PyObject *value = PyLong_FromLongLong(a->value);
+  PyObject *lat = PyLong_FromLongLong(a->lat);
+  PyObject *lon = PyLong_FromLongLong(a->lon);
+  PyObject *time_begin = PyLong_FromLongLong(a->time_begin);
+  PyObject *time_end = PyLong_FromLongLong(a->time_end);
+  PyObject *time_zone_delta = PyLong_FromLongLong(a->time_zone_delta);
+  PyObject *dst_delta = PyLong_FromLongLong(a->dst_delta);
+  //# 299
+  PyObject *unit = PyUnicode_FromString(a->unit);
+  PyObject *flags = PyLong_FromLongLong(a->flags);
+  PyObject *stored = PyLong_FromLongLong(a->stored);
+  
+  PyObject *uid_l = PyUnicode_FromString("uid");
+  PyObject *text_l = PyUnicode_FromString("text");
+  PyObject *value_l = PyUnicode_FromString("value");
+  PyObject *lat_l = PyUnicode_FromString("latitude");
+  PyObject *lon_l = PyUnicode_FromString("longitude");
+  PyObject *time_begin_l = PyUnicode_FromString("time_begin");
+  PyObject *time_end_l = PyUnicode_FromString("time_end");
+  PyObject *time_zone_delta_l = PyUnicode_FromString("time_zone_delta");
+  PyObject *dst_delta_l = PyUnicode_FromString("dst_delta");
+  //# 299
+  PyObject *unit_l = PyUnicode_FromString("unit");
+  PyObject *flags_l = PyUnicode_FromString("flags");
+  PyObject *stored_l = PyUnicode_FromString("stored");
+  
+  int errors = PyDict_SetItem(dict,uid_l,uid);
+  errors += PyDict_SetItem(dict,text_l,text);
+  errors += PyDict_SetItem(dict,value_l,value);
+  errors += PyDict_SetItem(dict,lat_l,lat);
+  errors += PyDict_SetItem(dict,lon_l,lon);
+  errors += PyDict_SetItem(dict,time_begin_l,time_begin);
+  errors += PyDict_SetItem(dict,time_end_l,time_end);
+  errors += PyDict_SetItem(dict,time_zone_delta_l,time_zone_delta);
+  errors += PyDict_SetItem(dict,dst_delta_l,dst_delta);
+  //# 299
+  errors += PyDict_SetItem(dict,unit_l,unit);
+  errors += PyDict_SetItem(dict,flags_l,flags);
+  errors += PyDict_SetItem(dict,stored_l,stored);
+  
+  if (errors) {
+    Py_DECREF(dict);
+    return NULL;
+  }
+  return dict;
+}
+
+
+
 int call_python_nextquestion(struct session *s,
 			     struct question *next_questions[],int max_next_questions,int *next_question_count)
 {
@@ -312,38 +370,9 @@ int call_python_nextquestion(struct session *s,
     for(int i=0;i<s->answer_count;i++) {
       // Don't include deleted answers in the list fed to Python. #186
       if (!(s->answers[i]->flags&ANSWER_DELETED)) {
-	  PyObject *dict = PyDict_New();
-	  PyObject *uid = PyUnicode_FromString(s->answers[i]->uid);
-	  PyObject *text = PyUnicode_FromString(s->answers[i]->text);
-	  PyObject *value = PyLong_FromLongLong(s->answers[i]->value);
-	  PyObject *lat = PyLong_FromLongLong(s->answers[i]->lat);
-	  PyObject *lon = PyLong_FromLongLong(s->answers[i]->lon);
-	  PyObject *time_begin = PyLong_FromLongLong(s->answers[i]->time_begin);
-	  PyObject *time_end = PyLong_FromLongLong(s->answers[i]->time_end);
-	  PyObject *time_zone_delta = PyLong_FromLongLong(s->answers[i]->time_zone_delta);
-	  PyObject *dst_delta = PyLong_FromLongLong(s->answers[i]->dst_delta);
-	  PyObject *uid_l = PyUnicode_FromString("uid");
-	  PyObject *text_l = PyUnicode_FromString("text");
-	  PyObject *value_l = PyUnicode_FromString("value");
-	  PyObject *lat_l = PyUnicode_FromString("latitude");
-	  PyObject *lon_l = PyUnicode_FromString("longitude");
-	  PyObject *time_begin_l = PyUnicode_FromString("time_begin");
-	  PyObject *time_end_l = PyUnicode_FromString("time_end");
-	  PyObject *time_zone_delta_l = PyUnicode_FromString("time_zone_delta");
-	  PyObject *dst_delta_l = PyUnicode_FromString("dst_delta");
+	  PyObject *dict = py_create_answer(s->answers[i]);
 	  
-	  int errors = PyDict_SetItem(dict,uid_l,uid);
-	  errors += PyDict_SetItem(dict,text_l,text);
-	  errors += PyDict_SetItem(dict,value_l,value);
-	  errors += PyDict_SetItem(dict,lat_l,lat);
-	  errors += PyDict_SetItem(dict,lon_l,lon);
-	  errors += PyDict_SetItem(dict,time_begin_l,time_begin);
-	  errors += PyDict_SetItem(dict,time_end_l,time_end);
-	  errors += PyDict_SetItem(dict,time_zone_delta_l,time_zone_delta);
-	  errors += PyDict_SetItem(dict,dst_delta_l,dst_delta);
-	  
-	  if (errors) {
-	    Py_DECREF(dict);
+	  if (!dict) {
 	    LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.",s->answers[i]->uid);
 	  }
 	  
@@ -588,38 +617,9 @@ int get_analysis(struct session *s,const char **output)
       // Don't include deleted answers in the list fed to Python. #186
       if (!(s->answers[i]->flags&ANSWER_DELETED))
 	{      
-	  PyObject *dict = PyDict_New();
-	  PyObject *uid = PyUnicode_FromString(s->answers[i]->uid);
-	  PyObject *text = PyUnicode_FromString(s->answers[i]->text);
-	  PyObject *value = PyLong_FromLongLong(s->answers[i]->value);
-	  PyObject *lat = PyLong_FromLongLong(s->answers[i]->lat);
-	  PyObject *lon = PyLong_FromLongLong(s->answers[i]->lon);
-	  PyObject *time_begin = PyLong_FromLongLong(s->answers[i]->time_begin);
-	  PyObject *time_end = PyLong_FromLongLong(s->answers[i]->time_end);
-	  PyObject *time_zone_delta = PyLong_FromLongLong(s->answers[i]->time_zone_delta);
-	  PyObject *dst_delta = PyLong_FromLongLong(s->answers[i]->dst_delta);
-	  PyObject *uid_l = PyUnicode_FromString("uid");
-	  PyObject *text_l = PyUnicode_FromString("text");
-	  PyObject *value_l = PyUnicode_FromString("value");
-	  PyObject *lat_l = PyUnicode_FromString("latitude");
-	  PyObject *lon_l = PyUnicode_FromString("longitude");
-	  PyObject *time_begin_l = PyUnicode_FromString("time_begin");
-	  PyObject *time_end_l = PyUnicode_FromString("time_end");
-	  PyObject *time_zone_delta_l = PyUnicode_FromString("time_zone_delta");
-	  PyObject *dst_delta_l = PyUnicode_FromString("dst_delta");
+	  PyObject *dict = py_create_answer(s->answers[i]);
 	  
-	  int errors = PyDict_SetItem(dict,uid_l,uid);
-	  errors += PyDict_SetItem(dict,text_l,text);
-	  errors += PyDict_SetItem(dict,value_l,value);
-	  errors += PyDict_SetItem(dict,lat_l,lat);
-	  errors += PyDict_SetItem(dict,lon_l,lon);
-	  errors += PyDict_SetItem(dict,time_begin_l,time_begin);
-	  errors += PyDict_SetItem(dict,time_end_l,time_end);
-	  errors += PyDict_SetItem(dict,time_zone_delta_l,time_zone_delta);
-	  errors += PyDict_SetItem(dict,dst_delta_l,dst_delta);
-	  
-	  if (errors) {
-	    Py_DECREF(dict);
+	  if (!dict) {
 	    LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.",s->answers[i]->uid);
 	  }
 	  

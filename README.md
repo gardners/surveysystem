@@ -36,6 +36,12 @@ This system requires python 3.7 and clang. Additionally, bmake is required for c
 sudo apt-get install python3.7-dev python3.7 clang
 ```
 
+Tests require Lighttpd and Curl
+
+```
+sudo apt-get install curl lighttpd
+```
+
 Then make sure to build and install kcgi:
 
 ```bash
@@ -43,7 +49,7 @@ git submodule init
 git submodule update
 cd backend/kcgi
 ./configure
-sudo make install
+sudo bmake install
 ```
 
 Then create a folder for logs:

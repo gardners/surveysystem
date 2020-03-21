@@ -514,7 +514,7 @@ int run_test(char *dir, char *test_file)
       else if (!strcmp(line,"python")) {
         // create python directory
         char python_dir[1024];
-        snprintf(python_dir, 8192,"%s/python", dir);
+        snprintf(python_dir, 1024,"%s/python", dir);
         mkdir(python_dir, 0755);
         
         if (chmod(python_dir, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)) {
@@ -541,7 +541,7 @@ int run_test(char *dir, char *test_file)
         
         // create python module (nextquestion.py)
         char python_module[2048];
-        snprintf(python_module, 8192, "%s/nextquestion.py", python_dir);
+        snprintf(python_module, 2048, "%s/nextquestion.py", python_dir);
         s = fopen(python_module, "w");
         if (!s) {
           fprintf(log, "T+%4.3fms : ERROR : Could not create python file '%s'\n", tdelta, python_module);
