@@ -31,11 +31,12 @@ int log_message(const char *file,const char *function,const int line,char *forma
     time_t now = time(0);
     struct tm *tm = localtime(&now);
     
-    if (!tm)
+    if (!tm) {
       snprintf(log_name,1024,"logs/surveysystem-UNKNOWNTIME.log");    
-    else
+    } else {
       snprintf(log_name,1024,"logs/surveysystem-%04d%02d%02d.%02d.log",
 	       1900+tm->tm_year,tm->tm_mon+1,tm->tm_mday,tm->tm_hour);	   
+    }
     
     if (generate_path(log_name,log_file,1024)) {
       LOG_ERRORV("generate_path('%s') failed to build path for log file",log_name);
@@ -48,15 +49,16 @@ int log_message(const char *file,const char *function,const int line,char *forma
 
     FILE *lf=fopen(log_file,"a");
     if (!lf) LOG_ERRORV("Could not open log file '%s' for append: %s",log_file,strerror(errno));
-    if (tm)
+    if (tm) {
       fprintf(lf,"%04d/%02d/%02d.%02d:%02d.%d:%s:%d:%s():%s\n",
 	      1900+tm->tm_year,tm->tm_mon+1,tm->tm_mday,tm->tm_hour,tm->tm_min,tm->tm_sec,
 	      file,line,function,
 	      message);
-    else
-      fprintf(lf,"\?\?\?\?/\?\?/\?\?.\?\?:\?\?.\?:%s:%d:%s():%s\n",
+    } else {
+        fprintf(lf,"\?\?\?\?/\?\?/\?\?.\?\?:\?\?.\?:%s:%d:%s():%s\n",
 	      file,line,function,
 	      message);
+    }
     fclose(lf);
     
   } while(0);

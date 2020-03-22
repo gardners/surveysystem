@@ -42,7 +42,12 @@ int kvalid_surveyid(struct kpair *kp) {
     // Is okay
     kp->parsed.s = kp->val;
   } while(0);
-  if (retVal) retVal=0; else retVal=1;
+  
+  if (retVal) { 
+    retVal=0; 
+  } else { 
+    retVal=1; 
+  }
 
   LOG_UNMUTE();
   return retVal;
@@ -68,8 +73,14 @@ int kvalid_sessionid(struct kpair *kp)
       LOG_ERROR("validate_session_id failed");
     }
   } while(0);
-  if (retVal) retVal=0; else retVal=1;
-  LOG_UNMUTE();
+
+  if (retVal) { 
+    retVal=0; 
+  } else { 
+    retVal=1; 
+  }
+
+    LOG_UNMUTE();
   return retVal;
 }
 
@@ -90,10 +101,19 @@ int kvalid_questionid(struct kpair *kp)
     
     kp->parsed.s = kp->val;
     // Is okay
-    if (kvalid_string(kp)) retVal=0;
-    else LOG_ERROR("questionid is not a valid string");
+    if (kvalid_string(kp)) {
+      retVal=0;
+    } else  {
+      LOG_ERROR("questionid is not a valid string");
+    }
   } while(0);
-  if (retVal) retVal=0; else retVal=1;
+ 
+  if (retVal) { 
+    retVal=0; 
+  } else { 
+    retVal=1; 
+  }
+ 
   LOG_UNMUTE();
   return retVal;
 }
@@ -134,7 +154,12 @@ int kvalid_answer(struct kpair *kp) {
 
   LOG_WARNV("retVal=%d",retVal);
   
-  if (retVal) retVal=0; else retVal=1;
+  if (retVal) { 
+    retVal=0; 
+  } else { 
+    retVal=1; 
+  }
+  
   LOG_UNMUTE();
   return retVal;
 }
@@ -278,14 +303,12 @@ int main(int argc,char **argv)
 	  fprintf(stderr, "khttp_head: error: %d\n", er);
 	  break;
 	}
-      }
-      else {
+      } else {
 	// Call page dispatcher
 	(*disps[req.page])(&req);
 
 	// Make sure no sessions are locked when done.
 	release_my_session_locks();
-
       }
       
       // Close off request

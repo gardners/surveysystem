@@ -121,36 +121,28 @@ int urandombytes(unsigned char *buf, size_t len)
     tries = 0;
     while (len > 0) {
       ssize_t i = read(urandomfd, buf, (len < 1048576) ? len : 1048576);
-      if (i == -1)
-    {
-      if (++tries > 4)
-        {
-          LOG_ERROR("failed to read from /dev/urandom, even after retries");
-          perror("read(/dev/urandom)");
-          if (errno==EBADF)
-        {
-          LOG_ERROR("EBADF on /dev/urandom, resetting urandomfd to -1");
-          urandomfd=-1;
-        }
-          break; // while
-        }
-      else
-        {
-          LOG_ERRORV("failed to read from /dev/urandom, retry %d, retrying", tries);
-        }
-    }
-      else
-    {
-      tries = 0;
-      buf += i;
-      len -= i;
-    }
+      if (i == -1) {
+	if (++tries > 4) {
+	    LOG_ERROR("failed to read from /dev/urandom, even after retries");
+	    perror("read(/dev/urandom)");
+	    if (errno==EBADF) {
+	      LOG_ERROR("EBADF on /dev/urandom, resetting urandomfd to -1");
+	      urandomfd=-1;
+	    }
+	    break; // while
+	} else {
+	  LOG_ERRORV("failed to read from /dev/urandom, retry %d, retrying", tries);
+	}
+      } else {
+	tries = 0;
+	buf += i;
+	len -= i;
+      }
     }
 
-    if (len == 0)
-      {
-    retVal = 0;
-      }
+    if (len == 0) {
+      retVal = 0;
+    }
   }
   while (0);
 
@@ -532,12 +524,12 @@ int load_survey_questions(struct session *ses)
       struct question *q=calloc(sizeof(struct question),1);
       if (!q) LOG_ERRORV("calloc(struct question) failed while loading survey question list from '%s'",survey_path);
       
-      if (deserialise_question(line,q))
-	{ free_question(q); q=NULL;
+      if (deserialise_question(line,q)) { 
+	  free_question(q); q=NULL;
 	  LOG_ERRORV("Error deserialising question '%s' in survey file '%s'",line,survey_path);
-	}
-      else
+      } else {
 	ses->questions[ses->question_count++]=q;
+      }
       
     } while(line[0]);
 
@@ -697,12 +689,14 @@ struct answer *copy_answer(struct answer *aa)
     if (a->text) { a->text=strdup(a->text);if (!a->text) { LOG_ERROR("Could not copy a->text"); } }
     if (a->unit) { a->unit=strdup(a->unit); if (!a->unit) { LOG_ERROR("Could not copy a->unit"); } }
   } while(0);
+  
   if (retVal) {
     if (a) free_answer(a);
     a=NULL;
     return NULL;
+  } else {
+    return a;
   }
-  else return a;
 }
 
 /*

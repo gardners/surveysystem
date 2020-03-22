@@ -21,8 +21,12 @@ wchar_t *as_wchar(const char *s)
     size_t result=mbstowcs(as_wchar_out,s,MAX_WLEN-1);
     if (result<0) LOG_ERRORV("mbstowcs('%s') failed",s);
   } while (0);
-  if (retVal) return NULL;
-  else return as_wchar_out;
+  
+  if (retVal) {
+    return NULL;
+  }
+  
+  return as_wchar_out;
 }
 
 int is_python_started=0;
@@ -128,7 +132,9 @@ int setup_python()
 	log_python_error();
 	PyErr_Clear();
 	LOG_ERRORV("'import nextquestion' failed.",0);
-      } else LOG_INFOV("import command '%s' appparently succeeded (result = %d).",append_cmd,res);
+      } else {
+	LOG_INFOV("import command '%s' appparently succeeded (result = %d).",append_cmd,res);
+      }
 
       PyObject *module_name_o= PyUnicode_FromString(append_cmd);
       nq_python_module=PyImport_GetModule(module_name_o);
@@ -152,7 +158,9 @@ int setup_python()
 	}
 	
 	fclose(f);
-      } else LOG_ERRORV("Could not open python file '%s' for reading",python_file);
+      } else {
+	LOG_ERRORV("Could not open python file '%s' for reading",python_file);
+      }
 
       module_name_o= PyUnicode_FromString("__main__");
       nq_python_module=PyImport_GetModule(module_name_o);
@@ -484,8 +492,7 @@ int get_next_questions_generic(struct session *s,
 	  if (j<s->answer_count) {
 	    LOG_INFOV("Answer to question %d exists.",i);
 	    continue;
-	  }
-	  else {
+	  } else {
 	    if ((*next_question_count)<max_next_questions) {
 	      next_questions[*next_question_count]=s->questions[i];
 	      (*next_question_count)++;

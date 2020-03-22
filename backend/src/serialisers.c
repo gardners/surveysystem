@@ -23,20 +23,35 @@ int escape_string(char *in,char *out,int max_len)
   for(int i=0;in[i];i++) {
     switch(in[i]) {
     case '\r': case '\n': case '\t': case '\b':
-      if (out_len>=max_len) { LOG_ERRORV("escaped version of string '%s' is too long",out); }
-      else out[out_len++]='\\';
-      if (out_len>=max_len) { LOG_ERRORV("escaped version of string '%s' is too long",out); }
-      else out[out_len++]=in[i];
+      if (out_len>=max_len) { 
+	LOG_ERRORV("escaped version of string '%s' is too long",out);
+      } else { 
+	out[out_len++]='\\'; 
+      }
+      if (out_len>=max_len) { 
+	LOG_ERRORV("escaped version of string '%s' is too long",out); 
+      } else { 
+	out[out_len++]=in[i];
+      }
       break;
     case ':': case '\\':
-      if (out_len>=max_len) { LOG_ERRORV("escaped version of string '%s' is too long",out); }
-      else out[out_len++]=':';
-      if (out_len>=max_len) { LOG_ERRORV("escaped version of string '%s' is too long",out); }
-      else out[out_len++]=in[i];
+      if (out_len>=max_len) { 
+	LOG_ERRORV("escaped version of string '%s' is too long",out); 
+      } else {
+	out[out_len++]=':';
+      }
+      if (out_len>=max_len) { 
+	LOG_ERRORV("escaped version of string '%s' is too long",out); 
+      } else {
+	out[out_len++]=in[i];
+      }
       break;
     default:
-      if (out_len>=max_len) { LOG_ERRORV("escaped version of string '%s' is too long",out); }
-      else out[out_len++]=in[i];
+      if (out_len>=max_len) { 
+	LOG_ERRORV("escaped version of string '%s' is too long",out); 
+      } else {
+	out[out_len++]=in[i];
+      }
       break;
     }
   }
@@ -54,8 +69,11 @@ int serialise_int(int in,char *out,int max_len)
   char temp[16];
   do {
     snprintf(temp,16,"%d",in);
-    if (strlen(temp)>=max_len) { LOG_ERRORV("integer converts to over-long string '%s...'",temp); }
-    else { strcpy(out,temp); retVal=strlen(temp); }
+    if (strlen(temp)>=max_len) { 
+      LOG_ERRORV("integer converts to over-long string '%s...'",temp); 
+    } else { 
+      strcpy(out,temp); retVal=strlen(temp); 
+    }
   } while (0);
   return retVal;
 }
@@ -69,8 +87,11 @@ int serialise_longlong(long long in,char *out,int max_len)
   char temp[32];
   do {
     snprintf(temp,32,"%lld",in);
-    if (strlen(temp)>=max_len) { LOG_ERRORV("long long converts to over-long string '%s...'",temp); }
-    else { strcpy(out,temp); retVal=strlen(temp); }
+    if (strlen(temp)>=max_len) { 
+      LOG_ERRORV("long long converts to over-long string '%s...'",temp); 
+    } else { 
+      strcpy(out,temp); retVal=strlen(temp); 
+    }
   } while (0);
   return retVal;
 }
@@ -82,7 +103,9 @@ int space_check(int append_len,int existing_len,int max_len)
 {
   int retVal=0;
   do {
-    if ((existing_len+append_len)>max_len) { LOG_ERRORV("Insufficient space to append string of %d chars",append_len); }
+    if ((existing_len+append_len)>max_len) { 
+      LOG_ERRORV("Insufficient space to append string of %d chars",append_len); 
+    }
   } while (0);
   return retVal;
 }
@@ -104,8 +127,9 @@ int deserialise_parse_field(char *in,int *in_offset,char *out)
       if (in[offset]!=':') {
 	LOG_ERRORV("Expected : before next field when deseralising at offset %d of '%s'\n",offset,in);
 	break;
+      } else {
+	offset++;
       }
-      else offset++;
     }
     
     out[olen]=0;
@@ -191,9 +215,14 @@ int deserialise_string(char *field,char **s)
   int retVal=0;
   do {
     *s=NULL;
-    if (!field) { LOG_ERROR("field is NULL"); }
-    else *s=strdup(field);
-    if (!*s) { LOG_ERROR("field is empty string"); }
+    if (!field) { 
+      LOG_ERROR("field is NULL"); 
+    } else {
+      *s=strdup(field);
+    }
+    if (!*s) { 
+      LOG_ERROR("field is empty string"); 
+    }
   } while (0);
   return retVal;
 }

@@ -229,16 +229,17 @@ int dump_logs(char *dir,FILE *log)
       snprintf(breakage_log,16384,"%s/../breakage.log",dir);
       FILE *f=fopen(breakage_log,"r");
       if (f) {
-	fprintf(log,"--------- %s ----------\n",breakage_log);
-	char line[4096];
-	line[0]=0; fgets(line,4096,f);
-	while(line[0]) {
-	  fprintf(log,"%s",line);
-	  line[0]=0; fgets(line,4096,f);
-	}
-	fclose(f);
-      } else
-	fprintf(log,"WARNING: Could not open breakage log file '%s' for reading.\n",breakage_log);
+        fprintf(log,"--------- %s ----------\n",breakage_log);
+        char line[4096];
+        line[0]=0; fgets(line,4096,f);
+        while(line[0]) {
+          fprintf(log,"%s",line);
+          line[0]=0; fgets(line,4096,f);
+        }
+        fclose(f);
+      } else {
+        fprintf(log,"WARNING: Could not open breakage log file '%s' for reading.\n",breakage_log);
+      }
     }
     fprintf(log,"========================================================================\n");    
 
@@ -276,8 +277,9 @@ int dump_logs(char *dir,FILE *log)
       case FTS_SL:
         {
           FILE *in=fopen(curr->fts_accpath,"r");
-          if (!in) fprintf(log,"ERROR: Could not read log file '%s'\n",curr->fts_accpath);
-          else {
+          if (!in) {
+            fprintf(log,"ERROR: Could not read log file '%s'\n",curr->fts_accpath);
+          } else {
             fprintf(log,"--------- %s ----------\n",curr->fts_accpath);
             char line[8192];
             line[0]=0; fgets(line,8192,in);
@@ -761,8 +763,9 @@ int run_test(char *dir, char *test_file)
 
         int o=0;
         for(int i=0;url[i];i++) {
-          if (url[i]!='$') url_sub[o++]=url[i];
-          else {
+          if (url[i]!='$') {
+            url_sub[o++]=url[i];
+          } else {
             // $$ substitutes for $
             if (url[i+1]=='\"') {
               // Escape quotes
@@ -771,8 +774,7 @@ int run_test(char *dir, char *test_file)
             }
             else if (url[i+1]=='$') {
               url_sub[o++]='$';
-            }
-            else if (!strncmp("$SESSION",&url[i],8)) {
+            } else if (!strncmp("$SESSION",&url[i],8)) {
               snprintf(&url_sub[o],65535-o,"%s",last_sessionid);
               o=strlen(url_sub);
               i+=7;
@@ -927,13 +929,17 @@ int run_test(char *dir, char *test_file)
             int len=strlen(comparison_line);
             while (len&&(comparison_line[len-1]=='\r'||comparison_line[len-1]=='\n')) comparison_line[--len]=0;
             fprintf(log,"<<< %s\n",comparison_line);
-          } else fprintf(log,"<<<<<< END OF EXPECTED SESSION DATA\n");
+          } else {
+            fprintf(log,"<<<<<< END OF EXPECTED SESSION DATA\n");
+          }
 
           if (session_line[0]) {
             int len=strlen(session_line);
             while (len&&(session_line[len-1]=='\r'||session_line[len-1]=='\n')) session_line[--len]=0;
             fprintf(log,">>> %s\n",session_line);
-          } else fprintf(log,">>>>>> END OF SESSION FILE\n");
+          } else {
+            fprintf(log,">>>>>> END OF SESSION FILE\n");
+          }
           
           // compare session line, we are relying on the string terminations set above
           if(verify_line>0) { // TODO for now(!) we ignore the header line with the hashed session id

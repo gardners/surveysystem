@@ -185,7 +185,7 @@ int main(int argc,char **argv)
     
     if (!ret) {
       dump_answer(stderr, "answer:", a);
-    } else{
+    } else {
       fprintf(stderr,"ERROR deserialise_answer(public)\n");
     }
     
