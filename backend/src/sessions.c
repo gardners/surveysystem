@@ -942,12 +942,12 @@ int session_delete_answer(struct session *ses,struct answer *a, int deleteFollow
   int deletions=0;
   
   do {
+    if (!ses) LOG_ERROR("Session structure is NULL");
+    if (!a) LOG_ERRORV("Asked to remove null answer from session '%s'",ses->session_id?ses->session_id:"(null)");
+    
     // #162 add/update stored timestamp
     a->stored = (long long) time(NULL);
     
-    if (!ses) LOG_ERROR("Session structure is NULL");
-    if (!a) LOG_ERRORV("Asked to remove null answer from session '%s'",ses->session_id?ses->session_id:"(null)");
-
     for (int i=0;i<ses->answer_count;i++) {
       // XXX - Doesn't actually check the value of the answer, but deletes first instance of an answer to the
       // same question.
