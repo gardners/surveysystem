@@ -19,7 +19,7 @@ wchar_t *as_wchar(const char *s)
   do {
     if (strlen(s)>=(MAX_WLEN-1)) LOG_ERRORV("String too long '%s', should be < %d characters",s,MAX_WLEN);
     size_t result=mbstowcs(as_wchar_out,s,MAX_WLEN-1);
-    if (result<0) LOG_ERRORV("mbstowcs('%s') failed",s);
+    if (result == (size_t) - 1) LOG_ERRORV("mbstowcs('%s') failed",s);
   } while (0);
   
   if (retVal) {
