@@ -825,13 +825,13 @@ int session_add_answer(struct session *ses,struct answer *a)
   int retVal=0;
   int undeleted=0;
   
-  do {
-    // #162 add/update stored timestamp
-    a->stored = (long long) time(NULL);
-    
+  do {    
     // Add answer to list of answers
     if (!ses) LOG_ERROR("Session structure is NULL");
     if (!a) LOG_ERROR("Asked to add null answer to session");
+    
+    // #162 add/update stored timestamp
+    a->stored = (long long) time(NULL);
 
     // Don't allow answers to questions that don't exist
     int question_number=0;
