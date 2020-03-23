@@ -27,6 +27,7 @@ void code_instrumentation_unmute()
   }
 }
 
+// joerg: TODO this function is unused
 void code_instrumentation_log(const char* fileName, int line, const char* functionName, int logLevel, const char *msg, ...)
 {
   if (instrumentation_muted) {
@@ -38,14 +39,14 @@ void code_instrumentation_log(const char* fileName, int line, const char* functi
     struct tm* localtm = localtime(&now);
 
     static char timeBuffer[BUFFER_SIZE];
-    strcpy(timeBuffer, asctime(localtm));
-    *(timeBuffer + strlen(timeBuffer) - 1) = '\0';
+    strftime(timeBuffer, BUFFER_SIZE, "%FT%T%z", localtm);
 
     static char formatBuffer[BUFFER_SIZE];
     snprintf(formatBuffer, BUFFER_SIZE, "%s: %s (%d) - %s:\n  %s\n", timeBuffer, fileName, line, functionName, msg);
     va_list args;
     va_start(args, msg);
     vfprintf(stderr, formatBuffer, args);
+    va_end(args);
   }
 }
 
