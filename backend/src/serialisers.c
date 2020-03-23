@@ -364,8 +364,9 @@ int deserialise_question_type(char *field,int *s)
 int serialise_question(struct question *q,char *out,int max_len)
 {
   int retVal=0;
-  int len=0;
+  
   do {
+    int len=0;
     SERIALISE_BEGIN(out,len,max_len);
     
     SERIALISE_STRING(q->uid);
@@ -491,8 +492,9 @@ int deserialise_question(char *in,struct question *q)
 int serialise_answer(struct answer *a,char *out,int max_len)
 {
   int retVal=0;
-  int len=0;
   do {
+    
+    int len=0;
     SERIALISE_BEGIN(out,len,max_len);
     
     SERIALISE_STRING(a->uid);
@@ -528,8 +530,9 @@ int serialise_answer(struct answer *a,char *out,int max_len)
 int deserialise_answer(char *in, enum answer_visibility visibility, struct answer *a)
 {
   int retVal=0;
-  int len=0;
+  
   do {
+    int len=0;
     DESERIALISE_BEGIN(out,len,max_len);
 
     DESERIALISE_STRING(a->uid);
