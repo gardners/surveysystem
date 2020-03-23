@@ -691,7 +691,8 @@ static void fcgi_updateanswer(struct kreq *req)
     }
     
     if (deserialise_answer(answer->val, ANSWER_FIELDS_PUBLIC, a)) {
-      free_answer(a); a=NULL;
+      free_answer(a); 
+      a=NULL;
       quick_error(req,KHTTP_400,"Could not deserialise answer.");
       LOG_ERROR("deserialise_answer() failed.");
       break;
@@ -704,9 +705,7 @@ static void fcgi_updateanswer(struct kreq *req)
     }
     
     if (session_delete_answers_by_question_uid(s,a->uid,0)<0) {
-      if (a) {
-        free_answer(a);
-      }
+      free_answer(a);
       a=NULL;
       // TODO could be both 400 or 500 (storage, serialization, not in session)
       quick_error(req,KHTTP_400,"Answer does not match existing session records.");
@@ -715,9 +714,7 @@ static void fcgi_updateanswer(struct kreq *req)
     }
     
     if (session_add_answer(s,a)) {
-      if (a) {
-        free_answer(a);
-      }
+      free_answer(a);
       a=NULL;
       quick_error(req,KHTTP_400,"Invalid answer, could not add to session.");
       LOG_ERROR("session_add_answer() failed.");
