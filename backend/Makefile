@@ -111,4 +111,4 @@ analyse_scanbuild:
 	scan-build-3.8 make
 
 analyse_sparse:
-	sparse -std=c99 -D__USE_MISC=1 -Iinclude/ -Ikcgi `$(PYCONFIG) --includes`  -Wsparse-all -Wnoundef src/*.c
+	sparse -std=c99 -D__USE_MISC=1 -Iinclude/ -Ikcgi `$(PYCONFIG) --includes`  -Wsparse-all -Wnoundef -Wsomething src/*.c
