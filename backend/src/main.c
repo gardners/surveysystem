@@ -23,10 +23,20 @@ int main(int argc,char **argv)
   int retVal=0;
 
   do {
-    if (argc<2) { usage(); retVal=-1; break; }
+    if (argc<2) { 
+      usage(); 
+      retVal=-1; 
+      break; 
+    }
 
     if (!strcmp(argv[1],"newsession")) {
-      if (argc!=3) { usage(); retVal=-1; break; }
+      
+      if (argc!=3) { 
+	usage(); 
+	retVal=-1; 
+	break; 
+      }
+      
       char session_id[1024];
       if (create_session(argv[2],session_id)) LOG_ERROR("create_session() failed");
       if (!retVal) {
@@ -34,8 +44,15 @@ int main(int argc,char **argv)
       } else {
 	fprintf(stderr,"Failed to create new session.\n");
       }
+      
     } else if (!strcmp(argv[1],"addanswer")) {
-      if (argc!=4) { usage(); retVal=-1; break; }
+      
+      if (argc!=4) { 
+	usage(); 
+	retVal=-1; 
+	break; 
+      }
+      
       char *session_id=argv[2];
       char *serialised_answer=argv[3];
       
@@ -49,12 +66,19 @@ int main(int argc,char **argv)
       if (save_session(s)) LOG_ERRORV("save_session('%s') failed",session_id);
 
     } else if (!strcmp(argv[1],"updateanswer")) {
-      if (argc!=4) { usage(); retVal=-1; break; }
+      
+      if (argc!=4) { 
+	usage(); 
+	retVal=-1; 
+	break; 
+      }
+      
       char *session_id=argv[2];
       char *serialised_answer=argv[3];
       
       struct session *s=load_session(session_id);
       if (!s) LOG_ERRORV("load_session('%s') failed",session_id);
+      
       struct answer a;
       bzero(&a,sizeof(struct answer));
       if (deserialise_answer(serialised_answer, ANSWER_FIELDS_PUBLIC, &a)) LOG_ERRORV("deserialise_answer('%s') failed",serialised_answer);
@@ -64,20 +88,35 @@ int main(int argc,char **argv)
       if (save_session(s)) LOG_ERRORV("save_session('%s') failed",session_id);
       
     } else if (!strcmp(argv[1],"nextquestion")) {
-      if (argc!=3) { usage(); retVal=-1; break; }
+      
+      if (argc!=3) { 
+	usage(); 
+	retVal=-1; 
+	break; 
+      }
+      
       char *session_id=argv[2];
       struct session *s=load_session(session_id);
+      
       struct question *q[1024];
       int next_question_count=0;
-      if (get_next_questions(s,q,1024,&next_question_count))
+      
+      if (get_next_questions(s,q,1024,&next_question_count)) {
 	LOG_ERRORV("get_next_questions('%s') failed",session_id);
+      }
 
       printf("%d\n",next_question_count);
-      for(int i=0;i<next_question_count;i++)
+      for(int i=0;i<next_question_count;i++) {
 	printf("%s\n",q[i]->uid);
+      }
       
     } else if (!strcmp(argv[1],"delanswer")) {
-      if (argc!=4) { usage(); retVal=-1; break; }
+      
+      if (argc!=4) { 
+	usage(); 
+	retVal=-1; 
+	break; 
+      }
 
       char *session_id=argv[2];
       char *serialised_answer=argv[3];
@@ -94,22 +133,29 @@ int main(int argc,char **argv)
 	if (session_delete_answers_by_question_uid(s,serialised_answer,0)) LOG_ERRORV("session_delete_answers_by_question_uid('%s','%s') failed",session_id,serialised_answer);
       }
 
-      
       if (save_session(s)) LOG_ERRORV("save_session('%s') failed",session_id);
       
     } else if (!strcmp(argv[1],"delsession")) {
-      if (argc!=3) { usage(); retVal=-1; break; }
+      
+      if (argc!=3) { 
+	usage(); 
+	retVal=-1; 
+	break; 
+      }
 
       char *session_id=argv[2];
       
       struct session *s=load_session(session_id);
       if (!s) LOG_ERRORV("load_session('%s') failed",session_id);
-
       free_session(s);
 
       if (delete_session(session_id)) LOG_ERRORV("delete_session('%s') failed",session_id);
       
-    } else { usage(); retVal=-1; break; }
+    } else { 
+      usage(); 
+      retVal=-1; 
+      break; 
+    }
   } while(0);
 
   if (retVal) {

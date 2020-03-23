@@ -98,9 +98,7 @@ void require_test_file(char *file_name, int perm) {
   fclose(f);
   
   // Now make sessions directory writeable by all users
-  if (chmod(tmp,S_IRUSR|S_IWUSR|S_IXUSR|
-            S_IRGRP|S_IWGRP|S_IXGRP|
-            S_IROTH|S_IWOTH|S_IXOTH)) {
+  if (chmod(tmp,S_IRUSR|S_IWUSR|S_IXUSR| S_IRGRP|S_IWGRP|S_IXGRP| S_IROTH|S_IWOTH|S_IXOTH)) {
     fprintf(stderr,"require_test_file() chmod(%s) failed.", tmp);
     exit(-3);
   }
@@ -144,9 +142,9 @@ int recursive_delete(const char *dir)
     case FTS_NS:
     case FTS_DNR:
     case FTS_ERR:
-      if (curr->fts_errno!=ENOENT)
-        fprintf(stderr,"recursive_delete('%s') encountered a problem: fts_read error: %s\n",
-                curr->fts_accpath, strerror(curr->fts_errno));
+      if (curr->fts_errno!=ENOENT) {
+        fprintf(stderr,"recursive_delete('%s') encountered a problem: fts_read error: %s\n", curr->fts_accpath, strerror(curr->fts_errno));
+      }
       break;
 
     case FTS_DC:
@@ -167,16 +165,14 @@ int recursive_delete(const char *dir)
     case FTS_SLNONE:
     case FTS_DEFAULT:
       if (remove(curr->fts_accpath) < 0) {
-        fprintf(stderr, "%s: Failed to remove: %s\n",
-                curr->fts_path, strerror(errno));
+        fprintf(stderr, "%s: Failed to remove: %s\n", curr->fts_path, strerror(errno));
         ret = -1;
       }
       break;
-
     }
   }
 
- finish:
+  finish:
   if (ftsp) {
     fts_close(ftsp);
   }
@@ -188,26 +184,21 @@ long long gettime_us()
 {
   long long retVal = -1;
 
-  do
-  {
+  do {
     struct timeval nowtv;
-
     // If gettimeofday() fails or returns an invalid value, all else is lost!
-    if (gettimeofday(&nowtv, NULL) == -1)
-    {
+    if (gettimeofday(&nowtv, NULL) == -1) {
       fprintf(stderr,"\nFATAL: gettimeofday returned -1");
       exit(-3);
     }
 
-    if (nowtv.tv_sec < 0 || nowtv.tv_usec < 0 || nowtv.tv_usec >= 1000000)
-    {
+    if (nowtv.tv_sec < 0 || nowtv.tv_usec < 0 || nowtv.tv_usec >= 1000000) {
       fprintf(stderr,"\nFATAL: gettimeofday returned invalid value");
       exit(-3);
     }
 
     retVal = nowtv.tv_sec * 1000000LL + nowtv.tv_usec;
-  }
-  while (0);
+  } while (0);
 
   return retVal;
 }
@@ -232,6 +223,7 @@ int dump_logs(char *dir,FILE *log)
         fprintf(log,"--------- %s ----------\n",breakage_log);
         char line[4096];
         line[0]=0; fgets(line,4096,f);
+        
         while(line[0]) {
           fprintf(log,"%s",line);
           line[0]=0; fgets(line,4096,f);
@@ -277,6 +269,7 @@ int dump_logs(char *dir,FILE *log)
       case FTS_SL:
         {
           FILE *in=fopen(curr->fts_accpath,"r");
+          
           if (!in) {
             fprintf(log,"ERROR: Could not read log file '%s'\n",curr->fts_accpath);
           } else {
@@ -289,6 +282,7 @@ int dump_logs(char *dir,FILE *log)
             }
             fclose(in);
           }
+          
         }
         break;
 
@@ -402,7 +396,9 @@ int run_test(char *dir, char *test_file)
 
     // Get name of test file without path
     char *test_name=test_file;
-    for(int i=0;test_file[i];i++) if (test_file[i]=='/') test_name=&test_file[i+1];
+    for(int i=0;test_file[i];i++) {
+      if (test_file[i]=='/') test_name=&test_file[i+1];
+    }
 
     in=fopen(test_file,"r");
     if (!in) {
@@ -437,8 +433,7 @@ int run_test(char *dir, char *test_file)
     log=fopen(testlog,"w");
 
     if (!log) {
-      fprintf(stderr,"\rFATAL: Could not create test log file '%s' for test '%s': %s                                    \n",
-              testlog,test_file,strerror(errno));
+      fprintf(stderr,"\rFATAL: Could not create test log file '%s' for test '%s': %s                                    \n", testlog,test_file,strerror(errno));
       goto error;
     }
 
@@ -465,22 +460,37 @@ int run_test(char *dir, char *test_file)
 
     // Now iterate through test script
     line[0]=0; fgets(line,8192,in);
+    
     while(line[0]) {
+      
       int len=strlen(line);
       // Trim CR/LF from the end of the line
-      while(len&&(line[len-1]<' ')) line[--len]=0;
+      while(len&&(line[len-1]<' ')) {
+        line[--len]=0;
+      }
 
       tdelta=gettime_us()-start_time; tdelta/=1000;
-      if (line[0]&&line[0]!='#')
+      if (line[0]&&line[0]!='#') {
         fprintf(log,"T+%4.3fms : Executing directive '%s'\n",tdelta,line);
+      }
+      
+////
+// keywords: START
+////
 
       if (sscanf(line,"definesurvey %[^\r\n]",surveyname)==1) {
+      
+//// 
+// keyword: "definesurvey"
+////
+        
         // Read survey definition and create survey file
         char survey_file[8192];
 
         // Trim trailing white space from survey name to avoid annoying mismatches
-        while (surveyname[0]&&surveyname[strlen(surveyname)-1]==' ')
+        while (surveyname[0]&&surveyname[strlen(surveyname)-1]==' ') {
           surveyname[strlen(surveyname)-1]=0;
+        }
 
         snprintf(survey_file,8192,"%s/surveys/%s",dir,surveyname);
         mkdir(survey_file,0777);
@@ -498,22 +508,31 @@ int run_test(char *dir, char *test_file)
                   survey_file);
           goto error;
         }
+        
         line[0]=0; fgets(line,8192,in);
+        
         while(line[0]) {
           int len=strlen(line);
           // Trim CR/LF from the end of the line
-          while(len&&(line[len-1]<' ')) line[--len]=0;
+          while(len&&(line[len-1]<' ')) {
+            line[--len]=0;
+          }
 
-          if (!strcmp(line,"endofsurvey")) break;
-
+          if (!strcmp(line,"endofsurvey")) {
+            break;
+          }
           fprintf(s,"%s\n",line);
-
           line[0]=0; fgets(line,8192,in);
         }
 
         fclose(s);
-      }
-      else if (!strcmp(line,"python")) {
+        
+      } else if (!strcmp(line,"python")) {
+        
+////
+// keyword: "python"
+////
+        
         // create python directory
         char python_dir[1024];
         snprintf(python_dir, 1024,"%s/python", dir);
@@ -528,6 +547,7 @@ int run_test(char *dir, char *test_file)
         // create python package (__ini.py__)
         char python_ini[2048];
         snprintf(python_ini, 2048, "%s/__init__.py", python_dir);
+        
         FILE *s = fopen(python_ini, "w");
         if (!s) {
           fprintf(log, "T+%4.3fms : ERROR : Could not create python file '%s'\n", tdelta, python_ini);
@@ -557,12 +577,17 @@ int run_test(char *dir, char *test_file)
         while(line[0]) {
           int len = strlen(line);
           // Trim CR/LF from the end of the line
-          while(len && (line[len - 1] < ' ')) line[--len] = 0;
-          if (!strcmp(line, "endofpython")) break;
+          while(len && (line[len - 1] < ' ')) {
+            line[--len] = 0;
+          }
+          
+          if (!strcmp(line, "endofpython")) {
+            break;
+          }
           fprintf(s,"%s\n",line);
 
           line[0] = 0; fgets(line, 8192, in);
-        }
+        }// endwhile
         fclose(s);
 
         if (chmod(python_module, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)) {
@@ -575,6 +600,7 @@ int run_test(char *dir, char *test_file)
         char cmd[1024];
         snprintf(cmd,1024, "python3.7 -m compileall %s 2>&1 >>%s", python_module, testlog);
         int compile_result = system(cmd);
+        
         if (compile_result) {
           tdelta = gettime_us() - start_time; tdelta/=1000;
           fprintf(log, "T+%4.3fms : FATAL : Failed to compile python module. Does the python have errors?\n", tdelta);
@@ -584,90 +610,125 @@ int run_test(char *dir, char *test_file)
         // Then restart, to clear out any old python code we had loaded before
         tdelta=gettime_us()-start_time; tdelta/=1000;
         fprintf(log,"T+%4.3fms : INFO : Restarting backend to clear loaded python code\n",tdelta);
+        
         if (configure_and_start_lighttpd(test_dir, 1)) {
           tdelta=gettime_us()-start_time; tdelta/=1000;
           fprintf(log,"T+%4.3fms : FATAL : Backend restart failed\n",tdelta);
           goto fatal;
         }
+        
         tdelta=gettime_us()-start_time; tdelta/=1000;
         fprintf(log,"T+%4.3fms : INFO : Backend restart complete\n",tdelta);
 
-      }
-      else if (!strcmp(line,"extract_sessionid")) {
+      } else if (!strcmp(line,"extract_sessionid")) {
+        
+////
+// keyword: "extract_sessionid"
+////
+        
         if (response_line_count!=1) {
           tdelta=gettime_us()-start_time; tdelta/=1000;
           fprintf(log,"T+%4.3fms : FAIL : Could not parse session ID: Last response contained %d lines, instead of exactly 1.\n",
                   tdelta,response_line_count);
           goto fail;
         }
-        if (validate_session_id(response_lines[0]))
-          {
-            tdelta=gettime_us()-start_time; tdelta/=1000;
-            fprintf(log,"T+%4.3fms : FAIL : Could not parse session ID: validate_session_id() reported failure.\n",tdelta);
-            goto fail;
-          }
+        
+        if (validate_session_id(response_lines[0])) {
+          tdelta=gettime_us()-start_time; tdelta/=1000;
+          fprintf(log,"T+%4.3fms : FAIL : Could not parse session ID: validate_session_id() reported failure.\n",tdelta);
+          goto fail;
+        }
+        
         // Remember session ID for other directives
         strcpy(last_sessionid,response_lines[0]);
         tdelta=gettime_us()-start_time; tdelta/=1000;
         fprintf(log,"T+%4.3fms : Session ID is '%s'\n",tdelta,last_sessionid);
-      }
-      else if (sscanf(line,"match_string %[^\r\n]",glob)==1) {
+        
+      } else if (sscanf(line,"match_string %[^\r\n]",glob)==1) {
+        
+////
+// keyword: "match_string"
+////
+        
         // Check that the response contains the supplied pattern
         int matches=0;
         for(int i=0;i<response_line_count;i++) {
-          if (strstr(response_lines[i],glob))
+          if (strstr(response_lines[i],glob)) {
             matches++;
           }
+        }
+        
         if (!matches) {
           tdelta=gettime_us()-start_time; tdelta/=1000;
           fprintf(log,"T+%4.3fms : FAIL : No match for literal string.\n",tdelta);
           goto fail;
         }
-      }
-      else if (sscanf(line,"nomatch_string %[^\r\n]",glob)==1) {
+        
+      } else if (sscanf(line,"nomatch_string %[^\r\n]",glob)==1) {
+        
+////
+// keyword: "extract_sessionid"
+////
+        
         // Check that the response contains the supplied pattern
         int matches=0;
         for(int i=0;i<response_line_count;i++) {
-          if (strstr(response_lines[i],glob))
+          if (strstr(response_lines[i],glob)) {
             matches++;
           }
+        }
+        
         if (matches) {
           tdelta=gettime_us()-start_time; tdelta/=1000;
           fprintf(log,"T+%4.3fms : FAIL : There are matches for literal string.\n",tdelta);
           goto fail;
         }
-      }
-      else if (sscanf(line,"for %s = %d to %d",var,&first,&last)==3) {
+        
+      } else if (sscanf(line,"for %s = %d to %d",var,&first,&last)==3) {
+
+////
+// keyword: "for $ = $ to $"
+////
+
         if (for_count>10) {
           tdelta=gettime_us()-start_time; tdelta/=1000;
           fprintf(log,"T+%4.3fms : FATAL : Too many FOR statements\n",
                   tdelta);
           goto fatal;
         }
+        
         if (strlen(var)>15) {
           tdelta=gettime_us()-start_time; tdelta/=1000;
           fprintf(log,"T+%4.3fms : FATAL : Variable name too long in FOR statement\n",
                   tdelta);
           goto fatal;
         }
+        
         strcpy(for_var[for_count],var);
         for_prevval[for_count]=first;
         for_last[for_count]=last;
         for_step[for_count]=1;
         for_seek_pos[for_count++]=ftello(in);
-      }
-      else if (!strcmp(line,"next")) {
+        
+      } else if (!strcmp(line,"next")) {
+
+////
+// keyword: "next"
+////
+
         if (!for_count) {
           tdelta=gettime_us()-start_time; tdelta/=1000;
           fprintf(log,"T+%4.3fms : FATAL : NEXT without FOR\n",
                   tdelta);
           goto fatal;
         }
+        
         if (for_prevval[for_count-1]==for_last[for_count-1]) {
           // No need to loop back
           for_count--;
         } else {
           for_prevval[for_count-1]+=for_step[for_count-1];
+          
           if (fseeko(in,for_seek_pos[for_count-1],SEEK_SET)) {
             tdelta=gettime_us()-start_time; tdelta/=1000;
             fprintf(log,"T+%4.3fms : ERROR : Could not seek to top of FOR %s loop at offset %lld\n",
@@ -676,12 +737,16 @@ int run_test(char *dir, char *test_file)
           }
         }
 
-      }
-      else if (sscanf(line,"match %[^\r\n]",glob)==1) {
+      } else if (sscanf(line,"match %[^\r\n]",glob)==1) {
+        
+////
+// keyword: "match" (pattern)
+////
         // Check that the response contains the supplied pattern
         regex_t regex;
         int matches=0;
         int error_code=regcomp(&regex,glob,REG_EXTENDED|REG_NOSUB);
+        
         if (error_code) {
           char err[8192]="";
           regerror(error_code,&regex,err,8192);
@@ -690,22 +755,30 @@ int run_test(char *dir, char *test_file)
                   tdelta,err);
           goto fatal;
         }
+        
         for(int i=0;i<response_line_count;i++) {
           if (REG_NOMATCH!=regexec(&regex,response_lines[i],0,NULL,0)) {
             matches++;
           }
         }
+        
         if (!matches) {
           tdelta=gettime_us()-start_time; tdelta/=1000;
           fprintf(log,"T+%4.3fms : FAIL : No match for regular expression.\n",tdelta);
           goto fail;
         }
-      }
-      else if (sscanf(line,"nomatch %[^\r\n]",glob)==1) {
+        
+      } else if (sscanf(line,"nomatch %[^\r\n]",glob)==1) {
+
+////
+// keyword: "nomatch" (pattern)
+////
+
         // Check that the response contains the supplied pattern
         regex_t regex;
         int matches=0;
         int error_code=regcomp(&regex,glob,REG_EXTENDED|REG_NOSUB);
+        
         if (error_code) {
           char err[8192]="";
           regerror(error_code,&regex,err,8192);
@@ -714,42 +787,25 @@ int run_test(char *dir, char *test_file)
                   tdelta,err);
           goto fatal;
         }
+        
         for(int i=0;i<response_line_count;i++) {
           if (REG_NOMATCH!=regexec(&regex,response_lines[i],0,NULL,0)) {
             matches++;
           }
         }
+        
         if (matches) {
           tdelta=gettime_us()-start_time; tdelta/=1000;
           fprintf(log,"T+%4.3fms : FAIL : There is a match to the regular expression.\n",tdelta);
           goto fail;
         }
-      }
-      else if (sscanf(line,"nomatch %[^\r\n]",glob)==1) {
-        // Check that the response contains the supplied pattern
-        regex_t regex;
-        int matches=0;
-        int error_code=regcomp(&regex,glob,REG_EXTENDED|REG_NOSUB);
-        if (error_code) {
-          char err[8192]="";
-          regerror(error_code,&regex,err,8192);
-          tdelta=gettime_us()-start_time; tdelta/=1000;
-          fprintf(log,"T+%4.3fms : FATAL : Could not compile regular expression: %s\n",
-                  tdelta,err);
-          goto fatal;
-        }
-        for(int i=0;i<response_line_count;i++) {
-          if (REG_NOMATCH!=regexec(&regex,response_lines[i],0,NULL,0)) {
-            matches++;
-          }
-        }
-        if (matches) {
-          tdelta=gettime_us()-start_time; tdelta/=1000;
-          fprintf(log,"T+%4.3fms : FAIL : Regular expression matches %d times.\n",tdelta,matches);
-          goto fail;
-        }
-      }
-      else if (sscanf(line,"request %d %[^\r\n]",&expected_result,url)==2) {
+        
+      } else if (sscanf(line,"request %d %[^\r\n]",&expected_result,url)==2) {
+        
+////
+// keyword: "request"
+////
+
         // Exeucte wget call. If it is a newsession command, then remember the session ID
         // We also log the returned data from the request, so that we can look at that
         // as well, if required.
@@ -763,16 +819,17 @@ int run_test(char *dir, char *test_file)
 
         int o=0;
         for(int i=0;url[i];i++) {
+          
           if (url[i]!='$') {
             url_sub[o++]=url[i];
           } else {
+            
             // $$ substitutes for $
             if (url[i+1]=='\"') {
               // Escape quotes
               url_sub[o++]='\\';
               url_sub[o++]='\"';
-            }
-            else if (url[i+1]=='$') {
+            } else if (url[i+1]=='$') {
               url_sub[o++]='$';
             } else if (!strncmp("$SESSION",&url[i],8)) {
               snprintf(&url_sub[o],65535-o,"%s",last_sessionid);
@@ -781,9 +838,11 @@ int run_test(char *dir, char *test_file)
             } else {
               fprintf(log,"T+%4.3fms : FATAL : Unknown $ substitution in URL",tdelta);
               goto fatal;
-            }
-          }
-        }
+            } // endif
+            
+          }// endif
+          
+        } // endfor
         url_sub[o]=0;
 
         // Delete any old version of files laying around
@@ -792,24 +851,28 @@ int run_test(char *dir, char *test_file)
           fprintf(log,"T+%4.3fms : FATAL : Could not unlink file '%s'",tdelta,cmd);
           goto fatal;
         }
+        
         snprintf(cmd,65536,"%s/request.code",dir); unlink(cmd);
         if (!access(cmd,F_OK)) {
           fprintf(log,"T+%4.3fms : FATAL : Could not unlink file '%s'",tdelta,cmd);
           goto fatal;
         }
-
+        
+        // build and execute curl cod
         snprintf(cmd, 65536,
             "curl -X %s -s -w \"HTTPRESULT=%%{http_code}\" %s%s -o %s/request.out \"http://localhost:%d/surveyapi/%s\" > %s/request.code",
             method, ((data[0] == '\0') ? "" : "-d "), data, dir, HTTP_PORT, url_sub, dir);
 
         tdelta=gettime_us()-start_time; tdelta/=1000;
         fprintf(log,"T+%4.3fms : HTTP API request command: '%s'\n",tdelta,cmd);
+        
         int shell_result=system(cmd);
         if (shell_result) {
           tdelta=gettime_us()-start_time; tdelta/=1000;
           fprintf(log,"T+%4.3fms : HTTP API request command returned with non-zero status %d.\n",tdelta,shell_result);
         }
-
+        
+        // handle  response
         int httpcode=-1;
         tdelta=gettime_us()-start_time; tdelta/=1000;
         fprintf(log,"T+%4.3fms : HTTP API request command completed.\n",tdelta);
@@ -817,19 +880,25 @@ int run_test(char *dir, char *test_file)
 
         snprintf(cmd,65536,"%s/request.out",dir);
         rc=fopen(cmd,"r");
+        
         if (!rc) {
+          
           tdelta=gettime_us()-start_time; tdelta/=1000;
           fprintf(log,"T+%4.3fms : NOTE : Could not open '%s/request.out'. No response from web page?\n",tdelta,dir);
+          
         } else {
+          
           tdelta=gettime_us()-start_time; tdelta/=1000;
           fprintf(log,"T+%4.3fms : HTTP request response body:\n",tdelta);
           response_line_count=0;
           line[0]=0; fgets(line,8192,rc);
+          
           while (line[0]) {
             int len=strlen(line);
             // Trim CR/LF from the end of the line
-            while(len&&(line[len-1]<' ')) line[--len]=0;
-
+            while(len&&(line[len-1]<' ')) {
+              line[--len]=0;
+            }
             fprintf(log,"::: %s\n",line);
 
             // Keep the lines returned from the request in case we want to probe them
@@ -838,18 +907,24 @@ int run_test(char *dir, char *test_file)
               strcpy(response_lines[response_line_count++],line);
             }
 
-            line[0]=0; fgets(line,8192,rc);
+            line[0]=0; 
+            fgets(line,8192,rc);
           }
           fclose(rc);
-        }
+          
+        }// endif !rc
 
         snprintf(cmd,65536,"%s/request.code",dir);
         rc=fopen(cmd,"r");
+        
         if (!rc) {
+          
           tdelta=gettime_us()-start_time; tdelta/=1000;
           fprintf(log,"T+%4.3fms : FATAL : Could not open '%s/request.code' to retrieve HTTP response code.\n",tdelta,dir);
           goto fatal;
+          
         } else {
+          
           tdelta=gettime_us()-start_time; tdelta/=1000;
           fprintf(log,"T+%4.3fms : HTTP request.code response:\n",tdelta);
           line[0]=0; fgets(line,1024,rc);
@@ -864,22 +939,31 @@ int run_test(char *dir, char *test_file)
             line[0]=0; fgets(line,1024,rc);
           }
           fclose(rc);
-        }
+          
+        }// endif !rc
+        
         tdelta=gettime_us()-start_time; tdelta/=1000;
         fprintf(log,"T+%4.3fms : HTTP response code %d\n",tdelta,httpcode);
+        
         if (httpcode==-1) {
           tdelta=gettime_us()-start_time; tdelta/=1000;
           fprintf(log,"T+%4.3fms : FATAL : Could not find HTTP response code in request.code file.\n",tdelta);
           goto fatal;
         }
+        
         if (httpcode!=expected_result) {
           tdelta=gettime_us()-start_time; tdelta/=1000;
           fprintf(log,"T+%4.3fms : ERROR : Expected HTTP response code %d, but got %d.\n",
                   tdelta,expected_result,httpcode);
           goto fail;
         }
-      }
-      else if (!strcmp(line,"verify_session")) {
+        
+      } else if (!strcmp(line,"verify_session")) {
+        
+////
+// keyword: "verify_session"
+////
+        
         if (validate_session_id(last_sessionid)) {
           tdelta=gettime_us()-start_time; tdelta/=1000;
           fprintf(log,"T+%4.3fms : FATAL : No session ID has been captured. Use extract_sessionid following request directive.\n",tdelta);
@@ -892,9 +976,11 @@ int run_test(char *dir, char *test_file)
                  test_dir,
                  last_sessionid[0],last_sessionid[1],last_sessionid[2],last_sessionid[3],
                  last_sessionid);
+                 
         char cmd[8192];
         snprintf(cmd,8192,"%s/session.log",dir);
         unlink(cmd);
+        
         snprintf(cmd,8192,"sudo cp %s %s/session.log",session_file,dir);
         system(cmd);
 
@@ -909,13 +995,13 @@ int run_test(char *dir, char *test_file)
           fprintf(log,"T+%4.3fms : FAIL : Could not open session file: %s\n",tdelta,strerror(errno));
           goto fail;
         }
+        
         // Now go through reading lines from here and from the session file
         char session_line[8192];
         char comparison_line[8192];
 
         fprintf(log,"<<<<<< START OF EXPECTED SESSION DATA\n");
         fprintf(log,">>>>>> START OF SESSION FILE\n");
-
 
         session_line[0]=0; fgets(session_line,8192,s);
         comparison_line[0]=0; fgets(comparison_line,8192,in);
@@ -924,10 +1010,13 @@ int run_test(char *dir, char *test_file)
         int verify_line=0;
         
         while(1) {
+          
           tdelta=gettime_us()-start_time; tdelta/=1000;
           if (comparison_line[0]&&strcmp(comparison_line,"endofsession")) {
             int len=strlen(comparison_line);
-            while (len&&(comparison_line[len-1]=='\r'||comparison_line[len-1]=='\n')) comparison_line[--len]=0;
+            while (len&&(comparison_line[len-1]=='\r'||comparison_line[len-1]=='\n')) {
+              comparison_line[--len]=0;
+            }
             fprintf(log,"<<< %s\n",comparison_line);
           } else {
             fprintf(log,"<<<<<< END OF EXPECTED SESSION DATA\n");
@@ -935,7 +1024,9 @@ int run_test(char *dir, char *test_file)
 
           if (session_line[0]) {
             int len=strlen(session_line);
-            while (len&&(session_line[len-1]=='\r'||session_line[len-1]=='\n')) session_line[--len]=0;
+            while (len&&(session_line[len-1]=='\r'||session_line[len-1]=='\n')) {
+              session_line[--len]=0;
+            }
             fprintf(log,">>> %s\n",session_line);
           } else {
             fprintf(log,">>>>>> END OF SESSION FILE\n");
@@ -943,36 +1034,38 @@ int run_test(char *dir, char *test_file)
           
           // compare session line, we are relying on the string terminations set above
           if(verify_line>0) { // TODO for now(!) we ignore the header line with the hashed session id
+            
             if((session_line[0] && comparison_line[0]) && strcmp(comparison_line,"endofsession")) {
               verify_errors = compare_session_line(session_line, comparison_line);
               
               switch (verify_errors) {
                 case 0:
                   // ok, do nothing
-                break;
+                  break;
                 
                 case -1:
                   fprintf(log, "  MISMATCH : compare_session_line() field mismatch (line %d, code %d): \"%s\" != \"%s\"\n",  verify_line, verify_errors, session_line, comparison_line);
-                break;
+                  break;
                   
                 case -2: 
                   fprintf(log, "  MISMATCH : compare_session_line() session line too short (columns) (line %d, code %d): \"%s\" != \"%s\"\n",  verify_line, verify_errors, session_line, comparison_line);
-                break;
+                  break;
                 
                 case -3: 
                   fprintf(log, "  MISMATCH : compare_session_line() session line too long (columns) (line %d, code %d): \"%s\" != \"%s\"\n",  verify_line, verify_errors, session_line, comparison_line);
-                break;
+                  break;
                 
                 case -4: 
                   fprintf(log, "  MISMATCH : compare_session_line() <UTIME> invalid (line %d, code %d): \"%s\" != \"%s\"\n",  verify_line, verify_errors, session_line, comparison_line);
-                break;
+                  break;
                 
                 default:
                   fprintf(log, "  MISMATCH : compare_session_line() unknown return code (line %d, code %d): \"%s\" != \"%s\"\n",  verify_line, verify_errors, session_line, comparison_line);
-              }
+              }// endswitch
               
             }
-          }
+            
+          }// endif verify_line
 
           if (session_line[0]&&(!strcmp("endofsession",comparison_line))) {
             // End of comparison list before end of session file
@@ -988,46 +1081,57 @@ int run_test(char *dir, char *test_file)
             goto fail;
           }
 
-          if (!strcmp("endofsession",comparison_line)) break;
+          if (!strcmp("endofsession",comparison_line)) {
+            break;
+          }
           
           verify_line++;
-          session_line[0]=0; fgets(session_line,8192,s);
-          comparison_line[0]=0; fgets(comparison_line,8192,in);
-        }
+          session_line[0]=0; 
+          fgets(session_line,8192,s);
+          comparison_line[0]=0; 
+          fgets(comparison_line,8192,in);
+          
+        }// end while 1
 
         fclose(s);
         
         // fail if session contents mismatch
-        if(verify_errors) {
+        if (verify_errors) {
             fprintf(log,"T+%4.3fms : FAIL : verifysession: %d lines in session file do not match!.\n",tdelta, verify_errors);
             goto fail;
         } else {
             fprintf(log,"T+%4.3fms : verifysession: session file matches comparasion.\n",tdelta);
         }
-      }
-      else if (line[0]==0) {
+
+////
+// keywords: End
+////
+
+      } else if (line[0]==0) {
         // Ignore blank lines
-      }
-      else if (line[0]=='#') {
+      } else if (line[0]=='#') {
         // print special comments starting with "#!"
-        if(line[1]!=0 && line[1]=='!') {
+        if (line[1]!=0 && line[1]=='!') {
           char *l = line;
           l +=2;
           fprintf(log,"%s\n",l);
         }
         // Ignore default comments
-      }
-      else {
+      } else {
         fprintf(log,"T+%4.3fms : FATAL : Test script '%s' has unknown directive '%s'\n",tdelta,test_file,line);
         goto fatal;
       }
+      
       line[0]=0; fgets(line,1024,in);
-    }
+      
+    } // endwhile line[0]
 
     //    pass:
 
     fix_ownership(test_dir);
-    if (log) dump_logs(log_path,log);
+    if (log) {
+      dump_logs(log_path,log);
+    }
 
     fprintf(stderr,"\r\033[39m[\033[32mPASS\033[39m]  %s : %s\n",test_name,description); fflush(stderr);
     break;
@@ -1035,7 +1139,9 @@ int run_test(char *dir, char *test_file)
   fail:
 
     fix_ownership(test_dir);
-    if (log) dump_logs(log_path,log);
+    if (log) {
+      dump_logs(log_path,log);
+    }
 
     fprintf(stderr,"\r\033[39m[\033[31mFAIL\033[39m]  %s : %s\n",test_name,description); fflush(stderr);
     retVal=1;
@@ -1044,7 +1150,9 @@ int run_test(char *dir, char *test_file)
   error:
 
     fix_ownership(test_dir);
-    if (log) dump_logs(log_path,log);
+    if (log) {
+      dump_logs(log_path,log);
+    }
 
     fprintf(stderr,"\r\033[39m[\033[31;1;5mERROR\033[39;0m]  %s : %s\n",test_name,description); fflush(stderr);
     retVal=2;
@@ -1053,7 +1161,9 @@ int run_test(char *dir, char *test_file)
   fatal:
 
     fix_ownership(test_dir);
-    if (log) dump_logs(log_path,log);
+    if (log) {
+      dump_logs(log_path,log);
+    }
 
     fprintf(stderr,"\r\033[39m[\033[31;1;5mDIED\033[39;0m]  %s : %s\n",test_name, description); fflush(stderr);
     retVal=3;
@@ -1061,8 +1171,13 @@ int run_test(char *dir, char *test_file)
 
   } while(0);
 
-  if (in) fclose(in);
-  if (log) fclose(log);
+  if (in) { 
+    fclose(in);
+  }
+  
+  if (log) {
+    fclose(log);
+  }
 
   return retVal;
 }
@@ -1135,23 +1250,31 @@ int configure_and_start_lighttpd(char *test_dir, int silent_flag)
     char cwd[1024];
     int cwdlen=1024;
 
-    if (!tests) fprintf(stderr,"Pulling configuration together...\n");
+    if (!tests) {
+      fprintf(stderr,"Pulling configuration together...\n");
+    }
     
     // Make sure at least 10 seconds passes between restarts of the back end, so that we don't get
     // spurious errors.
     long long time_since_last=time(0)-last_config_time;
-    if (time_since_last<10) sleep(11-time_since_last);
+    if (time_since_last<10) {
+      sleep(11-time_since_last);
+    }
     last_config_time=time(0);
 
     // Create log file in test directory, and make it globally writeable
     {
       snprintf(conf_data,16384,"%s/breakage.log", test_dir);
       FILE *f=fopen(conf_data,"w");
-      if (f) fclose(f);
+      if (f) {
+        fclose(f);
+      }
       chmod(conf_data,0777);
     }
 
-    if (!tests) fprintf(stderr,"Created breakage.log\n");
+    if (!tests) {
+      fprintf(stderr,"Created breakage.log\n");
+    }
     
     // point python dir ALWAYS to test dir
     char python_dir[4096];
@@ -1182,29 +1305,40 @@ int configure_and_start_lighttpd(char *test_dir, int silent_flag)
     fprintf(f,"%s",conf_data);
     fclose(f);
 
-    if (!tests) fprintf(stderr,"Config file created.\n");
+    if (!tests) {
+      fprintf(stderr,"Config file created.\n");
+    }
     
     char cmd[2048];
     snprintf(cmd,2048,"sudo cp %s/lighttpd.conf /etc/lighttpd/lighttpd.test.conf",test_dir);
-    if (!tests) fprintf(stderr,"Running '%s'\n",cmd);
+    if (!tests) {
+      fprintf(stderr,"Running '%s'\n",cmd);
+    }
     if (system(cmd)) {
       LOG_ERRORV("system() call to install lighttpd.conf failed: %s",strerror(errno));
     }
 
     snprintf(cmd,2048, "sudo cp surveyfcgi %s/surveyfcgi",test_dir);
-    if (!tests) fprintf(stderr,"Running '%s'\n",cmd);
+    if (!tests) {
+      fprintf(stderr,"Running '%s'\n",cmd);
+    }
     if (system(cmd)) {
       LOG_ERRORV("system() call to copy surveyfcgi failed: %s", strerror(errno));
     }
 
     snprintf(cmd,2048, "sudo lighttpd -f /etc/lighttpd/lighttpd.test.conf");
-    if (!tests) fprintf(stderr,"Running '%s'\n",cmd);
+    if (!tests) {
+      fprintf(stderr,"Running '%s'\n",cmd);
+    }
     if (system(cmd)) {
       LOG_ERRORV("system() call to start lighttpd failed: %s",strerror(errno));
     }
     
     snprintf(cmd, 2048, "curl -s -o /dev/null -f http://localhost:%d/surveyapi/fastcgitest", HTTP_PORT);
-    if (!tests) fprintf(stderr,"Running '%s'\n",cmd);
+    if (!tests) {
+      fprintf(stderr,"Running '%s'\n",cmd);
+    }
+    
     int v=0;
     while((v=system(cmd))!=0) {
       if (!silent_flag) {
@@ -1220,8 +1354,13 @@ int configure_and_start_lighttpd(char *test_dir, int silent_flag)
       sleep(2);
       continue;
     }
-    if (!tests) fprintf(stderr,"lighttpd is now responding to requests.\n");
-    if (!tests) fprintf(stderr,"All done.\n");
+    
+    if (!tests) {
+      fprintf(stderr,"lighttpd is now responding to requests.\n");
+    }
+    if (!tests) {
+      fprintf(stderr,"All done.\n");
+    }
 
   } while(0);
 
@@ -1239,27 +1378,41 @@ int stop_lighttpd()
   size_t hits = 0;
   
   snprintf(lsof_cmd, 2048, "sudo lsof -t -i:%d", HTTP_PORT);
-  if (!tests) fprintf(stderr,"Got lsof output\n");
+  if (!tests) {
+    fprintf(stderr,"Got lsof output\n");
+  }
+  
   fp = popen(lsof_cmd, "r");
   while (fgets(pidc, sizeof(pidc), fp) != NULL) {
+    
     hits++;
     snprintf(kill_cmd,2048,"sudo kill %s", pidc);
-    if (!tests) fprintf(stderr," - running: %s\n", kill_cmd);
+    if (!tests) {
+      fprintf(stderr," - running: %s\n", kill_cmd);
+    }
     if (system(kill_cmd)) {
       fprintf(stderr,"system() call to stop lighttpd failed (kill %s)\n", pidc);
       exit(-3);
     }
+    
   }
   fclose(fp);
 
-  if(!hits) {
-    if (!tests) fprintf(stderr,"No pid to kill.\n");
+  if (!hits) {
+    if (!tests) { 
+      fprintf(stderr,"No pid to kill.\n");
+    }
     return 0;
   }
-  if (!tests) fprintf(stderr,"Considering my options...\n");
-
+  
+  if (!tests) {
+    fprintf(stderr,"Considering my options...\n");
+  }
   sleep(1);
-  if (!tests) fprintf(stderr,"Done.\n");
+  if (!tests) {
+    fprintf(stderr,"Done.\n");
+  }
+  
   return 0;
 }
 
@@ -1291,7 +1444,9 @@ int main(int argc,char **argv)
   stop_lighttpd();
   fprintf(stderr,"About to request config gets pulled together\n");
   // Make config file pointing to the temp_dir, and start the server
-  if (configure_and_start_lighttpd(test_dir, 0)) exit(-3);
+  if (configure_and_start_lighttpd(test_dir, 0)) {
+    exit(-3);
+  }
 
   fprintf(stderr,"\n");
 
@@ -1302,16 +1457,28 @@ int main(int argc,char **argv)
 
   for(int i=1;i<argc;i++) {
     switch (run_test(test_dir,argv[i])) {
-    case 0: passes++; break;
-    case 1: fails++; break;
-    case 2: errors++; break;
-    case 3: fatals++; break;
+      case 0: 
+        passes++; 
+        break;
+        
+      case 1: 
+        fails++; 
+        break;
+        
+      case 2: 
+        errors++; 
+        break;
+        
+      case 3: 
+        fatals++; 
+        break;
     }
     tests++;
   }
 
   // Clean up after ourselves
   fprintf(stderr,"Cleaning up...\n");
+  
 #if 0
   fix_ownership(test_dir);
   if (recursive_delete(test_dir)) {

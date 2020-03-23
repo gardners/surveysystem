@@ -1,6 +1,5 @@
 /*
-  Serialiasers and de-serialisers for various structures.
-
+  Serialisers and de-serialisers for various structures.
 */
 
 #include <stdio.h>
@@ -21,42 +20,53 @@ int escape_string(char *in,char *out,int max_len)
   int retVal=0;
   int out_len=0;
   for(int i=0;in[i];i++) {
+    
     switch(in[i]) {
-    case '\r': case '\n': case '\t': case '\b':
-      if (out_len>=max_len) { 
-	LOG_ERRORV("escaped version of string '%s' is too long",out);
-      } else { 
-	out[out_len++]='\\'; 
-      }
-      if (out_len>=max_len) { 
-	LOG_ERRORV("escaped version of string '%s' is too long",out); 
-      } else { 
-	out[out_len++]=in[i];
-      }
-      break;
-    case ':': case '\\':
-      if (out_len>=max_len) { 
-	LOG_ERRORV("escaped version of string '%s' is too long",out); 
-      } else {
-	out[out_len++]=':';
-      }
-      if (out_len>=max_len) { 
-	LOG_ERRORV("escaped version of string '%s' is too long",out); 
-      } else {
-	out[out_len++]=in[i];
-      }
-      break;
-    default:
-      if (out_len>=max_len) { 
-	LOG_ERRORV("escaped version of string '%s' is too long",out); 
-      } else {
-	out[out_len++]=in[i];
-      }
-      break;
-    }
-  }
+      
+      case '\r': case '\n': case '\t': case '\b':
+	if (out_len>=max_len) { 
+	  LOG_ERRORV("escaped version of string '%s' is too long",out);
+	} else { 
+	  out[out_len++]='\\'; 
+	}
+	
+	if (out_len>=max_len) { 
+	  LOG_ERRORV("escaped version of string '%s' is too long",out); 
+	} else { 
+	  out[out_len++]=in[i];
+	}
+	break;
+	
+      case ':': case '\\':
+	if (out_len>=max_len) { 
+	  LOG_ERRORV("escaped version of string '%s' is too long",out); 
+	} else {
+	  out[out_len++]=':';
+	}
+	
+	if (out_len>=max_len) { 
+	  LOG_ERRORV("escaped version of string '%s' is too long",out); 
+	} else {
+	  out[out_len++]=in[i];
+	}
+	break;
+	
+      default:
+	if (out_len>=max_len) { 
+	  LOG_ERRORV("escaped version of string '%s' is too long",out); 
+	} else {
+	  out[out_len++]=in[i];
+	}
+	break;
+	
+    } // endswitch
+  }// endfor
+  
   out[out_len]=0;
-  if (retVal==0) retVal=out_len;
+  
+  if (retVal==0) {
+    retVal=out_len;
+  }
   return retVal;
 }
 
@@ -135,8 +145,8 @@ int deserialise_parse_field(char *in,int *in_offset,char *out)
     out[olen]=0;
     if (!in) LOG_ERROR("input string is NULL");
     if (!in[0]) LOG_ERROR("input string is empty");
-    for(;in[offset]&&(olen<16383)&&in[offset]!=':';offset++)
-      {
+    
+    for(;in[offset]&&(olen<16383)&&in[offset]!=':';offset++) {
 	// Allow some \ escape characters
 	if (in[offset]=='\\') {
 	  if (!in[offset+1]) LOG_ERRORV("String '%s' ends in \\\n",in);
@@ -156,7 +166,7 @@ int deserialise_parse_field(char *in,int *in_offset,char *out)
 	  out[olen++]=in[offset];
 	  out[olen]=0;
 	}
-      }
+    } // endfor
 
     *in_offset=offset;
     
@@ -174,11 +184,21 @@ int deserialise_int(char *field,int *s)
   do {
     if (!field) LOG_ERROR("field is NULL");
     if (!strlen(field)) LOG_ERROR("field is empty string");
+    
     int offset=0;
-    if (field[offset]=='-') offset++;
-    for(int i=offset;field[i];i++)
-      if (field[i]<'0'||field[i]>'9') LOG_ERRORV("integer field '%s' contains non-digit",field);
-    if (!retVal) *s=atoi(field);
+    if (field[offset]=='-') {
+      offset++;
+    }
+    
+    for(int i=offset;field[i];i++) { 
+      if (field[i]<'0'||field[i]>'9') {
+	LOG_ERRORV("integer field '%s' contains non-digit",field);
+      }
+    }
+    
+    if (!retVal) {
+      *s=atoi(field);
+    }
     
   } while(0);
   return retVal;
@@ -193,11 +213,21 @@ int deserialise_longlong(char *field,long long *s)
   do {
     if (!field) LOG_ERROR("field is NULL");
     if (!strlen(field)) LOG_ERROR("field is empty string");
+    
     int offset=0;
-    if (field[offset]=='-') offset++;
-    for(int i=offset;field[i];i++)
-      if (field[i]<'0'||field[i]>'9') LOG_ERRORV("long long field '%s' contains non-digit",field);
-    if (!retVal) *s=atoll(field);
+    if (field[offset]=='-') {
+      offset++;
+    }
+    
+    for(int i=offset;field[i];i++) {
+      if (field[i]<'0'||field[i]>'9') {
+	LOG_ERRORV("long long field '%s' contains non-digit",field);
+      }
+    }
+    
+    if (!retVal) {
+      *s=atoll(field);
+    }
     
   } while(0);
   return retVal;
@@ -220,6 +250,7 @@ int deserialise_string(char *field,char **s)
     } else {
       *s=strdup(field);
     }
+    
     if (!*s) { 
       LOG_ERROR("field is empty string"); 
     }
@@ -297,6 +328,7 @@ int serialise_question_type(int qt,char *out,int out_max_len)
     if (qt<1) LOG_ERRORV("was asked to serialise an illegal question type #%d",qt);
     if (qt>NUM_QUESTION_TYPES) LOG_ERRORV("was asked to serialise an illegal question type #%d",qt);
     if (strlen(question_type_names[qt])>=out_max_len) LOG_ERRORV("question type '%s' name too long",question_type_names[qt]);
+    
     strcpy(out,question_type_names[qt]); retVal=strlen(out);
   } while (0);
 
@@ -309,12 +341,15 @@ int deserialise_question_type(char *field,int *s)
   int retVal=0;
   do {
     int qt;
-    for(qt=1;qt<NUM_QUESTION_TYPES;qt++)
+    
+    for(qt=1;qt<NUM_QUESTION_TYPES;qt++) {
       if (!strcasecmp(field,question_type_names[qt])) {
 	retVal=0;
 	*s=qt;
 	break;
       }
+    }
+    
     if (qt==NUM_QUESTION_TYPES) LOG_ERRORV("invalid question type name '%s'",field);
   } while (0);
 

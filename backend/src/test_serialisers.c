@@ -212,21 +212,20 @@ int main(int argc,char **argv)
 	struct question d;
 	bzero(&d,sizeof(struct question));
 	int deserialise_result=deserialise_question(qst[i].serialised,&d);
+	
 	if (deserialise_result&&qst[i].shouldPassP) {
 	  // Deserialisation failed when it should have succeeded.
 	  fprintf(stderr,"\r[FAIL \n  FAIL: serialised string triggered an error during deserialisate\n");
 	    fprintf(stderr,"Internal error log:\n");
 	  dump_errors(stderr);
 	  fail++;
-	}
-	else if ((!deserialise_result)&&(!qst[i].shouldPassP)) {
+	} else if ((!deserialise_result)&&(!qst[i].shouldPassP)) {
 	  // Deserialiation passed when it should have failed.
 	  fprintf(stderr,"\r[FAIL \n  FAIL: invalid serialised string did not trigger an error during deserialisation\n");
 	    fprintf(stderr,"Internal error log:\n");
 	  dump_errors(stderr);
 	  fail++;
-	}
-	else if ((!deserialise_result)&&qst[i].shouldPassP) {
+	} else if ((!deserialise_result)&&qst[i].shouldPassP) {
 	  // Deserialised successfully, so make sure the field values
 	  // all match
 	  if (compare_questions(&d,&qst[i].question,MISMATCH_IS_AN_ERROR)) {
@@ -240,8 +239,7 @@ int main(int argc,char **argv)
 	    fprintf(stderr,"\r[PASS \n");
 	    pass++;
 	  }
-	}
-	else if ((deserialise_result)&&(!qst[i].shouldPassP)) {
+	} else if ((deserialise_result)&&(!qst[i].shouldPassP)) {
 	  fprintf(stderr,"\r[PASS \n");
 	  pass++;
 	} else {
@@ -249,6 +247,7 @@ int main(int argc,char **argv)
 		  deserialise_result,qst[i].shouldPassP);
 	  errors++;
 	}
+	
       }
     }
 

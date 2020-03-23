@@ -31,12 +31,10 @@ int kvalid_surveyid(struct kpair *kp) {
   
   int retVal=0;
   do {
-  
     if (!kp) LOG_ERROR("kp is NULL");
 
     // Only use our validation here, not one of the pre-defined ones
     kp->type = KPAIR__MAX;
-    
     LOG_WARNV("Validating surveyid",1);
     
     // Is okay
@@ -245,7 +243,11 @@ int main(int argc,char **argv)
   int retVal=0;
 
   do {
-    if (argc>1) { usage(); retVal=-1; break; }
+    if (argc>1) { 
+      usage(); 
+      retVal=-1; 
+      break; 
+    }
 
     if (!getenv("SURVEY_HOME")) {
       fprintf(stderr,"SURVEY_HOME environment variable must be set to data directory for survey system.\n");
@@ -261,10 +263,13 @@ int main(int argc,char **argv)
     if (KCGI_OK != khttp_fcgi_init(&fcgi,
 				   keys, KEY__MAX, // CGI variable parse definitions
 				   pages, PAGE__MAX,  // Pages for parsing
-				   PAGE_NEWSESSION))
-      {	LOG_ERROR("khttp_fcgi_init() failed."); }
+				   PAGE_NEWSESSION)) {	
+      LOG_ERROR("khttp_fcgi_init() failed."); 
+    }
 
-    if (!fcgi) { LOG_ERROR("fcgi==NULL after call to khttp_fcgi_init()"); }
+    if (!fcgi) { 
+      LOG_ERROR("fcgi==NULL after call to khttp_fcgi_init()"); 
+    }
 
     // For each request
     for (;;) {
@@ -291,11 +296,11 @@ int main(int argc,char **argv)
       LOG_WARNV("Considering whether to throw a 404 (req.page=%d, MAX=%d; req.mime=%d, KMIME=%d)",
 		(int)req.page,(int)PAGE__MAX,
 		(int)KMIME_TEXT_HTML, (int)req.mime);
-      if (PAGE__MAX == req.page || 
-	  KMIME_TEXT_HTML != req.mime) {
+		
+      if (PAGE__MAX == req.page || KMIME_TEXT_HTML != req.mime) {
 	LOG_WARNV("Throwing a 404 error",1);
-	er = khttp_head(&req, kresps[KRESP_STATUS], 
-			"%s", khttps[KHTTP_404]);
+	er = khttp_head(&req, kresps[KRESP_STATUS], "%s", khttps[KHTTP_404]);
+	
 	if (KCGI_HUP == er) {
 	  fprintf(stderr, "khttp_head: interrupt\n");
 	  continue;
@@ -334,8 +339,7 @@ void quick_error(struct kreq *req,int e,const char *msg)
   int retVal=0;
   enum kcgi_err    er;
   do {
-    er = khttp_head(req, kresps[KRESP_STATUS], 
-		    "%s", khttps[e]);
+    er = khttp_head(req, kresps[KRESP_STATUS], "%s", khttps[e]);
     if (KCGI_HUP == er) {
       fprintf(stderr, "khttp_head: interrupt\n");
       continue;
@@ -345,8 +349,7 @@ void quick_error(struct kreq *req,int e,const char *msg)
     }
     
     // Emit mime-type
-    er = khttp_head(req, kresps[KRESP_CONTENT_TYPE], 
-		    "%s", kmimetypes[KMIME_APP_JSON]);
+    er = khttp_head(req, kresps[KRESP_CONTENT_TYPE], "%s", kmimetypes[KMIME_APP_JSON]);
     if (KCGI_HUP == er) {
       fprintf(stderr, "khttp_head: interrupt\n");
       continue;
@@ -397,8 +400,7 @@ void begin_200(struct kreq *req)
 
   do {
     // Emit 200 response
-    er = khttp_head(req, kresps[KRESP_STATUS], 
-		    "%s", khttps[KHTTP_200]);
+    er = khttp_head(req, kresps[KRESP_STATUS], "%s", khttps[KHTTP_200]);
     if (KCGI_HUP == er) {
       fprintf(stderr, "khttp_head: interrupt\n");
       continue;
@@ -408,8 +410,7 @@ void begin_200(struct kreq *req)
     }
     
     // Emit mime-type
-    er = khttp_head(req, kresps[KRESP_CONTENT_TYPE], 
-		    "%s", kmimetypes[req->mime]);
+    er = khttp_head(req, kresps[KRESP_CONTENT_TYPE], "%s", kmimetypes[req->mime]);
     if (KCGI_HUP == er) {
       fprintf(stderr, "khttp_head: interrupt\n");
       continue;
@@ -427,7 +428,6 @@ void begin_200(struct kreq *req)
       fprintf(stderr, "khttp_body: error: %d\n", er);
       break;
     }
-    
 
   } while(0);
 }
@@ -438,8 +438,7 @@ void begin_500(struct kreq *req)
 
   do {
     // Emit 500 response
-    er = khttp_head(req, kresps[KRESP_STATUS], 
-		    "%s", khttps[KHTTP_500]);
+    er = khttp_head(req, kresps[KRESP_STATUS], "%s", khttps[KHTTP_500]);
     if (KCGI_HUP == er) {
       fprintf(stderr, "khttp_head: interrupt\n");
       continue;
@@ -449,8 +448,7 @@ void begin_500(struct kreq *req)
     }
     
     // Emit mime-type
-    er = khttp_head(req, kresps[KRESP_CONTENT_TYPE], 
-		    "%s", kmimetypes[req->mime]);
+    er = khttp_head(req, kresps[KRESP_CONTENT_TYPE], "%s", kmimetypes[req->mime]);
     if (KCGI_HUP == er) {
       fprintf(stderr, "khttp_head: interrupt\n");
       continue;
@@ -837,8 +835,7 @@ static void fcgi_delanswer(struct kreq *req)
 	LOG_ERROR("session_delete_answer() failed");
 	break;
       }
-    }
-    else if (question&&question->val) {
+    } else if (question&&question->val) {
       
       /* 
        * We have a question -- so delete all answers to the given question 
@@ -850,8 +847,7 @@ static void fcgi_delanswer(struct kreq *req)
 	LOG_ERROR("session_delete_answers_by_question_uid() failed");
 	break;
       }      
-    }
-    else {
+    } else {
       quick_error(req,KHTTP_400,"Either a question ID or an answer must be provided");
       LOG_ERROR("either a question ID or an answer must be provided");
       break;
@@ -979,13 +975,12 @@ static void fcgi_delanswerandfollowing(struct kreq *req)
        */
        
       if (session_delete_answers_by_question_uid(s,question->val,1)<0) {
-	      // TODO could be both 400 or 500 (storage, serialization, not in session)
-	      quick_error(req,KHTTP_400,"Answer does not match existing session records.");
-	      LOG_ERROR("session_delete_answers_by_question_uid() failed");
-	      break;
+	// TODO could be both 400 or 500 (storage, serialization, not in session)
+	quick_error(req,KHTTP_400,"Answer does not match existing session records.");
+	LOG_ERROR("session_delete_answers_by_question_uid() failed");
+	break;
       }   
-    }
-    else {
+    } else {
       quick_error(req,KHTTP_400,"Either a question ID or an answer must be provided");
       LOG_ERROR("either a question ID or an answer must be provided");
       break;
@@ -1153,7 +1148,9 @@ static void fcgi_nextquestion(struct kreq *req)
     kjson_obj_open(&resp);
     kjson_putint(&resp, next_question_count); 
     kjson_arrayp_open(&resp,"next_questions");
+    
     for(int i=0;i<next_question_count;i++) {
+      
       // #269 add a flag indicating id default_value was set: kjson_putstringp() does not check keys and simply appends fields with the same key
       int default_value_flag = 0;
       // Output each question
@@ -1166,47 +1163,47 @@ static void fcgi_nextquestion(struct kreq *req)
       // Provide default value if question not previously answered,
       // else provide the most recent deleted answer for this question. #186
       {
-	for(int j=0;j<s->answer_count;j++)
+	for(int j=0;j<s->answer_count;j++) {
 	  if(!strcmp(s->answers[j]->uid,q[i]->uid)) {
-	    if (s->answers[j]->flags&ANSWER_DELETED)
-	      {
-		char rendered[8192];
-		snprintf(rendered,8192,"%s",s->answers[j]->text);
+	    
+	    if (s->answers[j]->flags&ANSWER_DELETED) {
+	      char rendered[8192];
+	      snprintf(rendered,8192,"%s",s->answers[j]->text);
+	      
+	      switch(q[i]->type) {
+		case QTYPE_INT:                 snprintf(rendered,8192,"%lld",s->answers[j]->value); break;
+		case QTYPE_FIXEDPOINT:          snprintf(rendered,8192,"%lld",s->answers[j]->value); break;
+		case QTYPE_MULTICHOICE:         break;
+		case QTYPE_MULTISELECT:         break;
+		case QTYPE_LATLON:              snprintf(rendered,8192,"%lld,%lld",s->answers[j]->lat,s->answers[j]->lon); break;
+		case QTYPE_DATETIME:            snprintf(rendered,8192,"%lld",s->answers[j]->time_begin); break;
+		case QTYPE_DAYTIME:             snprintf(rendered,8192,"%lld",s->answers[j]->time_begin); break;
+		case QTYPE_TIMERANGE:           snprintf(rendered,8192,"%lld,%lld",s->answers[j]->time_begin,s->answers[j]->time_end); break;
+		case QTYPE_UPLOAD:              break;
+		case QTYPE_TEXT:                break;
+		case QTYPE_CHECKBOX:            break;
+		case QTYPE_HIDDEN:              break;
+		case QTYPE_TEXTAREA:            break;
+		case QTYPE_EMAIL:               break;
+		case QTYPE_PASSWORD:            break;
+		case QTYPE_SINGLECHOICE:        break;
+		case QTYPE_SINGLESELECT:        break;
+		case QTYPE_UUID:                break;
+		// #205 add sequence fields
+		case QTYPE_FIXEDPOINT_SEQUENCE: break;
+		case QTYPE_DAYTIME_SEQUENCE: 	  break;
+		case QTYPE_DATETIME_SEQUENCE:   break;
+		case QTYPE_DIALOG_DATA_CRAWLER: break;
 		
-		switch(q[i]->type)
-		  {
-		  case QTYPE_INT:                 snprintf(rendered,8192,"%lld",s->answers[j]->value); break;
-		  case QTYPE_FIXEDPOINT:          snprintf(rendered,8192,"%lld",s->answers[j]->value); break;
-		  case QTYPE_MULTICHOICE:         break;
-		  case QTYPE_MULTISELECT:         break;
-		  case QTYPE_LATLON:              snprintf(rendered,8192,"%lld,%lld",s->answers[j]->lat,s->answers[j]->lon); break;
-		  case QTYPE_DATETIME:            snprintf(rendered,8192,"%lld",s->answers[j]->time_begin); break;
-		  case QTYPE_DAYTIME:             snprintf(rendered,8192,"%lld",s->answers[j]->time_begin); break;
-		  case QTYPE_TIMERANGE:           snprintf(rendered,8192,"%lld,%lld",s->answers[j]->time_begin,s->answers[j]->time_end); break;
-		  case QTYPE_UPLOAD:              break;
-		  case QTYPE_TEXT:                break;
-		  case QTYPE_CHECKBOX:            break;
-		  case QTYPE_HIDDEN:              break;
-		  case QTYPE_TEXTAREA:            break;
-		  case QTYPE_EMAIL:               break;
-		  case QTYPE_PASSWORD:            break;
-		  case QTYPE_SINGLECHOICE:        break;
-		  case QTYPE_SINGLESELECT:        break;
-		  case QTYPE_UUID:                break;
-		  // #205 add sequence fields
-		  case QTYPE_FIXEDPOINT_SEQUENCE: break;
-		  case QTYPE_DAYTIME_SEQUENCE: 	  break;
-		  case QTYPE_DATETIME_SEQUENCE:   break;
-		  case QTYPE_DIALOG_DATA_CRAWLER: break;
-		  
-		  default:
-		    LOG_ERRORV("Unknown question type #%d in session '%s'",q[i]->type,session_id);
-		    break;
-		  }
-		  kjson_putstringp(&resp,"default_value",rendered);
-		  default_value_flag = 1;
+		default:
+		  LOG_ERRORV("Unknown question type #%d in session '%s'",q[i]->type,session_id);
+		  break;
 	      }
-	  }
+	      kjson_putstringp(&resp,"default_value",rendered);
+	      default_value_flag = 1;
+	    } //endif
+	  } // endif
+	} // endfor
       }
       
       // #269 add default_value if not set before
@@ -1231,8 +1228,10 @@ static void fcgi_nextquestion(struct kreq *req)
 	  
 	  kjson_arrayp_open(&resp,"choices");
 	  int len=strlen(q[i]->choices);
+	  
 	  if (len) {
 	    for(int j=0;q[i]->choices[j];) {
+	      
 	      char choice[65536];
 	      int cl=0;
 	      choice[0]=0;
@@ -1248,24 +1247,31 @@ static void fcgi_nextquestion(struct kreq *req)
 		  }
 		  cl++;
 		} 
+		
 	      // #74 skip empty values
 	      if (q[i]->choices[j]!=',') {
 		kjson_putstring(&resp,choice);
 	      }
+	      
 	      j+=cl;
-	      if (q[i]->choices[j+cl]==',') j++;
-	    }
-	  }
+	      if (q[i]->choices[j+cl]==',') {
+		j++;
+	      }
+	      
+	    } // endfor
+	  } // endif
 	  kjson_array_close(&resp);
 	  break;
 	default:
 	  break;
-	}
+	} // switch
+	
       // #72 unit field
       kjson_putstringp(&resp,"unit",q[i]->unit);
-      
       kjson_obj_close(&resp);
-    }
+      
+    } // endfor
+    
     kjson_array_close(&resp); 
     kjson_obj_close(&resp); 
     kjson_close(&resp);
@@ -1283,7 +1289,7 @@ static void fcgi_nextquestion(struct kreq *req)
   if (generate_path(X,test_path,8192)) { \
       quick_error(req,KHTTP_500,failmsg); \
       break; \
-    } \
+  } \
   snprintf(failmsg,16384,"Could not open for reading path ${SURVEY_HOME}/%s",X); \
   f=fopen(test_path,"r");						\
     if (!f) { \
@@ -1296,7 +1302,7 @@ static void fcgi_nextquestion(struct kreq *req)
   if (generate_path(X,test_path,8192)) { \
       quick_error(req,KHTTP_500,failmsg); \
       break; \
-    } \
+  } \
   f=fopen(test_path,"w");			\
     if (!f) { \
       snprintf(failmsg,16384,"Could not open for writing path %s, errno=%d (%s)",test_path,errno,strerror(errno)); \
@@ -1309,25 +1315,25 @@ static void fcgi_nextquestion(struct kreq *req)
   if (generate_path(X,test_path,8192)) { \
       quick_error(req,KHTTP_500,failmsg); \
       break; \
-    } \
+  } \
   if (mkdir(test_path,0777)) {						\
       snprintf(failmsg,16384,"Could not mkdir path %s, errno=%d (%s)",test_path,errno,strerror(errno)); \
       quick_error(req,KHTTP_500,failmsg); \
       break; \
-    }
+  }
 
 #define TEST_REMOVE(X)  snprintf(failmsg,16384,"Could not generate path ${SURVEY_HOME}/%s",X); \
   if (generate_path(X,test_path,8192)) { \
       quick_error(req,KHTTP_500,failmsg); \
       break; \
-    } \
+  } \
   if(remove(test_path)) { \
     if (errno != ENOENT) { \
       snprintf(failmsg,16384,"Could not remove file for writing path %s, errno=%d (%s)",test_path,errno,strerror(errno)); \
       quick_error(req,KHTTP_500,failmsg); \
       break; \
       } \
-    } \
+  } \
 
 static void fcgi_accesstest(struct kreq *req)
 {
@@ -1476,8 +1482,7 @@ static void fcgi_analyse(struct kreq *req)
     }
     
     // reply
-    er = khttp_head(req, kresps[KRESP_STATUS], 
-		    "%s", khttps[KHTTP_200]);
+    er = khttp_head(req, kresps[KRESP_STATUS], "%s", khttps[KHTTP_200]);
     if (KCGI_HUP == er) {
       fprintf(stderr, "khttp_head: interrupt\n");
       continue;
@@ -1487,13 +1492,14 @@ static void fcgi_analyse(struct kreq *req)
     }
     
     // Emit mime-type
-    er =  khttp_head(req, kresps[KRESP_CONTENT_TYPE], 
-	       "%s", kmimetypes[KMIME_APP_JSON]); 
+    er =  khttp_head(req, kresps[KRESP_CONTENT_TYPE], "%s", kmimetypes[KMIME_APP_JSON]); 
     if (KCGI_HUP == er) {
       fprintf(stderr, "khttp_head: interrupt\n");
       continue;
     } else if (KCGI_OK != er) {
-      if (analysis) { free((char*) analysis); }
+      if (analysis) { 
+	free((char*) analysis); 
+      }
       fprintf(stderr, "khttp_head: error: %d\n", er);
       break;
     }
@@ -1504,14 +1510,19 @@ static void fcgi_analyse(struct kreq *req)
       fprintf(stderr, "khttp_body: interrupt\n");
       continue;
     } else if (KCGI_OK != er) {
-      if (analysis) { free((char*) analysis); }
+      if (analysis) { 
+	free((char*) analysis); 
+      }
       fprintf(stderr, "khttp_body: error: %d\n", er);
       break;
     }
 
     er = khttp_puts(req, analysis);
     // #288, we need to free the analysis
-    if (analysis) { free((char*) analysis); }
+    if (analysis) { 
+      free((char*) analysis); 
+    }
+    
     if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
     LOG_INFO("Leaving page handler");
   } while(0);

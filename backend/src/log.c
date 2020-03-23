@@ -23,10 +23,11 @@ int log_message(const char *file,const char *function,const int line,char *forma
   char message[65536];
   
   do {
-
     // Don't allow us reporting errors via LOG_ERROR cause infinite recursion
     log_recursed++;
-    if (log_recursed>1) break;
+    if (log_recursed>1) {
+      break;
+    }
     
     time_t now = time(0);
     struct tm *tm = localtime(&now);
@@ -55,9 +56,9 @@ int log_message(const char *file,const char *function,const int line,char *forma
 	      file,line,function,
 	      message);
     } else {
-        fprintf(lf,"\?\?\?\?/\?\?/\?\?.\?\?:\?\?.\?:%s:%d:%s():%s\n",
-	      file,line,function,
-	      message);
+      fprintf(lf,"\?\?\?\?/\?\?/\?\?.\?\?:\?\?.\?:%s:%d:%s():%s\n",
+      file,line,function,
+      message);
     }
     fclose(lf);
     
