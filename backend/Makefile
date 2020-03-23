@@ -112,3 +112,6 @@ analyse_scanbuild:
 
 analyse_sparse:
 	sparse -std=c99 -D__USE_MISC=1 -Iinclude/ -Ikcgi `$(PYCONFIG) --includes`  -Wsparse-all -Wnoundef -Wsomething src/*.c
+
+analyse_cppcheck:
+	cppcheck --enable=all src/*c
