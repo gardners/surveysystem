@@ -34,7 +34,7 @@ int validate_session_id(char *session_id)
     if (strlen(session_id)!=36) LOG_ERRORV("session_id '%s' must be exactly 36 characters long",session_id);
     if (session_id[0]=='-') LOG_ERRORV("session_id '%s' may not begin with a dash",session_id);
     
-    for(int i=0;session_id[i];i++) {
+    for (int i=0;session_id[i];i++) {
       
       switch (session_id[i]) {
 	case '0': case '1': case '2': case '3':
@@ -74,7 +74,7 @@ int validate_survey_id(char *survey_id)
     if (!survey_id) LOG_ERROR("survey_id is NULL");
     if (!survey_id[0]) LOG_ERROR("survey_id is empty string");
     
-    for(int i=0;survey_id[i];i++) {
+    for (int i=0;survey_id[i];i++) {
       
       switch(survey_id[i]) {
 	case ' ': case '.': case '-': case '_':
@@ -307,10 +307,10 @@ int create_session(char *survey_id,char *session_id_out)
 
     // Generate new unique session ID
     int tries=0;
-    for(tries=0;tries<5;tries++) {
+    for (tries=0;tries<5;tries++) {
       if (random_session_id(session_id)) LOG_ERROR("random_session_id() failed to generate new session_id");
       
-      for(int i=0;i<4;i++) {
+      for (int i=0;i<4;i++) {
 	session_prefix[i]=session_id[i];
       }
       session_prefix[4]=0;
@@ -375,7 +375,7 @@ int delete_session(char *session_id)
     if (!session_id) LOG_ERROR("session_id is NULL");
     if (validate_session_id(session_id)) LOG_ERRORV("Session ID '%s' is malformed",session_id);
 
-    for(int i=0;i<4;i++) {
+    for (int i=0;i<4;i++) {
       session_prefix[i]=session_id[i];
     }
     session_prefix[4]=0;
@@ -448,11 +448,11 @@ void free_session(struct session *s)
   freez(s->survey_description);
   freez(s->session_id);
 
-  for(int i=0;i<s->question_count;i++) {
+  for (int i=0;i<s->question_count;i++) {
     free_question(s->questions[i]);
   }
   
-  for(int i=0;i<s->answer_count;i++) {
+  for (int i=0;i<s->answer_count;i++) {
     free_answer(s->answers[i]);
   }
   
@@ -609,7 +609,7 @@ struct session *load_session(char *session_id)
     char session_path_suffix[1024];
     char session_prefix[5];
     
-    for(int i=0;i<4;i++) { 
+    for (int i=0;i<4;i++) { 
       session_prefix[i]=session_id[i];
     }
     session_prefix[4]=0;
@@ -728,7 +728,7 @@ int save_session(struct session *s)
     char session_path_suffix[1024];
     char session_prefix[5];
     
-    for(int i=0;i<4;i++) {
+    for (int i=0;i<4;i++) {
       session_prefix[i]=s->session_id[i];
     }
     session_prefix[4]=0;
@@ -742,7 +742,7 @@ int save_session(struct session *s)
     if (!o) LOG_ERRORV("Could not create or open session file '%s' for write",session_path);
     fprintf(o,"%s\n",s->survey_id);
     
-    for(int i=0;i<s->answer_count;i++) {
+    for (int i=0;i<s->answer_count;i++) {
       char line[65536];
       if (serialise_answer(s->answers[i],line,65536)) {
 	LOG_ERRORV("Could not serialise answer for question '%s' for session '%s'.  Text field too long?",s->answers[i]->uid,s->session_id);
@@ -835,7 +835,7 @@ int session_add_answer(struct session *ses,struct answer *a)
 
     // Don't allow answers to questions that don't exist
     int question_number=0;
-    for(question_number=0; question_number < ses->question_count; question_number++) {
+    for (question_number=0; question_number < ses->question_count; question_number++) {
       if (!strcmp(ses->questions[question_number]->uid, a->uid)) {
 	break;
       }
@@ -844,7 +844,7 @@ int session_add_answer(struct session *ses,struct answer *a)
     if (question_number==ses->question_count) LOG_ERRORV("There is no such question '%s'",a->uid);    
     
     // Don't allow multiple answers to the same question
-    for(int i=0; i < ses->answer_count; i++) {
+    for (int i=0; i < ses->answer_count; i++) {
       if (!strcmp(ses->answers[i]->uid,a->uid)) {
 	
 	if (ses->answers[i]->flags&ANSWER_DELETED) {
@@ -893,7 +893,7 @@ int session_delete_answers_by_question_uid(struct session *ses,char *uid, int de
     if (!ses) LOG_ERROR("Session structure is NULL");
     if (!uid) LOG_ERRORV("Asked to remove answers to null question UID from session '%s'",ses->session_id);
 
-    for(int i=0;i<ses->answer_count;i++) {
+    for (int i=0;i<ses->answer_count;i++) {
       if (!strcmp(ses->answers[i]->uid,uid)) {
 	  // Delete matching questions
 	  // #186 - Deletion now just sets the ANSWER_DELETED flag in the flags field for the answer.
@@ -912,7 +912,7 @@ int session_delete_answers_by_question_uid(struct session *ses,char *uid, int de
 	  
 	  // Mark all following answers deleted, if required
 	  if (deleteFollowingP) {
-	    for(int j=i+1;j<ses->answer_count;j++) {
+	    for (int j=i+1;j<ses->answer_count;j++) {
 	      ses->answers[j]->flags |= ANSWER_DELETED;	  
 	      deletions++;
 	    }
@@ -948,7 +948,7 @@ int session_delete_answer(struct session *ses,struct answer *a, int deleteFollow
     if (!ses) LOG_ERROR("Session structure is NULL");
     if (!a) LOG_ERRORV("Asked to remove null answer from session '%s'",ses->session_id?ses->session_id:"(null)");
 
-    for(int i=0;i<ses->answer_count;i++) {
+    for (int i=0;i<ses->answer_count;i++) {
       // XXX - Doesn't actually check the value of the answer, but deletes first instance of an answer to the
       // same question.
       if ((!strcmp(ses->answers[i]->uid,a->uid)) &&(1)) {
@@ -964,7 +964,7 @@ int session_delete_answer(struct session *ses,struct answer *a, int deleteFollow
 	  
 	  // Mark all following answers deleted, if required
 	  if (deleteFollowingP) {
-	    for(int j=i+1;j<ses->answer_count;j++) {
+	    for (int j=i+1;j<ses->answer_count;j++) {
 	      ses->answers[j]->flags |= ANSWER_DELETED;
 	      deletions++;
 	    }

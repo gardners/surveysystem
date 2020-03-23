@@ -19,7 +19,7 @@ int escape_string(char *in,char *out,int max_len)
 {
   int retVal=0;
   int out_len=0;
-  for(int i=0;in[i];i++) {
+  for (int i=0;in[i];i++) {
     
     switch(in[i]) {
       
@@ -146,7 +146,7 @@ int deserialise_parse_field(char *in,int *in_offset,char *out)
     if (!in) LOG_ERROR("input string is NULL");
     if (!in[0]) LOG_ERROR("input string is empty");
     
-    for(;in[offset]&&(olen<16383)&&in[offset]!=':';offset++) {
+    for (;in[offset]&&(olen<16383)&&in[offset]!=':';offset++) {
 	// Allow some \ escape characters
 	if (in[offset]=='\\') {
 	  if (!in[offset+1]) LOG_ERRORV("String '%s' ends in \\\n",in);
@@ -190,7 +190,7 @@ int deserialise_int(char *field,int *s)
       offset++;
     }
     
-    for(int i=offset;field[i];i++) { 
+    for (int i=offset;field[i];i++) { 
       if (field[i]<'0'||field[i]>'9') {
 	LOG_ERRORV("integer field '%s' contains non-digit",field);
       }
@@ -219,7 +219,7 @@ int deserialise_longlong(char *field,long long *s)
       offset++;
     }
     
-    for(int i=offset;field[i];i++) {
+    for (int i=offset;field[i];i++) {
       if (field[i]<'0'||field[i]>'9') {
 	LOG_ERRORV("long long field '%s' contains non-digit",field);
       }
@@ -342,7 +342,7 @@ int deserialise_question_type(char *field,int *s)
   do {
     int qt;
     
-    for(qt=1;qt<NUM_QUESTION_TYPES;qt++) {
+    for (qt=1;qt<NUM_QUESTION_TYPES;qt++) {
       if (!strcasecmp(field,question_type_names[qt])) {
 	retVal=0;
 	*s=qt;

@@ -396,7 +396,7 @@ int run_test(char *dir, char *test_file)
 
     // Get name of test file without path
     char *test_name=test_file;
-    for(int i=0;test_file[i];i++) {
+    for (int i=0;test_file[i];i++) {
       if (test_file[i]=='/') test_name=&test_file[i+1];
     }
 
@@ -652,7 +652,7 @@ int run_test(char *dir, char *test_file)
         
         // Check that the response contains the supplied pattern
         int matches=0;
-        for(int i=0;i<response_line_count;i++) {
+        for (int i=0;i<response_line_count;i++) {
           if (strstr(response_lines[i],glob)) {
             matches++;
           }
@@ -672,7 +672,7 @@ int run_test(char *dir, char *test_file)
         
         // Check that the response contains the supplied pattern
         int matches=0;
-        for(int i=0;i<response_line_count;i++) {
+        for (int i=0;i<response_line_count;i++) {
           if (strstr(response_lines[i],glob)) {
             matches++;
           }
@@ -756,7 +756,7 @@ int run_test(char *dir, char *test_file)
           goto fatal;
         }
         
-        for(int i=0;i<response_line_count;i++) {
+        for (int i=0;i<response_line_count;i++) {
           if (REG_NOMATCH!=regexec(&regex,response_lines[i],0,NULL,0)) {
             matches++;
           }
@@ -788,7 +788,7 @@ int run_test(char *dir, char *test_file)
           goto fatal;
         }
         
-        for(int i=0;i<response_line_count;i++) {
+        for (int i=0;i<response_line_count;i++) {
           if (REG_NOMATCH!=regexec(&regex,response_lines[i],0,NULL,0)) {
             matches++;
           }
@@ -818,7 +818,7 @@ int run_test(char *dir, char *test_file)
         sscanf(line,"request %d %s %s %s", &expected_result, url, method, data);
 
         int o=0;
-        for(int i=0;url[i];i++) {
+        for (int i=0;url[i];i++) {
           
           if (url[i]!='$') {
             url_sub[o++]=url[i];
@@ -1033,9 +1033,9 @@ int run_test(char *dir, char *test_file)
           }
           
           // compare session line, we are relying on the string terminations set above
-          if(verify_line>0) { // TODO for now(!) we ignore the header line with the hashed session id
+          if (verify_line>0) { // TODO for now(!) we ignore the header line with the hashed session id
             
-            if((session_line[0] && comparison_line[0]) && strcmp(comparison_line,"endofsession")) {
+            if ((session_line[0] && comparison_line[0]) && strcmp(comparison_line,"endofsession")) {
               verify_errors = compare_session_line(session_line, comparison_line);
               
               switch (verify_errors) {
@@ -1455,7 +1455,7 @@ int main(int argc,char **argv)
   int errors=0;
   int fatals=0;
 
-  for(int i=1;i<argc;i++) {
+  for (int i=1;i<argc;i++) {
     switch (run_test(test_dir,argv[i])) {
       case 0: 
         passes++; 

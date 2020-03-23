@@ -378,7 +378,7 @@ void quick_error(struct kreq *req,int e,const char *msg)
     
     // Display error log as well.
     kjson_stringp_open(&jsonreq, "trace");
-    for(int i = 0; i < error_count; i++) {
+    for (int i = 0; i < error_count; i++) {
       char line[1024];
       snprintf(line, 1024, "%s\n", error_messages[i]);
       kjson_string_puts(&jsonreq, line);
@@ -1149,7 +1149,7 @@ static void fcgi_nextquestion(struct kreq *req)
     kjson_putint(&resp, next_question_count); 
     kjson_arrayp_open(&resp,"next_questions");
     
-    for(int i=0;i<next_question_count;i++) {
+    for (int i=0;i<next_question_count;i++) {
       
       // #269 add a flag indicating id default_value was set: kjson_putstringp() does not check keys and simply appends fields with the same key
       int default_value_flag = 0;
@@ -1163,7 +1163,7 @@ static void fcgi_nextquestion(struct kreq *req)
       // Provide default value if question not previously answered,
       // else provide the most recent deleted answer for this question. #186
       {
-	for(int j=0;j<s->answer_count;j++) {
+	for (int j=0;j<s->answer_count;j++) {
 	  if(!strcmp(s->answers[j]->uid,q[i]->uid)) {
 	    
 	    if (s->answers[j]->flags&ANSWER_DELETED) {
@@ -1229,7 +1229,7 @@ static void fcgi_nextquestion(struct kreq *req)
 	  int len=strlen(q[i]->choices);
 	  
 	  if (len) {
-	    for(int j=0;q[i]->choices[j];) {
+	    for (int j=0;q[i]->choices[j];) {
 	      
 	      char choice[65536];
 	      int cl=0;

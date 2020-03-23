@@ -106,7 +106,7 @@ int main(int argc,char **argv)
       }
 
       printf("%d\n",next_question_count);
-      for(int i=0;i<next_question_count;i++) {
+      for (int i=0;i<next_question_count;i++) {
 	printf("%s\n",q[i]->uid);
       }
       

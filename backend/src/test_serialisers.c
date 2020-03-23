@@ -184,7 +184,7 @@ int main(int argc,char **argv)
     int pass=0;
     int errors=0;
     
-    for(int i=0;qst[i].name;i++) {
+    for (int i=0;qst[i].name;i++) {
       fprintf(stderr,"[     ] %s",qst[i].name); fflush(stderr);
 
       clear_errors();

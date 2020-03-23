@@ -43,7 +43,9 @@ int lock_session(char *session_id)
     if (!session_id) LOG_ERROR("session_id is NULL");
     if (validate_session_id(session_id)) LOG_ERRORV("Session ID '%s' is malformed",session_id);
 
-    for(int i=0;i<4;i++) session_prefix[i]=session_id[i];
+    for (int i=0;i<4;i++) {
+	session_prefix[i]=session_id[i];
+    }
     session_prefix[4]=0;
 
     // Create subdirectory in locks directory if required
@@ -60,7 +62,7 @@ int lock_session(char *session_id)
 
     // See if we already hold a lock to this session
     int i;
-    for(i=0;i<lock_count;i++) {
+    for (i=0;i<lock_count;i++) {
       if (!strcmp(lock_path,locks[i].path)) {
 	  break;
       }
@@ -106,7 +108,7 @@ int release_my_session_locks(void)
 
   do {
     // Release locks and flush lock list
-    for(int i=0;i<lock_count;i++) {
+    for (int i=0;i<lock_count;i++) {
       if (flock(fileno(locks[i].file_handle),LOCK_UN)) LOG_ERRORV("flock('%s',LOCK_UN) failed",locks[i].path);
       
       // #284 close file handle

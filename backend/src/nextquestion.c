@@ -219,7 +219,7 @@ int mark_next_question(struct session *s,struct question *next_questions[],
     if (!uid) LOG_ERROR("question UID is null");
     if ((*next_question_count)>=MAX_QUESTIONS) LOG_ERRORV("Too many questions in list when marking question uid='%s'",uid);
     
-    for(qn=0;qn<s->question_count;qn++) {
+    for (qn=0;qn<s->question_count;qn++) {
       if (!strcmp(s->questions[qn]->uid,uid)) {
 	break;
       }
@@ -227,7 +227,7 @@ int mark_next_question(struct session *s,struct question *next_questions[],
     
     if (qn==s->question_count) LOG_ERRORV("Asked to mark non-existent question UID '%s'",uid);
     
-    for(int j=0;j<(*next_question_count);j++) {
+    for (int j=0;j<(*next_question_count);j++) {
       if (next_questions[j]==s->questions[qn]) {
 	LOG_ERRORV("Duplicate question UID '%s' in list of next questions",uid);
       }
@@ -390,14 +390,14 @@ int call_python_nextquestion(struct session *s,
     PyObject* questions = PyList_New(s->question_count);
     // #227 initialize answer list with the correct length (excluding ANSWER_DELETED)
     int count_given_answers = 0;
-    for(int i=0;i<s->answer_count;i++) {
+    for (int i=0;i<s->answer_count;i++) {
       if (!(s->answers[i]->flags&ANSWER_DELETED)) {
 	count_given_answers++;
       }
     }
     PyObject* answers = PyList_New(count_given_answers);
 
-    for(int i=0;i<s->question_count;i++) {
+    for (int i=0;i<s->question_count;i++) {
       PyObject *item = PyUnicode_FromString(s->questions[i]->uid);
       if (PyList_SetItem(questions,i,item)) {
 	Py_DECREF(item);
@@ -406,7 +406,7 @@ int call_python_nextquestion(struct session *s,
     }
     
     int listIndex = 0; // // #311, PyList increment
-    for(int i=0;i<s->answer_count;i++) {
+    for (int i=0;i<s->answer_count;i++) {
       // Don't include deleted answers in the list fed to Python. #186
       if (!(s->answers[i]->flags&ANSWER_DELETED)) {
 	  PyObject *dict = py_create_answer(s->answers[i]);
@@ -463,7 +463,7 @@ int call_python_nextquestion(struct session *s,
       
       // XXX Go through list adding values
       int list_len=PyList_Size(result);
-      for(int i=0;i<list_len;i++) {
+      for (int i=0;i<list_len;i++) {
 	
 	PyObject *item=PyList_GetItem(result,i);
 	if (PyUnicode_Check(item)) {
@@ -523,9 +523,9 @@ int get_next_questions_generic(struct session *s,
     LOG_INFOV("Calling get_next_questions_generic()",0);
     
     // Check each question to see if it has been answered already
-    for(i=0;i<s->question_count;i++) {
+    for (i=0;i<s->question_count;i++) {
       
-      for(j=0;j<s->answer_count;j++) {
+      for (j=0;j<s->answer_count;j++) {
 	if (!(s->answers[j]->flags&ANSWER_DELETED)) {
 	  if (!strcmp(s->answers[j]->uid,s->questions[i]->uid)) {
 	    break;
@@ -622,7 +622,7 @@ int get_analysis(struct session *s,const char **output)
 
     // Try all three possible function names
     snprintf(function_name,1024,"analyse_%s",s->survey_id);
-    for(int i=0;function_name[i];i++) {
+    for (int i=0;function_name[i];i++) {
       if (function_name[i]=='/') {
 	function_name[i]='_';
       }
@@ -634,7 +634,7 @@ int get_analysis(struct session *s,const char **output)
     if (!myFunction) {
       // Try again without _hash on the end
       snprintf(function_name,1024,"analyse_%s",s->survey_id);      
-      for(int i=0;function_name[i];i++) {
+      for (int i=0;function_name[i];i++) {
 	if (function_name[i]=='/') {
 	  function_name[i]=0;
 	}
@@ -663,14 +663,14 @@ int get_analysis(struct session *s,const char **output)
     PyObject* questions = PyList_New(s->question_count);
     // #227 initialize answer list with the correct length (excluding ANSWER_DELETED)
     int count_given_answers = 0;
-    for(int i=0;i<s->answer_count;i++) {
+    for (int i=0;i<s->answer_count;i++) {
       if (!(s->answers[i]->flags&ANSWER_DELETED)) {
 	count_given_answers++;
       }
     }
     PyObject* answers = PyList_New(count_given_answers);
 
-    for(int i=0;i<s->question_count;i++) {
+    for (int i=0;i<s->question_count;i++) {
       PyObject *item = PyUnicode_FromString(s->questions[i]->uid);
       if (PyList_SetItem(questions,i,item)) {
 	Py_DECREF(item);
@@ -679,7 +679,7 @@ int get_analysis(struct session *s,const char **output)
     }
     
     int listIndex = 0; // #311, PyList increment
-    for(int i=0;i<s->answer_count;i++) {
+    for (int i=0;i<s->answer_count;i++) {
       // Don't include deleted answers in the list fed to Python. #186
       if (!(s->answers[i]->flags&ANSWER_DELETED)) {      
 	PyObject *dict = py_create_answer(s->answers[i]);
