@@ -1212,8 +1212,7 @@ static void fcgi_nextquestion(struct kreq *req)
 	default_value_flag = 1;
       }
       
-      switch (q[i]->type)
-	{
+      switch (q[i]->type) {
 	case QTYPE_MULTICHOICE:
 	case QTYPE_MULTISELECT:
 	// #98 add single checkbox choices
@@ -1264,7 +1263,7 @@ static void fcgi_nextquestion(struct kreq *req)
 	  break;
 	default:
 	  break;
-	} // switch
+      } // switch
 	
       // #72 unit field
       kjson_putstringp(&resp,"unit",q[i]->unit);
