@@ -170,7 +170,7 @@ int deserialise_parse_field(char *in,int *in_offset,char *out)
 
     *in_offset=offset;
     
-  } while(0);
+  } while (0);
   
   return retVal;  
 }
@@ -200,7 +200,7 @@ int deserialise_int(char *field,int *s)
       *s=atoi(field);
     }
     
-  } while(0);
+  } while (0);
   return retVal;
 }
 
@@ -229,7 +229,7 @@ int deserialise_longlong(char *field,long long *s)
       *s=atoll(field);
     }
     
-  } while(0);
+  } while (0);
   return retVal;
 }
 
@@ -384,7 +384,7 @@ int serialise_question(struct question *q,char *out,int max_len)
     // Trim terminal separator character
     SERIALISE_COMPLETE(out,len,max_len);
     
-  } while(0);
+  } while (0);
 
   return retVal;
 }
@@ -416,7 +416,7 @@ int dump_question(FILE *f,char *msg,struct question *q)
     fprintf(f,"  num_choices=%d\n",q->num_choices);
     // #72 unit field
     fprintf(f,"  unit=%s\n",q->unit);
-  } while(0);
+  } while (0);
 
   return retVal;
 }
@@ -446,7 +446,7 @@ int dump_answer(FILE *f, char *msg, struct answer *a)
     fprintf(f, "  unit='%s'\n", temp);
     fprintf(f, "  flags=%d\n", a->flags);
     fprintf(f, "  stored=%lld\n", a->stored);
-  } while(0);
+  } while (0);
 
   return retVal;
 }
@@ -480,7 +480,7 @@ int deserialise_question(char *in,struct question *q)
     // Check that we are at the end of the input string
     DESERIALISE_COMPLETE(out,len,max_len);
     
-  } while(0);
+  } while (0);
 
   return retVal;
 }
@@ -513,7 +513,7 @@ int serialise_answer(struct answer *a,char *out,int max_len)
     
     // Trim terminal separator character
     SERIALISE_COMPLETE(out,len,max_len); 
-  } while(0);
+  } while (0);
 
   return retVal;
 }
@@ -553,7 +553,7 @@ int deserialise_answer(char *in, enum answer_visibility visibility, struct answe
     
     // Check that we are at the end of the input string
     DESERIALISE_COMPLETE(out,len,max_len);
-  } while(0);
+  } while (0);
 
   return retVal;
 }
@@ -589,7 +589,7 @@ int compare_questions(struct question *q1, struct question *q2, int mismatchIsEr
     COMPARE_INT(num_choices);
     // #72 unit field
     COMPARE_STRING(unit);
-  } while(0);
+  } while (0);
   return retVal;
 }
 
@@ -618,6 +618,6 @@ int compare_answers(struct answer *q1, struct answer *q2, int mismatchIsError)
     COMPARE_INT(flags);
     // #162 storage timestamp
     COMPARE_LONGLONG(stored);
-  } while(0);
+  } while (0);
   return retVal;
 }

@@ -71,7 +71,7 @@ void log_python_error()
 	LOG_WARNV("Unable to build traceback Python function (%s) missing!",tb_function);
       }
     } // endif
-  } while(0);
+  } while (0);
 
   (void)retVal;
   return;
@@ -182,7 +182,7 @@ int setup_python()
     }
 
     is_python_started = 1;
-  } while(0);
+  } while (0);
   return retVal;
 }
 
@@ -203,7 +203,7 @@ int end_python(void)
     }
     
     Py_Finalize();
-  } while(0);
+  } while (0);
   return retVal;
 }
 
@@ -235,7 +235,7 @@ int mark_next_question(struct session *s,struct question *next_questions[],
     
     next_questions[*next_question_count]=s->questions[qn];
     (*next_question_count)++;
-  } while(0);
+  } while (0);
   return retVal;
 }
 
@@ -495,7 +495,7 @@ int call_python_nextquestion(struct session *s,
     }
 
     Py_DECREF(result);    
-  } while(0);
+  } while (0);
   
   if (is_error) retVal=-99;
   return retVal;
@@ -550,7 +550,7 @@ int get_next_questions_generic(struct session *s,
       
     } // endfor
     
-  } while(0);
+  } while (0);
   
   return retVal;
 }
@@ -736,7 +736,7 @@ int get_analysis(struct session *s,const char **output)
     }
 
     Py_DECREF(result);    
-  } while(0);
+  } while (0);
   
   if (is_error) {
     retVal=-99;

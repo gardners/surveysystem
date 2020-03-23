@@ -97,7 +97,7 @@ int lock_session(char *session_id)
     if (!locks[lock_count].path) LOG_ERROR("strdup() failed when remembering file lock");
     lock_count++;
     
-  } while(0);
+  } while (0);
 
   return retVal;
 }
@@ -122,7 +122,7 @@ int release_my_session_locks(void)
     lock_count=0;
 
     
-  } while(0);
+  } while (0);
 
   return retVal;
 }

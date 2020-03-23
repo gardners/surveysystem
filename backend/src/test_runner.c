@@ -66,7 +66,7 @@ int fix_ownership(char *dir)
     char cmd[8192];
     snprintf(cmd,8192,"sudo chown -R %s:%s %s\n" , LIGHTY_USER, LIGHTY_GROUP, dir);
     system(cmd);
-  } while(0);
+  } while (0);
   return retVal;
 }
 
@@ -224,7 +224,7 @@ int dump_logs(char *dir,FILE *log)
         char line[4096];
         line[0]=0; fgets(line,4096,f);
         
-        while(line[0]) {
+        while (line[0]) {
           fprintf(log,"%s",line);
           line[0]=0; fgets(line,4096,f);
         }
@@ -276,7 +276,8 @@ int dump_logs(char *dir,FILE *log)
             fprintf(log,"--------- %s ----------\n",curr->fts_accpath);
             char line[8192];
             line[0]=0; fgets(line,8192,in);
-            while(line[0]) {
+            
+            while (line[0]) {
               fprintf(log,"%s",line);
               line[0]=0; fgets(line,8192,in);
             }
@@ -294,7 +295,7 @@ int dump_logs(char *dir,FILE *log)
       fts_close(ftsp);
     }
 
-  } while(0);
+  } while (0);
 
   return retVal;
 
@@ -325,7 +326,7 @@ int compare_session_line(char *session_line, char *comparison_line) {
   char *left = strtok_r(left_line, ":", &left_ptr);
   char *right = strtok_r(right_line, ":", &right_ptr);
   
-  while(right) {
+  while (right) {
     
     // match number of columns: session line too short
     if(!left) {
@@ -461,11 +462,11 @@ int run_test(char *dir, char *test_file)
     // Now iterate through test script
     line[0]=0; fgets(line,8192,in);
     
-    while(line[0]) {
+    while (line[0]) {
       
       int len=strlen(line);
       // Trim CR/LF from the end of the line
-      while(len&&(line[len-1]<' ')) {
+      while (len&&(line[len-1]<' ')) {
         line[--len]=0;
       }
 
@@ -511,10 +512,10 @@ int run_test(char *dir, char *test_file)
         
         line[0]=0; fgets(line,8192,in);
         
-        while(line[0]) {
+        while (line[0]) {
           int len=strlen(line);
           // Trim CR/LF from the end of the line
-          while(len&&(line[len-1]<' ')) {
+          while (len&&(line[len-1]<' ')) {
             line[--len]=0;
           }
 
@@ -574,10 +575,10 @@ int run_test(char *dir, char *test_file)
         
         // write python content from testfile
         line[0] = 0; fgets(line, 8192, in);
-        while(line[0]) {
+        while (line[0]) {
           int len = strlen(line);
           // Trim CR/LF from the end of the line
-          while(len && (line[len - 1] < ' ')) {
+          while (len && (line[len - 1] < ' ')) {
             line[--len] = 0;
           }
           
@@ -896,7 +897,7 @@ int run_test(char *dir, char *test_file)
           while (line[0]) {
             int len=strlen(line);
             // Trim CR/LF from the end of the line
-            while(len&&(line[len-1]<' ')) {
+            while (len&&(line[len-1]<' ')) {
               line[--len]=0;
             }
             fprintf(log,"::: %s\n",line);
@@ -931,7 +932,7 @@ int run_test(char *dir, char *test_file)
           while (line[0]) {
             int len=strlen(line);
             // Trim CR/LF from the end of the line
-            while(len&&(line[len-1]<' ')) line[--len]=0;
+            while (len&&(line[len-1]<' ')) line[--len]=0;
 
             sscanf(line,"HTTPRESULT=%d",&httpcode);
 
@@ -1009,7 +1010,7 @@ int run_test(char *dir, char *test_file)
         int verify_errors=0;
         int verify_line=0;
         
-        while(1) {
+        while (1) {
           
           tdelta=gettime_us()-start_time; tdelta/=1000;
           if (comparison_line[0]&&strcmp(comparison_line,"endofsession")) {
@@ -1340,7 +1341,7 @@ int configure_and_start_lighttpd(char *test_dir, int silent_flag)
     }
     
     int v=0;
-    while((v=system(cmd))!=0) {
+    while ((v=system(cmd))!=0) {
       if (!silent_flag) {
         fprintf(stderr,"cmd returned code %d\n",v);
       }

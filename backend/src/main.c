@@ -156,7 +156,7 @@ int main(int argc,char **argv)
       retVal=-1; 
       break; 
     }
-  } while(0);
+  } while (0);
 
   if (retVal) {
     fprintf(stderr,"Command failed:\n");

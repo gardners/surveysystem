@@ -62,7 +62,7 @@ int log_message(const char *file,const char *function,const int line,char *forma
     }
     fclose(lf);
     
-  } while(0);
+  } while (0);
 
   log_recursed--;
   return retVal;

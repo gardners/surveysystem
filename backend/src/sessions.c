@@ -56,7 +56,7 @@ int validate_session_id(char *session_id)
       } // endswitch
       
     }// endfor
-  } while(0);
+  } while (0);
   return retVal;
 }
 
@@ -88,7 +88,7 @@ int validate_survey_id(char *survey_id)
       }// endswitch
       
     }// endfor
-  } while(0);
+  } while (0);
   return retVal;
 }
 
@@ -197,7 +197,7 @@ int random_session_id(char *session_id_out)
          getpid()&0xffff,
          hash[0],hash[1],hash[2],hash[3],hash[4],hash[5]);
 
-  } while(0);
+  } while (0);
   return retVal;
 }
 
@@ -292,7 +292,7 @@ int create_session(char *survey_id,char *session_id_out)
 	if (retVal) {
 	  break;
 	}
-      } while(count>0);
+      } while (count>0);
 
       fclose(in);
       fclose(c);
@@ -354,7 +354,7 @@ int create_session(char *survey_id,char *session_id_out)
 
     LOG_INFOV("Created new session file '%s' for survey '%s'",session_path,survey_id);
 
-  } while(0);
+  } while (0);
 
   return retVal;
 }
@@ -388,7 +388,7 @@ int delete_session(char *session_id)
     
     if (unlink(session_path)) LOG_ERRORV("unlink('%s') failed",session_path);
     LOG_INFOV("Deleted session '%s'.",session_path);
-  } while(0);
+  } while (0);
 
   return retVal;
 }
@@ -580,11 +580,11 @@ int load_survey_questions(struct session *ses)
 	ses->questions[ses->question_count++]=q;
       }
       
-    } while(line[0]);
+    } while (line[0]);
 
     fclose(f); 
     f=NULL;
-  } while(0);
+  } while (0);
   
   if (f) {
     fclose(f);
@@ -688,7 +688,7 @@ struct session *load_session(char *session_id)
       if (deserialise_answer(line, ANSWER_FIELDS_PROTECTED, ses->answers[ses->answer_count])) LOG_ERRORV("Failed to deserialise answer '%s' from session file '%s'",line,session_path);
       ses->answer_count++;
 
-    } while(line[0]);
+    } while (line[0]);
     
     if (retVal) { 
       fclose(s); 
@@ -700,7 +700,7 @@ struct session *load_session(char *session_id)
 
     fclose(s);
 
-  } while(0);
+  } while (0);
   
   if (retVal) {
     ses=NULL;
@@ -801,7 +801,7 @@ struct answer *copy_answer(struct answer *aa)
 	LOG_ERROR("Could not copy a->unit"); 
       } 
     }
-  } while(0);
+  } while (0);
   
   if (retVal) {
     
@@ -876,7 +876,7 @@ int session_add_answer(struct session *ses,struct answer *a)
     serialise_answer(a,serialised_answer,65536);
     LOG_INFOV("Added to session '%s' answer '%s'.",ses->session_id,serialised_answer);
 
-  } while(0);
+  } while (0);
   return retVal;
 }
 
@@ -927,7 +927,7 @@ int session_delete_answers_by_question_uid(struct session *ses,char *uid, int de
     if (!retVal) {
       retVal=deletions;
     }
-  } while(0);
+  } while (0);
   return retVal;
 }
 
@@ -981,7 +981,7 @@ int session_delete_answer(struct session *ses,struct answer *a, int deleteFollow
     if (!retVal) {
       retVal=deletions;
     }
-  } while(0);
+  } while (0);
   
   return retVal;
 }

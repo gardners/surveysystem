@@ -376,7 +376,7 @@ int sha1_file(const char *filename,char *hash)
       count=fread(buffer,1,8192,f);
       if (count<0) LOG_ERROR("Error hashing file",filename);
       if (count>0) sha1_write(&s,buffer,count);
-    } while(count>0);
+    } while (count>0);
     
     fclose(f);
 

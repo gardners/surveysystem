@@ -59,7 +59,7 @@ int remember_error(const char *severity,const char *file,const int line, const c
     // Also record the error into the general log
     LOG_INFOV("%s : %s",severity,message);
 
-  } while(0);
+  } while (0);
     
   return retVal;
 }

@@ -39,7 +39,7 @@ int kvalid_surveyid(struct kpair *kp) {
     
     // Is okay
     kp->parsed.s = kp->val;
-  } while(0);
+  } while (0);
   
   if (retVal) { 
     retVal=0; 
@@ -70,7 +70,7 @@ int kvalid_sessionid(struct kpair *kp)
     if (validate_session_id(kp->val)) {
       LOG_ERROR("validate_session_id failed");
     }
-  } while(0);
+  } while (0);
 
   if (retVal) { 
     retVal=0; 
@@ -104,7 +104,7 @@ int kvalid_questionid(struct kpair *kp)
     } else  {
       LOG_ERROR("questionid is not a valid string");
     }
-  } while(0);
+  } while (0);
  
   if (retVal) { 
     retVal=0; 
@@ -148,7 +148,7 @@ int kvalid_answer(struct kpair *kp) {
       free_answer(a);
       // Success, so nothing to do
     }
-  } while(0);
+  } while (0);
 
   LOG_WARNV("retVal=%d",retVal);
   
@@ -325,7 +325,7 @@ int main(int argc,char **argv)
     CHECKPOINT();
     
       
-  } while(0);
+  } while (0);
 
   if (retVal) {
     fprintf(stderr,"Survey FASTCGI service failed:\n");
@@ -388,7 +388,7 @@ void quick_error(struct kreq *req,int e,const char *msg)
     kjson_obj_close(&jsonreq); 
     kjson_close(&jsonreq);
     
-  } while(0);
+  } while (0);
 
   (void)retVal;
   return;
@@ -429,7 +429,7 @@ void begin_200(struct kreq *req)
       break;
     }
 
-  } while(0);
+  } while (0);
 }
 
 void begin_500(struct kreq *req)
@@ -467,7 +467,7 @@ void begin_500(struct kreq *req)
       break;
     }
         
-  } while(0);
+  } while (0);
 }
 
 static void fcgi_newsession(struct kreq *req)
@@ -522,7 +522,7 @@ static void fcgi_newsession(struct kreq *req)
     if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
     LOG_INFO("Leaving page handler");
     
-  } while(0);
+  } while (0);
 
   (void)retVal;
   return;
@@ -618,7 +618,7 @@ static void fcgi_addanswer(struct kreq *req)
     fcgi_nextquestion(req);
     LOG_INFO("Leaving page handler.");
     
-  } while(0);
+  } while (0);
 
   (void)retVal;
   return;
@@ -730,7 +730,7 @@ static void fcgi_updateanswer(struct kreq *req)
     fcgi_nextquestion(req);
     LOG_INFO("Leaving page handler.");
     
-  } while(0);
+  } while (0);
 
   (void)retVal;
   return; 
@@ -863,7 +863,7 @@ static void fcgi_delanswer(struct kreq *req)
     fcgi_nextquestion(req);
     LOG_INFO("Leaving page handler.");
     
-  } while(0);
+  } while (0);
 
   (void)retVal;
   return;   
@@ -996,7 +996,7 @@ static void fcgi_delanswerandfollowing(struct kreq *req)
     fcgi_nextquestion(req);
     LOG_INFO("Leaving page handler.");
     
-  } while(0);
+  } while (0);
 
   (void)retVal;
   return;   
@@ -1079,7 +1079,7 @@ static void fcgi_delsession(struct kreq *req)
     if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
     LOG_INFO("Leaving page handler");
     
-  } while(0);
+  } while (0);
 
   (void)retVal;
   return;  
@@ -1234,10 +1234,10 @@ static void fcgi_nextquestion(struct kreq *req)
 	      char choice[65536];
 	      int cl=0;
 	      choice[0]=0;
-	      while(
-		    ((j+cl)<len)
-		    &&q[i]->choices[j+cl]
-		    &&(q[i]->choices[j+cl]!=',')
+	      while (
+          ((j+cl)<len)
+          &&q[i]->choices[j+cl]
+          &&(q[i]->choices[j+cl]!=',')
 		    )
 		{
 		  if (cl<65535) {
@@ -1277,7 +1277,7 @@ static void fcgi_nextquestion(struct kreq *req)
 
     LOG_INFO("Leaving page handler.");
     
-  } while(0);
+  } while (0);
 
   (void)retVal;
   
@@ -1524,7 +1524,7 @@ static void fcgi_analyse(struct kreq *req)
     
     if (er!=KCGI_OK) LOG_ERROR("khttp_puts() failed");
     LOG_INFO("Leaving page handler");
-  } while(0);
+  } while (0);
 
   (void)retVal;
   
