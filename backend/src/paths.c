@@ -20,7 +20,7 @@ int generate_path(char *path_in,char *path_out,int max_len)
 
     int l=snprintf(path_out,max_len,"%s/%s",survey_home,path_in);
     if (l<1||l>=max_len) LOG_ERROR("snprintf() failed");
-  } while(0);
+  } while (0);
   return retVal;
 }
 
@@ -53,7 +53,7 @@ int generate_python_path(char *path_out, int max_len)
     
     LOG_INFOV("generated python path: '%s'", path_out);
     
-  } while(0);
+  } while (0);
   return retVal;
 }
 

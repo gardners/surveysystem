@@ -18,21 +18,23 @@ void clear_errors(void)
 
 void dump_errors(FILE *f)
 {
-  if (instrumentation_muted) return;
-  for(int i=0;i<error_count;i++)
-    {
-
-      fprintf(f,"   %s\n",error_messages[i]);	     
-    }
+  if (instrumentation_muted) {
+    return;
+  }
+  
+  for(int i=0;i<error_count;i++) {
+    fprintf(f,"   %s\n",error_messages[i]);	     
+  }
   return;
 }
 
 int remember_error(const char *severity,const char *file,const int line, const char *function,const char *format,...)
 {
-  if (instrumentation_muted) return 0;
-
+  if (instrumentation_muted) {
+    return 0;
+  }
+  
   char message[65536];
-
   int retVal=0;
 
   do {
@@ -57,7 +59,7 @@ int remember_error(const char *severity,const char *file,const int line, const c
     // Also record the error into the general log
     LOG_INFOV("%s : %s",severity,message);
 
-  } while(0);
+  } while (0);
     
   return retVal;
 }

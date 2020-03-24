@@ -19,10 +19,14 @@ wchar_t *as_wchar(const char *s)
   do {
     if (strlen(s)>=(MAX_WLEN-1)) LOG_ERRORV("String too long '%s', should be < %d characters",s,MAX_WLEN);
     size_t result=mbstowcs(as_wchar_out,s,MAX_WLEN-1);
-    if (result<0) LOG_ERRORV("mbstowcs('%s') failed",s);
+    if (result == (size_t) - 1) LOG_ERRORV("mbstowcs('%s') failed",s);
   } while (0);
-  if (retVal) return NULL;
-  else return as_wchar_out;
+  
+  if (retVal) {
+    return NULL;
+  }
+  
+  return as_wchar_out;
 }
 
 int is_python_started=0;
@@ -48,13 +52,16 @@ void log_python_error()
       // Another way to do this might be to create a Python CustomError class with a traceback string injected into the message.
       // However, this would only work if the CustomError is deliberately raised. This method might seem like an overhead but provides tracebacks for any exception type.
       // todo: enable/disable this via a debug flag
-      if(!nq_python_module) break;
+      if(!nq_python_module) {
+	break;
+      }
       PyObject* callable = PyObject_GetAttrString(nq_python_module,tb_function);
       
       if(callable) {
 	PyObject* args = PyTuple_Pack(3,ptype,pvalue,ptraceback);
 	PyObject* result = PyObject_CallObject(callable, args);
 	Py_DECREF(args);
+	
 	if (!result) {
 	  LOG_WARNV("Could not build Python error traceback with function (%s)",tb_function);
 	} else {
@@ -63,8 +70,8 @@ void log_python_error()
       } else {
 	LOG_WARNV("Unable to build traceback Python function (%s) missing!",tb_function);
       }
-    }
-  } while(0);
+    } // endif
+  } while (0);
 
   (void)retVal;
   return;
@@ -101,11 +108,10 @@ int setup_python()
       // Add python directory to python's search path
       if (!strstr(syspath, append_cmd)) {
 	PyObject *sys_path = PySys_GetObject("path");
-	if (PyList_Append(sys_path, PyUnicode_FromString(append_cmd)))
-	  {
-	    log_python_error();
-	    LOG_ERRORV("Failed to setup python search path using \"%s\"", append_cmd);
-	  }
+	if (PyList_Append(sys_path, PyUnicode_FromString(append_cmd))) {
+	  log_python_error();
+	  LOG_ERRORV("Failed to setup python search path using \"%s\"", append_cmd);
+	}
       } else {
 	LOG_WARNV("Python sys.path already contains '%s'", append_cmd);
       }
@@ -128,7 +134,9 @@ int setup_python()
 	log_python_error();
 	PyErr_Clear();
 	LOG_ERRORV("'import nextquestion' failed.",0);
-      } else LOG_INFOV("import command '%s' appparently succeeded (result = %d).",append_cmd,res);
+      } else {
+	LOG_INFOV("import command '%s' appparently succeeded (result = %d).",append_cmd,res);
+      }
 
       PyObject *module_name_o= PyUnicode_FromString(append_cmd);
       nq_python_module=PyImport_GetModule(module_name_o);
@@ -142,6 +150,7 @@ int setup_python()
       if (generate_python_path(python_file, 8192)) {
 	LOG_ERRORV("Failed to generate python search path using \"%s\"", python_file);
       }
+      
       FILE *f=fopen(python_file,"r");
       if (f) {
 	char python_code[1048576]="";
@@ -152,15 +161,19 @@ int setup_python()
 	}
 	
 	fclose(f);
-      } else LOG_ERRORV("Could not open python file '%s' for reading",python_file);
+      } else {
+	LOG_ERRORV("Could not open python file '%s' for reading",python_file);
+      }
 
       module_name_o= PyUnicode_FromString("__main__");
       nq_python_module=PyImport_GetModule(module_name_o);
       if (!nq_python_module) {
 	log_python_error();
 	LOG_WARNV("Using PyImport_GetModule() didn't work either", 0);
-      } else LOG_WARNV("Using module __main__ with manually loaded python functions instead of import nextquestion.", 0);
-
+      } else {
+	LOG_WARNV("Using module __main__ with manually loaded python functions instead of import nextquestion.", 0);
+      }
+      
     }
     
     if (!nq_python_module) {
@@ -169,7 +182,7 @@ int setup_python()
     }
 
     is_python_started = 1;
-  } while(0);
+  } while (0);
   return retVal;
 }
 
@@ -177,15 +190,20 @@ int end_python(void)
 {
   int retVal=0;
   do {
-    if (!is_python_started) break;
+    if (!is_python_started) {
+      break;
+    }
 
     fprintf(stderr,"STOPPING python\n");
 
     // Free any python objects we have hanging about
-    if (nq_python_module) Py_DECREF(nq_python_module); nq_python_module = NULL;
+    if (nq_python_module) {
+       Py_DECREF(nq_python_module); 
+       nq_python_module = NULL;
+    }
     
     Py_Finalize();
-  } while(0);
+  } while (0);
   return retVal;
 }
 
@@ -201,15 +219,23 @@ int mark_next_question(struct session *s,struct question *next_questions[],
     if (!uid) LOG_ERROR("question UID is null");
     if ((*next_question_count)>=MAX_QUESTIONS) LOG_ERRORV("Too many questions in list when marking question uid='%s'",uid);
     
-    for(qn=0;qn<s->question_count;qn++)
-      if (!strcmp(s->questions[qn]->uid,uid)) break;
+    for (qn=0;qn<s->question_count;qn++) {
+      if (!strcmp(s->questions[qn]->uid,uid)) {
+	break;
+      }
+    }
+    
     if (qn==s->question_count) LOG_ERRORV("Asked to mark non-existent question UID '%s'",uid);
-    for(int j=0;j<(*next_question_count);j++)
-      if (next_questions[j]==s->questions[qn])
+    
+    for (int j=0;j<(*next_question_count);j++) {
+      if (next_questions[j]==s->questions[qn]) {
 	LOG_ERRORV("Duplicate question UID '%s' in list of next questions",uid);
+      }
+    }
+    
     next_questions[*next_question_count]=s->questions[qn];
     (*next_question_count)++;
-  } while(0);
+  } while (0);
   return retVal;
 }
 
@@ -218,16 +244,19 @@ void log_python_object(char *msg,PyObject *result)
   char fname[1024];
   snprintf(fname,1024,"/tmp/pyobj.%d.txt",getpid());
   FILE *f=fopen(fname,"w");
+  
   if (f) {
     PyObject_Print(result, f, 0);
     fclose(f);
     f=fopen(fname,"r");	
     char buffer[8192]="";
+    
     if (f) {
       int bytes=fread(buffer,1,8192,f);
       (void)bytes;
       fclose(f);
     }
+    
     if (buffer[0]) LOG_INFOV("%s = %s",msg,buffer);
   }
 }
@@ -296,6 +325,7 @@ int call_python_nextquestion(struct session *s,
 {
   int retVal=0;
   int is_error=0;
+  
   do {
     if (!s) LOG_ERROR("session structure is NULL");
     if (!next_questions) LOG_ERROR("next_questions is null");
@@ -319,7 +349,11 @@ int call_python_nextquestion(struct session *s,
 
     // Try all three possible function names
     snprintf(function_name,1024,"nextquestion_%s",s->survey_id);
-    for(int i=0;function_name[i];i++) if (function_name[i]=='/') function_name[i]='_';
+    for (int i=0;function_name[i];i++) {
+      if (function_name[i]=='/') {
+	function_name[i]='_';
+      }
+    }
     LOG_INFOV("Searching for python function '%s'",function_name);
 
     PyObject* myFunction = PyObject_GetAttrString(nq_python_module,function_name);
@@ -327,10 +361,15 @@ int call_python_nextquestion(struct session *s,
     if (!myFunction) {
       // Try again without _hash on the end
       snprintf(function_name,1024,"nextquestion_%s",s->survey_id);      
-      for(int i=0;function_name[i];i++) if (function_name[i]=='/') function_name[i]=0;
+      for(int i=0;function_name[i];i++) {
+	if (function_name[i]=='/') {
+	  function_name[i]=0;
+	}
+      }
       LOG_INFOV("Searching for python function '%s'",function_name);
       myFunction = PyObject_GetAttrString(nq_python_module,function_name);      
     }
+    
     if (!myFunction) {
       snprintf(function_name,1024,"nextquestion");
       LOG_INFOV("Searching for python function '%s'",function_name);
@@ -351,14 +390,14 @@ int call_python_nextquestion(struct session *s,
     PyObject* questions = PyList_New(s->question_count);
     // #227 initialize answer list with the correct length (excluding ANSWER_DELETED)
     int count_given_answers = 0;
-    for(int i=0;i<s->answer_count;i++) {
+    for (int i=0;i<s->answer_count;i++) {
       if (!(s->answers[i]->flags&ANSWER_DELETED)) {
 	count_given_answers++;
       }
     }
     PyObject* answers = PyList_New(count_given_answers);
 
-    for(int i=0;i<s->question_count;i++) {
+    for (int i=0;i<s->question_count;i++) {
       PyObject *item = PyUnicode_FromString(s->questions[i]->uid);
       if (PyList_SetItem(questions,i,item)) {
 	Py_DECREF(item);
@@ -367,7 +406,7 @@ int call_python_nextquestion(struct session *s,
     }
     
     int listIndex = 0; // // #311, PyList increment
-    for(int i=0;i<s->answer_count;i++) {
+    for (int i=0;i<s->answer_count;i++) {
       // Don't include deleted answers in the list fed to Python. #186
       if (!(s->answers[i]->flags&ANSWER_DELETED)) {
 	  PyObject *dict = py_create_answer(s->answers[i]);
@@ -391,7 +430,7 @@ int call_python_nextquestion(struct session *s,
     PyObject* result = PyObject_CallObject(myFunction, args);
     Py_DECREF(args);
     
-    if(PyErr_Occurred()) {
+    if (PyErr_Occurred()) {
       is_error=1;
       log_python_error();
       LOG_ERRORV("Python function '%s' exited with an Error (PyErr_Occurred()). Check the backtrace and error messages above, in case they give you any clues.)",function_name);
@@ -405,6 +444,7 @@ int call_python_nextquestion(struct session *s,
     }
     // PyObject_Print(result,stderr,0);
     if (PyUnicode_Check(result)) {
+      
       // Get value and put it as single response
       const char *question = PyUnicode_AsUTF8(result);
       if (!question) {
@@ -412,15 +452,19 @@ int call_python_nextquestion(struct session *s,
 	Py_DECREF(result);
 	LOG_ERRORV("String in reply from Python function '%s' is null",function_name);
       }
+      
       if (mark_next_question(s,next_questions,next_question_count,question)) {
 	is_error=1;
 	Py_DECREF(result);
 	LOG_ERRORV("Error adding question '%s' to list of next questions.  Is it a valid question UID?",question);
       }
+      
     } else if (PyList_Check(result)) {
+      
       // XXX Go through list adding values
       int list_len=PyList_Size(result);
-      for(int i=0;i<list_len;i++) {
+      for (int i=0;i<list_len;i++) {
+	
 	PyObject *item=PyList_GetItem(result,i);
 	if (PyUnicode_Check(item)) {
 	  // Get value and put it as single response
@@ -430,6 +474,7 @@ int call_python_nextquestion(struct session *s,
 	    Py_DECREF(result);
 	    LOG_ERRORV("String in reply from Python function '%s' is null",function_name);
 	  }
+	  
 	  if (mark_next_question(s,next_questions,next_question_count,question)) {
 	    is_error=1;
 	    Py_DECREF(result);
@@ -439,7 +484,9 @@ int call_python_nextquestion(struct session *s,
 	  Py_DECREF(result);    
 	  LOG_ERRORV("List item is not a string in response from Python function '%s'",function_name);
 	}
-      }
+	
+      }// endfor
+      
     } else {
       log_python_object("Return value",result);
 
@@ -448,7 +495,8 @@ int call_python_nextquestion(struct session *s,
     }
 
     Py_DECREF(result);    
-  } while(0);
+  } while (0);
+  
   if (is_error) retVal=-99;
   return retVal;
 }
@@ -475,33 +523,36 @@ int get_next_questions_generic(struct session *s,
     LOG_INFOV("Calling get_next_questions_generic()",0);
     
     // Check each question to see if it has been answered already
-    for(i=0;i<s->question_count;i++)
-	{
-	  for(j=0;j<s->answer_count;j++)
-	    if (!(s->answers[j]->flags&ANSWER_DELETED))
-	      if (!strcmp(s->answers[j]->uid,s->questions[i]->uid)) break;
-	  // LOG_INFOV("Answer to question %d is answer %d/%d",i,j,s->answer_count);
-	  if (j<s->answer_count) {
-	    LOG_INFOV("Answer to question %d exists.",i);
-	    continue;
-	  }
-	  else {
-	    if ((*next_question_count)<max_next_questions) {
-	      next_questions[*next_question_count]=s->questions[i];
-	      (*next_question_count)++;
-	      LOG_INFOV("Need answer to question %d.",i);
-	      
-	      // XXX - For now, just return exactly the first unanswered question
-	      break;
-	      
-	    }
+    for (i=0;i<s->question_count;i++) {
+      
+      for (j=0;j<s->answer_count;j++) {
+	if (!(s->answers[j]->flags&ANSWER_DELETED)) {
+	  if (!strcmp(s->answers[j]->uid,s->questions[i]->uid)) {
+	    break;
 	  }
 	}
+      }
+
+      if (j<s->answer_count) {
+	LOG_INFOV("Answer to question %d exists.",i);
+	continue;
+      } else {
+	if ((*next_question_count)<max_next_questions) {
+	  next_questions[*next_question_count]=s->questions[i];
+	  (*next_question_count)++;
+	  LOG_INFOV("Need answer to question %d.",i);
+	  
+	  // XXX - For now, just return exactly the first unanswered question
+	  break;
+	  
+	}
+      } // endif
+      
+    } // endfor
     
-  } while(0);
+  } while (0);
   
   return retVal;
-  
 }
 
 int get_next_questions(struct session *s,
@@ -520,9 +571,15 @@ int get_next_questions(struct session *s,
     if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_PYTHON) {
       LOG_INFO("NEXTQUESTIONS_FLAG_PYTHON set, calling call_python_nextquestion())");
       int r=call_python_nextquestion(s,next_questions,max_next_questions,next_question_count);
-      if (r==-99) { retVal=-1; break; }
-      if (!r) { retVal=0; break; }
+      
+      if (r==-99) { 
+	retVal=-1; break; 
+      }
+      if (!r) { 
+	retVal=0; break; 
+      }
     }
+    
     // PGS: Disabled generic implementation of nextquestion, since if you have a python version and it can't be loaded
     // for some reason we should NOT fall back, because it may expose questions and IP in a survey that should not be revealed. 
     if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_GENERIC) {
@@ -565,7 +622,11 @@ int get_analysis(struct session *s,const char **output)
 
     // Try all three possible function names
     snprintf(function_name,1024,"analyse_%s",s->survey_id);
-    for(int i=0;function_name[i];i++) if (function_name[i]=='/') function_name[i]='_';
+    for (int i=0;function_name[i];i++) {
+      if (function_name[i]=='/') {
+	function_name[i]='_';
+      }
+    }
     LOG_INFOV("Searching for python function '%s'",function_name);
 
     PyObject* myFunction = PyObject_GetAttrString(nq_python_module,function_name);
@@ -573,10 +634,15 @@ int get_analysis(struct session *s,const char **output)
     if (!myFunction) {
       // Try again without _hash on the end
       snprintf(function_name,1024,"analyse_%s",s->survey_id);      
-      for(int i=0;function_name[i];i++) if (function_name[i]=='/') function_name[i]=0;
+      for (int i=0;function_name[i];i++) {
+	if (function_name[i]=='/') {
+	  function_name[i]=0;
+	}
+      }
       LOG_INFOV("Searching for python function '%s'",function_name);
       myFunction = PyObject_GetAttrString(nq_python_module,function_name);      
     }
+    
     if (!myFunction) {
       snprintf(function_name,1024,"analyse");
       LOG_INFOV("Searching for python function '%s'",function_name);
@@ -597,14 +663,14 @@ int get_analysis(struct session *s,const char **output)
     PyObject* questions = PyList_New(s->question_count);
     // #227 initialize answer list with the correct length (excluding ANSWER_DELETED)
     int count_given_answers = 0;
-    for(int i=0;i<s->answer_count;i++) {
+    for (int i=0;i<s->answer_count;i++) {
       if (!(s->answers[i]->flags&ANSWER_DELETED)) {
 	count_given_answers++;
       }
     }
     PyObject* answers = PyList_New(count_given_answers);
 
-    for(int i=0;i<s->question_count;i++) {
+    for (int i=0;i<s->question_count;i++) {
       PyObject *item = PyUnicode_FromString(s->questions[i]->uid);
       if (PyList_SetItem(questions,i,item)) {
 	Py_DECREF(item);
@@ -613,25 +679,24 @@ int get_analysis(struct session *s,const char **output)
     }
     
     int listIndex = 0; // #311, PyList increment
-    for(int i=0;i<s->answer_count;i++)
+    for (int i=0;i<s->answer_count;i++) {
       // Don't include deleted answers in the list fed to Python. #186
-      if (!(s->answers[i]->flags&ANSWER_DELETED))
-	{      
-	  PyObject *dict = py_create_answer(s->answers[i]);
-	  
-	  if (!dict) {
-	    LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.",s->answers[i]->uid);
-	  }
-	  
-	  if (PyList_SetItem(answers,listIndex,dict)) {
-	    Py_DECREF(dict);
-	    LOG_ERRORV("Error inserting answer name '%s' into Python list",s->answers[i]->uid); 
-	  }
-	  listIndex++;
+      if (!(s->answers[i]->flags&ANSWER_DELETED)) {      
+	PyObject *dict = py_create_answer(s->answers[i]);
+	
+	if (!dict) {
+	  LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.",s->answers[i]->uid);
 	}
+	
+	if (PyList_SetItem(answers,listIndex,dict)) {
+	  Py_DECREF(dict);
+	  LOG_ERRORV("Error inserting answer name '%s' into Python list",s->answers[i]->uid); 
+	}
+	listIndex++;
+      }
+    }
     
     PyObject* args = PyTuple_Pack(2,questions,answers);
-    
     PyObject* result = PyObject_CallObject(myFunction, args);
     Py_DECREF(args);
 
@@ -647,6 +712,7 @@ int get_analysis(struct session *s,const char **output)
       log_python_error();
       LOG_ERRORV("Python function '%s' did not return anything (does it have the correct arguments defined? If not, this can happen. Check the backtrace and error messages above, in case they give you any clues.)",function_name);
     }
+    
     // PyObject_Print(result,stderr,0);
     if (PyUnicode_Check(result)) {
       
@@ -660,6 +726,7 @@ int get_analysis(struct session *s,const char **output)
 	Py_DECREF(result);
 	LOG_ERRORV("String in reply from Python function '%s' is null",function_name);
       }
+      
       // #288, allocate dedicated memory, managed by backend and write string
       *output=strndup(return_string, (size_t)size);
       // TODO should issues occur then consider hard-setting a \0 token at the last position of *output
@@ -669,7 +736,10 @@ int get_analysis(struct session *s,const char **output)
     }
 
     Py_DECREF(result);    
-  } while(0);
-  if (is_error) retVal=-99;
+  } while (0);
+  
+  if (is_error) {
+    retVal=-99;
+  }
   return retVal;
 }

@@ -158,11 +158,11 @@ struct question_serialiser_test qst[]={
     "<div>What is the answer to life, the universe and everything?</div>",
     QTYPE_INT,0,"42",0,100,0,-1,"",""}},  
 
-  {"numchoices should match number of colon separated items in choices field",SHOULD_FAIL,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
+  {"numchoices should match number of colon separated items in choices field",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
    "dummyuid:"
    "\\\\\r\n\t\\:What is the answer to life, the universe and everything?:"
    "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:100:0:1:this,that:",
+   "MULTICHOICE:0:42:0:100:0:1:this,that:",
    {"dummyuid",
     "\\\r\n\t:What is the answer to life, the universe and everything?",
     "<div>What is the answer to life, the universe and everything?</div>",
@@ -175,23 +175,7 @@ struct question_serialiser_test qst[]={
 int main(int argc,char **argv)
 {
   int retVal=0;
-    fprintf(stderr,"=> deserialise START\n");
-    struct answer *a=calloc(sizeof(struct answer),1);
-    char *in = "SnoringLoudness:Don%27t%20know:0:0:0:0:0:0:0:";
-    fprintf(stderr,"%s\n", in);
-    int ret = deserialise_answer(in, ANSWER_FIELDS_PUBLIC, a);
-    
-    fprintf(stderr,"ret: %d\n", ret);
-    
-    if (!ret) {
-      dump_answer(stderr, "answer:", a);
-    } else{
-      fprintf(stderr,"ERROR deserialise_answer(public)\n");
-    }
-    
-    free_answer(a);
-    fprintf(stderr,"=> deserialise END\n");
-    exit(0);
+
   do {
     
     setenv("SURVEY_HOME", ".", 0);
@@ -200,7 +184,7 @@ int main(int argc,char **argv)
     int pass=0;
     int errors=0;
     
-    for(int i=0;qst[i].name;i++) {
+    for (int i=0;qst[i].name;i++) {
       fprintf(stderr,"[     ] %s",qst[i].name); fflush(stderr);
 
       clear_errors();
@@ -212,21 +196,20 @@ int main(int argc,char **argv)
 	struct question d;
 	bzero(&d,sizeof(struct question));
 	int deserialise_result=deserialise_question(qst[i].serialised,&d);
+	
 	if (deserialise_result&&qst[i].shouldPassP) {
 	  // Deserialisation failed when it should have succeeded.
 	  fprintf(stderr,"\r[FAIL \n  FAIL: serialised string triggered an error during deserialisate\n");
 	    fprintf(stderr,"Internal error log:\n");
 	  dump_errors(stderr);
 	  fail++;
-	}
-	else if ((!deserialise_result)&&(!qst[i].shouldPassP)) {
+	} else if ((!deserialise_result)&&(!qst[i].shouldPassP)) {
 	  // Deserialiation passed when it should have failed.
 	  fprintf(stderr,"\r[FAIL \n  FAIL: invalid serialised string did not trigger an error during deserialisation\n");
 	    fprintf(stderr,"Internal error log:\n");
 	  dump_errors(stderr);
 	  fail++;
-	}
-	else if ((!deserialise_result)&&qst[i].shouldPassP) {
+	} else if ((!deserialise_result)&&qst[i].shouldPassP) {
 	  // Deserialised successfully, so make sure the field values
 	  // all match
 	  if (compare_questions(&d,&qst[i].question,MISMATCH_IS_AN_ERROR)) {
@@ -240,8 +223,7 @@ int main(int argc,char **argv)
 	    fprintf(stderr,"\r[PASS \n");
 	    pass++;
 	  }
-	}
-	else if ((deserialise_result)&&(!qst[i].shouldPassP)) {
+	} else if ((deserialise_result)&&(!qst[i].shouldPassP)) {
 	  fprintf(stderr,"\r[PASS \n");
 	  pass++;
 	} else {
@@ -249,6 +231,7 @@ int main(int argc,char **argv)
 		  deserialise_result,qst[i].shouldPassP);
 	  errors++;
 	}
+	
       }
     }
 

@@ -41,10 +41,11 @@ int lock_session(char *session_id)
     char lock_path[1024];
 
     if (!session_id) LOG_ERROR("session_id is NULL");
-
     if (validate_session_id(session_id)) LOG_ERRORV("Session ID '%s' is malformed",session_id);
 
-    for(int i=0;i<4;i++) session_prefix[i]=session_id[i];
+    for (int i=0;i<4;i++) {
+	session_prefix[i]=session_id[i];
+    }
     session_prefix[4]=0;
 
     // Create subdirectory in locks directory if required
@@ -61,8 +62,12 @@ int lock_session(char *session_id)
 
     // See if we already hold a lock to this session
     int i;
-    for(i=0;i<lock_count;i++)
-      if (!strcmp(lock_path,locks[i].path)) break;
+    for (i=0;i<lock_count;i++) {
+      if (!strcmp(lock_path,locks[i].path)) {
+	  break;
+      }
+    }
+    
     if (i<lock_count) {
       // We already hold a lock. Nothing to do
       retVal=0;
@@ -92,7 +97,7 @@ int lock_session(char *session_id)
     if (!locks[lock_count].path) LOG_ERROR("strdup() failed when remembering file lock");
     lock_count++;
     
-  } while(0);
+  } while (0);
 
   return retVal;
 }
@@ -103,12 +108,12 @@ int release_my_session_locks(void)
 
   do {
     // Release locks and flush lock list
-    for(int i=0;i<lock_count;i++) {
+    for (int i=0;i<lock_count;i++) {
       if (flock(fileno(locks[i].file_handle),LOCK_UN)) LOG_ERRORV("flock('%s',LOCK_UN) failed",locks[i].path);
       
       // #284 close file handle
       if (locks[i].file_handle) {
-	  fclose(locks[i].file_handle);
+	fclose(locks[i].file_handle);
       }
       
       locks[i].file_handle=NULL;
@@ -117,7 +122,7 @@ int release_my_session_locks(void)
     lock_count=0;
 
     
-  } while(0);
+  } while (0);
 
   return retVal;
 }

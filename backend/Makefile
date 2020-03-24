@@ -108,7 +108,10 @@ clean:
 
 # Run static analysis of code using sparse and scan-build
 analyse_scanbuild:
-	scan-build-3.8 make
+	scan-build make
 
 analyse_sparse:
-	sparse -std=c99 -D__USE_MISC=1 -Iinclude/ -Ikcgi `$(PYCONFIG) --includes`  -Wsparse-all -Wnoundef src/*.c
+	sparse -std=c99 -D__USE_MISC=1 -Iinclude/ -Ikcgi `$(PYCONFIG) --includes`  -Wsparse-all -Wnoundef -Wsomething src/*.c
+
+analyse_cppcheck:
+	cppcheck --enable=all src/*c
