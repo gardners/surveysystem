@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# include utils
+source ./scripts/inc/utils
+
+SRC_DIR=./src
+INC_DIR=./include
+
+# see https://github.com/rizsotto/Bear#how-to-use
+echo -e "$(YELLOW "--- 1/2 formatting source files: $SRC_DIR ---")\n"
+find "$SRC_DIR" -iname *.h -o -iname *.c | xargs clang-format-9 --verbose -i --style=file
+
+echo -e "\n$(YELLOW "--- 2/2 formatting surce files: $INC_DIR ---")\n"
+find "$INC_DIR" -iname *.h | xargs clang-format-9 --verbose -i --style=file
+
+echo -e "\n$(GREEN "--- done ---")\n"
+
