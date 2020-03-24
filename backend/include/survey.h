@@ -2,6 +2,10 @@
 #define __SURVEY_H__
 
 // clang-format off
+/*
+ * Disable code formatters in this section to avoid messing with the line breaks! 
+ * The make script does grep 'QTYPE_*' lines in order to generate 'question_types.h
+ */ 
 struct question {
   // Unique identifier
   char *uid;
