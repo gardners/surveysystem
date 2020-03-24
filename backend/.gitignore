@@ -15,3 +15,7 @@ surveys/*
 
 # external modules
 queue/*
+
+# linters
+compile_commands.*
+cppcheck-log.*
