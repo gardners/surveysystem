@@ -1,4 +1,7 @@
+#ifndef __SURVEY_H__
+#define __SURVEY_H__
 
+// clang-format off
 struct question {
   // Unique identifier
   char *uid;
@@ -10,6 +13,7 @@ struct question {
 
   // Type of question
   int type;
+  
   // Answer is an integer, bounded by min_value and max_value
 #define QTYPE_INT               1
   // Answer is a fixed point value encoded as a 64-bit integer
@@ -91,7 +95,9 @@ struct question {
   // #72 unit field
   char *unit;
 };
+// clang-format on
 
+// clang-format off
 struct answer {
   
   /* 
@@ -138,6 +144,7 @@ struct answer {
   
 #define ANSWER_DELETED 1
 };
+// clang-format on
 
 enum answer_visibility {
   ANSWER_FIELDS_PUBLIC,
@@ -185,3 +192,5 @@ int session_add_datafile(char *session_id, char *filename_suffix, const char *da
 
 int lock_session(char *session_id);
 int release_my_session_locks(void);
+
+#endif

@@ -1,3 +1,6 @@
+#ifndef __ERRORLOG_H__
+#define __ERRORLOG_H__
+
 void clear_errors(void);
 void dump_errors(FILE *F);
 int remember_error(const char *severity,const char *file,const int line, const char *function,const char *message,...);
@@ -20,3 +23,5 @@ int log_message(const char *file,const char *function,const int line,char *forma
 #define MAX_ERRORS 20
 extern char error_messages[MAX_ERRORS][1024];
 extern int error_count;
+
+#endif

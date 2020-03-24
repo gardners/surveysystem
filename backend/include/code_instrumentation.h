@@ -1,5 +1,5 @@
-#ifndef __INSTRUMENTATION_H__
-#define __INSTRUMENTATION_H__
+#ifndef __CODE_INSTRUMENTATION_H__
+#define __CODE_INSTRUMENTATION_H__
 
 //
 // 'code_instrumentation.h/.c' provide a number of light-weight debugging/logging 
