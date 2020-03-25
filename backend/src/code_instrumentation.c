@@ -50,7 +50,7 @@ void code_instrumentation_log(const char* fileName, int line, const char* functi
   }
 }
 
-// To do: store usage counts for functions. Also can allow us to find rogue mid-function 'return's: 
+// TODO: store usage counts for functions. Also can allow us to find rogue mid-function 'return's: 
 // if an entry is not balanced with an exit, we have a rogue return somewhere
 
 void code_instrumentation_entry(const char* functionName)
