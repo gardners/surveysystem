@@ -1,12 +1,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <strings.h>
+#include <unistd.h>
 
-#include "survey.h"
 #include "errorlog.h"
 #include "serialisers.h"
+#include "survey.h"
 
 struct question_serialiser_test {
   char *name;
@@ -21,224 +21,250 @@ struct question_serialiser_test {
 #define SHOULD_FAIL 0
 #define SHOULD_PASS 1
 
-struct question_serialiser_test qst[]={
+struct question_serialiser_test qst[] = {
 
-  // An empty string should not be accepted
-  {"Empty string not accepted",SHOULD_FAIL,DIRECTION_DESERIALISE,"",{NULL}},
+    // An empty string should not be accepted
+    {"Empty string not accepted",
+     SHOULD_FAIL,
+     DIRECTION_DESERIALISE,
+     "",
+     {NULL}},
 
-  // A simple valid record should be accepted.
-  {"Simple serialised question",SHOULD_PASS,DIRECTION_SERIALISE|DIRECTION_DESERIALISE,
-   "dummyuid:"
-   "What is the answer to life, the universe and everything?:"
-   "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:100:0:1::",
-   {"dummyuid",
-    "What is the answer to life, the universe and everything?",
-    "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,1,"",""}},
+    // A simple valid record should be accepted.
+    {"Simple serialised question",
+     SHOULD_PASS,
+     DIRECTION_SERIALISE | DIRECTION_DESERIALISE,
+     "dummyuid:"
+     "What is the answer to life, the universe and everything?:"
+     "<div>What is the answer to life, the universe and everything?</div>:"
+     "INT:0:42:0:100:0:1::",
+     {"dummyuid", "What is the answer to life, the universe and everything?",
+      "<div>What is the answer to life, the universe and everything?</div>",
+      QTYPE_INT, 0, "42", 0, 100, 0, 1, "", ""}},
 
-  // Only valid question types should be accepted
-  {"Illegal question type fails",SHOULD_FAIL,DIRECTION_DESERIALISE,
-   "dummyuid:"
-   "What is the answer to life, the universe and everything?:"
-   "<div>What is the answer to life, the universe and everything?</div>:"
-   "FISH:0:42:0:100:0:1::",
-   {"dummyuid",
-    "What is the answer to life, the universe and everything?",
-    "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,1,"",""}},
+    // Only valid question types should be accepted
+    {"Illegal question type fails",
+     SHOULD_FAIL,
+     DIRECTION_DESERIALISE,
+     "dummyuid:"
+     "What is the answer to life, the universe and everything?:"
+     "<div>What is the answer to life, the universe and everything?</div>:"
+     "FISH:0:42:0:100:0:1::",
+     {"dummyuid", "What is the answer to life, the universe and everything?",
+      "<div>What is the answer to life, the universe and everything?</div>",
+      QTYPE_INT, 0, "42", 0, 100, 0, 1, "", ""}},
 
-  {"Negative numbers are accepted",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
-   "dummyuid:"
-   "What is the answer to life, the universe and everything?:"
-   "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:-100:0:-1::",
-   {"dummyuid",
-    "What is the answer to life, the universe and everything?",
-    "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,-100,0,-1,"",""}},
+    {"Negative numbers are accepted",
+     SHOULD_PASS,
+     DIRECTION_DESERIALISE | DIRECTION_SERIALISE,
+     "dummyuid:"
+     "What is the answer to life, the universe and everything?:"
+     "<div>What is the answer to life, the universe and everything?</div>:"
+     "INT:0:42:0:-100:0:-1::",
+     {"dummyuid", "What is the answer to life, the universe and everything?",
+      "<div>What is the answer to life, the universe and everything?</div>",
+      QTYPE_INT, 0, "42", 0, -100, 0, -1, "", ""}},
 
-  {"Minus sign can appear only at beginning of a number",SHOULD_FAIL,DIRECTION_DESERIALISE,
-   "dummyuid:"
-   "What is the answer to life, the universe and everything?:"
-   "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:10-0:0:-1::",
-   {"dummyuid",
-    "What is the answer to life, the universe and everything?",
-    "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1,"",""}},
+    {"Minus sign can appear only at beginning of a number",
+     SHOULD_FAIL,
+     DIRECTION_DESERIALISE,
+     "dummyuid:"
+     "What is the answer to life, the universe and everything?:"
+     "<div>What is the answer to life, the universe and everything?</div>:"
+     "INT:0:42:0:10-0:0:-1::",
+     {"dummyuid", "What is the answer to life, the universe and everything?",
+      "<div>What is the answer to life, the universe and everything?</div>",
+      QTYPE_INT, 0, "42", 0, 100, 0, -1, "", ""}},
 
-  {"Missing fields results in failure",SHOULD_FAIL,DIRECTION_DESERIALISE,
-   "dummyuid:"
-   "What is the answer to life, the universe and everything?:"
-   "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:10-0:0::",
-   {"dummyuid",
-    "What is the answer to life, the universe and everything?",
-    "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1,"",""}},
+    {"Missing fields results in failure",
+     SHOULD_FAIL,
+     DIRECTION_DESERIALISE,
+     "dummyuid:"
+     "What is the answer to life, the universe and everything?:"
+     "<div>What is the answer to life, the universe and everything?</div>:"
+     "INT:0:42:0:10-0:0::",
+     {"dummyuid", "What is the answer to life, the universe and everything?",
+      "<div>What is the answer to life, the universe and everything?</div>",
+      QTYPE_INT, 0, "42", 0, 100, 0, -1, "", ""}},
 
-  {"Missing fields results in failure",SHOULD_FAIL,DIRECTION_DESERIALISE,
-   "dummyuid:"
-   "What is the answer to life, the universe and everything?:"
-   "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:10-0:0::",
-   {"dummyuid",
-    "What is the answer to life, the universe and everything?",
-    "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1,"",""}},
+    {"Missing fields results in failure",
+     SHOULD_FAIL,
+     DIRECTION_DESERIALISE,
+     "dummyuid:"
+     "What is the answer to life, the universe and everything?:"
+     "<div>What is the answer to life, the universe and everything?</div>:"
+     "INT:0:42:0:10-0:0::",
+     {"dummyuid", "What is the answer to life, the universe and everything?",
+      "<div>What is the answer to life, the universe and everything?</div>",
+      QTYPE_INT, 0, "42", 0, 100, 0, -1, "", ""}},
 
-  {"Extra fields results in failure",SHOULD_FAIL,DIRECTION_DESERIALISE,
-   "dummyuid:"
-   "What is the answer to life, the universe and everything?:"
-   "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:10-0:0:-1:::-1",
-   {"dummyuid",
-    "What is the answer to life, the universe and everything?",
-    "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1,"",""}},
+    {"Extra fields results in failure",
+     SHOULD_FAIL,
+     DIRECTION_DESERIALISE,
+     "dummyuid:"
+     "What is the answer to life, the universe and everything?:"
+     "<div>What is the answer to life, the universe and everything?</div>:"
+     "INT:0:42:0:10-0:0:-1:::-1",
+     {"dummyuid", "What is the answer to life, the universe and everything?",
+      "<div>What is the answer to life, the universe and everything?</div>",
+      QTYPE_INT, 0, "42", 0, 100, 0, -1, "", ""}},
 
-  {"\\t escape is accepted in strings",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
-   "dummyuid:"
-   "\tWhat is the answer to life, the universe and everything?:"
-   "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:100:0:-1::",
-   {"dummyuid",
-    "\tWhat is the answer to life, the universe and everything?",
-    "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1,"",""}},
-  
-  {"\\r escape is accepted in strings",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
-   "dummyuid:"
-   "\rWhat is the answer to life, the universe and everything?:"
-   "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:100:0:-1::",
-   {"dummyuid",
-    "\rWhat is the answer to life, the universe and everything?",
-    "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1,"",""}},
-  
-  {"\\n escape is accepted in strings",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
-   "dummyuid:"
-   "\nWhat is the answer to life, the universe and everything?:"
-   "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:100:0:-1::",
-   {"dummyuid",
-    "\nWhat is the answer to life, the universe and everything?",
-    "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1,"",""}},
-  
-  {"\\: escape is accepted in strings",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
-   "dummyuid:"
-   "\\:What is the answer to life, the universe and everything?:"
-   "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:100:0:-1::",
-   {"dummyuid",
-    ":What is the answer to life, the universe and everything?",
-    "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1,"",""}},
-  
-  {"\\\\ escape is accepted in strings",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
-   "dummyuid:"
-   "\\\\What is the answer to life, the universe and everything?:"
-   "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:100:0:-1::",
-   {"dummyuid",
-    "\\What is the answer to life, the universe and everything?",
-    "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1,"",""}},
-  
-  {"Multiple escape is accepted in strings",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
-   "dummyuid:"
-   "\\\\\r\n\t\\:What is the answer to life, the universe and everything?:"
-   "<div>What is the answer to life, the universe and everything?</div>:"
-   "INT:0:42:0:100:0:-1::",
-   {"dummyuid",
-    "\\\r\n\t:What is the answer to life, the universe and everything?",
-    "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_INT,0,"42",0,100,0,-1,"",""}},  
+    {"\\t escape is accepted in strings",
+     SHOULD_PASS,
+     DIRECTION_DESERIALISE | DIRECTION_SERIALISE,
+     "dummyuid:"
+     "\tWhat is the answer to life, the universe and everything?:"
+     "<div>What is the answer to life, the universe and everything?</div>:"
+     "INT:0:42:0:100:0:-1::",
+     {"dummyuid", "\tWhat is the answer to life, the universe and everything?",
+      "<div>What is the answer to life, the universe and everything?</div>",
+      QTYPE_INT, 0, "42", 0, 100, 0, -1, "", ""}},
 
-  {"numchoices should match number of colon separated items in choices field",SHOULD_PASS,DIRECTION_DESERIALISE|DIRECTION_SERIALISE,
-   "dummyuid:"
-   "\\\\\r\n\t\\:What is the answer to life, the universe and everything?:"
-   "<div>What is the answer to life, the universe and everything?</div>:"
-   "MULTICHOICE:0:42:0:100:0:1:this,that:",
-   {"dummyuid",
-    "\\\r\n\t:What is the answer to life, the universe and everything?",
-    "<div>What is the answer to life, the universe and everything?</div>",
-    QTYPE_MULTICHOICE,0,"42",0,100,0,1,"this,that",""}},  
+    {"\\r escape is accepted in strings",
+     SHOULD_PASS,
+     DIRECTION_DESERIALISE | DIRECTION_SERIALISE,
+     "dummyuid:"
+     "\rWhat is the answer to life, the universe and everything?:"
+     "<div>What is the answer to life, the universe and everything?</div>:"
+     "INT:0:42:0:100:0:-1::",
+     {"dummyuid", "\rWhat is the answer to life, the universe and everything?",
+      "<div>What is the answer to life, the universe and everything?</div>",
+      QTYPE_INT, 0, "42", 0, 100, 0, -1, "", ""}},
 
-  
-  {NULL,-1,-1,NULL,{NULL}}
-};
+    {"\\n escape is accepted in strings",
+     SHOULD_PASS,
+     DIRECTION_DESERIALISE | DIRECTION_SERIALISE,
+     "dummyuid:"
+     "\nWhat is the answer to life, the universe and everything?:"
+     "<div>What is the answer to life, the universe and everything?</div>:"
+     "INT:0:42:0:100:0:-1::",
+     {"dummyuid", "\nWhat is the answer to life, the universe and everything?",
+      "<div>What is the answer to life, the universe and everything?</div>",
+      QTYPE_INT, 0, "42", 0, 100, 0, -1, "", ""}},
 
-int main(int argc,char **argv)
-{
-  int retVal=0;
+    {"\\: escape is accepted in strings",
+     SHOULD_PASS,
+     DIRECTION_DESERIALISE | DIRECTION_SERIALISE,
+     "dummyuid:"
+     "\\:What is the answer to life, the universe and everything?:"
+     "<div>What is the answer to life, the universe and everything?</div>:"
+     "INT:0:42:0:100:0:-1::",
+     {"dummyuid", ":What is the answer to life, the universe and everything?",
+      "<div>What is the answer to life, the universe and everything?</div>",
+      QTYPE_INT, 0, "42", 0, 100, 0, -1, "", ""}},
+
+    {"\\\\ escape is accepted in strings",
+     SHOULD_PASS,
+     DIRECTION_DESERIALISE | DIRECTION_SERIALISE,
+     "dummyuid:"
+     "\\\\What is the answer to life, the universe and everything?:"
+     "<div>What is the answer to life, the universe and everything?</div>:"
+     "INT:0:42:0:100:0:-1::",
+     {"dummyuid", "\\What is the answer to life, the universe and everything?",
+      "<div>What is the answer to life, the universe and everything?</div>",
+      QTYPE_INT, 0, "42", 0, 100, 0, -1, "", ""}},
+
+    {"Multiple escape is accepted in strings",
+     SHOULD_PASS,
+     DIRECTION_DESERIALISE | DIRECTION_SERIALISE,
+     "dummyuid:"
+     "\\\\\r\n\t\\:What is the answer to life, the universe and everything?:"
+     "<div>What is the answer to life, the universe and everything?</div>:"
+     "INT:0:42:0:100:0:-1::",
+     {"dummyuid",
+      "\\\r\n\t:What is the answer to life, the universe and everything?",
+      "<div>What is the answer to life, the universe and everything?</div>",
+      QTYPE_INT, 0, "42", 0, 100, 0, -1, "", ""}},
+
+    {"numchoices should match number of colon separated items in choices field",
+     SHOULD_PASS,
+     DIRECTION_DESERIALISE | DIRECTION_SERIALISE,
+     "dummyuid:"
+     "\\\\\r\n\t\\:What is the answer to life, the universe and everything?:"
+     "<div>What is the answer to life, the universe and everything?</div>:"
+     "MULTICHOICE:0:42:0:100:0:1:this,that:",
+     {"dummyuid",
+      "\\\r\n\t:What is the answer to life, the universe and everything?",
+      "<div>What is the answer to life, the universe and everything?</div>",
+      QTYPE_MULTICHOICE, 0, "42", 0, 100, 0, 1, "this,that", ""}},
+
+    {NULL, -1, -1, NULL, {NULL}}};
+
+int main(int argc, char **argv) {
+  int retVal = 0;
 
   do {
-    
+
     setenv("SURVEY_HOME", ".", 0);
 
-    int fail=0;
-    int pass=0;
-    int errors=0;
-    
-    for (int i=0;qst[i].name;i++) {
-      fprintf(stderr,"[     ] %s",qst[i].name); fflush(stderr);
+    int fail = 0;
+    int pass = 0;
+    int errors = 0;
+
+    for (int i = 0; qst[i].name; i++) {
+      fprintf(stderr, "[     ] %s", qst[i].name);
+      fflush(stderr);
 
       clear_errors();
-      
-      if (qst[i].direction&DIRECTION_SERIALISE) {
-	// XXX Implement
+
+      if (qst[i].direction & DIRECTION_SERIALISE) {
+        // XXX Implement
       }
-      if (qst[i].direction&DIRECTION_DESERIALISE) {
-	struct question d;
-	bzero(&d,sizeof(struct question));
-	int deserialise_result=deserialise_question(qst[i].serialised,&d);
-	
-	if (deserialise_result&&qst[i].shouldPassP) {
-	  // Deserialisation failed when it should have succeeded.
-	  fprintf(stderr,"\r[FAIL \n  FAIL: serialised string triggered an error during deserialisate\n");
-	    fprintf(stderr,"Internal error log:\n");
-	  dump_errors(stderr);
-	  fail++;
-	} else if ((!deserialise_result)&&(!qst[i].shouldPassP)) {
-	  // Deserialiation passed when it should have failed.
-	  fprintf(stderr,"\r[FAIL \n  FAIL: invalid serialised string did not trigger an error during deserialisation\n");
-	    fprintf(stderr,"Internal error log:\n");
-	  dump_errors(stderr);
-	  fail++;
-	} else if ((!deserialise_result)&&qst[i].shouldPassP) {
-	  // Deserialised successfully, so make sure the field values
-	  // all match
-	  if (compare_questions(&d,&qst[i].question,MISMATCH_IS_AN_ERROR)) {
-	    fprintf(stderr,"\r[FAIL \n  FAIL: Original and serialised-then-deserialised question structures differ\n");
-	    dump_question(stderr,"Deserialised result",&d);
-	    dump_question(stderr,"Expected result",&qst[i].question);
-	    fprintf(stderr,"Internal error log:\n");
-	    dump_errors(stderr);
-	    fail++;
-	  } else {
-	    fprintf(stderr,"\r[PASS \n");
-	    pass++;
-	  }
-	} else if ((deserialise_result)&&(!qst[i].shouldPassP)) {
-	  fprintf(stderr,"\r[PASS \n");
-	  pass++;
-	} else {
-	  fprintf(stderr,"\r[ERROR\n  ERROR: deserialisation failed unexpectedly: deserialise_result=%d, shouldPass=%d\n",
-		  deserialise_result,qst[i].shouldPassP);
-	  errors++;
-	}
-	
+      if (qst[i].direction & DIRECTION_DESERIALISE) {
+        struct question d;
+        bzero(&d, sizeof(struct question));
+        int deserialise_result = deserialise_question(qst[i].serialised, &d);
+
+        if (deserialise_result && qst[i].shouldPassP) {
+          // Deserialisation failed when it should have succeeded.
+          fprintf(stderr, "\r[FAIL \n  FAIL: serialised string triggered an "
+                          "error during deserialisate\n");
+          fprintf(stderr, "Internal error log:\n");
+          dump_errors(stderr);
+          fail++;
+        } else if ((!deserialise_result) && (!qst[i].shouldPassP)) {
+          // Deserialiation passed when it should have failed.
+          fprintf(stderr, "\r[FAIL \n  FAIL: invalid serialised string did not "
+                          "trigger an error during deserialisation\n");
+          fprintf(stderr, "Internal error log:\n");
+          dump_errors(stderr);
+          fail++;
+        } else if ((!deserialise_result) && qst[i].shouldPassP) {
+          // Deserialised successfully, so make sure the field values
+          // all match
+          if (compare_questions(&d, &qst[i].question, MISMATCH_IS_AN_ERROR)) {
+            fprintf(
+                stderr,
+                "\r[FAIL \n  FAIL: Original and serialised-then-deserialised "
+                "question structures differ\n");
+            dump_question(stderr, "Deserialised result", &d);
+            dump_question(stderr, "Expected result", &qst[i].question);
+            fprintf(stderr, "Internal error log:\n");
+            dump_errors(stderr);
+            fail++;
+          } else {
+            fprintf(stderr, "\r[PASS \n");
+            pass++;
+          }
+        } else if ((deserialise_result) && (!qst[i].shouldPassP)) {
+          fprintf(stderr, "\r[PASS \n");
+          pass++;
+        } else {
+          fprintf(stderr,
+                  "\r[ERROR\n  ERROR: deserialisation failed unexpectedly: "
+                  "deserialise_result=%d, shouldPass=%d\n",
+                  deserialise_result, qst[i].shouldPassP);
+          errors++;
+        }
       }
     }
 
-    fprintf(stderr,"Summary: %d tests passed, %d failed and %d encountered internal errors.\n",
-	    pass,fail,errors);
-    
+    fprintf(stderr,
+            "Summary: %d tests passed, %d failed and %d encountered internal "
+            "errors.\n",
+            pass, fail, errors);
+
   } while (0);
-  
+
   return retVal;
 }

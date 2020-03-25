@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# include utils
+source ./scripts/inc/utils
+
+SRC_DIR=./src
+INC_DIR=./include
+
+read -p " - format $(YELLOW \"$SRC_DIR\") ? $(BOLD "(y/n): ") "  -n 1 -r
+echo
+
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+  # exclude automatically generated files by make
+  echo -e "$(YELLOW "--- formatting source files: $SRC_DIR ---")\n"
+  find "$SRC_DIR" -iname *.h -o -iname *.c ! -iname 'question_types.*' | xargs clang-format-9 --verbose -i --style=file
+  echo -e "\n$(GREEN "---  $(YELLOW \"$SRC_DIR\"): done ---")\n"
+fi
+
+read -p " - format $(YELLOW \"$INC_DIR\") ? $(BOLD "(y/n): ") "  -n 1 -r
+echo
+
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+  # exclude automatically generated files by make
+  echo -e "\n$(YELLOW "--- formatting surce files: $INC_DIR ---")\n"
+  find "$INC_DIR" -iname *.h ! -iname 'question_types.*' | xargs clang-format-9 --verbose -i --style=file
+  echo -e "\n$(GREEN "--- $(YELLOW \"INC_DIR\"): done ---")\n"
+fi
+
+
+
