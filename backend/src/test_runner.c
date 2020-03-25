@@ -118,7 +118,7 @@ void require_directory(char *dir, int perm) {
 // From https://stackoverflow.com/questions/2256945/removing-a-non-empty-directory-programmatically-in-c-or-c
 int recursive_delete(const char *dir) {
   int ret = 0;
-  FTS *ftsp = NULL;
+  FTS *ftsp;
   FTSENT *curr;
 
   // Cast needed (in C) because fts_open() takes a "char * const *", instead
@@ -246,7 +246,7 @@ int dump_logs(char *dir, FILE *log) {
                  "===========\n");
 
     int ret = 0;
-    FTS *ftsp = NULL;
+    FTS *ftsp;
     FTSENT *curr;
 
     // Cast needed (in C) because fts_open() takes a "char * const *", instead
@@ -985,7 +985,7 @@ int run_test(char *dir, char *test_file) {
         tdelta /= 1000;
         fprintf(log, "T+%4.3fms : HTTP API request command completed.\n",
                 tdelta);
-        FILE *rc = NULL;
+        FILE *rc;
 
         snprintf(cmd, 65536, "%s/request.out", dir);
         rc = fopen(cmd, "r");
@@ -1290,7 +1290,7 @@ int run_test(char *dir, char *test_file) {
         // Ignore blank lines
       } else if (line[0] == '#') {
         // print special comments starting with "#!"
-        if (line[1] != 0 && line[1] == '!') {
+        if (line[1] == '!') {
           char *l = line;
           l += 2;
           fprintf(log, "%s\n", l);
