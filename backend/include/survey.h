@@ -157,41 +157,45 @@ enum answer_visibility {
 
 #define MAX_QUESTIONS 8192
 struct session {
-  char *survey_id;   // <survey name>/<hash>
+  char *survey_id; // <survey name>/<hash>
   char *survey_description;
   char *session_id;
-  
+
   // #184, add nextquestion provider mode flag
   unsigned int nextquestions_flag;
-  #define NEXTQUESTIONS_FLAG_GENERIC 1
-  #define NEXTQUESTIONS_FLAG_PYTHON 2
-  
+#define NEXTQUESTIONS_FLAG_GENERIC 1
+#define NEXTQUESTIONS_FLAG_PYTHON 2
+
   struct question *questions[MAX_QUESTIONS];
   struct answer *answers[MAX_QUESTIONS];
   int answer_count;
   int question_count;
 };
 
-int generate_path(char *path_in,char *path_out,int max_len);
+int generate_path(char *path_in, char *path_out, int max_len);
 int generate_python_path(char *path_out, int max_len);
 
-int get_next_questions(struct session *s, struct question *next_questions_out[],int max_next_questions,int *next_question_count_out);
-int get_analysis(struct session *s,const char **output);
+int get_next_questions(struct session *s, struct question *next_questions_out[],
+                       int max_next_questions, int *next_question_count_out);
+int get_analysis(struct session *s, const char **output);
 
-int create_session(char *survey_id,char *session_id_out);
+int create_session(char *survey_id, char *session_id_out);
 int delete_session(char *session_id);
 struct session *load_session(char *session_id);
 int save_session(struct session *s);
-int session_add_answer(struct session *s,struct answer *a);
-int session_delete_answer(struct session *s,struct answer *a, int deleteFollowingP);
-int session_delete_answers_by_question_uid(struct session *ses,char *uid,int deleteFollowingP);
+int session_add_answer(struct session *s, struct answer *a);
+int session_delete_answer(struct session *s, struct answer *a,
+                          int deleteFollowingP);
+int session_delete_answers_by_question_uid(struct session *ses, char *uid,
+                                           int deleteFollowingP);
 int delete_session(char *session_id);
 void free_session(struct session *s);
 void free_question(struct question *q);
 void free_answer(struct answer *a);
 int validate_session_id(char *session_id);
 int session_add_userlog_message(char *session_id, char *message);
-int session_add_datafile(char *session_id, char *filename_suffix, const char *data);
+int session_add_datafile(char *session_id, char *filename_suffix,
+                         const char *data);
 int lock_session(char *session_id);
 int release_my_session_locks(void);
 
