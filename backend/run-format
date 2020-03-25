@@ -6,12 +6,25 @@ source ./scripts/inc/utils
 SRC_DIR=./src
 INC_DIR=./include
 
-# exclude automatically generated files by mak
-echo -e "$(YELLOW "--- 1/2 formatting source files: $SRC_DIR ---")\n"
-find "$SRC_DIR" -iname *.h -o -iname *.c ! -iname 'question_types.*' | xargs clang-format-9 --verbose -i --style=file
+read -p " - format $(YELLOW \"$SRC_DIR\") ? $(BOLD "(y/n): ") "  -n 1 -r
+echo
 
-echo -e "\n$(YELLOW "--- 2/2 formatting surce files: $INC_DIR ---")\n"
-find "$INC_DIR" -iname *.h ! -iname 'question_types.*' | xargs clang-format-9 --verbose -i --style=file
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+  # exclude automatically generated files by make
+  echo -e "$(YELLOW "--- formatting source files: $SRC_DIR ---")\n"
+  find "$SRC_DIR" -iname *.h -o -iname *.c ! -iname 'question_types.*' | xargs clang-format-9 --verbose -i --style=file
+  echo -e "\n$(GREEN "---  $(YELLOW \"$SRC_DIR\"): done ---")\n"
+fi
 
-echo -e "\n$(GREEN "--- done ---")\n"
+read -p " - format $(YELLOW \"$INC_DIR\") ? $(BOLD "(y/n): ") "  -n 1 -r
+echo
+
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+  # exclude automatically generated files by make
+  echo -e "\n$(YELLOW "--- formatting surce files: $INC_DIR ---")\n"
+  find "$INC_DIR" -iname *.h ! -iname 'question_types.*' | xargs clang-format-9 --verbose -i --style=file
+  echo -e "\n$(GREEN "--- $(YELLOW \"INC_DIR\"): done ---")\n"
+fi
+
+
 
