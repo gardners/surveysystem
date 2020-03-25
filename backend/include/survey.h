@@ -1,7 +1,7 @@
 #ifndef __SURVEY_H__
 #define __SURVEY_H__
 
-// clang-format off
+/* clang-format off */
 /*
  * Disable code formatters in this section to avoid messing with the line breaks! 
  * The make script does grep 'QTYPE_*' lines in order to generate 'question_types.h
@@ -99,9 +99,9 @@ struct question {
   // #72 unit field
   char *unit;
 };
-// clang-format on
+/* clang-format on */
 
-// clang-format off
+/* clang-format off */
 struct answer {
   
   /* 
@@ -148,7 +148,7 @@ struct answer {
   
 #define ANSWER_DELETED 1
 };
-// clang-format on
+/* clang-format on */
 
 enum answer_visibility {
   ANSWER_FIELDS_PUBLIC,

@@ -21,11 +21,14 @@
 #define LOG_USAGE_COUNTS  1              // 1 or 0
 #define LOG_ENTRY_EXIT    1              // 1 or 0
 
-#define TEST_LEVEL_ALWAYS 0 // Always tested, even in production code
-#define TEST_LEVEL_LIGHT  1 // Light-weight tests. Leave this on unless you're cramped in time or memory
-#define TEST_LEVEL_HEAVY  2 // Heavy tests. Disable these in production releases
-
-#define COMPILE_TEST_LEVEL TEST_LEVEL_LIGHT // Change this as desired
+// Always tested, even in production code
+#define TEST_LEVEL_ALWAYS 0 
+// Light-weight tests. Leave this on unless you're cramped in time or memory
+#define TEST_LEVEL_LIGHT 1 
+// Heavy tests. Disable these in production releases
+#define TEST_LEVEL_HEAVY 2 
+// Change this as desired
+#define COMPILE_TEST_LEVEL TEST_LEVEL_LIGHT 
 
 #define LOG_MUTE() code_instrumentation_mute()
 #define LOG_UNMUTE() code_instrumentation_unmute()
@@ -91,6 +94,7 @@
 
 #else // if LOG_ENTRY_EXIT
 
+/* clang-format off */
 #define LOG_ENTRY_PREFIX \
   { \
     static int __entranceSentinel##__FUNCTION__ = 0; \
@@ -113,6 +117,7 @@
   }}
 
 #endif // LOG_ENTRY_EXIT
+/* clang-format on */
 
 #if ! LOG_USAGE_COUNTS
 
