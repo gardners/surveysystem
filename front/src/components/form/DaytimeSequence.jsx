@@ -196,7 +196,7 @@ class DaytimeSequence extends Component {
         this.state = {
             current: 0,
             values: [],
-            touched: 0,
+            touched: -1,
         };
     }
 
@@ -234,13 +234,14 @@ class DaytimeSequence extends Component {
      */
     handleChange(index, value) {
         let { values, touched } = this.state;
-
         values = setValues(index, value, values);
 
         this.setState({
             values,
+            current: index,
             touched: (index > touched) ? index : touched,
         });
+
     }
 
     /**
@@ -257,6 +258,8 @@ class DaytimeSequence extends Component {
         const { question, handleChange } = this.props;
         const { values } = this.state;
 
+        this.handleNext(index, e);
+        // ! props.handleChange
         handleChange(null, question, values);
     }
 
@@ -299,12 +302,15 @@ class DaytimeSequence extends Component {
 
         this.setState({
             current,
+            touched: current,
         });
     }
 
     render() {
         const { question, error, required, grouped, className, step } = this.props;
         const { values, current, touched } = this.state;
+
+        const touchedAll = touched === values.length - 1;
 
         if (!values.length) {
             return (null);
@@ -382,10 +388,10 @@ class DaytimeSequence extends Component {
                                                                 </button>
                                                         }
                                                         {
-                                                            index === values.length - 1 &&
+                                                            (index === values.length - 1 && !touchedAll ) &&
                                                                 <button
                                                                     className="btn btn-primary btn-sm ml-4"
-                                                                    onClick={ this.handleSubmit.bind(this) }
+                                                                    onClick={ this.handleSubmit.bind(this, index) }
                                                                 >
                                                                     <i className="fas fa-check" /> Submit
                                                                 </button>
