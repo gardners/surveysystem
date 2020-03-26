@@ -223,7 +223,7 @@ class DaytimeQuestionGroup extends Component {
         const { questions, errors, required, grouped, className, step } = this.props;
         const { values, current, touched } = this.state;
 
-        const touchedAll = touched == questions.length - 1;
+        const touchedAll = touched === questions.length - 1;
 
         if (!values.length) {
             return (null);
