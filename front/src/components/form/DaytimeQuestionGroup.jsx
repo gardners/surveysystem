@@ -125,7 +125,7 @@ class DaytimeQuestionGroup extends Component {
         this.state = {
             current: 0,
             values: [],
-            touched: 0,
+            touched: -1,
         };
     }
 
@@ -223,6 +223,8 @@ class DaytimeQuestionGroup extends Component {
         const { questions, errors, required, grouped, className, step } = this.props;
         const { values, current, touched } = this.state;
 
+        const touchedAll = touched == questions.length - 1;
+
         if (!values.length) {
             return (null);
         }
@@ -301,7 +303,7 @@ class DaytimeQuestionGroup extends Component {
                                                                 </button>
                                                         }
                                                         {
-                                                            index === values.length - 1 &&
+                                                            (index === values.length - 1 && !touchedAll) &&
                                                                 <button
                                                                     className="btn btn-primary btn-sm ml-4"
                                                                     onClick={ this.handleNext.bind(this, index) } // for the case the handle was not moved (default_value given), otherwise the survey would display the incomplete warning and not proceed
