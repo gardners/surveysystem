@@ -5,18 +5,19 @@
 # run from source directory
 cd "${0%/*}"
 
-FILES=()
+CONFIG=""
+SESSION=""
 
 ## workflow funcs
 
 run () {
-    node ./run "$1"
+    node ./lib/run "$@"
 }
 
 prepare () {
     echo -e "\e[90m Copying required frontend JS modules...\e[0m"
-    cp -fv ../front/src/Answer.js ./Answer.js
-    cp -fv ../front/src/Utils.js ./Utils.js
+    cp -fv ../front/src/Answer.js ./lib/ext/Answer.js
+    cp -fv ../front/src/Utils.js ./lib/ext/Utils.js
 }
 
 select_config () {
@@ -25,7 +26,7 @@ select_config () {
     echo ""
 
     for index in "${!FILES[@]}"; do
-        echo -e "\e[32m ${index}\e[0m: ${FILES[$index]}"
+        echo -e "\e[32m ${index}\e[0m: $(basename ${FILES[$index]})"
     done
 
     echo ""
@@ -43,10 +44,34 @@ select_config () {
 
     echo ""
 
-    run "${FILES[$SELECTED]}"
+    run --config $(basename "${FILES[$SELECTED]}") --session "${SESSION}"
 }
 
 ## main
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]; do
+    key="$1"
+
+    case $key in
+        -c|--config)
+            CONFIG="$2"
+            shift # past argument
+            shift # past value
+            ;;
+        -s|--session)
+            SESSION="$2"
+            shift # past argument
+            shift # past value
+            ;;
+        *) # preserve positional arguments
+            POSITIONAL+=("$1") # save it in an array for later
+            shift # past argument
+            ;;
+    esac
+
+done
+set -- "${POSITIONAL[@]}" # restore positional parameters
 
 prepare
 
@@ -56,11 +81,8 @@ for file in configs/*.js; do
     fi
 done
 
-if [[ "${#FILES[@]}" == "0" ]]; then
-        echo -e "\e[31mError:\e[0m No config files found: ${SELECTED}!"
-        exit 1
-elif [[ "${#FILES[@]}" == "1" ]]; then
-    run "$FILES"
-else
+if [[ -z "$1" ]]; then
     select_config
+else
+    run "$@"
 fi

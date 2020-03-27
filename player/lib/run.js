@@ -11,32 +11,37 @@
 const imports = require('esm')(module);
 const path = require('path');
 const fs = require('fs');
+const { argv } = require('yargs');
 
 const FSLOG = require('./fslog');
 const JSONF = require('./jsonf');
 const Log = require('./log');
 
-const { getlastSessionEntry } = require('./session');
+const { getlastSessionEntry, parseSessionFile } = require('./session');
 
 // frontend serializer
-const _libanswer = imports('./Answer');
+const _libanswer = imports('./ext/Answer');
 const Answer = (typeof _libanswer.default !== 'undefined') ? _libanswer.default : _libanswer;
 
 // api
 const Fetch = require('./fetch');
 
+// args
+
+const config = argv.config || '';
+const sessionId = argv.session || '';
+
 ////
 // Config
 ////
 
-// print process.argv
-const configFile = process.argv[2] || null;
-
-if (!configFile) {
+if (!config) {
     Log.error('Command line error:');
-    Log.log(' * Config file required! Exiting player ...');
+    Log.log(' * Config required! Exiting player ...');
     process.exit(1);
 }
+
+const configFile = `${process.cwd()}/configs/${config}`;
 
 if (!fs.existsSync(configFile)) {
     Log.error('Command line error: ');
@@ -46,15 +51,36 @@ if (!fs.existsSync(configFile)) {
 
 // eslint-disable-next-line import/no-dynamic-require
 const Config = require(path.resolve(configFile));
+Object.assign(Fetch, Config.Api);
+
+////
+// Test session (optional)
+////
+
+let sessionFile = null;
+
+if (sessionId) {
+    sessionFile = `${process.cwd()}/sessions/${sessionId}`;
+
+    if (!fs.existsSync(sessionFile)) {
+        Log.error('Command line error: ');
+        Log.log(' * Session file does not exist! Exiting player ...');
+        process.exit(1);
+    }
+}
+
+////
+// globals
+////
 
 Log.log(`\n    * ${Log.colors.yellow('using config: ')}${configFile}\n`);
-
-const CustomAnswers = Config.answers || {};
-
-Object.assign(Fetch, Config.Api);
+if (sessionId) {
+    Log.log(`    * ${Log.colors.yellow('using session')}: ${sessionId}`);
+}
 
 let SESSIONID;
 let COUNT = 0;
+let CUSTOMANSWER_COUNT = 0;
 let LOGFILE;
 let JSONFILE;
 
@@ -62,6 +88,13 @@ let JSONFILE;
 const now = new Date();
 
 const sleep = millisec => new Promise(resolve => setTimeout(resolve, millisec));
+
+const getCustomAnswers = function() {
+    if (sessionFile) {
+        return parseSessionFile(sessionFile);
+    }
+    return Promise.resolve(Config.answers || {});
+};
 
 ////
 // Answers
@@ -257,10 +290,9 @@ const answerQuestionsSequential = function(entries, count, responses = []) {
  *
  * @returns {Promise} http request response
  */
-const answerQuestions = function(questions) {
+const answerQuestions = function(questions, customAnswers) {
     COUNT += 1;
     const curr = COUNT;
-
     FSLOG.append(`\n-- STEP #${COUNT} --------------\n`);
 
     const ids = questions.map(q => q.id);
@@ -268,16 +300,27 @@ const answerQuestions = function(questions) {
     FSLOG.append(`${questions.length} questions to answer: ${ids.toString()}`);
 
     const data = questions.map((question) => {
-        const customAnswer = CustomAnswers[question.id] || null;
-        const answerType = (customAnswer !== null) ? 'custom' : 'generic';
 
+        let customAnswer = customAnswers[question.id] || null;
+
+        let answerType = (customAnswer !== null) ? 'custom' : 'generic';
+        if (answerType === 'custom') {
+            CUSTOMANSWER_COUNT += 1;
+        }
+
+        // custom answer is an Answer object (session)
+        if (customAnswer && typeof customAnswer.uid !== 'undefined') {
+            answerType = 'session';
+            customAnswer = Answer.getValue(question, customAnswer);
+        }
+        // custom answer is a scalar value (config)
         const answer = provideSerializedAnswer(question, customAnswer);
 
         if (answer instanceof Error) {
             Log.error(answer.message);
             /* eslint-disable-next-line no-console */
             console.log(question, answer);
-            process.exit(1);
+            throw new Error(`Error for answer! ${answer.toString()})!`);
         }
 
         const logType = (answerType === 'custom') ? Log.colors.green(answerType) : answerType;
@@ -302,7 +345,7 @@ const answerQuestions = function(questions) {
             Log.log(`    └── ${Log.colors.green(newQuestions.length)} new questions received.. (${qids})`);
 
             if (newQuestions.length) {
-                return answerQuestions(newQuestions);
+                return answerQuestions(newQuestions, customAnswers);
             }
 
             return Promise.resolve('FINISHED');
@@ -313,8 +356,14 @@ const answerQuestions = function(questions) {
 // Play
 ////
 
+let customAnswers = {};
+
+getCustomAnswers()
 // initialize new session
-Fetch.raw('/surveyapi/newsession')
+    .then((answers) => {
+        customAnswers = answers;
+        return Fetch.raw('/surveyapi/newsession');
+    })
     .then((sessid) => {
         SESSIONID = sessid;
         return Log.note(`SessionId: ${SESSIONID}`);
@@ -336,10 +385,11 @@ Fetch.raw('/surveyapi/newsession')
 // fetch first questions
     .then(() => nextQuestions())
 // start question/answer loop
-    .then(res => answerQuestions(res.next_questions))
+    .then(res => answerQuestions(res.next_questions, customAnswers))
 // finalise
     .then(() => FSLOG.finish())
     .then(res => Log.success(`\nSurvey questions finished in ${COUNT} steps\n`, res))
+    .then(res => Log.log(`   ${Log.colors.yellow('*')} ${CUSTOMANSWER_COUNT} of ${Object.keys(customAnswers).length} custom answers used in this session\n`, res))
     .then(logfile => Log.log(`   ${Log.colors.yellow('*')} Log file: ${logfile}\n`))
 // analyse
 // initialize log file
@@ -348,5 +398,6 @@ Fetch.raw('/surveyapi/newsession')
     .then(() => JSONF.finish())
     .then(jsonfile => Log.success('\nSurvey analysis retrieved\n', jsonfile))
     .then(jsonfile => Log.log(`   ${Log.colors.yellow('*')} File: ${jsonfile}\n`))
+    .then(() => Log.log(`   ${Log.colors.yellow('* run again:')} player ${process.argv.slice(2).join(' ')}\n`))
 // errors
     .catch(err => Log.error(`REQUEST ERROR\n${err}`, err));
