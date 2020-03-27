@@ -5,9 +5,13 @@ log/*
 .~lock.*
 
 # ignore symlink-ed fronend files, see #289
-Answer.js
-Utils.js
+ext/*.js
+ext/*.js
 
 # ignore custom player configs
 configs/*.js
 !configs/.gitkeep
+
+# ignore test sessions
+sessions/*
+!sessions/.gitkeep
