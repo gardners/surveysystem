@@ -291,6 +291,41 @@ const serialize = function(answer) {
     return values.join(':');
 };
 
+
+/**
+ * Deserializes a answer string, public properties only!
+ * @returns {Answer}
+ */
+const deserialize = function(fragment) {
+    const answer = model();
+    const re = /(?<!\\):/
+
+    const parts = fragment.split(re);
+    if (parts.length < Object.keys(answer).length) {
+        return new Error(`Fragment parts don\'t match the required length of ${Object.keys(answer).length}, ${parts.length} given: ${fragment}`);
+    }
+
+    // TODO validate uid
+
+    answer.uid              = parts[0];
+    answer.text             = parts[1];
+    answer.value            = _number(parts[2]);
+    answer.lat              = _latitude(parts[3]);
+    answer.lon              = _longitude(parts[4]);
+    answer.time_begin       = _number(parts[5]);
+    answer.time_end         = _number(parts[6]);
+    answer.time_zone_delta  = _number(parts[7]);
+    answer.dst_delta        = _number(parts[8]);
+    answer.unit             = parts[9];
+
+    const errors = Object.keys(answer).filter(key => answer[key] instanceof Error);
+    if(errors.length) {
+        return new Error(`Answer "${fragment}" serialisation failed with errors for following properties: [${errors.toString()}]`);
+    }
+
+    return answer;
+};
+
 /**
  * Parses a comma-separated csv row from an mapped answer object
  * @param {QuestionModel} question
@@ -464,6 +499,7 @@ const Answer = {
     create,
     propTypes,
     serialize,
+    deserialize,
     setValue,
     getValue,
 };
