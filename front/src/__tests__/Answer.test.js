@@ -506,3 +506,111 @@ describe('Answer.serialize()', () => {
 });
 
 
+describe('Answer.deserialize()', () => {
+
+    test('csv fragment completeness', () => {
+        // negative
+        expect(Answer.deserialize({})).toBeInstanceOf(Error);
+        expect(Answer.deserialize(9)).toBeInstanceOf(Error);
+        expect(Answer.deserialize('')).toBeInstanceOf(Error);
+        expect(Answer.deserialize('incomplete')).toBeInstanceOf(Error);
+        expect(Answer.deserialize('incomplete:answer')).toBeInstanceOf(Error);
+        // positive
+        expect(Answer.deserialize('test::0:0:0:0:0:0:0:')).toMatchObject({ uid: 'test' });
+    });
+
+    test('answer.uid (required)', () => {
+        //positive
+        expect(Answer.deserialize('test::0:0:0:0:0:0:0:')).toEqual({
+            uid : 'test',
+            text : '',
+            value : 0.0,
+            lat : 0.0,
+            lon : 0.0,
+            time_begin : 0,
+            time_end : 0,
+            time_zone_delta : 0,
+            dst_delta : 0,
+            unit: '',
+        });
+        //negative
+        expect(Answer.deserialize(':::::::::')).toBeInstanceOf(Error);
+    });
+
+    test('answer.text', () => {
+        expect(Answer.deserialize('test:text:0:0:0:0:0:0:0:')).toEqual({
+            uid : 'test',
+            text : 'text',
+            value : 0.0,
+            lat : 0.0,
+            lon : 0.0,
+            time_begin : 0,
+            time_end : 0,
+            time_zone_delta : 0,
+            dst_delta : 0,
+            unit: '',
+        });
+
+        expect(Answer.deserialize('test:123:0:0:0:0:0:0:0:')).toEqual({
+            uid : 'test',
+            text : '123',
+            value : 0.0,
+            lat : 0.0,
+            lon : 0.0,
+            time_begin : 0,
+            time_end : 0,
+            time_zone_delta : 0,
+            dst_delta : 0,
+            unit: '',
+        });
+    });
+
+    test('answer.value', () => {
+        // 0
+        expect(Answer.deserialize('test::0:0:0:0:0:0:0:')).toEqual({
+            uid : 'test',
+            text : '',
+            value : 0.0,
+            lat : 0.0,
+            lon : 0.0,
+            time_begin : 0,
+            time_end : 0,
+            time_zone_delta : 0,
+            dst_delta : 0,
+            unit: '',
+        });
+
+        expect(Answer.deserialize('test::123:0:0:0:0:0:0:')).toEqual({
+            uid : 'test',
+            text : '',
+            value : 123,
+            lat : 0.0,
+            lon : 0.0,
+            time_begin : 0,
+            time_end : 0,
+            time_zone_delta : 0,
+            dst_delta : 0,
+            unit: '',
+        });
+
+        expect(Answer.deserialize('test::3.14:0:0:0:0:0:0:')).toEqual({
+            uid : 'test',
+            text : '',
+            value : 3.14,
+            lat : 0.0,
+            lon : 0.0,
+            time_begin : 0,
+            time_end : 0,
+            time_zone_delta : 0,
+            dst_delta : 0,
+            unit: '',
+        });
+
+        expect(Answer.deserialize('test::pi=3.14:0:0:0:0:0:0:')).toBeInstanceOf(Error);
+    });
+
+    // TODO, all props
+
+});
+
+
