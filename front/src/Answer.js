@@ -293,10 +293,14 @@ const serialize = function(answer) {
 
 
 /**
- * Deserializes a answer string, public properties only!
+ * Deserializes a answer string, public properties only!, see player
  * @returns {Answer}
  */
 const deserialize = function(fragment) {
+    if (typeof fragment !== 'string') {
+        return new Error('Answer csv fragment is not a string');
+    }
+
     const answer = model();
     const re = /(?<!\\):/
 
@@ -305,10 +309,13 @@ const deserialize = function(fragment) {
         return new Error(`Fragment parts don\'t match the required length of ${Object.keys(answer).length}, ${parts.length} given: ${fragment}`);
     }
 
-    // TODO validate uid
+    // TODO validate uid? no rules in backend
+    if (!parts[0]) {
+        return new Error(`Answer csv fragment is missing uid: ${fragment}`);
+    }
 
-    answer.uid              = parts[0];
-    answer.text             = parts[1];
+    answer.uid              = _text(parts[0]);
+    answer.text             = _text(parts[1]);
     answer.value            = _number(parts[2]);
     answer.lat              = _latitude(parts[3]);
     answer.lon              = _longitude(parts[4]);
@@ -316,7 +323,7 @@ const deserialize = function(fragment) {
     answer.time_end         = _number(parts[6]);
     answer.time_zone_delta  = _number(parts[7]);
     answer.dst_delta        = _number(parts[8]);
-    answer.unit             = parts[9];
+    answer.unit             = _text(parts[9]);
 
     const errors = Object.keys(answer).filter(key => answer[key] instanceof Error);
     if(errors.length) {
