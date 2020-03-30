@@ -69,6 +69,29 @@ if (sessionId) {
     }
 }
 
+if (sessionId) {
+    sessionFile = `${process.cwd()}/sessions/${sessionId}`;
+
+    if (!fs.existsSync(sessionFile)) {
+        Log.error('Command line error: ');
+        Log.log(' * Session file does not exist! Exiting player ...');
+        process.exit(1);
+    }
+}
+
+////
+// load assertions
+////
+
+let assertions = Config.assertions || {};
+
+if (sessionFile) {
+    const assertionFile = `${process.cwd()}/sessions/${sessionId}.test.js`;
+    if (fs.existsSync(assertionFile)) {
+        assertions = require(assertionFile);
+    }
+}
+
 ////
 // globals
 ////
@@ -78,7 +101,7 @@ if (sessionId) {
     Log.log(`    * ${Log.colors.yellow('using session')}: ${sessionId}`);
 }
 
-let SESSIONID;
+let SESSIONID; // new session id
 let COUNT = 0;
 let CUSTOMANSWER_COUNT = 0;
 let LOGFILE;
@@ -231,7 +254,8 @@ const nextQuestions = function() {
  * @returns {Promise} http request response
  */
 const handleResponse = function(response) {
-    const nextIds = response.next_questions.map(q => q.id).toString();
+    const { next_questions } = response;
+    const nextIds = next_questions.map(q => q.id).toString();
     FSLOG.append(`received next questions.. [${nextIds}]`);
     FSLOG.append(` => ${JSON.stringify(response)}`);
     return getlastSessionEntry(SESSIONID)
@@ -255,6 +279,8 @@ const handleResponse = function(response) {
  * @returns {Promise} http request response
  */
 const answerQuestion = function(question, answer, answerType) {
+    const { id } = question;
+
     FSLOG.append(`sending answer... [${answerType.toUpperCase()}] qid: ${question.id}, answer: ${answer}`);
     FSLOG.append(` => "${answer}"`);
     return Fetch.json('/surveyapi/updateAnswer', {
@@ -262,6 +288,15 @@ const answerQuestion = function(question, answer, answerType) {
         answer,
     })
         .then(response => handleResponse(response))
+        .then(response => {
+            // run next_questions assert
+            if (typeof assertions[id] === 'function') {
+                Log.log(`    |      └── run assertion for response of for answer "${id}"...`);
+                assertions[id](response);
+            }
+
+            return response;
+        })
         .then(response => response);
 };
 
@@ -272,11 +307,13 @@ const answerQuestionsSequential = function(entries, count, responses = []) {
     const next = responses.length;
 
     const { question, answer, answerType } = entries[next];
+    const { id } = question;
 
     return answerQuestion(question, answer, answerType)
         .then(response => Log.log(`    |   └── ${answer}`, response))
         .then((response) => {
             responses.push(response);
+
             if (responses.length < entries.length) {
                 return answerQuestionsSequential(entries, count, responses);
             }
@@ -324,7 +361,7 @@ const answerQuestions = function(questions, customAnswers) {
         }
 
         const logType = (answerType === 'custom') ? Log.colors.green(answerType) : answerType;
-        Log.log(`  ${Log.colors.yellow('title')}: ${question.id}: ${Log.colors.yellow('title:')} ${question.title}, ${Log.colors.yellow('answer type:')} ${logType}, ${Log.colors.yellow('answer:')} ${answer}`);
+        Log.log(`  ${Log.colors.yellow('id')}: ${question.id}: ${Log.colors.yellow('title:')} ${question.title.substring(0, 100)}, ${Log.colors.yellow('answer type:')} ${logType}, ${Log.colors.yellow('answer:')} ${answer}`);
 
         return {
             question,
