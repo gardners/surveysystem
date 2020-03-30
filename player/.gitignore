@@ -5,8 +5,8 @@ log/*
 .~lock.*
 
 # ignore symlink-ed fronend files, see #289
-ext/*.js
-ext/*.js
+lib/ext/*.js
+lib/ext/*.js
 
 # ignore custom player configs
 configs/*.js
