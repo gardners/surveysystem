@@ -519,6 +519,21 @@ describe('Answer.deserialize()', () => {
         expect(Answer.deserialize('test::0:0:0:0:0:0:0:')).toMatchObject({ uid: 'test' });
     });
 
+    test('csv fragment escaped colon', () => {
+        expect(Answer.deserialize('test:my answer is\\: test:0:0:0:0:0:0:0:')).toMatchObject({
+            uid : 'test',
+            text : 'my answer is: test',
+            value : 0.0,
+            lat : 0.0,
+            lon : 0.0,
+            time_begin : 0,
+            time_end : 0,
+            time_zone_delta : 0,
+            dst_delta : 0,
+            unit: '',
+        });
+    });
+
     test('answer.uid (required)', () => {
         //positive
         expect(Answer.deserialize('test::0:0:0:0:0:0:0:')).toEqual({
