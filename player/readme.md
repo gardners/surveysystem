@@ -3,16 +3,10 @@
 Command line tool for progressing through a survey with generic or custom answers.
 The survey progress is displayed to the cli and logged into a csv file for inspection.
 
-**Install:**
-
-```
-$ npm install
-```
-
 **Setup:**
 
 copy `template.config.js` to `./configs/config.js` and
-    -  fill in valid survey server configuration.
+    - fill in valid survey server configuration.
     - add custom answers for specified question ids in order to to overwrite the default answers.
 
 It is possible to have multiple configs by simply prefixing them, ie.e `./configs/<YOUR CUSTOM FILENAME>.js`.
@@ -45,7 +39,7 @@ The matching `/analysis` response is also stored in that folder.
 You can hook in assertion tests for responses to specified answer ids.
 This is especially useful when using python `nextquestion` hooks in the backend.
 
-Assertion hooks are defined as a map of answer uids and [assertion](https://nodejs.org/api/assert.html) callbacks who provide the parsed response json as their only argument
+Assertion hooks are defined as a map of answer uids and [assertion](https://nodejs.org/api/assert.html) callbacks who provide the parsed response json as their only argument.
 
 Location:
 
