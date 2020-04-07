@@ -18,7 +18,7 @@
   }
 
 /*
-  Escape a string so that it can be safely embedded in a CSV file, that uses colons as delimeters 
+  Escape a string so that it can be safely embedded in a CSV file, that uses colons as delimeters
 */
 int escape_string(char *in, char *out, int max_len) {
   int retVal = 0;
@@ -79,7 +79,7 @@ int escape_string(char *in, char *out, int max_len) {
 }
 
 /*
-  Write out an integer in a format that can be embedded in a CSV file 
+  Write out an integer in a format that can be embedded in a CSV file
 */
 int serialise_int(int in, char *out, int max_len) {
   int retVal = 0;
@@ -97,7 +97,7 @@ int serialise_int(int in, char *out, int max_len) {
 }
 
 /*
-  Write out a 64-bit integer in a format that can be embedded in a CSV file 
+  Write out a 64-bit integer in a format that can be embedded in a CSV file
 */
 int serialise_longlong(long long in, char *out, int max_len) {
   int retVal = 0;
@@ -325,8 +325,8 @@ int deserialise_string(char *field, char **s) {
   built.
 
   We then have _BEGIN and _COMPLETE macros, similar for deserialisation.
-  Also, the _THING and derivative macros perform the opposite of the 
-  DESERIALISE_* equivalents.  The result is that the serialiser and 
+  Also, the _THING and derivative macros perform the opposite of the
+  DESERIALISE_* equivalents.  The result is that the serialiser and
   deserialiser code at the top level looks almosts identical, except for
   the DE prefix on the macros for deserialising.  This is designed to help
   keep the serialiser and deserialiser functions for given structures in
@@ -418,7 +418,7 @@ int deserialise_question_type(char *field, int *s) {
 
 /*
   Top-level function for serialising a question that has been passed in
-  in a struct question.  It uses the various macros defined above to 
+  in a struct question.  It uses the various macros defined above to
   make a very clear and succinct description of what is required.
 */
 int serialise_question(struct question *q, char *out, int max_len) {
@@ -451,7 +451,7 @@ int serialise_question(struct question *q, char *out, int max_len) {
 
 /*
   For debugging it can be helpful to dump a question structure to
-  stdout or a file. 
+  stdout or a file.
 */
 int dump_question(FILE *f, char *msg, struct question *q) {
   int retVal = 0;
@@ -513,7 +513,7 @@ int dump_answer(FILE *f, char *msg, struct answer *a) {
 
 /*
   This should match exactly the field order and types as used
-  in serialise_question(), so that it can reconstute a 
+  in serialise_question(), so that it can reconstute a
   question structure from a serialised string version of a
   question.
  */
@@ -619,7 +619,7 @@ int deserialise_answer(char *in, enum answer_visibility visibility,
 }
 
 /*
-  The following macros make it easier to compare fields between two instances of 
+  The following macros make it easier to compare fields between two instances of
   a structure.
  */
 #define COMPARE_INT(S)                                                         \
@@ -654,7 +654,7 @@ int deserialise_answer(char *in, enum answer_visibility visibility,
   Using the above convenience macros, quickly compare all fields in a pair of
   question structures, so that the semantic equivalence of them can be tested.
   It returns 0 if the structures are equivalent, and -1 otherwise.
-  If mistmatchIsError is non-zero, then the error logging facility will record 
+  If mistmatchIsError is non-zero, then the error logging facility will record
   each difference.  Otherwise, mismatches are considered not to be an error.
 */
 int compare_questions(struct question *q1, struct question *q2,

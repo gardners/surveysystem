@@ -19,3 +19,6 @@ queue/*
 # linters
 compile_commands.*
 cppcheck-log.*
+
+# dev env specific sripts
+propTests.*

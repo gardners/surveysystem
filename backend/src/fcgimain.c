@@ -799,8 +799,8 @@ static void fcgi_delanswer(struct kreq *req) {
 
     if (answer && answer->val) {
 
-      /* 
-       * We have an answer -- so delete the specific answer 
+      /*
+       * We have an answer -- so delete the specific answer
        */
 
       // Deserialise answer
@@ -836,8 +836,8 @@ static void fcgi_delanswer(struct kreq *req) {
       }
     } else if (question && question->val) {
 
-      /* 
-       * We have a question -- so delete all answers to the given question 
+      /*
+       * We have a question -- so delete all answers to the given question
        */
 
       if (session_delete_answers_by_question_uid(s, question->val, 0) < 0) {
@@ -943,8 +943,8 @@ static void fcgi_delanswerandfollowing(struct kreq *req) {
 
     if (answer && answer->val) {
 
-      /* 
-       * We have an answer -- so delete the specific answer 
+      /*
+       * We have an answer -- so delete the specific answer
        */
 
       // Deserialise answer
@@ -980,8 +980,8 @@ static void fcgi_delanswerandfollowing(struct kreq *req) {
       }
     } else if (question && question->val) {
 
-      /* 
-       * We have a question -- so delete all answers to the given question 
+      /*
+       * We have a question -- so delete all answers to the given question
        */
 
       if (session_delete_answers_by_question_uid(s, question->val, 1) < 0) {
