@@ -161,7 +161,6 @@ class DaytimeQuestionGroup extends Component {
 
         this.setState({
             values,
-            touched: (index > touched) ? index : touched,
         });
     }
 

@@ -1,7 +1,7 @@
 /**
  * @module answer object to backend csv row parser
- *
  */
+
 import PropTypes from 'prop-types';
 
 import { isArray, isScalar } from './Utils';
@@ -291,7 +291,6 @@ const serialize = function(answer) {
     return values.join(':');
 };
 
-
 /**
  * Deserializes a answer string, public properties only!, see player
  * @returns {Answer}
@@ -306,7 +305,7 @@ const deserialize = function(fragment) {
     const parts = fragment.replace(/\\:/g, '[colon]').split(':').map(part => part.replace('[colon]', ':'));
 
     if (parts.length < Object.keys(answer).length) {
-        return new Error(`Fragment parts don\'t match the required length of ${Object.keys(answer).length}, ${parts.length} given: ${fragment}`);
+        return new Error(`Fragment parts don't match the required length of ${Object.keys(answer).length}, ${parts.length} given: ${fragment}`);
     }
 
     // TODO validate uid? no rules in backend
