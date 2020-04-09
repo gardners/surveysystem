@@ -83,7 +83,42 @@ SurveyBar.propTypes = {
     })
 };
 
+const Question = function(props) {
+    const { question } = props;
+
+    // don't display in production mode
+    if (NODE_ENV === 'production') {
+        return (null);
+    }
+
+    if(!question) {
+        return (null);
+    }
+
+    return(
+        <pre className={ props.className }>
+            id: { question.id }, type: ({ question.type })
+        </pre>
+    );
+};
+
+Question.defaultProps = {
+    question: PropTypes.shape({
+        id: '',
+        type: '',
+    })
+};
+
+Question.propTypes = {
+    className: PropTypes.string,
+    question: PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        type: PropTypes.string.isRequired,
+    })
+};
+
 export default {
     Pretty,
     SurveyBar,
+    Question,
 };
