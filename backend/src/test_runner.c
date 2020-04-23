@@ -1438,7 +1438,11 @@ int configure_and_start_lighttpd(char *test_dir, int silent_flag) {
 
   do {
     // kill open ports
-    stop_lighttpd();
+    if (stop_lighttpd()) {
+        fprintf(stderr, "\nExiting.. stop_lighttpd failed\n");
+        exit(-3);
+    }
+
     // Create config file
     char conf_data[16384];
     char cwd[1024];
@@ -1501,16 +1505,16 @@ int configure_and_start_lighttpd(char *test_dir, int silent_flag) {
     // sysymlink /etc/lighttpd/conf-enabled into test dir (required by mod_fcgi)
     char sym_path[1024];
     snprintf(sym_path, 1024, "%s/conf-enabled", test_dir);
-
-    if(symlink("/etc/lighttpd/conf-enabled", sym_path)) {
-      fprintf(stderr, "symlinking '/etc/lighttpd/conf-enabled' => '%s' failed, error: %s",
-                 sym_path, strerror(errno));
-      retVal = -1;
-      break;
+    if (access(sym_path, F_OK)) {
+      if(symlink("/etc/lighttpd/conf-enabled", sym_path)) {
+        fprintf(stderr, "symlinking '/etc/lighttpd/conf-enabled' => '%s' failed, error: %s",
+                    sym_path, strerror(errno));
+        retVal = -1;
+        break;
+      }
     }
 
     char cmd[2048];
-
     snprintf(cmd, 2048, "sudo cp surveyfcgi %s/surveyfcgi", test_dir);
     if (!tests) {
       fprintf(stderr, "Running '%s'\n", cmd);
@@ -1582,6 +1586,7 @@ int stop_lighttpd() {
     char cmd[2048];
     char out[2048];
     FILE *fp;
+    int status;
 
     snprintf(cmd, 2048, "sudo ./scripts/killport %d 2>&1", HTTP_PORT);
     fp = popen(cmd, "r");
@@ -1595,8 +1600,33 @@ int stop_lighttpd() {
         fprintf(stderr, "%s", out);
     }
 
-    int status = pclose(fp);
-    fprintf(stderr, "(exit code: %d)", WEXITSTATUS(status));
+    status = pclose(fp);
+    if (status) {
+        fprintf(stderr, "stopping lighttpd on port '%d' failed (exit code: %d)\n", HTTP_PORT, WEXITSTATUS(status));
+        retVal = -1;
+        break;
+    }
+    fprintf(stderr, "\n");
+    ////
+
+    snprintf(cmd, 2048, "sudo ./scripts/killport %d 2>&1", SURVEYFCGI_PORT);
+    fp = popen(cmd, "r");
+    if (fp == NULL) {
+        fprintf(stderr, "FAIL\nsystem(popen) call to stop lighttpd failed ('%s')\n", cmd);
+        retVal = -1;
+        break;
+    }
+
+    while (fgets(out, sizeof(out), fp) != NULL) {
+        fprintf(stderr, "%s", out);
+    }
+
+    status = pclose(fp);
+    if (status) {
+        fprintf(stderr, "stopping lighttpd on port '%d' failed (exit code: %d)\n", SURVEYFCGI_PORT, WEXITSTATUS(status));
+        retVal = -1;
+        break;
+    }
 
     sleep(1);
     if (!tests) {
@@ -1660,6 +1690,7 @@ int main(int argc, char **argv) {
     fprintf(stderr, "Compiling current path failed");
     exit(-1);
   }
+
   char varname[1024];
   if (snprintf(varname, 1024, "SURVEY_HOME=%s", current_path) < 0) {
     fprintf(stderr, "compiling env var failed (1)");
@@ -1695,7 +1726,10 @@ int main(int argc, char **argv) {
   // Make sure we have a test log directory
   require_directory("testlog", 0755);
 
-  stop_lighttpd();
+  if (stop_lighttpd()) {
+      fprintf(stderr, "\nExiting.. stop_lighttpd failed\n");
+      exit(-3);
+  }
   fprintf(stderr, "About to request config gets pulled together\n");
   // Make config file pointing to the temp_dir, and start the server
   if (configure_and_start_lighttpd(test_dir, 0)) {
@@ -1740,7 +1774,10 @@ int main(int argc, char **argv) {
   }
 #endif
 
-  stop_lighttpd(); // remove for debugging
+  if (stop_lighttpd()) {
+      fprintf(stderr, "\nExiting.. stop_lighttpd failed\n");
+      exit(-3);
+  }
   fprintf(stderr, "\n");
   fprintf(stderr,
           "Summary: %d/%d tests passed (%d failed, %d errors, %d fatalities "
