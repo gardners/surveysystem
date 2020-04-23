@@ -22,7 +22,7 @@ if [ -z "${PID}" ]; then
     exit 0
 fi
 
-if kill -0 "${PID}" && kill -SIGKILL "${PID}"; then
+if ! kill "${PID}" > /dev/null 2>&1; then
     printf "Error killing %d(%s)" "${1}" "${PID}"
     exit 1
 fi
