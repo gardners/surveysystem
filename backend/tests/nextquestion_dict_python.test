@@ -1,0 +1,138 @@
+description Python nextquestion with python dict and struct next_questions
+
+#!---------------------
+#!Survey WITH python dict responses, see #322
+#!---------------------
+
+definesurvey dict_python
+version 1
+Silly test survey updated
+question0:Question INFO::TEXT:0::-1:-1:0:0::
+question1:Question WARN::TEXT:0::-1:-1:0:0::
+question2:Question ERROR::TEXT:0::-1:-1:0:0::
+question99:Question UNKNOWN::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+# Create python module
+python
+
+def nextquestion(questions, answers):
+  if len(answers) == 0:
+    return {
+          'status': 0,
+          'message': 'INFO',
+          'next_questions': [ 'question0' ]
+    }
+
+  if len(answers) == 1:
+    return {
+          'status': 1,
+          'message': 'WARN',
+          'next_questions': [ 'question1' ]
+    }
+
+  if len(answers) == 2:
+    return {
+          'status': 2,
+          'message': 'ERROR',
+          'next_questions': [ 'question2' ]
+    }
+
+  if len(answers) == 3:
+    """
+    At the current state of development the backend should pass unkown states on
+    """
+    return {
+          'status': 99,
+          'message': 'UNKNOWN',
+          'next_questions': [ 'question99' ]
+    }
+
+  if len(answers) == 4:
+    """
+    At the current state of development the backend should pass unkown states on
+    """
+    return []
+
+  return {
+        'status': 1,
+        'message': 'END OF SURVEY',
+        'next_questions': []
+  }
+
+endofpython
+
+# Request creation of a  new session
+request 200 newsession?surveyid=dict_python
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session
+dict_python/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+endofsession
+
+# Ask for next question
+request 200 nextquestion?sessionid=$SESSION
+match_string {"status": 0, "message": "INFO", "next_questions": [{"id": "question0", "name": "question0", "title": "Question INFO", "description": "", "type": "TEXT", "default_value": "", "unit": ""}]}
+
+request 200 updateanswer?sessionid=$SESSION&answer=question0:Answer+0:0:0:0:0:0:0:0:
+match_string {"status": 1, "message": "WARN", "next_questions": [{"id": "question1", "name": "question1", "title": "Question WARN", "description": "", "type": "TEXT", "default_value": "", "unit": ""}]}
+
+request 200 updateanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0:
+match_string {"status": 2, "message": "ERROR", "next_questions": [{"id": "question2", "name": "question2", "title": "Question ERROR", "description": "", "type": "TEXT", "default_value": "", "unit": ""}]}
+
+request 200 updateanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0:
+match_string {"status": 99, "message": "UNKNOWN", "next_questions": [{"id": "question99", "name": "question99", "title": "Question UNKNOWN", "description": "", "type": "TEXT", "default_value": "", "unit": ""}]}
+
+#!---------------------
+#!Survey WITH invalid python dict responses, see #322
+#!---------------------
+
+definesurvey dict_python_invalid
+version 1
+Silly test survey updated
+question0:Question OK::TEXT:0::-1:-1:0:0::
+question1:Should FAIL::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+# Create python module
+python
+
+def nextquestion(questions, answers):
+  if len(answers) == 0:
+    return {
+          'status': 0,
+          'message': 'INFO',
+          'next_questions': [ 'question0' ]
+    }
+
+  # Here we passing on an invalid (old) format
+  if len(answers) == 1:
+    return [ 'question1' ]
+
+  return {
+        'status': 1,
+        'message': 'END OF SURVEY',
+        'next_questions': []
+  }
+
+endofpython
+
+# Request creation of a  new session
+request 200 newsession?surveyid=dict_python_invalid
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session
+dict_python_invalid/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+endofsession
+
+# Ask for next question
+request 200 nextquestion?sessionid=$SESSION
+match_string {"status": 0, "message": "INFO", "next_questions": [{"id": "question0", "name": "question0", "title": "Question OK", "description": "", "type": "TEXT", "default_value": "", "unit": ""}]}
+
+request 500 updateanswer?sessionid=$SESSION&answer=question0:Answer+0:0:0:0:0:0:0:0:
