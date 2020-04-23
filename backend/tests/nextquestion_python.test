@@ -14,8 +14,11 @@ endofsurvey
 # Create python module
 python
 def nextquestion_nextquestion_python(questions,answers):
-        print (questions,answers)
-        return ["question2"]
+    return {
+        'status': 1,
+        'message': 'warning!',
+        'next_questions': ['question2'],
+    }
 endofpython
 
 # Request creation of a  new session
@@ -31,5 +34,5 @@ endofsession
 
 # Ask for next question
 request 200 nextquestion?sessionid=$SESSION
-match_string {"next_questions": [{"id": "question2", "name": "question2", "title": "How boring was question 1?", "description": "How boring was question 1?", "type": "TEXT", "default_value": "I don't know", "unit": ""}]}
+match_string {"status": 1, "message": "warning!", "next_questions": [{"id": "question2", "name": "question2", "title": "How boring was question 1?", "description": "How boring was question 1?", "type": "TEXT", "default_value": "I don't know", "unit": ""}]}
 
