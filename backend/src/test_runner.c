@@ -35,6 +35,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <libgen.h>
 
 #include "errorlog.h"
 #include "survey.h"
@@ -43,6 +44,7 @@
 #define SURVEYFCGI_PORT 9009
 #define LIGHTY_USER "www-data"
 #define LIGHTY_GROUP "www-data"
+#define LIGHTY_PIDFILE "/var/run/lighttpd.pid"
 
 char test_dir[1024];
 int tests = 0;
@@ -312,11 +314,11 @@ int dump_logs(char *dir, FILE *log) {
 
 /**
  * Compares survey session line with a comparsion string
- * - the number of delimitors (Note, this includes escaped delimiters in fields, i.e "\:") 
+ * - the number of delimitors (Note, this includes escaped delimiters in fields, i.e "\:")
  * - string matches between delimitors
  * - custom validation via <KEYWORDS>
  * Note that this function is not very practical in terms of deserializing lines due to ignoring escaped delimiters
- *  
+ *
  * Return values:
  *    0: OK, columns match
  *   -1: text compare error
@@ -1373,6 +1375,7 @@ int run_test(char *dir, char *test_file) {
   return retVal;
 }
 
+// #333 set max-procs to 1, dedicated test pifile
 char *config_template =
     "server.modules = (\n"
     "     \"mod_access\",\n"
@@ -1387,7 +1390,7 @@ char *config_template =
     "server.document-root        = \"%s/front/build\"\n"
     "server.upload-dirs          = ( \"/var/cache/lighttpd/uploads\" )\n"
     "server.errorlog             = \"%s/lighttpd-error.log\"\n"
-    "server.pid-file             = \"/var/run/lighttpd.pid\"\n"
+    "server.pid-file             = \"%s\"\n"
     "server.username             = \"%s\"\n"
     "server.groupname            = \"%s\"\n"
     "server.port                 = %d\n"
@@ -1411,6 +1414,7 @@ char *config_template =
     "  \"/surveyapi\" =>\n"
     "  (( \"host\" => \"127.0.0.1\",\n"
     "     \"port\" => %d,\n"
+    "     \"max-procs\" => 1,\n"
     "     \"bin-path\" => \"%s/surveyfcgi\",\n"
     "     \"bin-environment\" => (\n"
     "     \"SURVEY_HOME\" => \"%s\",\n"
@@ -1472,7 +1476,7 @@ int configure_and_start_lighttpd(char *test_dir, int silent_flag) {
     require_directory(python_dir, 0775);
 
     snprintf(conf_data, 16384, config_template, test_dir, getcwd(cwd, cwdlen),
-             test_dir, LIGHTY_USER, LIGHTY_GROUP, HTTP_PORT, test_dir,
+             test_dir, LIGHTY_PIDFILE, LIGHTY_USER, LIGHTY_GROUP, HTTP_PORT, test_dir,
              SURVEYFCGI_PORT, test_dir, test_dir, python_dir,
              getcwd(cwd, cwdlen));
     char tmp_conf_file[1024];
@@ -1480,8 +1484,10 @@ int configure_and_start_lighttpd(char *test_dir, int silent_flag) {
 
     FILE *f = fopen(tmp_conf_file, "w");
     if (!f) {
-      LOG_ERRORV("Failed to open temporary lighttpd.conf file: %s",
+      fprintf(stderr, "Failed to open lighttpd.conf file: %s",
                  strerror(errno));
+      retVal = -1;
+      break;
     }
 
     fprintf(f, "%s", conf_data);
@@ -1491,33 +1497,39 @@ int configure_and_start_lighttpd(char *test_dir, int silent_flag) {
       fprintf(stderr, "Config file created.\n");
     }
 
+    // #333 remove creating temp config in /etc/lighttpd,
+    // sysymlink /etc/lighttpd/conf-enabled into test dir (required by mod_fcgi)
+    char sym_path[1024];
+    snprintf(sym_path, 1024, "%s/conf-enabled", test_dir);
+
+    if(symlink("/etc/lighttpd/conf-enabled", sym_path)) {
+      fprintf(stderr, "symlinking '/etc/lighttpd/conf-enabled' => '%s' failed, error: %s",
+                 sym_path, strerror(errno));
+      retVal = -1;
+      break;
+    }
+
     char cmd[2048];
-    snprintf(cmd, 2048,
-             "sudo cp %s/lighttpd.conf /etc/lighttpd/lighttpd.test.conf",
-             test_dir);
-    if (!tests) {
-      fprintf(stderr, "Running '%s'\n", cmd);
-    }
-    if (system(cmd)) {
-      LOG_ERRORV("system() call to install lighttpd.conf failed: %s",
-                 strerror(errno));
-    }
 
     snprintf(cmd, 2048, "sudo cp surveyfcgi %s/surveyfcgi", test_dir);
     if (!tests) {
       fprintf(stderr, "Running '%s'\n", cmd);
     }
     if (system(cmd)) {
-      LOG_ERRORV("system() call to copy surveyfcgi failed: %s",
+      fprintf(stderr, "system() call to copy surveyfcgi failed: %s",
                  strerror(errno));
+      retVal = -1;
+      break;
     }
 
-    snprintf(cmd, 2048, "sudo lighttpd -f /etc/lighttpd/lighttpd.test.conf");
+    snprintf(cmd, 2048, "sudo lighttpd -f %s", tmp_conf_file);
     if (!tests) {
       fprintf(stderr, "Running '%s'\n", cmd);
     }
     if (system(cmd)) {
-      LOG_ERRORV("system() call to start lighttpd failed: %s", strerror(errno));
+      fprintf(stderr, "system() call to start lighttpd failed: %s", strerror(errno));
+      retVal = -1;
+      break;
     }
 
     snprintf(
@@ -1556,56 +1568,108 @@ int configure_and_start_lighttpd(char *test_dir, int silent_flag) {
   return 0;
 }
 
+/**
+ * #333, kill connections synchronous
+ * requires sh: ./scripts/killport
+ */
 int stop_lighttpd() {
-  if (!tests)
-    fprintf(stderr, "Stop lighttpd on port %d...\n", HTTP_PORT);
-
-  FILE *fp;
-  char lsof_cmd[2048];
-  char kill_cmd[2048];
-  char pidc[20];
-  size_t hits = 0;
-
-  snprintf(lsof_cmd, 2048, "sudo lsof -t -i:%d", HTTP_PORT);
-  if (!tests) {
-    fprintf(stderr, "Got lsof output\n");
-  }
-
-  fp = popen(lsof_cmd, "r");
-  while (fgets(pidc, sizeof(pidc), fp) != NULL) {
-
-    hits++;
-    snprintf(kill_cmd, 2048, "sudo kill %s", pidc);
+  int retVal = 0;
+  do {
     if (!tests) {
-      fprintf(stderr, " - running: %s\n", kill_cmd);
+        fprintf(stderr, "Killing test port %d...", HTTP_PORT);
     }
-    if (system(kill_cmd)) {
-      fprintf(stderr, "system() call to stop lighttpd failed (kill %s)\n",
-              pidc);
-      exit(-3);
-    }
-  }
-  fclose(fp);
 
-  if (!hits) {
+    char cmd[2048];
+    char out[2048];
+    FILE *fp;
+
+    snprintf(cmd, 2048, "sudo ./scripts/killport %d 2>&1", HTTP_PORT);
+    fp = popen(cmd, "r");
+    if (fp == NULL) {
+        fprintf(stderr, "FAIL\nsystem(popen) call to stop lighttpd failed ('%s')\n", cmd);
+        retVal = -1;
+        break;
+    }
+
+    while (fgets(out, sizeof(out), fp) != NULL) {
+        fprintf(stderr, "%s", out);
+    }
+
+    int status = pclose(fp);
+    fprintf(stderr, "(exit code: %d)", WEXITSTATUS(status));
+
+    sleep(1);
     if (!tests) {
-      fprintf(stderr, "No pid to kill.\n");
+        fprintf(stderr, (!status) ? " \e[32mOK\e[0m" : " \e[31mFAIL\e[0m");
+        fprintf(stderr, "\n");
     }
-    return 0;
-  }
+  } while (0);
+  return retVal;
+}
 
-  if (!tests) {
-    fprintf(stderr, "Considering my options...\n");
-  }
-  sleep(1);
-  if (!tests) {
-    fprintf(stderr, "Done.\n");
-  }
+/**
+ * #333, get current pat to executable (for setting SURVEY_HOME)
+ */
+int get_current_path(int argc, char **argv, char *path_out, size_t max_len) {
+  int retVal = 0;
+  do {
 
-  return 0;
+    if (!path_out) {
+        retVal = -1;
+        break;
+    }
+
+    char prog_name[max_len];
+    strncpy(prog_name, argv[0], max_len);
+    char *dir = dirname(prog_name);
+
+    // argv is absolute path
+    if(argv[0][0] == '/') {
+        strncpy(path_out, dir, max_len);
+        break;
+    }
+
+    // argv is relative path
+    char cwd[1024];
+    if (getcwd(cwd, max_len) == NULL) {
+        fprintf(stderr, "getcwd failed");
+        retVal = -1;
+        break;
+    }
+    if (snprintf(dir, max_len, "%s%s", dir, cwd) < 0) {
+        fprintf(stderr, "snprintf failed");
+        retVal = -1;
+        break;
+    }
+    if (realpath(dir, path_out) == NULL) {
+        fprintf(stderr, "realpath failed");
+        retVal = -1;
+        break;
+    }
+
+  } while (0);
+  return retVal;
 }
 
 int main(int argc, char **argv) {
+  // #333, we are using some backend functions in our test code who rely on generate_path,
+  // for this to work we need to set SURVEY_HOME for this executable,
+  // this is indepenent to fastcgi SURVEY_HOME
+  char current_path[1024];
+  if (get_current_path(argc, argv, current_path, 1024)) {
+    fprintf(stderr, "Compiling current path failed");
+    exit(-1);
+  }
+  char varname[1024];
+  if (snprintf(varname, 1024, "SURVEY_HOME=%s", current_path) < 0) {
+    fprintf(stderr, "compiling env var failed (1)");
+    exit(-1);
+  }
+  if(putenv(varname)) {
+    fprintf(stderr, "putenv SURVEY_HOME failed");
+    exit(-1);
+  }
+
   snprintf(test_dir, 1024, "/tmp/surveytestrunner.%d.%d", (int)time(0),
            getpid());
   fprintf(stderr, "\e[33m *\e[0m Using \e[1m%s\e[0m as test directory\n",
