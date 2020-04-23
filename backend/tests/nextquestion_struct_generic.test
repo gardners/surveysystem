@@ -1,0 +1,42 @@
+description Generic nextquestion with struct next_questions
+
+#!---------------------
+#!Survey WITHOUT python, see #322
+#!---------------------
+
+definesurvey nextquestions_generic
+version 2
+Silly test survey updated
+without python
+question0:Question 0::TEXT:0::-1:-1:0:0::
+question1:Question 1::TEXT:0::-1:-1:0:0::
+question2:Question 2::TEXT:0::-1:-1:0:0::
+question3:Question 3::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+# Request creation of a  new session
+request 200 newsession?surveyid=nextquestions_generic
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session
+nextquestions_generic/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+endofsession
+
+# Ask for next question
+request 200 nextquestion?sessionid=$SESSION
+match_string {"status": 0, "message": "", "next_questions": [{"id": "question0", "name": "question0", "title": "Question 0", "description": "", "type": "TEXT", "default_value": "", "unit": ""}]}
+
+request 200 addanswer?sessionid=$SESSION&answer=question0:Answer+0:0:0:0:0:0:0:0:
+match_string {"status": 0, "message": "", "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "unit": ""}]}
+
+request 200 addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0:
+match_string {"status": 0, "message": "", "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "unit": ""}]}
+
+request 200 addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0:
+match_string {"status": 0, "message": "", "next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "unit": ""}]}
+
+request 200 addanswer?sessionid=$SESSION&answer=question3:Answer+3:0:0:0:0:0:0:0:
+match_string {"status": 0, "message": "", "next_questions": []}
