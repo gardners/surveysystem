@@ -1139,10 +1139,10 @@ static void fcgi_nextquestion(struct kreq *req) {
       break;
     }
 
-    struct question *q[1024];
-    int next_question_count = 0;
-
-    if (get_next_questions(s, q, 1024, &next_question_count)) {
+    // #332 next_questions data struct
+    struct next_questions *nq = init_next_questions();
+    if (get_next_questions(s, nq)) {
+      free_next_questions(nq);
       quick_error(req, KHTTP_500, "Could not get next questions.");
       LOG_ERRORV("get_next_questions('%s') failed", session_id);
       break;
@@ -1159,31 +1159,34 @@ static void fcgi_nextquestion(struct kreq *req) {
     khttp_body(req);
 
     kjson_obj_open(&resp);
-    kjson_putint(&resp, next_question_count);
+    // #332 add status, message
+    kjson_putintp(&resp, "status", nq->status);
+    kjson_putstringp(&resp, "message", (nq->message != NULL) ? nq->message : "");
+
     kjson_arrayp_open(&resp, "next_questions");
 
-    for (int i = 0; i < next_question_count; i++) {
+    for (int i = 0; i < nq->question_count; i++) {
 
       // #269 add a flag indicating id default_value was set: kjson_putstringp() does not check keys and simply appends fields with the same key
       int default_value_flag = 0;
       // Output each question
       kjson_obj_open(&resp);
-      kjson_putstringp(&resp, "id", q[i]->uid);
-      kjson_putstringp(&resp, "name", q[i]->uid);
-      kjson_putstringp(&resp, "title", q[i]->question_text);
-      kjson_putstringp(&resp, "description", q[i]->question_html);
-      kjson_putstringp(&resp, "type", question_type_names[q[i]->type]);
+      kjson_putstringp(&resp, "id",          nq->next_questions[i]->uid);
+      kjson_putstringp(&resp, "name",        nq->next_questions[i]->uid);
+      kjson_putstringp(&resp, "title",       nq->next_questions[i]->question_text);
+      kjson_putstringp(&resp, "description", nq->next_questions[i]->question_html);
+      kjson_putstringp(&resp, "type",        question_type_names[nq->next_questions[i]->type]);
       // Provide default value if question not previously answered,
       // else provide the most recent deleted answer for this question. #186
       {
         for (int j = 0; j < s->answer_count; j++) {
-          if (!strcmp(s->answers[j]->uid, q[i]->uid)) {
+          if (!strcmp(s->answers[j]->uid, nq->next_questions[i]->uid)) {
 
             if (s->answers[j]->flags & ANSWER_DELETED) {
               char rendered[8192];
               snprintf(rendered, 8192, "%s", s->answers[j]->text);
 
-              switch (q[i]->type) {
+              switch (nq->next_questions[i]->type) {
               case QTYPE_INT:
                 snprintf(rendered, 8192, "%lld", s->answers[j]->value);
                 break;
@@ -1239,8 +1242,9 @@ static void fcgi_nextquestion(struct kreq *req) {
                 break;
 
               default:
+                free_next_questions(nq);
                 LOG_ERRORV("Unknown question type #%d in session '%s'",
-                           q[i]->type, session_id);
+                           nq->next_questions[i]->type, session_id);
                 break;
               }
               kjson_putstringp(&resp, "default_value", rendered);
@@ -1252,11 +1256,11 @@ static void fcgi_nextquestion(struct kreq *req) {
 
       // #269 add default_value if not set before
       if (!default_value_flag) {
-        kjson_putstringp(&resp, "default_value", q[i]->default_value);
+        kjson_putstringp(&resp, "default_value", nq->next_questions[i]->default_value);
         default_value_flag = 1;
       }
 
-      switch (q[i]->type) {
+      switch (nq->next_questions[i]->type) {
       case QTYPE_MULTICHOICE:
       case QTYPE_MULTISELECT:
       // #98 add single checkbox choices
@@ -1270,31 +1274,31 @@ static void fcgi_nextquestion(struct kreq *req) {
       case QTYPE_DIALOG_DATA_CRAWLER:
 
         kjson_arrayp_open(&resp, "choices");
-        int len = strlen(q[i]->choices);
+        int len = strlen(nq->next_questions[i]->choices);
 
         if (len) {
-          for (int j = 0; q[i]->choices[j];) {
+          for (int j = 0; nq->next_questions[i]->choices[j];) {
 
             char choice[65536];
             int cl = 0;
             choice[0] = 0;
 
-            while (((j + cl) < len) && q[i]->choices[j + cl] &&
-                   (q[i]->choices[j + cl] != ',')) {
+            while (((j + cl) < len) && nq->next_questions[i]->choices[j + cl] &&
+                   (nq->next_questions[i]->choices[j + cl] != ',')) {
               if (cl < 65535) {
-                choice[cl] = q[i]->choices[j + cl];
+                choice[cl] = nq->next_questions[i]->choices[j + cl];
                 choice[cl + 1] = 0;
               }
               cl++;
             } // endwhile
 
             // #74 skip empty values
-            if (q[i]->choices[j] != ',') {
+            if (nq->next_questions[i]->choices[j] != ',') {
               kjson_putstring(&resp, choice);
             }
 
             j += cl;
-            if (q[i]->choices[j + cl] == ',') {
+            if (nq->next_questions[i]->choices[j + cl] == ',') {
               j++;
             }
 
@@ -1308,11 +1312,12 @@ static void fcgi_nextquestion(struct kreq *req) {
       } // switch
 
       // #72 unit field
-      kjson_putstringp(&resp, "unit", q[i]->unit);
+      kjson_putstringp(&resp, "unit", nq->next_questions[i]->unit);
       kjson_obj_close(&resp);
 
     } // endfor
 
+    free_next_questions(nq);
     kjson_array_close(&resp);
     kjson_obj_close(&resp);
     kjson_close(&resp);
