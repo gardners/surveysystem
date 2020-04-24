@@ -16,6 +16,7 @@ import { SurveyContext } from '../Context';
 // form components
 import SurveySection from './survey/SurveySection';
 import SurveyForm from './survey/SurveyForm';
+import SurveyMessage from './survey/SurveyMessage';
 import Question from './survey/Question';
 import QuestionGroup from './survey/QuestionGroup';
 import FeedbackItem from './survey/FeedbackItem';
@@ -192,7 +193,7 @@ class Survey extends Component {
         Api.createNewSession(survey.surveyID)
         .then(sessID => survey.init(sessID))
         .then(() => Api.nextQuestion(survey.sessionID))
-        .then(response => survey.add(response.next_questions))
+        .then(response => survey.add(response.next_questions, response.status || 0, response.message || ''))
         .then(() => this.setState({
             loading: '',
             survey,
@@ -220,7 +221,7 @@ class Survey extends Component {
         // 2. add question set to survey instance, (survey.add() will internally evaluate if the new question set matches the old one - based on ids - and skip adding in thast case)
 
         Api.nextQuestion(survey.sessionID)
-        .then(response => survey.add(response.next_questions))
+        .then(response => survey.add(response.next_questions, response.status || 0, response.message || ''))
         .then(() => this.setState({
             loading: '',
             survey,
@@ -269,7 +270,7 @@ class Survey extends Component {
 
         Api.updateAnswers_SEQUENTIAL(survey.sessionID, csvFragments)
         .then(responses => responses.pop()) // last
-        .then(response => survey.add(response.next_questions))
+        .then(response => survey.add(response.next_questions, response.status || 0, response.message || ''))
         .then(() => this.setState({
             loading: '',
             survey,
@@ -310,7 +311,7 @@ class Survey extends Component {
         this.setState({ loading: `Deleting ${prev.length} answers...` });
 
         Api.deleteAnswerAndFollowing(survey.sessionID, questionId)
-        .then(response => survey.replaceCurrent(response.next_questions))
+        .then(response => survey.replaceCurrent(response.next_questions, response.status || 0, response.message || ''))
         .then(() => this.setState({
             loading: '',
             survey,
@@ -371,6 +372,8 @@ class Survey extends Component {
                             </div>
                         : null
                     }
+
+                    <SurveyMessage session={ survey} />
 
                     <SurveyContext.Provider value={ {
                         surveyID: survey.surveyID,
