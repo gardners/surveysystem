@@ -813,4 +813,37 @@ describe('SurveyManager.replaceCurrent', () => {
         expect(res).toBe(true);
     });
 
+    // #332
+    test('replaceCurrent - status', () => {
+        const that = new SurveyManager('test', 'uri');
+        that.init('123');
+
+        res = that.replaceCurrent([{ id: 1 }], 1);
+
+        expect(that.questions.length).toBe(1);
+        expect(that.questions[0].length).toBe(1);
+        expect(that.questions[0][0]).toMatchObject({ id: 1 });
+
+        expect(that.status).toBe(1);
+        expect(that.message).toBe('');
+
+        expect(res).toBe(true);
+    });
+
+    test('replaceCurrent - status and message', () => {
+        const that = new SurveyManager('test', 'uri');
+        that.init('123');
+
+        res = that.replaceCurrent([{ id: 1 }], 1, 'Hello');
+
+        expect(that.questions.length).toBe(1);
+        expect(that.questions[0].length).toBe(1);
+        expect(that.questions[0][0]).toMatchObject({ id: 1 });
+
+        expect(that.status).toBe(1);
+        expect(that.message).toBe('Hello');
+
+        expect(res).toBe(true);
+    });
+
 });
