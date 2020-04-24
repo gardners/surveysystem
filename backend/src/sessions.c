@@ -519,6 +519,43 @@ void free_question(struct question *q) {
   return;
 }
 
+// #332 initialise next_questions data struct
+struct next_questions *init_next_questions() {
+  int retVal = 0;
+  struct next_questions *nq = NULL;
+
+  do {
+    nq = calloc(sizeof(struct next_questions), 1);
+    if (!nq) {
+      LOG_ERRORV("calloc(%d,1) failed when loading struct next_questions",
+                 sizeof(struct next_questions));
+    }
+    nq->status = 0;
+    nq->message = NULL;
+    nq->question_count = 0;
+  } while (0);
+  
+  if (retVal) {
+    nq = NULL;
+  }
+  return nq;
+}
+
+// #332 free next_questions data struct
+void free_next_questions(struct next_questions *nq) {
+  if (!nq) {
+    return;
+  }
+  freez(nq->message);
+  for (int i = 0; i < nq->question_count; i++) {
+    free_question(nq->next_questions[i]);
+  }
+  nq->question_count = 0;
+  
+  free(nq);
+  return;
+}
+
 void free_session(struct session *s) {
   if (!s) {
     return;
@@ -541,6 +578,35 @@ void free_session(struct session *s) {
 
   free(s);
   return;
+}
+
+int dump_next_questions(FILE *f, struct next_questions *nq) {
+  int retVal = 0;
+  do {
+    fprintf(f, "{\n");
+    if (!nq) {
+      fprintf(f, "  <NULL>\n");
+      break;
+    }
+    fprintf(f, "  status: %d\n", nq->status);
+    fprintf(f, "  message: %s\n", nq->message);
+    fprintf(f, "  next_questions: [");
+    for (int i = 0; i < nq->question_count; i++) {
+      if (nq->next_questions[i]) {
+        fprintf(f, "%s", nq->next_questions[i]->uid);
+      } else {
+        fprintf(f, "<NULL>");
+      }
+      if (i < nq->question_count - 1) {
+        fprintf(f, ", ");
+      }
+    }
+    fprintf(f, "]\n");
+    fprintf(f, "  question_count: %d\n", nq->question_count);
+    fprintf(f, "}\n");
+  } while (0);
+
+  return retVal;
 }
 
 /*
