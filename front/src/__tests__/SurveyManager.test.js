@@ -741,3 +741,76 @@ describe('SurveyManager.merge', () => {
     });
 
 });
+
+describe('SurveyManager.replaceCurrent', () => {
+    let res;
+
+    test('replaceCurrent - do not replace when closed', () => {
+        const that = new SurveyManager('test', 'uri');
+        that.init('123');
+        that.close();
+        expect(that.closed).toBe(true);
+
+        res = that.replaceCurrent([{ id: 1 }]);
+        expect(res).toBe(false);
+    });
+
+    test('replaceCurrent - close session on receiving and empty question set and do not replace', () => {
+        const that = new SurveyManager('test', 'uri');
+        that.init('123');
+        that.add([{ id: 1 }]);
+
+        res = that.replaceCurrent([]);
+
+        expect(that.questions.length).toBe(1);
+        expect(that.questions[0].length).toBe(1);
+        expect(that.questions[0][0]).toMatchObject({ id: 1 });
+
+        expect(res).toBe(false);
+    });
+
+    test('replaceCurrent - replace (empty session)', () => {
+        const that = new SurveyManager('test', 'uri');
+        that.init('123');
+
+        res = that.replaceCurrent([{ id: 1 }]);
+
+        expect(that.questions.length).toBe(1);
+        expect(that.questions[0].length).toBe(1);
+        expect(that.questions[0][0]).toMatchObject({ id: 1 });
+
+        expect(res).toBe(true);
+    });
+
+    test('replaceCurrent - replace (1)', () => {
+        const that = new SurveyManager('test', 'uri');
+        that.init('123');
+        that.add([{ id: 1 }]);
+
+        res = that.replaceCurrent([{ id: 2 }]);
+
+        expect(that.questions.length).toBe(1);
+        expect(that.questions[0].length).toBe(1);
+        expect(that.questions[0][0]).toMatchObject({ id: 2 });
+
+        expect(res).toBe(true);
+    });
+
+    test('replaceCurrent - replace (2)', () => {
+        const that = new SurveyManager('test', 'uri');
+        that.init('123');
+        that.add([{ id: 1 }]);
+        that.add([{ id: 2 }]);
+
+        res = that.replaceCurrent([{ id: 3 }]);
+
+        expect(that.questions.length).toBe(2);
+        expect(that.questions[0].length).toBe(1);
+        expect(that.questions[0][0]).toMatchObject({ id: 1 });
+        expect(that.questions[1].length).toBe(1);
+        expect(that.questions[1][0]).toMatchObject({ id: 3 });
+
+        expect(res).toBe(true);
+    });
+
+});
