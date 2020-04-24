@@ -17,7 +17,11 @@ python
 """
 def nextquestion(questions, answers):
     print (questions, answers)
-    return ["question2"]
+    return {
+        'status': 0,
+        'message': '',
+        'next_questions': ["question2"],
+    }
 """
 endofpython
 

@@ -37,8 +37,9 @@ wchar_t *as_wchar(const char *s) {
   return as_wchar_out;
 }
 
+// TODO, make thread-safe
 int is_python_started = 0;
-PyObject *nq_python_module = NULL;
+PyObject *py_module = NULL;
 
 void log_python_error() {
   int retVal = 0;
@@ -59,11 +60,11 @@ void log_python_error() {
       // Another way to do this might be to create a Python CustomError class with a traceback string injected into the message.
       // However, this would only work if the CustomError is deliberately raised. This method might seem like an overhead but provides tracebacks for any exception type.
       // todo: enable/disable this via a debug flag
-      if (!nq_python_module) {
+      if (!py_module) {
         break;
       }
       PyObject *callable =
-          PyObject_GetAttrString(nq_python_module, tb_function);
+          PyObject_GetAttrString(py_module, tb_function);
 
       if (callable) {
         PyObject *args = PyTuple_Pack(3, ptype, pvalue, ptraceback);
@@ -130,7 +131,7 @@ int setup_python() {
       }
     }
 
-    nq_python_module = PyImport_ImportModule("nextquestion");
+    py_module = PyImport_ImportModule("nextquestion");
 
     if (PyErr_Occurred()) {
       log_python_error();
@@ -138,7 +139,7 @@ int setup_python() {
       LOG_WARNV("PyImport_ImportModule('nextquestion') failed.", 0);
     }
 
-    if (!nq_python_module) {
+    if (!py_module) {
       char append_cmd[1024];
       // So now try to get the module a different way
       snprintf(append_cmd, 1024, "import nextquestion");
@@ -153,8 +154,8 @@ int setup_python() {
       }
 
       PyObject *module_name_o = PyUnicode_FromString(append_cmd);
-      nq_python_module = PyImport_GetModule(module_name_o);
-      if (!nq_python_module) {
+      py_module = PyImport_GetModule(module_name_o);
+      if (!py_module) {
         log_python_error();
         LOG_WARNV("Using PyImport_GetModule() didn't work either", 0);
       }
@@ -183,8 +184,8 @@ int setup_python() {
       }
 
       module_name_o = PyUnicode_FromString("__main__");
-      nq_python_module = PyImport_GetModule(module_name_o);
-      if (!nq_python_module) {
+      py_module = PyImport_GetModule(module_name_o);
+      if (!py_module) {
         log_python_error();
         LOG_WARNV("Using PyImport_GetModule() didn't work either", 0);
       } else {
@@ -194,7 +195,7 @@ int setup_python() {
       }
     }
 
-    if (!nq_python_module) {
+    if (!py_module) {
       PyErr_Print();
       LOG_ERROR("Failed to load python module 'nextquestion'");
     }
@@ -214,9 +215,9 @@ int end_python(void) {
     fprintf(stderr, "STOPPING python\n");
 
     // Free any python objects we have hanging about
-    if (nq_python_module) {
-      Py_DECREF(nq_python_module);
-      nq_python_module = NULL;
+    if (py_module) {
+      Py_DECREF(py_module);
+      py_module = NULL;
     }
 
     Py_Finalize();
@@ -224,6 +225,9 @@ int end_python(void) {
   return retVal;
 }
 
+/**
+ * Given a question uid load the question data and append it to the givven next_questions struct
+ */
 int mark_next_question(struct session *s, struct question *next_questions[],
                        int *next_question_count, const char *uid) {
   int retVal = 0;
@@ -287,7 +291,7 @@ void log_python_object(char *msg, PyObject *result) {
 
 /**
  * Creates an answer Py_Dict
- * 
+ *
  * the caller is responsible for derferencing the dict:  if(dict) Py_DECREF(dict);
  */
 PyObject *py_create_answer(struct answer *a) {
@@ -341,27 +345,25 @@ PyObject *py_create_answer(struct answer *a) {
   return dict;
 }
 
-int call_python_nextquestion(struct session *s,
-                             struct question *next_questions[],
-                             int max_next_questions, int *next_question_count) {
+int call_python_nextquestion(struct session *s, struct next_questions *nq) {
   int retVal = 0;
   int is_error = 0;
 
   do {
-    if (!s)
-      LOG_ERROR("session structure is NULL");
-    if (!next_questions)
-      LOG_ERROR("next_questions is null");
-    if (!next_question_count)
-      LOG_ERROR("next_question_count is null");
-    if ((*next_question_count) >= MAX_QUESTIONS)
-      LOG_ERROR("Too many questions in list.");
+    if (!s->survey_id)
+      LOG_ERROR("surveyname is NULL");
+    if (!s->session_id)
+      LOG_ERROR("session_uuid is NULL");
+    if (!nq)
+      LOG_ERROR("next_questions is NULL");
+    if (nq->question_count)
+      LOG_ERROR("next_questions->question_count is > 0");
 
     // Setup python
     if (setup_python()) {
       LOG_ERROR("Failed to initialise python.\n");
     }
-    if (!nq_python_module)
+    if (!py_module)
       LOG_ERROR(
           "Python module 'nextquestion' not loaded. Does it have an error?");
 
@@ -384,7 +386,7 @@ int call_python_nextquestion(struct session *s,
     LOG_INFOV("Searching for python function '%s'", function_name);
 
     PyObject *myFunction =
-        PyObject_GetAttrString(nq_python_module, function_name);
+        PyObject_GetAttrString(py_module, function_name);
 
     if (!myFunction) {
       // Try again without _hash on the end
@@ -395,13 +397,13 @@ int call_python_nextquestion(struct session *s,
         }
       }
       LOG_INFOV("Searching for python function '%s'", function_name);
-      myFunction = PyObject_GetAttrString(nq_python_module, function_name);
+      myFunction = PyObject_GetAttrString(py_module, function_name);
     }
 
     if (!myFunction) {
       snprintf(function_name, 1024, "nextquestion");
       LOG_INFOV("Searching for python function '%s'", function_name);
-      myFunction = PyObject_GetAttrString(nq_python_module, function_name);
+      myFunction = PyObject_GetAttrString(py_module, function_name);
     }
 
     if (!myFunction)
@@ -483,86 +485,123 @@ int call_python_nextquestion(struct session *s,
                  "give you any clues.)",
                  function_name);
     }
-    // PyObject_Print(result,stderr,0);
-    if (PyUnicode_Check(result)) {
 
-      // Get value and put it as single response
-      const char *question = PyUnicode_AsUTF8(result);
-      if (!question) {
-        is_error = 1;
-        Py_DECREF(result);
-        LOG_ERRORV("String in reply from Python function '%s' is null",
+    // #332 add instance check for exported Python class 'NextQuestions'
+
+    if(!PyDict_Check(result)) {
+      is_error = 1;
+      Py_DECREF(result);
+      LOG_ERRORV("Reply from Python function '%s' is of invalid type (not a dict)",
                    function_name);
-      }
+    }
 
-      if (mark_next_question(s, next_questions, next_question_count,
-                             question)) {
-        is_error = 1;
-        Py_DECREF(result);
-        LOG_ERRORV("Error adding question '%s' to list of next questions.  Is "
-                   "it a valid question UID?",
-                   question);
-      }
+    // 1. extract status
+    PyObject *py_status = PyDict_GetItemString(result, "status");
+    if (!py_status) {
+      is_error = 1;
+      Py_DECREF(result);
+      LOG_ERRORV("Reply from Python function '%s' has no member 'status'",
+                   function_name);
+    }
 
-    } else if (PyList_Check(result)) {
+    long int status = PyLong_AsLong(py_status);
+    if(status == -1) {
+      is_error = 1;
+      Py_DECREF(result);
+      LOG_ERRORV("Reply from Python function '%s': invalid member 'status' (int)",
+                   function_name);
+    }
+    
+    // 2. assign status
+    nq->status = status;
 
-      // XXX Go through list adding values
-      int list_len = PyList_Size(result);
-      for (int i = 0; i < list_len; i++) {
+    // 3. extract message
+    PyObject *py_message = PyDict_GetItemString(result, "message");
+    if (!py_message) {
+      is_error = 1;
+      Py_DECREF(result);
+      LOG_ERRORV("Reply from Python function '%s' has no member 'message'",
+                   function_name);
+    }
 
-        PyObject *item = PyList_GetItem(result, i);
-        if (PyUnicode_Check(item)) {
-          // Get value and put it as single response
-          const char *question = PyUnicode_AsUTF8(item);
-          if (!question) {
-            is_error = 1;
-            Py_DECREF(result);
-            LOG_ERRORV("String in reply from Python function '%s' is null",
-                       function_name);
-          }
+    const char *message = PyUnicode_AsUTF8(py_message);
+    if(!message) {
+      is_error = 1;
+      Py_DECREF(result);
+      LOG_ERRORV("Reply from Python function '%s': invalid member 'message' (str)",
+                   function_name);
+    }
+    
+    // 4. assign message
+    nq->message = strdup(message);
 
-          if (mark_next_question(s, next_questions, next_question_count,
-                                 question)) {
-            is_error = 1;
-            Py_DECREF(result);
-            LOG_ERRORV("Error adding question '%s' to list of next questions.  "
-                       "Is it a valid question UID?",
-                       question);
-          }
-        } else {
+    // 5. extract next_questions
+    PyObject *py_next_questions = PyDict_GetItemString(result, "next_questions");
+    if (!py_next_questions) {
+      is_error = 1;
+      Py_DECREF(result);
+      LOG_ERRORV("Reply from Python function '%s' has no member 'next_questions'",
+                   function_name);
+    }
+
+    if(!PyList_Check(py_next_questions)) {
+      is_error = 1;
+      Py_DECREF(result);
+      LOG_ERRORV("Reply from Python function '%s': invalid member 'next_questions' (list(str))",
+                   function_name);
+    }
+
+    int list_len = PyList_Size(py_next_questions);
+
+    // XXX Go through list adding values
+    for (int i = 0; i < list_len; i++) {
+      PyObject *item = PyList_GetItem(py_next_questions, i);
+      if (PyUnicode_Check(item)) {
+        // Get value and put it as single response
+        const char *uid = PyUnicode_AsUTF8(item);
+        if (!uid) {
+          is_error = 1;
           Py_DECREF(result);
-          LOG_ERRORV(
-              "List item is not a string in response from Python function '%s'",
-              function_name);
+          LOG_ERRORV("String in reply from Python function '%s' is null",
+                      function_name);
+        }
+        
+        // 6. assign next_questions
+        // 7. assign question_count
+        nq->next_questions[i] = NULL; // intialize target pointer to NULL first!
+        if (mark_next_question(s, nq->next_questions, &nq->question_count, uid)) {
+          is_error = 1;
+          Py_DECREF(result);
+          LOG_ERRORV("Error adding question '%s' to list of next questions.  "
+                      "Is it a valid question UID?",
+                      uid);
         }
 
-      } // endfor
+      } else {
+        Py_DECREF(result);
+        LOG_ERRORV(
+            "result.next_questions[%d] list item is not a string in response from Python function '%s'",
+            i, function_name);
+      }
 
-    } else {
-      log_python_object("Return value", result);
-
-      Py_DECREF(result);
-      LOG_ERRORV("Return value from Python function '%s' is neither string nor "
-                 "list.  Empty return should be an empty list.",
-                 function_name);
-    }
+    } // endfor
 
     Py_DECREF(result);
   } while (0);
 
-  if (is_error)
+
+  if (is_error) {
+    free_next_questions(nq);
     retVal = -99;
+  }
   return retVal;
 }
 
 /*
   Generic next question selector, which selects the first question lacking an answer.
-  
+  #332 next_questions data struct
 */
-int get_next_questions_generic(struct session *s,
-                               struct question *next_questions[],
-                               int max_next_questions,
-                               int *next_question_count) {
+int get_next_questions_generic(struct session *s, struct next_questions *nq) {
   int retVal = 0;
 
   do {
@@ -574,12 +613,10 @@ int get_next_questions_generic(struct session *s,
       LOG_ERROR("surveyname is NULL");
     if (!s->session_id)
       LOG_ERROR("session_uuid is NULL");
-    if (!next_questions)
+    if (!nq)
       LOG_ERROR("next_questions is NULL");
-    if (max_next_questions < 1)
-      LOG_ERROR("max_next_questions < 1");
-    if (!next_question_count)
-      LOG_ERROR("next_question_count is NULL");
+    if (nq->question_count)
+      LOG_ERROR("next_questions->question_count is > 0");
 
     LOG_INFOV("Calling get_next_questions_generic()", 0);
 
@@ -598,9 +635,10 @@ int get_next_questions_generic(struct session *s,
         LOG_INFOV("Answer to question %d exists.", i);
         continue;
       } else {
-        if ((*next_question_count) < max_next_questions) {
-          next_questions[*next_question_count] = s->questions[i];
-          (*next_question_count)++;
+        if (nq->question_count < MAX_NEXTQUESTIONS) {
+          nq->next_questions[nq->question_count] = s->questions[i];
+          nq->question_count++;
+
           LOG_INFOV("Need answer to question %d.", i);
 
           // XXX - For now, just return exactly the first unanswered question
@@ -615,8 +653,8 @@ int get_next_questions_generic(struct session *s,
   return retVal;
 }
 
-int get_next_questions(struct session *s, struct question *next_questions[],
-                       int max_next_questions, int *next_question_count) {
+// #332 next_questions data struct
+int get_next_questions(struct session *s, struct next_questions *nq) {
   // Call the function to get the next question(s) to ask.
   // First see if we have a python function to do the job.
   // If not, then return the list of all not-yet-answered questions
@@ -624,24 +662,21 @@ int get_next_questions(struct session *s, struct question *next_questions[],
   do {
     if (!s)
       LOG_ERROR("session structure is NULL");
-    if (!next_questions)
-      LOG_ERROR("next_questions is null");
-    if (!next_question_count)
-      LOG_ERROR("next_question_count is null");
-    if ((*next_question_count) >= MAX_QUESTIONS)
-      LOG_ERROR("Too many questions in list.");
+    if (!nq)
+      LOG_ERROR("next_questions structure is null");
 
     if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_PYTHON) {
       LOG_INFO(
           "NEXTQUESTIONS_FLAG_PYTHON set, calling call_python_nextquestion())");
-      int r = call_python_nextquestion(s, next_questions, max_next_questions,
-                                       next_question_count);
+      int r = call_python_nextquestion(s, nq);
 
       if (r == -99) {
+        free_next_questions(nq);
         retVal = -1;
         break;
       }
       if (!r) {
+        free_next_questions(nq);
         retVal = 0;
         break;
       }
@@ -652,9 +687,9 @@ int get_next_questions(struct session *s, struct question *next_questions[],
     if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_GENERIC) {
       LOG_INFO("NEXTQUESTIONS_FLAG_GENERIC set, calling "
                "get_next_questions_generic())");
-      retVal = get_next_questions_generic(s, next_questions, max_next_questions,
-                                          next_question_count);
+      retVal = get_next_questions_generic(s, nq);
     } else {
+      free_next_questions(nq);
       LOG_ERROR("Could not call python nextquestion function.");
     }
   } while (0);
@@ -662,7 +697,7 @@ int get_next_questions(struct session *s, struct question *next_questions[],
   return retVal;
 }
 
-/* 
+/*
  * Fetch analysis json string via Python script
  * #288, the parent unit is responsible for freeing *output pointer
  */
@@ -679,7 +714,7 @@ int get_analysis(struct session *s, const char **output) {
     if (setup_python()) {
       LOG_ERROR("Failed to initialise python.\n");
     }
-    if (!nq_python_module)
+    if (!py_module)
       LOG_ERROR(
           "Python module 'nextquestion' not loaded. Does it have an error?");
 
@@ -702,7 +737,7 @@ int get_analysis(struct session *s, const char **output) {
     LOG_INFOV("Searching for python function '%s'", function_name);
 
     PyObject *myFunction =
-        PyObject_GetAttrString(nq_python_module, function_name);
+        PyObject_GetAttrString(py_module, function_name);
 
     if (!myFunction) {
       // Try again without _hash on the end
@@ -713,13 +748,13 @@ int get_analysis(struct session *s, const char **output) {
         }
       }
       LOG_INFOV("Searching for python function '%s'", function_name);
-      myFunction = PyObject_GetAttrString(nq_python_module, function_name);
+      myFunction = PyObject_GetAttrString(py_module, function_name);
     }
 
     if (!myFunction) {
       snprintf(function_name, 1024, "analyse");
       LOG_INFOV("Searching for python function '%s'", function_name);
-      myFunction = PyObject_GetAttrString(nq_python_module, function_name);
+      myFunction = PyObject_GetAttrString(py_module, function_name);
     }
 
     if (!myFunction)

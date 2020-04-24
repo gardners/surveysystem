@@ -61,9 +61,16 @@ class SurveyManager {
         this.sessionID = null;
         this.endpoint = endpoint;
         this.closed = false; // all questions are answered && survey is closed
+        // #332
+        this.status = 0;
+        this.message = '';
 
         this.created = Date.now();
         this.modified = 0;
+
+        // #333 add status, message from last response
+        this.status = 0;
+        this.message = '';
 
         // questions
         // this is an array of question sets with the length of 2 [previousquestions, currentquestions]
@@ -177,7 +184,7 @@ class SurveyManager {
      * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
      * @returns {boolean} whether question was added
      */
-    add(questions) {
+    add(questions, status, message) {
         if(this.isClosed()) {
             return false;
         }
@@ -192,7 +199,15 @@ class SurveyManager {
             return false;
         }
 
+        // #333 add status, message from last response
+        this.status = status || 0;
+        this.message = message || '';
+
         this.questions.push(normalizeQuestions(questions));
+
+        // #332
+        this.status = status || 0;
+        this.message = message || '';
 
         this.modified = Date.now();
         return true;
@@ -207,7 +222,7 @@ class SurveyManager {
      * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
      * @returns {boolean} whether question was areplaced
      */
-    replaceCurrent(questions) {
+    replaceCurrent(questions, status, message) {
         if(this.isClosed()) {
             return false;
         }
@@ -217,19 +232,26 @@ class SurveyManager {
             return false;
         }
 
+        // #333 add status, message from last response
+        this.status = status || 0;
+        this.message = message || '';
+
         if (!this.questions.length) {
             this.questions.push(normalizeQuestions(questions));
         } else {
             this.questions[this.questions.length - 1] = normalizeQuestions(questions);
         }
 
+        // #332
+        this.status = status || 0;
+        this.message = message || '';
+
         this.modified = Date.now();
         return true;
     }
 
     /**
-     * Clears this.questions and adds current set of QuestionItems
-     * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
+     * Removes last set of questions, clears status and message
      * @returns {boolean} whether question was added
      */
     reset() {
@@ -240,7 +262,16 @@ class SurveyManager {
         if (!this.questions.length) {
             return false;
         }
+
+        // #333 add status, message
+        this.status =  0;
+        this.message = '';
+
         this.questions.pop();
+
+        // #332
+        this.status = 0;
+        this.message = '';
 
         this.modified = Date.now();
         return true;

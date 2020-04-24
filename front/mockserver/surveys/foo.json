@@ -1,6 +1,7 @@
 {
-    "survey": [
-        {
+    "survey": [{
+           "status": 0,
+           "message": "",
            "next_questions": [{
                  "id": "q0",
                  "name": "q0",
@@ -9,11 +10,13 @@
                  "type": "HIDDEN",
                  "unit": ""
              }]
-        },         {
+        }, {
+            "status": 0,
+            "message": "<q>If there's anything more important than my ego around, I want it caught and shot now.</q>",
             "next_questions": [{
                 "id": "q1a",
                 "name": "q1a",
-                "title": "Question 1a",
+                "title": "Name",
                 "description": "Your Hitchhicker name",
                 "type": "TEXT",
                 "unit": ""
@@ -33,6 +36,8 @@
                 "unit": ""
             }]
         }, {
+            "status": 0,
+            "message": "",
             "next_questions": [{
                 "id": "q4",
                 "name": "q4",
@@ -40,9 +45,12 @@
                 "description": "How long can a <strong>Somebody Else's Problem field</strong> be run for on a single torch battery",
                 "type": "SINGLESELECT",
                 "unit": "years",
-                "choices": [1, 20, 50, "over a hundred"]
+                "choices": [1, 20, 50, "over a hundred"],
+                "default_value": "20"
             }]
         }, {
+            "status": 1,
+            "message": "We demand rigidly defined areas of doubt and uncertainty!",
             "next_questions": [{
                 "id": "q5",
                 "name": "q5",
@@ -57,6 +65,8 @@
                 "unit": ""
             }]
         },  {
+            "status": 0,
+            "message": "",
             "next_questions": [{
                 "id": "q6",
                 "name": "q6",
@@ -72,6 +82,8 @@
                 "unit": ""
             }]
         },  {
+            "status": 0,
+            "message": "",
             "next_questions": [{
                 "id": "q7",
                 "name": "q7",
@@ -81,6 +93,8 @@
                 "unit": "spacecoords"
             }]
         }, {
+            "status": 0,
+            "message": "",
             "next_questions": [{
                 "id": "q8",
                 "name": "q8",
@@ -90,6 +104,8 @@
                 "unit": "hours"
             }]
         }, {
+            "status": 0,
+            "message": "",
              "next_questions": [{
                 "id": "q9",
                 "name": "q9",
@@ -99,9 +115,10 @@
                 "unit": ""
              }]
          }, {
-            "next_questions": []
-        }
-    ],
+           "status": 0,
+           "message": "So long, and thanks for all the fish.",
+           "next_questions": []
+        }],
 
     "evaluationSrc": "surveys/foo.evaluation.json"
 }

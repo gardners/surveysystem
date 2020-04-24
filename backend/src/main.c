@@ -116,17 +116,19 @@ int main(int argc, char **argv) {
       char *session_id = argv[2];
       struct session *s = load_session(session_id);
 
-      struct question *q[1024];
-      int next_question_count = 0;
-
-      if (get_next_questions(s, q, 1024, &next_question_count)) {
+      // #332 next_questions data struct
+      struct next_questions *nq = init_next_questions();
+      if (get_next_questions(s, nq)) {
+        free_next_questions(nq);
         LOG_ERRORV("get_next_questions('%s') failed", session_id);
       }
 
-      printf("%d\n", next_question_count);
-      for (int i = 0; i < next_question_count; i++) {
-        printf("%s\n", q[i]->uid);
+      printf("%d\n", nq->question_count);
+      for (int i = 0; nq->question_count; i++) {
+        printf("%s\n", nq->next_questions[i]->uid);
       }
+      
+      free_next_questions(nq);
 
     } else if (!strcmp(argv[1], "delanswer")) {
 

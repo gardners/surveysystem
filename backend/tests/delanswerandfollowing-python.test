@@ -25,12 +25,12 @@ count = 0
 
 def nextquestion(questions, answers):
     global count
-    
+
     str='invalid'
-    
+
     # json.dumps() will throw a ValueError if the answer dict contains invalid values
     str = json.dumps(answers)
-      
+
     with open('/tmp/pythoninputs.txt', 'a') as f:
         f.write("=========== %d ===========\n" % count)
         f.write("QNs: %s\n" % questions)
@@ -38,29 +38,45 @@ def nextquestion(questions, answers):
         f.write("ans: %s\n" % answers)
         f.write("ans len: %d\n" % len(answers))
         f.write("ans JSON: %s\n" % str)
-	
+
     # addanswer
     if (count == 0):
       count +=1
       assert str == '[{"uid": "question1", "text": "Answer 1", "value": 0, "latitude": 0, "longitude": 0, "time_begin": 0, "time_end": 0, "time_zone_delta": 0, "dst_delta": 0}]'
-      return ['question2']
+      return {
+          'status': 0,
+          'message': '',
+          'next_questions': ['question2'],
+      }
     # addanswer
     if (count == 1):
       count +=1
       assert str == '[{"uid": "question1", "text": "Answer 1", "value": 0, "latitude": 0, "longitude": 0, "time_begin": 0, "time_end": 0, "time_zone_delta": 0, "dst_delta": 0}, {"uid": "question2", "text": "Answer 2", "value": 0, "latitude": 0, "longitude": 0, "time_begin": 0, "time_end": 0, "time_zone_delta": 0, "dst_delta": 0}]'
-      return ['question3']
+      return {
+          'status': 0,
+          'message': '',
+          'next_questions': ['question3'],
+      }
     # addanswer
     if (count == 2):
       count +=1
       assert str == '[{"uid": "question1", "text": "Answer 1", "value": 0, "latitude": 0, "longitude": 0, "time_begin": 0, "time_end": 0, "time_zone_delta": 0, "dst_delta": 0}, {"uid": "question2", "text": "Answer 2", "value": 0, "latitude": 0, "longitude": 0, "time_begin": 0, "time_end": 0, "time_zone_delta": 0, "dst_delta": 0}, {"uid": "question3", "text": "Answer 3", "value": 0, "latitude": 0, "longitude": 0, "time_begin": 0, "time_end": 0, "time_zone_delta": 0, "dst_delta": 0}]'
-      return []
+      return {
+          'status': 0,
+          'message': '',
+          'next_questions': [],
+      }
     # delanswerandfollowing
     if (count == 3):
       count +=1
       assert str == '[]'
-      return ['question1']
-      
-    return ['FAIL']
+      return {
+          'status': 0,
+          'message': '',
+          'next_questions': ['question1'],
+      }
+
+    raise ValueError('nextquestion logic failed')
 
 endofpython
 
@@ -72,13 +88,13 @@ extract_sessionid
 
 #! ------- answer 3 questions -------
 request 200 addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0:
-match_string {"next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "unit": ""}]}
+match_string {"status": 0, "message": "", "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "unit": ""}]}
 
 request 200 addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0:
-match_string {"next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "unit": ""}]}
+match_string {"status": 0, "message": "", "next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "unit": ""}]}
 
 request 200 addanswer?sessionid=$SESSION&answer=question3:Answer+3:0:0:0:0:0:0:0:
-match_string {"next_questions": []}
+match_string {"status": 0, "message": "", "next_questions": []}
 
 verify_session
 delanswerandfollowingpython/0b39e0c93f1b338433b8a8773d57f738dd405e17
@@ -89,7 +105,7 @@ endofsession
 
 #! ------- delanswer question 1 -------
 request 200 delanswerandfollowing?sessionid=$SESSION&questionid=question1
-match_string {"next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "Answer 1", "unit": ""}]}
+match_string {"status": 0, "message": "", "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "Answer 1", "unit": ""}]}
 
 verify_session
 delanswerandfollowingpython/0b39e0c93f1b338433b8a8773d57f738dd405e17
