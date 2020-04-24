@@ -72,6 +72,12 @@ const server = (() => {
                 // api
                 // todo check session id
 
+                case 'accesstest':
+                    response.statusCode = 200;
+                    response.statusText = 'OK';
+                    response.end('', 'utf-8');
+                    break;
+
                 case 'newsession':
                     res = Survey.newsession(query.surveyid);
                     SURVEY_ID = query.surveyid;
