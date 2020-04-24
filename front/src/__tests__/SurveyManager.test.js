@@ -166,6 +166,43 @@ describe('SurveyManager.merge', () => {
         expect(undef).toBe(undefined);
     });
 
+    // #332
+    test('merge - default status and message', () => {
+        const that = new SurveyManager('test', 'uri');
+        that.merge({
+            surveyID: 'test',
+            endpoint: 'uri',
+            sessionID: '123',
+        })
+        expect(that).toMatchObject({
+            surveyID: 'test',
+            endpoint: 'uri',
+            sessionID: '123',
+            status: 0,
+            message: '',
+        });
+    });
+
+    // #332
+    test('merge - custom status and message', () => {
+        const that = new SurveyManager('test', 'uri');
+        that.merge({
+            surveyID: 'test',
+            endpoint: 'uri',
+            sessionID: '123',
+
+            status: 1,
+            message: 'Hello'
+        })
+        expect(that).toMatchObject({
+            surveyID: 'test',
+            endpoint: 'uri',
+            sessionID: '123',
+
+            status: 1,
+            message: 'Hello'
+        });
+    });
 
 });
 
@@ -199,6 +236,11 @@ describe('SurveyManager', () => {
         expect(that.sessionID).toBe(null);
         expect(that.questions.length).toBe(0);
         expect(that.closed).toBe(false);
+
+        // #332
+        expect(that.status).toBe(0);
+        expect(that.message).toBe('');
+
         // array and empty
         expect(JSON.stringify(that.questions)).toBe('[]');
     });
@@ -213,21 +255,13 @@ describe('SurveyManager', () => {
         // add?
     });
 
-    test('defaults', () => {
-        const that = new SurveyManager('test', 'uri');
-        expect(that.surveyID).toBe('test');
-        expect(that.endpoint).toBe('uri');
-        expect(that.sessionID).toBe(null);
-        expect(that.questions.length).toBe(0);
-        expect(that.closed).toBe(false);
-        // array and empty
-        expect(JSON.stringify(that.questions)).toBe('[]');
-    });
-
     test('init', () => {
         const that = new SurveyManager('test', 'uri');
         that.init('123');
         expect(that.sessionID).toBe('123');
+        // #332
+        expect(that.status).toBe(0);
+        expect(that.message).toBe('');
     });
 
     test('close', () => {
@@ -251,6 +285,39 @@ describe('SurveyManager', () => {
         expect(that.questions[1].length).toBe(1);
         expect(that.questions[0][0]).toMatchObject({ id: 1 });
         expect(that.questions[1][0]).toMatchObject({ id: 2});
+    });
+
+    // #332
+    test('add with status and message', () => {
+        const that = new SurveyManager('test', 'uri');
+        that.init('123');
+
+        // no status and messages
+        that.add([{ id: 1 }]);
+        expect(that.questions.length).toBe(1);
+        expect(that.questions[0][0]).toMatchObject({ id: 1 });
+
+        expect(that.status).toBe(0);
+        expect(that.message).toBe('');
+
+        // with status
+        that.add([{ id: 2 }], 1);
+        expect(that.questions.length).toBe(2);
+        expect(that.questions[0][0]).toMatchObject({ id: 1 });
+        expect(that.questions[1][0]).toMatchObject({ id: 2});
+
+        expect(that.status).toBe(1);
+        expect(that.message).toBe('');
+
+        // with status and message
+        that.add([{ id: 3 }], 1, 'Hello');
+        expect(that.questions.length).toBe(3);
+        expect(that.questions[0][0]).toMatchObject({ id: 1 });
+        expect(that.questions[1][0]).toMatchObject({ id: 2});
+        expect(that.questions[2][0]).toMatchObject({ id: 3});
+
+        expect(that.status).toBe(1);
+        expect(that.message).toBe('Hello');
     });
 
     test('add has no effect on closed suvey', () => {
@@ -335,7 +402,7 @@ describe('SurveyManager', () => {
         const that = new SurveyManager('test', 'uri');
         that.init('123');
         that.add([{ id: 1 }]);
-        that.add([{ id: 2 }]);
+        that.add([{ id: 2 }], 1, 'Hello');
 
         expect(that.questions.length).toBe(2);
         expect(that.questions[0].length).toBe(1);
@@ -348,6 +415,30 @@ describe('SurveyManager', () => {
         expect(that.questions.length).toBe(1);
         expect(that.questions[0].length).toBe(1);
         expect(that.questions[0][0]).toMatchObject({ id: 1 });
+    });
+
+    // #332
+    test('reset() - reset status and message to defaults', () => {
+        const that = new SurveyManager('test', 'uri');
+        that.init('123');
+        that.add([{ id: 1 }]);
+        that.add([{ id: 2 }], 1, 'Hello');
+
+        expect(that.questions.length).toBe(2);;
+        expect(that.questions[0][0]).toMatchObject({ id: 1 });
+        expect(that.questions[1][0]).toMatchObject({ id: 2 });
+
+        expect(that.status).toBe(1);
+        expect(that.message).toBe('Hello');
+
+        that.reset();
+
+        expect(that.questions.length).toBe(1);
+        expect(that.questions[0].length).toBe(1);
+        expect(that.questions[0][0]).toMatchObject({ id: 1 });
+
+        expect(that.status).toBe(0);
+        expect(that.message).toBe('');
     });
 
     test('reset() has no effect on closed suvey', () => {
@@ -532,6 +623,23 @@ describe('SurveyManager.canMerge', () => {
         expect(res).toBe(false);
     });
 
+    // #332
+    test('different status and message values have no impact', () => {
+        const that = new SurveyManager('test', 'uri');
+        // defaults
+        expect(that.status).toBe(0);
+        expect(that.message).toBe('');
+        const res = that.canMerge({
+            surveyID: 'test',
+            endpoint: 'uri',
+            sessionID: 'another',
+            status: '1',
+            message: 'hello',
+        })
+
+        expect(res).toBe(true);
+    });
+
 });
 
 describe('SurveyManager.merge', () => {
@@ -609,6 +717,27 @@ describe('SurveyManager.merge', () => {
 
         expect(that.sessionID).toBe('123');
         expect(undef).toBe(undefined);
+    });
+
+    // #332
+    test('merge - status and message are merged in', () => {
+        const that = new SurveyManager('test', 'uri');
+        // defaults
+        expect(that.status).toBe(0);
+        expect(that.message).toBe('');
+
+        that.merge({
+            surveyID: 'test',
+            endpoint: 'uri',
+            sessionID: '123',
+            status: 1,
+            message: 'Hello',
+        })
+        const undef = that.init('123');
+
+        expect(that.sessionID).toBe('123');
+        expect(that.status).toBe(1);
+        expect(that.message).toBe('Hello');
     });
 
 });
