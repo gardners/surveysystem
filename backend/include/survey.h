@@ -156,6 +156,16 @@ enum answer_visibility {
 };
 
 #define MAX_QUESTIONS 8192
+
+// #332 next_questions data struct
+#define MAX_NEXTQUESTIONS 1024
+struct next_questions {
+    enum { STATUS_INFO, STATUS_WARN, STATUS_ERROR } status; // status flag, indcatiing how front end should handle message
+    char *message;                                          // ad-hoc notifications, needs to be de-allocated
+    struct question *next_questions[MAX_NEXTQUESTIONS];
+    int question_count;
+};
+
 struct session {
   char *survey_id; // <survey name>/<hash>
   char *survey_description;
@@ -175,8 +185,7 @@ struct session {
 int generate_path(char *path_in, char *path_out, int max_len);
 int generate_python_path(char *path_out, int max_len);
 
-int get_next_questions(struct session *s, struct question *next_questions_out[],
-                       int max_next_questions, int *next_question_count_out);
+int get_next_questions(struct session *s, struct next_questions *nq);
 int get_analysis(struct session *s, const char **output);
 
 int create_session(char *survey_id, char *session_id_out);
@@ -199,4 +208,8 @@ int session_add_datafile(char *session_id, char *filename_suffix,
 int lock_session(char *session_id);
 int release_my_session_locks(void);
 
+// #332 next_question struct
+struct next_questions *init_next_questions();
+void free_next_questions(struct next_questions *nq);
+int dump_next_questions(FILE *f, struct next_questions *nq);
 #endif
