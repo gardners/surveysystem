@@ -155,7 +155,7 @@ class DaytimeQuestionGroup extends Component {
      * @returns {void}
      */
     handleChange(index, value) {
-        let { values, touched } = this.state;
+        let { values } = this.state;
 
         values = setValues(index, value, values);
 

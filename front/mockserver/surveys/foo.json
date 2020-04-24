@@ -88,9 +88,10 @@
                 "id": "q7",
                 "name": "q7",
                 "title": "Question 7",
-                "description": "Your current planetary position?",
-                "type": "LATLON",
-                "unit": "spacecoords"
+                "description": "Any complaints about this survey so far?",
+                "type": "TEXTAREA",
+                "unit": "",
+                "default_value": "No, I am enjoying this."
             }]
         }, {
             "status": 0,
