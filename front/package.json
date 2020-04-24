@@ -20,7 +20,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "dev": "xterm -hold -e \"cd ../backend & sudo ./testrun --skip-npm-build\" && react-scripts start",
-    "dev-mock": "xterm -hold -e \"./mockserver/start\" & REACT_APP_SURVEY_ENDPOINT=http://localhost:3098 react-scripts start",
+    "dev-mock": "xterm -hold -e \"./mockserver/start\" & REACT_APP_SURVEYAPI_ENDPOINT=http://localhost:3098 REACT_APP_SURVEY_LIST=foo react-scripts start",
     "coverage": "npm test -- --coverage"
   },
   "eslintConfig": {
