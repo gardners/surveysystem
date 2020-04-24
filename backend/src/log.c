@@ -12,14 +12,44 @@
 
 int log_recursed = 0;
 
+ FILE *open_log(char *name) {
+  char log_name[1024];
+  char log_file[1024];
+
+  if (!name) {
+      fprintf(stderr, "Log name is null\n");
+      return NULL;
+  }
+  if (name[0] == 0) {
+      fprintf(stderr, "Log name is empty\n");
+      return NULL;
+  }
+
+  snprintf(log_name, 1024, "logs/%s", name);
+
+  if (generate_path(log_name, log_file, 1024)) {
+      fprintf(stderr, "generate_path('%s') failed to build path for log file: '%s'\n",
+                  log_name, log_file);
+      fprintf(stderr, "'%s'\n",
+                  log_file);
+      return NULL;
+  }
+
+  FILE *lf = fopen(log_file, "a");
+  if (!lf) {
+      fprintf(stderr, "Could not open log file '%s' for append: %s\n", log_file,
+                  strerror(errno));
+  }
+
+  return lf;
+}
+
 int log_message(const char *file, const char *function, const int line,
                 char *format, ...) {
 
   int retVal = 0;
 
   char log_name[1024];
-  char log_file[1024];
-
   char message[65536];
 
   do {
@@ -33,15 +63,15 @@ int log_message(const char *file, const char *function, const int line,
     struct tm *tm = localtime(&now);
 
     if (!tm) {
-      snprintf(log_name, 1024, "logs/surveysystem-UNKNOWNTIME.log");
+      snprintf(log_name, 1024, "surveysystem-UNKNOWNTIME.log");
     } else {
-      snprintf(log_name, 1024, "logs/surveysystem-%04d%02d%02d.%02d.log",
+      snprintf(log_name, 1024, "surveysystem-%04d%02d%02d.%02d.log",
                1900 + tm->tm_year, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour);
     }
 
-    if (generate_path(log_name, log_file, 1024)) {
-      LOG_ERRORV("generate_path('%s') failed to build path for log file",
-                 log_name);
+    FILE *lf = open_log(log_name);
+    if (!lf) {
+      LOG_ERRORV("Could not open log file '%s'", log_name);
     }
 
     va_list argp;
@@ -49,10 +79,6 @@ int log_message(const char *file, const char *function, const int line,
     vsnprintf(message, 65536, format, argp);
     va_end(argp);
 
-    FILE *lf = fopen(log_file, "a");
-    if (!lf)
-      LOG_ERRORV("Could not open log file '%s' for append: %s", log_file,
-                 strerror(errno));
     if (tm) {
       fprintf(lf, "%04d/%02d/%02d.%02d:%02d.%d:%s:%d:%s():%s\n",
               1900 + tm->tm_year, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour,
@@ -61,6 +87,7 @@ int log_message(const char *file, const char *function, const int line,
       fprintf(lf, "\?\?\?\?/\?\?/\?\?.\?\?:\?\?.\?:%s:%d:%s():%s\n", file, line,
               function, message);
     }
+
     fclose(lf);
 
   } while (0);

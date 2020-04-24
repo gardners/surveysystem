@@ -51,6 +51,7 @@ void code_instrumentation_unmute();
   log_message(__FILE__, __FUNCTION__, __LINE__, MSG, __VA_ARGS__)
 #define LOG_INFO(MSG) log_message(__FILE__, __FUNCTION__, __LINE__, "%s", MSG)
 
+FILE *open_log(char *name);
 int log_message(const char *file, const char *function, const int line,
                 char *format, ...);
 
