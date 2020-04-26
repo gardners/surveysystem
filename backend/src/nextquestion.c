@@ -511,7 +511,7 @@ int call_python_nextquestion(struct session *s, struct next_questions *nq) {
       LOG_ERRORV("Reply from Python function '%s': invalid member 'status' (int)",
                    function_name);
     }
-    
+
     // 2. assign status
     nq->status = status;
 
@@ -531,7 +531,7 @@ int call_python_nextquestion(struct session *s, struct next_questions *nq) {
       LOG_ERRORV("Reply from Python function '%s': invalid member 'message' (str)",
                    function_name);
     }
-    
+
     // 4. assign message
     nq->message = strdup(message);
 
@@ -565,10 +565,10 @@ int call_python_nextquestion(struct session *s, struct next_questions *nq) {
           LOG_ERRORV("String in reply from Python function '%s' is null",
                       function_name);
         }
-        
+
         // 6. assign next_questions
         // 7. assign question_count
-        nq->next_questions[i] = NULL; // intialize target pointer to NULL first!
+        nq->next_questions[i] = NULL; // intialize target pointer to NULL!
         if (mark_next_question(s, nq->next_questions, &nq->question_count, uid)) {
           is_error = 1;
           Py_DECREF(result);
@@ -676,7 +676,6 @@ int get_next_questions(struct session *s, struct next_questions *nq) {
         break;
       }
       if (!r) {
-        free_next_questions(nq);
         retVal = 0;
         break;
       }
