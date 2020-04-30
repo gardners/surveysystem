@@ -18,7 +18,7 @@ const make_answer = function(merge) {
     return Object.assign(Answer.model(), merge);
 };
 
-const run_qestiontype_answer__text = function(type) {
+const run_questiontype_answer__text = function(type) {
 
     test(`question type: ${type}`, () => {
         const uid = 'textid';
@@ -43,7 +43,7 @@ const run_qestiontype_answer__text = function(type) {
 
 };
 
-const run_qestiontype_answer__text__commaseparated = function(type) {
+const run_questiontype_answer__text__commaseparated = function(type) {
 
     test(`question type: ${type}`, () => {
         const uid = 'textid';
@@ -92,7 +92,7 @@ const run_qestiontype_answer__text__commaseparated = function(type) {
 
 };
 
-const run_qestiontype_answer__value = function(type, unit) {
+const run_questiontype_answer__value = function(type, unit) {
 
     test(`question type: ${type}`, () => {
         const uid = 'numberid';
@@ -120,7 +120,7 @@ const run_qestiontype_answer__value = function(type, unit) {
 
 };
 
-const run_qestiontype_answer__time_begin = function(type) {
+const run_questiontype_answer__time_begin = function(type) {
     const unit = 'seconds';
 
     test(`question type: ${type}`, () => {
@@ -157,7 +157,7 @@ const run_qestiontype_answer__time_begin = function(type) {
 
 };
 
-const run_qestiontype_answer__time_end = function(type) {
+const run_questiontype_answer__time_end = function(type) {
     const unit = 'seconds';
 
     test(`question type: ${type}`, () => {
@@ -195,7 +195,73 @@ const run_qestiontype_answer__time_end = function(type) {
 
 };
 
-const run_qestiontype__TIMERANGE = function() {
+// #336 sequences
+const run_questiontype__sequencetypes = function(type) {
+    let unit = ''
+    if(['DAYTIME_SEQUENCE', 'DATETIME_SEQUENCE'].indexOf(type) > -1) {
+        unit = 'seconds';
+    }
+
+    test(`question type: ${type}`, () => {
+        const uid = 'timestampid';
+        const q = { id: uid, type };
+
+        //positive
+        expect(Answer.setValue(q, [0, 0])).toMatchObject({ uid, text: '0,0', unit });
+        expect(Answer.setValue(q, [-1, 0, 1])).toMatchObject({ uid, text: '-1,0,1', unit });
+        expect(Answer.setValue(q, [ 0, 3.14])).toMatchObject({ uid, text: '0,3.14', unit });
+        expect(Answer.setValue(q, [ Number('123'), 125])).toMatchObject({ uid, text: '123,125', unit });
+
+        // negative
+        expect(Answer.setValue(q, [])).toBeInstanceOf(Error);
+        expect(Answer.setValue(q, {})).toBeInstanceOf(Error);
+        expect(Answer.setValue(q, 'invalid')).toBeInstanceOf(Error);
+        expect(Answer.setValue(q, null)).toBeInstanceOf(Error);
+        expect(Answer.setValue(q, undefined)).toBeInstanceOf(Error);
+        expect(Answer.setValue(q, 2)).toBeInstanceOf(Error);
+
+        expect(Answer.setValue(q, [2, 1])).toBeInstanceOf(Error);
+        expect(Answer.setValue(q, [-1, -2])).toBeInstanceOf(Error);
+
+        expect(Answer.setValue(q, [3.14, 2.14])).toBeInstanceOf(Error);
+
+        expect(Answer.setValue(q, [null, 1])).toBeInstanceOf(Error);
+        expect(Answer.setValue(q, [1, null])).toBeInstanceOf(Error);
+
+        // expect(Answer.setValue(q, ['123', 1])).toBeInstanceOf(Error);
+        // expect(Answer.setValue(q, [1, '123'])).toBeInstanceOf(Error);
+
+        expect(Answer.setValue(q, [undefined, 1])).toBeInstanceOf(Error);
+        expect(Answer.setValue(q, [1, undefined])).toBeInstanceOf(Error);
+
+        // expect(Answer.setValue(q, ['', 1])).toBeInstanceOf(Error);
+        // expect(Answer.setValue(q, [1, ''])).toBeInstanceOf(Error);
+
+        expect(Answer.setValue(q, ['string', 1])).toBeInstanceOf(Error);
+        expect(Answer.setValue(q, [1, 'string'])).toBeInstanceOf(Error);
+
+        expect(Answer.setValue(q, [{}, 1])).toBeInstanceOf(Error);
+        expect(Answer.setValue(q, [1, {}])).toBeInstanceOf(Error);
+
+        expect(Answer.setValue(q, [[], 1])) .toBeInstanceOf(Error);
+        expect(Answer.setValue(q, [1, []])) .toBeInstanceOf(Error);
+
+        expect(Answer.setValue(q, [Symbol(1), 1])).toBeInstanceOf(Error);
+        expect(Answer.setValue(q, [1, Symbol(1)])).toBeInstanceOf(Error);
+
+        expect(Answer.setValue(q, [NaN, 1])).toBeInstanceOf(Error);
+        expect(Answer.setValue(q, [1, NaN])).toBeInstanceOf(Error);
+
+        expect(Answer.setValue(q, [Infinity, 1])).toBeInstanceOf(Error);
+        expect(Answer.setValue(q, [1, Infinity])).toBeInstanceOf(Error);
+
+        expect(Answer.setValue(q, [new Number('123'), 1])).toBeInstanceOf(Error);
+        expect(Answer.setValue(q, [1, new Number('123')])).toBeInstanceOf(Error);
+    });
+
+};
+
+const run_questiontype__TIMERANGE = function() {
     const type = 'TIMERANGE';
     const unit = 'seconds';
 
@@ -264,7 +330,7 @@ const run_qestiontype__TIMERANGE = function() {
 
 };
 
-const run_qestiontype__LATLON = function() {
+const run_questiontype__LATLON = function() {
     const type = 'LATLON';
     const unit = 'degrees';
 
@@ -351,26 +417,30 @@ describe('Answer.setValue()', () => {
         expect(Answer.serialize({ id: 'textid', type: 'DOES_NOT_EXISTS' }, 'donotset'))  .toBeInstanceOf(Error);
     });
 
-    run_qestiontype_answer__text('TEXT');
-    run_qestiontype_answer__text('HIDDEN');
-    run_qestiontype_answer__text('TEXTAREA');
-    run_qestiontype_answer__text('EMAIL');
-    run_qestiontype_answer__text('PASSWORD');
-    run_qestiontype_answer__text('CHECKBOX');
-    run_qestiontype_answer__text('SINGLECHOICE');
-    run_qestiontype_answer__text('SINGLESELECT');
+    run_questiontype_answer__text('TEXT');
+    run_questiontype_answer__text('HIDDEN');
+    run_questiontype_answer__text('TEXTAREA');
+    run_questiontype_answer__text('EMAIL');
+    run_questiontype_answer__text('PASSWORD');
+    run_questiontype_answer__text('CHECKBOX');
+    run_questiontype_answer__text('SINGLECHOICE');
+    run_questiontype_answer__text('SINGLESELECT');
 
-    run_qestiontype_answer__text__commaseparated('MULTICHOICE');
-    run_qestiontype_answer__text__commaseparated('MULTISELECT');
+    run_questiontype_answer__text__commaseparated('MULTICHOICE');
+    run_questiontype_answer__text__commaseparated('MULTISELECT');
 
-    run_qestiontype_answer__value('INT', '');
-    run_qestiontype_answer__value('FIXEDPOINT', '');
+    run_questiontype_answer__value('INT', '');
+    run_questiontype_answer__value('FIXEDPOINT', '');
 
-    run_qestiontype_answer__time_begin('DATETIME');
-    run_qestiontype_answer__time_begin('DAYTIME');
+    run_questiontype_answer__time_begin('DATETIME');
+    run_questiontype_answer__time_begin('DAYTIME');
 
-    run_qestiontype_answer__time_begin('DATETIME');
-    run_qestiontype_answer__time_begin('DAYTIME');
+    run_questiontype_answer__time_begin('DATETIME');
+    run_questiontype_answer__time_begin('DAYTIME');
+
+    // #336, sequences
+    run_questiontype__sequencetypes('DAYTIME_SEQUENCE')
+    run_questiontype__sequencetypes('DATETIME_SEQUENCE')
 });
 
 describe('Answer.serialize()', () => {
