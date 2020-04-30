@@ -81,8 +81,8 @@ for file in configs/*.js; do
     fi
 done
 
-if [[ -z "$1" ]]; then
+if [[ -z "${CONFIG}" ]]; then
     select_config
 else
-    run "$@"
+    run --config $(basename "${CONFIG}") --session "${SESSION}"
 fi
