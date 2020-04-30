@@ -435,6 +435,6 @@ getCustomAnswers()
     .then(() => JSONF.finish())
     .then(jsonfile => Log.success('\nSurvey analysis retrieved\n', jsonfile))
     .then(jsonfile => Log.log(`   ${Log.colors.yellow('*')} File: ${jsonfile}\n`))
-    .then(() => Log.log(`   ${Log.colors.yellow('* run again:')} player ${process.argv.slice(2).join(' ')}\n`))
+    .then(() => Log.log(`   ${Log.colors.yellow('* run again:')} ./player ${process.argv.slice(2).join(' ')}\n`))
 // errors
     .catch(err => Log.error(`REQUEST ERROR\n${err}`, err));

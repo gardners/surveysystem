@@ -175,9 +175,12 @@ const _serializedNumberArraySequence = function(val) {
     if (!isArray(val)) {
         return new Error ('CSV serializer: Invalid value: expected array.');
     }
+    if (!val.length) {
+        return new Error ('CSV serializer: Invalid value: emptyarray.');
+    }
 
     let item;
-    let prev = 0;
+    let prev;
     const ret = [];
 
     for (let i = 0; i < val.length; i += 1) {
@@ -186,7 +189,7 @@ const _serializedNumberArraySequence = function(val) {
             return item;
         }
 
-        if(item < prev) {
+        if(i && item < prev) {
             return new Error (`CSV serializer: Invalid value for sequence item ${i}: smaller than previous item.`);
         }
         prev = item;
@@ -358,7 +361,6 @@ const setValue = function(question, value) {
     switch(type) {
         case 'INT':
         case 'FIXEDPOINT':
-        case 'DURATION24':
             // number
             answer.value = _number(value);
         break;
@@ -409,10 +411,21 @@ const setValue = function(question, value) {
         break;
 
         case 'FIXEDPOINT_SEQUENCE':
+            // array of numbers
+            answer.text = _serializedNumberArraySequence(value);
+        break;
+
         case 'DAYTIME_SEQUENCE':
         case 'DATETIME_SEQUENCE':
-            // array of n numbers in seconds
+            // #336, array of numbers in seconds
             answer.text = _serializedNumberArraySequence(value);
+            answer.unit = 'seconds';
+        break;
+
+        case 'DURATION24':
+            // #336, number (seconds)
+            answer.value = _number(value);
+            answer.unit = 'seconds';
         break;
 
         case 'UPLOAD':
@@ -428,7 +441,6 @@ const setValue = function(question, value) {
         case 'SINGLECHOICE':
         case 'SINGLESELECT':
         case 'DIALOG_DATA_CRAWLER':
-        case 'UUID': // TODO no component
             // string
             answer.text = _text(value);
         break;
