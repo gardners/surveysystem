@@ -270,6 +270,11 @@ const findQuestionGroupCommons = function(group) {
         return 'DAYTIME_SEQUENCE';
     }
 
+    // #339 CHECKBOX commons, display only single checkbox per row
+    if (type === 'CHECKBOX') {
+        return 'CHECKBOX';
+    }
+
     return (!choices) ? 'TYPE' : 'CHOICES'
 };
 

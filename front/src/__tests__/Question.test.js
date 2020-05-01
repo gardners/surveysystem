@@ -164,6 +164,19 @@ describe('findQuestionGroupCommons', () => {
             makeQuestion('test2', 'TEXT'),
         ]);
         expect(qc).toBe('TYPE');
+
+        // #339, CHECKBOX commons
+        qc = findQuestionGroupCommons([
+            makeQuestion('test1', 'CHECKBOX'),
+            makeQuestion('test2', 'CHECKBOX'),
+        ]);
+        expect(qc).toBe('CHECKBOX');
+
+        qc = findQuestionGroupCommons([
+            makeQuestion('test1', 'TEXT'),
+            makeQuestion('test2', 'CHECKBOX'),
+        ]);
+        expect(qc).toBe('NONE');
     });
 
     test('CHOICES', () => {
