@@ -74,19 +74,21 @@ const parseQuestionManifest = function(survey) {
             continue;
         }
 
-        const fields = lines[i].trim().split(':');
+        const line = lines[i].replace(/\\:/g, '%3A');
+        console.log(line);
+        const fields = line.trim().split(':');
 
         if(fields.length !== 12) {
             return new Error(`(line ${i}) Manifest is invalid. It requires at least one line with 12 fields separated by ":"`);
         }
 
-        const id = fields[0];
-        const name = fields[0];
-        const title = fields[1];
-        const description = fields[2];
-        const type = fields[3];
-        const default_value = fields[5];
-        const unit = fields[11];
+        const id = decodeURIComponent(fields[0]);
+        const name = decodeURIComponent(fields[0]);
+        const title = decodeURIComponent(fields[1]);
+        const description = decodeURIComponent(fields[2]);
+        const type = decodeURIComponent(fields[3]);
+        const default_value = decodeURIComponent(fields[5]);
+        const unit = decodeURIComponent(fields[11]);
 
         const question = {
             id,

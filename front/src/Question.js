@@ -90,7 +90,7 @@ const serializationModel = function() {
         min_value: 0,
         max_value: 0,
         decimal_places: 2,
-        num_choices: [],
+        num_choices: 0,
         choices: [],
         unit: '',
     };
