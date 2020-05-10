@@ -1261,17 +1261,17 @@ static void fcgi_nextquestion(struct kreq *req) {
       }
 
       switch (nq->next_questions[i]->type) {
-      case QTYPE_MULTICHOICE:
-      case QTYPE_MULTISELECT:
-      // #98 add single checkbox choices
-      case QTYPE_SINGLESELECT:
-      case QTYPE_SINGLECHOICE:
-      case QTYPE_CHECKBOX:
-      // #205 add sequence fields
-      case QTYPE_FIXEDPOINT_SEQUENCE:
-      case QTYPE_DAYTIME_SEQUENCE:
-      case QTYPE_DATETIME_SEQUENCE:
-      case QTYPE_DIALOG_DATA_CRAWLER:
+        case QTYPE_MULTICHOICE:
+        case QTYPE_MULTISELECT:
+        // #98 add single checkbox choices
+        case QTYPE_SINGLESELECT:
+        case QTYPE_SINGLECHOICE:
+        case QTYPE_CHECKBOX:
+        // #205 add sequence fields
+        case QTYPE_FIXEDPOINT_SEQUENCE:
+        case QTYPE_DAYTIME_SEQUENCE:
+        case QTYPE_DATETIME_SEQUENCE:
+        case QTYPE_DIALOG_DATA_CRAWLER:
 
         kjson_arrayp_open(&resp, "choices");
         int len = strlen(nq->next_questions[i]->choices);
@@ -1310,6 +1310,10 @@ static void fcgi_nextquestion(struct kreq *req) {
       default:
         break;
       } // switch
+
+      // #341 man kjson_putintp
+      kjson_putintp(&resp, "min_value", (int64_t) nq->next_questions[i]->min_value);
+      kjson_putintp(&resp, "max_value", (int64_t) nq->next_questions[i]->max_value);
 
       // #72 unit field
       kjson_putstringp(&resp, "unit", nq->next_questions[i]->unit);
