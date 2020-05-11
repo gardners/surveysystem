@@ -38,7 +38,7 @@ endofsession
 
 # Ask for next question
 request 200 nextquestion?sessionid=$SESSION
-match_string {"status": 0, "message": "", "next_questions": [{"id": "q1", "name": "q1", "title": "Question 1?", "description": "Question 1!", "type": "TEXT", "default_value": "", "unit": ""}, {"id": "q2", "name": "q2", "title": "Question 2?", "description": "Question 2!", "type": "TEXT", "default_value": "", "unit": ""}]}
+match_string {"status": 0, "message": "", "next_questions": [{"id": "q1", "name": "q1", "title": "Question 1?", "description": "Question 1!", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}, {"id": "q2", "name": "q2", "title": "Question 2?", "description": "Question 2!", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 verify_session
 nextquestion_multiple/11b0c147a2e1e1dc1840ab719a031fccaa4014ab

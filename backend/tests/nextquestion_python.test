@@ -34,5 +34,5 @@ endofsession
 
 # Ask for next question
 request 200 nextquestion?sessionid=$SESSION
-match_string {"status": 1, "message": "warning!", "next_questions": [{"id": "question2", "name": "question2", "title": "How boring was question 1?", "description": "How boring was question 1?", "type": "TEXT", "default_value": "I don't know", "unit": ""}]}
+match_string {"status": 1, "message": "warning!", "next_questions": [{"id": "question2", "name": "question2", "title": "How boring was question 1?", "description": "How boring was question 1?", "type": "TEXT", "default_value": "I don't know", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 

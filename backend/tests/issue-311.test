@@ -58,13 +58,13 @@ extract_sessionid
 
 #! ------- answer 3 questions -------
 request 200 nextquestion?sessionid=$SESSION
-match_string {"status": 0, "message": "hello world", "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "unit": ""}]}
+match_string {"status": 0, "message": "hello world", "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 request 200 addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0:
-match_string {"status": 0, "message": "hello world", "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "unit": ""}]}
+match_string {"status": 0, "message": "hello world", "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 request 200 addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0:
-match_string {"status": 0, "message": "hello world", "next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "unit": ""}]}
+match_string {"status": 0, "message": "hello world", "next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 request 200 addanswer?sessionid=$SESSION&answer=question3:Answer+3:0:0:0:0:0:0:0:
 match_string {"status": 0, "message": "", "next_questions": []}

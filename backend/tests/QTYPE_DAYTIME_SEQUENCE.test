@@ -21,7 +21,7 @@ endofsession
 
 # Ask for next question
 request 200 nextquestion?sessionid=$SESSION
-match_string {"status": 0, "message": "", "next_questions": [{"id": "meals", "name": "meals", "title": "Your average daily meal times", "description": "", "type": "DAYTIME_SEQUENCE", "default_value": "", "choices": ["Breakfast", "Lunch", "Tea", "Late Snack"], "unit": "seconds"}]}
+match_string {"status": 0, "message": "", "next_questions": [{"id": "meals", "name": "meals", "title": "Your average daily meal times", "description": "", "type": "DAYTIME_SEQUENCE", "default_value": "", "min_value": -1, "max_value": -1, "choices": ["Breakfast", "Lunch", "Tea", "Late Snack"], "unit": "seconds"}]}
 
 #! ------- answer question -------
 
@@ -37,7 +37,7 @@ endofsession
 #! ------- delete question -------
 
 request 200 delanswer?sessionid=$SESSION&questionid=meals
-match_string {"status": 0, "message": "", "next_questions": [{"id": "meals", "name": "meals", "title": "Your average daily meal times", "description": "", "type": "DAYTIME_SEQUENCE", "default_value": "27000,43200,66600,75600", "choices": ["Breakfast", "Lunch", "Tea", "Late Snack"], "unit": "seconds"}]}
+match_string {"status": 0, "message": "", "next_questions": [{"id": "meals", "name": "meals", "title": "Your average daily meal times", "description": "", "type": "DAYTIME_SEQUENCE", "default_value": "27000,43200,66600,75600", "min_value": -1, "max_value": -1, "choices": ["Breakfast", "Lunch", "Tea", "Late Snack"], "unit": "seconds"}]}
 
 # Make sure answer ends up in file
 verify_session
