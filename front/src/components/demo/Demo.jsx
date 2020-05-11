@@ -140,6 +140,8 @@ class Row extends Component {
                     type: props.type,
 
                     default_value: props.default_value,
+                    min_value: props.min_value,
+                    max_value: props.max_value,
                     choices: props.choices || [],
                     unit: props.unit,
                 })
@@ -309,6 +311,8 @@ class Row extends Component {
 Row.defaultProps = {
     unit: '',
     default_value: '',
+    min_value: 0,
+    max_value: 0,
     questions: [],
 };
 
