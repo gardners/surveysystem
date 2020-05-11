@@ -17,8 +17,13 @@ class NumberInput extends Component {
     componentDidMount() {
         const { question } = this.props;
         const val = Number(question.default_value);
-        const minval = Number(question.min_value);
-        const maxval = Number(question.max_value);
+        let minval = Number(question.min_value);
+        let maxval = Number(question.max_value);
+        // TODO isNAN checks may be removed after #341
+        if (!isNaN(minval) && minval == maxval) {
+            minval = 0;
+            maxval = 0;
+        }
 
         this.setState({
             value: (!isNaN(val)) ? val : 0,
@@ -36,6 +41,7 @@ class NumberInput extends Component {
         handleChange(e.target, question, value);
     }
 
+    // { (maxValue !== Infinity && minValue !== maxValue) ? <small className="text-muted">{ ` (${minValue} to ${maxValue})` }</small> : '' }
     render() {
         const { value, minValue, maxValue } = this.state;
         const { question, error, required, grouped, className, step } = this.props;
