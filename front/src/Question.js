@@ -33,8 +33,8 @@ const model = function() {
         description: "",
         type: "",
         default_value: "",
-        min_value: "",
-        max_value: "",
+        min_value: 0,
+        max_value: 0,
         choices: [],
         unit: "",
     };
@@ -142,8 +142,8 @@ const Question = {
                 PropTypes.string,
                 PropTypes.number
             ]).isRequired,
-            min_value: PropTypes.string,
-            max_value: PropTypes.string,
+            min_value: PropTypes.number,
+            max_value: PropTypes.number,
             choices: (!withChoices) ? PropTypes.array : PropTypes.array.isRequired,
             unit: PropTypes.string.isRequired,
         });
