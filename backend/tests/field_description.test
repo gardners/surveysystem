@@ -23,11 +23,11 @@ endofsession
 
 # Ask for next question
 request 200 nextquestion?sessionid=$SESSION
-match_string {"status": 0, "message": "", "next_questions": [{"id": "question1", "name": "question1", "title": "This is the first title", "description": "This is the first description", "type": "INT", "default_value": "", "choices": [], "unit": ""}]}
+match_string {"status": 0, "message": "", "next_questions": [{"id": "question1", "name": "question1", "title": "This is the first title", "description": "This is the first description", "type": "INT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 # answer question
 request 200 addanswer?sessionid=$SESSION&answer=question1::5:0:0:0:0:0:0:
-match_string {"status": 0, "message": "", "next_questions": [{"id": "question2", "name": "question2", "title": "This is the second title", "description": "This is the <strong>second HTML description<\/strong>", "type": "INT", "default_value": "", "choices": [], "unit": ""}]}
+match_string {"status": 0, "message": "", "next_questions": [{"id": "question2", "name": "question2", "title": "This is the second title", "description": "This is the <strong>second HTML description<\/strong>", "type": "INT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 request 200 addanswer?sessionid=$SESSION&answer=question2::-5:0:0:0:0:0:0:
 match_string {"status": 0, "message": "", "next_questions": []}

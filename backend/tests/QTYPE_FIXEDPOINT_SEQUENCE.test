@@ -21,7 +21,7 @@ endofsession
 
 # Ask for next question
 request 200 nextquestion?sessionid=$SESSION
-match_string {"status": 0, "message": "", "next_questions": [{"id": "sequence", "name": "sequence", "title": "Plant height?", "description": "", "type": "FIXEDPOINT_SEQUENCE", "default_value": "", "choices": ["week 1", "week 2", "week 3"], "unit": "cm"}]}
+match_string {"status": 0, "message": "", "next_questions": [{"id": "sequence", "name": "sequence", "title": "Plant height?", "description": "", "type": "FIXEDPOINT_SEQUENCE", "default_value": "", "min_value": -1, "max_value": -1, "choices": ["week 1", "week 2", "week 3"], "unit": "cm"}]}
 
 #! ------- answer question -------
 
@@ -37,7 +37,7 @@ endofsession
 #! ------- delete question -------
 
 request 200 delanswer?sessionid=$SESSION&questionid=sequence
-match_string {"status": 0, "message": "", "next_questions": [{"id": "sequence", "name": "sequence", "title": "Plant height?", "description": "", "type": "FIXEDPOINT_SEQUENCE", "default_value": "0,5.5,30.8", "choices": ["week 1", "week 2", "week 3"], "unit": "cm"}]}
+match_string {"status": 0, "message": "", "next_questions": [{"id": "sequence", "name": "sequence", "title": "Plant height?", "description": "", "type": "FIXEDPOINT_SEQUENCE", "default_value": "0,5.5,30.8", "min_value": -1, "max_value": -1, "choices": ["week 1", "week 2", "week 3"], "unit": "cm"}]}
 
 # Make sure answer ends up in file
 verify_session

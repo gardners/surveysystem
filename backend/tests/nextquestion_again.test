@@ -25,5 +25,5 @@ endofsession
 for i = 1 to 10
 # Ask for next question
 request 200 nextquestion?sessionid=$SESSION
-match_string {"status": 0, "message": "", "next_questions": [{"id": "multichoice", "name": "multichoice", "title": "Select one of the following", "description": "Select one of the following", "type": "MULTICHOICE", "default_value": "", "choices": ["Yes", "No", "Maybe"], "unit": ""}]}
+match_string {"status": 0, "message": "", "next_questions": [{"id": "multichoice", "name": "multichoice", "title": "Select one of the following", "description": "Select one of the following", "type": "MULTICHOICE", "default_value": "", "min_value": -1, "max_value": -1, "choices": ["Yes", "No", "Maybe"], "unit": ""}]}
 next
