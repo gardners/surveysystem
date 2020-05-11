@@ -1261,8 +1261,8 @@ static void fcgi_nextquestion(struct kreq *req) {
       }
 
       // #341 add min/max values, man kjson_putintp
-      // kjson_putintp(&resp, "min_value", (int64_t) nq->next_questions[i]->min_value);
-      // kjson_putintp(&resp, "max_value", (int64_t) nq->next_questions[i]->max_value);
+      kjson_putintp(&resp, "min_value", (int64_t) nq->next_questions[i]->min_value);
+      kjson_putintp(&resp, "max_value", (int64_t) nq->next_questions[i]->max_value);
 
       // open "choices"
       kjson_arrayp_open(&resp, "choices");
