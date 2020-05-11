@@ -21,7 +21,7 @@ endofsession
 
 # Ask for next question
 request 200 nextquestion?sessionid=$SESSION
-match_string {"status": 0, "message": "", "next_questions": [{"id": "duration24", "name": "duration24", "title": "How long do you brush your teeth?", "description": "", "type": "DURATION24", "default_value": "", "unit": "seconds"}]}
+match_string {"status": 0, "message": "", "next_questions": [{"id": "duration24", "name": "duration24", "title": "How long do you brush your teeth?", "description": "", "type": "DURATION24", "default_value": "", "choices": [], "unit": "seconds"}]}
 
 request 200 addanswer?sessionid=$SESSION&answer=duration24::3600:0:0:0:0:0:0:seconds
 match_string {"status": 0, "message": "", "next_questions": []}

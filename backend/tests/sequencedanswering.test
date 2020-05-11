@@ -25,7 +25,7 @@ request 200 nextquestion?sessionid=$SESSION
 match_string {"status": 0, "message": "", "next_questions": [{"id": "question1", "name": "question1", "title": "Select one of the following", "description": "", "type": "MULTICHOICE", "default_value": "", "choices": ["Yes", "No", "Maybe"], "unit": ""}]}
 
 request 200 addanswer?sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0:
-match_string {"status": 0, "message": "", "next_questions": [{"id": "question2", "name": "question2", "title": "What is the answer to question 1?", "description": "", "type": "TEXT", "default_value": "I don't know", "unit": ""}]}
+match_string {"status": 0, "message": "", "next_questions": [{"id": "question2", "name": "question2", "title": "What is the answer to question 1?", "description": "", "type": "TEXT", "default_value": "I don't know", "choices": [], "unit": ""}]}
 
 # Make sure answer ends up in file
 verify_session
@@ -34,7 +34,7 @@ question1:Hello World:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 request 200 addanswer?sessionid=$SESSION&answer=question2:Another+answer:0:0:0:0:0:0:0:
-match_string {"status": 0, "message": "", "next_questions": [{"id": "question3", "name": "question3", "title": "How boring was question 2?", "description": "", "type": "TEXT", "default_value": "I don't know", "unit": ""}]}
+match_string {"status": 0, "message": "", "next_questions": [{"id": "question3", "name": "question3", "title": "How boring was question 2?", "description": "", "type": "TEXT", "default_value": "I don't know", "choices": [], "unit": ""}]}
 
 # Make sure answer ends up in file
 verify_session
