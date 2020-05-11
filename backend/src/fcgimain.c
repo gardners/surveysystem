@@ -1260,6 +1260,14 @@ static void fcgi_nextquestion(struct kreq *req) {
         default_value_flag = 1;
       }
 
+      // #341 add min/max values, man kjson_putintp
+      // kjson_putintp(&resp, "min_value", (int64_t) nq->next_questions[i]->min_value);
+      // kjson_putintp(&resp, "max_value", (int64_t) nq->next_questions[i]->max_value);
+
+      // open "choices"
+      kjson_arrayp_open(&resp, "choices");
+      int len = strlen(nq->next_questions[i]->choices);
+
       switch (nq->next_questions[i]->type) {
         case QTYPE_MULTICHOICE:
         case QTYPE_MULTISELECT:
@@ -1272,9 +1280,6 @@ static void fcgi_nextquestion(struct kreq *req) {
         case QTYPE_DAYTIME_SEQUENCE:
         case QTYPE_DATETIME_SEQUENCE:
         case QTYPE_DIALOG_DATA_CRAWLER:
-
-        kjson_arrayp_open(&resp, "choices");
-        int len = strlen(nq->next_questions[i]->choices);
 
         if (len) {
           for (int j = 0; nq->next_questions[i]->choices[j];) {
@@ -1304,16 +1309,15 @@ static void fcgi_nextquestion(struct kreq *req) {
 
           } // endfor
         }   // endif len
-        kjson_array_close(&resp);
+
         break;
 
       default:
         break;
       } // switch
 
-      // #341 man kjson_putintp
-      kjson_putintp(&resp, "min_value", (int64_t) nq->next_questions[i]->min_value);
-      kjson_putintp(&resp, "max_value", (int64_t) nq->next_questions[i]->max_value);
+      // close "choices"
+      kjson_array_close(&resp);
 
       // #72 unit field
       kjson_putstringp(&resp, "unit", nq->next_questions[i]->unit);
