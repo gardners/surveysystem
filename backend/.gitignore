@@ -22,3 +22,6 @@ cppcheck-log.*
 
 # dev env specific sripts
 propTests.*
+
+# dev docs
+TODO.*
