@@ -385,12 +385,12 @@ class Survey extends Component {
                         : null
                     }
 
-                    <SurveyMessage session={ survey } />
-
                     <SurveyContext.Provider value={ {
                         surveyID: survey.surveyID,
                         sessionID: survey.sessionID,
                     } }>
+                        <SurveyMessage session={ survey } />
+
                         <SurveyForm
                             show={ !isClosed && questions.length > 0 && !this.state.loading }
                             className="list-group"
