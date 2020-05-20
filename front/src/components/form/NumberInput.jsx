@@ -20,7 +20,7 @@ class NumberInput extends Component {
         let minval = Number(question.min_value);
         let maxval = Number(question.max_value);
         // TODO isNAN checks may be removed after #341
-        if (!isNaN(minval) && minval == maxval) {
+        if (!isNaN(minval) && minval === maxval) {
             minval = 0;
             maxval = 0;
         }

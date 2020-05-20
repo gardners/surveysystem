@@ -477,9 +477,9 @@ static void fcgi_newsession(struct kreq *req) {
 
     // create session meta log file, log user and creation time
 
-    char *user_name = "anonymous";
+    char *user = NULL;
     if (req->rawauth.d.digest.user) {
-      user_name = strdup(req->rawauth.d.digest.user);
+      user = req->rawauth.d.digest.user;
     }
 
     time_t now = time(0);
@@ -492,7 +492,7 @@ static void fcgi_newsession(struct kreq *req) {
     char user_message[1024];
     snprintf(user_message, 1024,
              "username %s\nsurveyid %s\nsessionid %s\ncreated %s by user %s",
-             user_name, survey->val, session_id, created, user_name);
+             (user) ? user: "anonymous", survey->val, session_id, created, (user) ? user: "anonymous");
 
     if (session_add_userlog_message(session_id, user_message)) {
       quick_error(req, KHTTP_500, "Error handling session user data.");
@@ -1065,9 +1065,9 @@ static void fcgi_delsession(struct kreq *req) {
 
     // log event in session meta log file
 
-    char *user_name = "anonymous";
+    char *user = NULL;
     if (req->rawauth.d.digest.user) {
-      user_name = strdup(req->rawauth.d.digest.user);
+      user = req->rawauth.d.digest.user;
     }
 
     time_t now = time(0);
@@ -1078,7 +1078,7 @@ static void fcgi_delsession(struct kreq *req) {
     }
 
     char user_message[1024];
-    snprintf(user_message, 1024, "deleted %s by user %s", deleted, user_name);
+    snprintf(user_message, 1024, "deleted %s by user %s", deleted, (user) ? user: "anonymous");
 
     if (session_add_userlog_message(session_id, user_message)) {
       quick_error(req, KHTTP_500, "Error handling session user data.");
@@ -1517,9 +1517,9 @@ static void fcgi_analyse(struct kreq *req) {
 
     // log event in session meta log file
 
-    char *user_name = "anonymous";
+    char *user = NULL;
     if (req->rawauth.d.digest.user) {
-      user_name = strdup(req->rawauth.d.digest.user);
+      user = req->rawauth.d.digest.user;
     }
 
     time_t now = time(0);
@@ -1530,7 +1530,7 @@ static void fcgi_analyse(struct kreq *req) {
     }
 
     char user_message[1024];
-    snprintf(user_message, 1024, "finished %s by user %s", finished, user_name);
+    snprintf(user_message, 1024, "finished %s by user %s", finished, (user) ? user : "anonymous");
 
     if (session_add_userlog_message(session_id, user_message)) {
       quick_error(req, KHTTP_500, "Error handling session user data.");
