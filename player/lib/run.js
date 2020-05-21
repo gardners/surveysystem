@@ -41,16 +41,16 @@ if (!config) {
     process.exit(1);
 }
 
-const configFile = `${process.cwd()}/configs/${config}`;
+const CONFIG_FILE = `${process.cwd()}/configs/${config}`;
 
-if (!fs.existsSync(configFile)) {
+if (!fs.existsSync(CONFIG_FILE)) {
     Log.error('Command line error: ');
     Log.log(' * Config file does not exist! Exiting player ...');
     process.exit(1);
 }
 
 // eslint-disable-next-line import/no-dynamic-require
-const Config = require(path.resolve(configFile));
+const Config = require(path.resolve(CONFIG_FILE));
 Object.assign(Fetch, Config.Api);
 
 ////
@@ -96,7 +96,7 @@ if (sessionFile) {
 // globals
 ////
 
-Log.log(`\n    * ${Log.colors.yellow('using config: ')}${configFile}\n`);
+Log.log(`\n    * ${Log.colors.yellow('using config: ')}${CONFIG_FILE}\n`);
 if (sessionId) {
     Log.log(`    * ${Log.colors.yellow('using session')}: ${sessionId}`);
 }
@@ -418,7 +418,7 @@ getCustomAnswers()
         return Log.note(`Logging analysis into: ${JSONFILE}`, JSONFILE);
     })
 // csv comment
-    .then(() => FSLOG.append(`# Log for survey ${Config.Api.SURVEYID}\n# config: ${configFile}\n# session: ${SESSIONID}\n# executed on: ${now.toLocaleString()}\n`))
+    .then(() => FSLOG.append(`# Log for survey ${Config.Api.SURVEYID}\n# config: ${CONFIG_FILE}\n# session: ${SESSIONID}\n# executed on: ${now.toLocaleString()}\n`))
 // fetch first questions
     .then(() => nextQuestions())
 // start question/answer loop
@@ -435,6 +435,6 @@ getCustomAnswers()
     .then(() => JSONF.finish())
     .then(jsonfile => Log.success('\nSurvey analysis retrieved\n', jsonfile))
     .then(jsonfile => Log.log(`   ${Log.colors.yellow('*')} File: ${jsonfile}\n`))
-    .then(() => Log.log(`   ${Log.colors.yellow('* run again:')} ./player ${process.argv.slice(2).join(' ')}\n`))
+    .then(() => Log.log(`   ${Log.colors.yellow('* run again:')} ./player --config ${CONFIG_FILE} --session ${SESSIONID}\n`))
 // errors
     .catch(err => Log.error(`REQUEST ERROR\n${err}`, err));
