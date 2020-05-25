@@ -4,8 +4,24 @@
  */
 import PropTypes from 'prop-types';
 
+import { isArray } from './Utils';
+
 /**
- * @typedef EvaluationCondition
+ * @typedef Constraint
+ * @type {object}
+ * @property {string} key
+ * @property {string} message
+ */
+
+/**
+ * @typedef AdditionalInsight
+ * @type {object}
+ * @property {string} displayName
+ * @property {string} displayText
+ */
+
+/**
+ * @typedef Condition
  * @type {object}
  * @property {string} condition
  * @property {string} subcondition
@@ -27,7 +43,7 @@ import PropTypes from 'prop-types';
  * @typedef EvaluationDisplayResult
  * @type {object}
  * @property {EvaluationInsightItem[]} additionalInsights
- * @property {EvaluationCondition[]} conditions
+ * @property {Condition[]} conditions
  */
 
 /**
@@ -42,12 +58,93 @@ import PropTypes from 'prop-types';
  */
 
 /**
+ * @typedef Analysis
+ * @type {object}
+ * @property {string} version
+ * @property {string} created
+ * @property {Constraint[]} constraints
+ * @property {Evaluation[]} evaluations
+ */
+
+const Models = {
+
+    /**
+     * @returns {Evaluation} evaluation
+     */
+    constraint: function() {
+        return {
+            key: '',
+            message: '',
+        };
+    },
+
+    /**
+     * @returns {AdditionalInsight} additionalInsights
+     */
+    additionalInsight: function() {
+        return {
+            displayName: '',
+            displayText: '',
+        };
+    },
+
+    /**
+     * @returns {Condition} condition
+     */
+    conditions: function() {
+        return {
+            condition: '',
+            subcondition: '',
+            mainText: '',
+            learnMore: '',
+            mainRecommendation: '',
+            mandatoryTips: '',
+            additionalInsights: ''
+        };
+    },
+
+    displayResults: function() {
+        return {
+            additionalInsights: [],
+            conditions: {},
+        };
+    },
+
+    /**
+     * @returns {Evaluation} evaluation
+     */
+    evaluation: function() {
+        return {
+            category: '',
+            classification: '',
+            displayResults: {},
+            rank: 0,
+            recommendation: '',
+            riskRating: 0
+        };
+    },
+
+    /**
+     * @returns {Evaluation} evaluation
+     */
+    analysis: function() {
+        return {
+            version: '',
+            created: 0,
+            constraints: [],
+            evaluations: [],
+        };
+    },
+
+};
+
+/**
 * Get Proptypes schema
 * @returns {PropTypes}
 */
 const evaluationPropTypes = function () {
     return PropTypes.shape({
-        category: PropTypes.string, // TODO check if still used
+        category: PropTypes.string,
         classification: PropTypes.string,
         rank: PropTypes.number,
         recommendation: PropTypes.string,
@@ -69,13 +166,29 @@ const evaluationPropTypes = function () {
                 additionalInsights: PropTypes.string,
             })
         }),
+    });
+};
 
-
+/**
+* Get Proptypes schema
+* @returns {PropTypes}
+*
+* #350, add meta data wrapper
+*/
+const analysisPropTypes = function () {
+    return PropTypes.shape({
+        created: PropTypes.string.isRequired,
+        version: PropTypes.string,
+        constraints: PropTypes.arrayOf(PropTypes.shape({
+            key: PropTypes.string,
+            message: PropTypes.string,
+        })),
+        evaluations: PropTypes.arrayOf(evaluationPropTypes())
     });
 };
 
 const mockAnalysis = function() {
-    return [{
+    const evaluations =  [{
         category: "",
         classification: "Mild",
         displayResults: {
@@ -115,6 +228,16 @@ const mockAnalysis = function() {
         recommendation: "",
         riskRating: 0
     }];
+
+    return {
+        created: new Date().toISOString(),
+        version: '9.9.9',
+        constraints: [{
+            key: 'Warning',
+            message: 'Don\'t Panic',
+        }],
+        evaluations,
+    }
 };
 // console.log(JSON.stringify(mockAnalysis(), null, 4));
 
@@ -124,27 +247,46 @@ const mockAnalysis = function() {
  * @returns {object}
  */
 const normalizeEvaluation = function(response) {
-    const r = response || {};
+    let r = response || {};
+    const d = r.displayResults || {};
 
-    return Object.assign({
-        category: '',
-        classification: '',
-        displayResults: {
-            additionalInsights: [],
-            conditions: {
-                condition: '',
-                subcondition: '',
-                mainText: '',
-                learnMore: '',
-                mainRecommendation: '',
-                mandatoryTips: '',
-                additionalInsights: ''
-            }
-        },
-        rank: 0,
-        recommendation: '',
-        riskRating: 0
-    }, r);
+    r = Object.assign(Models.evaluation(), r);
+    r.displayResults = Object.assign(Models.displayResults(), d);
+
+    const a = r.displayResults.additionalInsights;
+    const c = r.displayResults.conditions;
+
+    r.displayResults.additionalInsights = a.map(item => Object.assign(Models.additionalInsight(), item));
+    r.displayResults.conditions = Object.assign(Models.conditions(), c);
+    return r;
 }
 
-export { mockAnalysis, normalizeEvaluation, evaluationPropTypes };
+/**
+ * Sets default values and normalizes an /analyse api response object
+ * @param {object} response
+ * @returns {object}
+ *
+ * #350, add meta data wrapper, deal with legacy format
+ */
+const normalizeAnalysis = function(response) {
+    let r = response || {};
+
+    let c = [];
+    let e = [];
+
+    // #350 transform legacy analysis: array of evaluations
+    if (isArray(response)) {
+        r = {};
+        e = response;
+    } else {
+        c = response.constraints || [];
+        e = response.evaluations || [];
+    }
+
+    r = Object.assign(Models.analysis(), r);
+    r.constraints =  c.map(item => Object.assign(Models.constraint(), item));
+    r.evaluations =  e.map(item => normalizeEvaluation(item));
+    return r;
+}
+
+export { Models, mockAnalysis, normalizeEvaluation, normalizeAnalysis, evaluationPropTypes, analysisPropTypes };
