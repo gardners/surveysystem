@@ -111,11 +111,9 @@ Evaluation.propTypes = {
     evaluation: evaluationPropTypes(),
 };
 
-const EvaluationGroup = function({ surveyID, sessionID, evaluations }) {
+const EvaluationGroup = function({ evaluations }) {
     return (
         <section>
-            <h2>Survey: <span className="text-success">{ surveyID }</span></h2>
-            <p>session: <span className="text-muted">{ sessionID } </span></p>
             {
                 evaluations.map((item, index) => <Evaluation key={ index } index={ index } evaluation={ item } />)
             }
@@ -128,8 +126,6 @@ EvaluationGroup.defaultProps = {
 };
 
 EvaluationGroup.propTypes = {
-    surveyID: PropTypes.string.isRequired,
-    sessionID: PropTypes.string.isRequired,
     analysis: PropTypes.arrayOf(evaluationPropTypes()),
 };
 
