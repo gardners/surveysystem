@@ -1,43 +1,46 @@
 import React, { Component } from 'react';
 
 import { mockAnalysis } from '../../Analysis';
+import AnalysisMeta from '../analysis/AnalysisMeta';
 import { EvaluationGroup } from '../analysis/Evaluation';
 
 class DemoAnalysis extends Component {
 
     constructor(props) {
-        const evaluations = mockAnalysis();
+        const analysis = mockAnalysis();
 
         super(props);
         this.state = {
-            json: JSON.stringify(evaluations, null, 4),
-            evaluations,
+            json: JSON.stringify(analysis, null, 4),
+            analysis,
         };
     }
 
     handleChange(e) {
         const json = e.target.value;
-        let evaluations = [];
+        let analysis = {};
 
         try {
-            evaluations = JSON.parse(json);
+            analysis = JSON.parse(json);
         } catch (e) {
-            evaluations = e;
+            analysis = e;
         }
 
-        if(json[0] !== '[') {
-            evaluations = new Error('Error: analysis has to be an array of evaluation objects');
+        if(json[0] !== '{') {
+            analysis = new Error('Error: analysis has to be an object containing an array evaluation objects');
         }
 
         this.setState({
             json,
-            evaluations,
+            analysis,
         });
     }
 
     render() {
-        const { json, evaluations } = this.state;
-
+        const { json, analysis } = this.state;
+        const { evaluations } = analysis;
+        const surveyID = 'DEMO-SURVEY';
+        const sessionID = 'DEMO-SESSION';
         return (
             <section>
                 <textarea className="p-3 bg-dark text-white" style={ { width: '100%', height: '200px' } } onChange={ this.handleChange.bind(this) } value={ json } />
@@ -46,11 +49,10 @@ class DemoAnalysis extends Component {
                     (evaluations instanceof Error) ?
                         <div class="alert alert-danger">{ evaluations.toString() }</div>
                         :
-                        <EvaluationGroup
-                            evaluations={ evaluations }
-                            surveyID="DEMO-SURVEY"
-                            sessionID="DEMO-SESSION"
-                        />
+                        <React.Fragment>
+                            <AnalysisMeta surveyID={ surveyID } sessionID={ sessionID } analysis={ analysis } />
+                            <EvaluationGroup surveyID={ surveyID } sessionID={ sessionID } evaluations={ evaluations } />
+                        </React.Fragment>
                 }
             </section>
         );
