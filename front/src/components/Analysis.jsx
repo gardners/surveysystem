@@ -4,8 +4,10 @@ import { Link } from 'react-router-dom';
 // apis
 import Api from '../Api';
 import ApiAlert from './ApiAlert';
+import { normalizeAnalysis } from '../Analysis';
 
 // components
+import AnalysisMeta from './analysis/AnalysisMeta';
 import { EvaluationGroup } from './analysis/Evaluation';
 import Preloader from './Preloader';
 
@@ -17,7 +19,7 @@ class Analysis extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            evaluations: [],
+            analysis: [],
             loading: '',
             alerts: [],
         }
@@ -27,12 +29,13 @@ class Analysis extends Component {
         const sessionID = this.props.match.params.sessionID;
 
         this.setState({
-            loading: 'Fetching evaluations...',
+            loading: 'Fetching analysis...',
         });
 
         Api.getAnalysis(sessionID)
-        .then(evaluations => this.setState({
-            evaluations,
+        .then(result => normalizeAnalysis(result))
+        .then(analysis => this.setState({
+            analysis,
             loading: '',
             alerts: [],
         }))
@@ -62,7 +65,8 @@ class Analysis extends Component {
     render() {
         const surveyID = this.props.match.params.id;
         const sessionID = this.props.match.params.sessionID;
-        const { evaluations, loading, alerts } = this.state;
+        const { analysis, loading, alerts } = this.state;
+        const { evaluations } = analysis;
 
         if(alerts.length) {
             return (
@@ -101,7 +105,8 @@ class Analysis extends Component {
                 <Preloader loading={ loading } message={ loading }/>
                 <h1>Analysis</h1>
 
-                <EvaluationGroup surveyID={ surveyID } sessionID={ sessionID } evaluations={ evaluations } />
+                <AnalysisMeta surveyID={ surveyID } sessionID={ sessionID } analysis={ analysis } />
+                <EvaluationGroup evaluations={ evaluations } />
                 <Dev.Pretty label="raw analyis" data={ evaluations } open={ false }/>
             </section>
         );
