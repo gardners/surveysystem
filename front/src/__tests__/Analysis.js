@@ -13,7 +13,7 @@ const evaluationReference = function() {
                 learnMore: '',
                 mainRecommendation: '',
                 mandatoryTips: '',
-                additionalInsights: ''
+                additionalInsights: [],
             }
         },
         rank: 0,
@@ -152,8 +152,8 @@ describe('normalizeEvaluation', () => {
     });
 });
 
-describe('normalizeEAnalysis', () => {
-   test('normalizeEAnalysis LEGACY', () => {
+describe('normalizeAnalysis', () => {
+   test('normalizeAnalysis LEGACY', () => {
         const e = evaluationReference();
         const legacy  = [e, e];
 
@@ -166,4 +166,80 @@ describe('normalizeEAnalysis', () => {
         reference.evaluations = [evaluationReference(), evaluationReference()]
         expect(a).toEqual(reference);
    });
+
+   // #352 lts
+    test('normalizeEAnalysis insight empty', () => {
+        const ref = evaluationReference();
+        const e = normalizeEvaluation(ref);
+
+        expect(e.displayResults.conditions.additionalInsights.length).toBe(0);
+    });
+
+    test('normalizeEAnalysis insight', () => {
+        const ref = evaluationReference();
+        ref.displayResults.conditions.additionalInsights = [{
+            displayName: 'testName',
+            displayText: 'testText'
+        }];
+
+        const e = normalizeEvaluation(ref);
+
+        expect(e.displayResults.conditions.additionalInsights.length).toBe(1);
+        expect(e.displayResults.conditions.additionalInsights[0]).toEqual({
+            displayName: 'testName',
+            displayText: 'testText',
+        });
+    });
+
+   // #352 legacy additional insights
+    test('normalizeEAnalysis insight LEGACY (string)', () => {
+        const ref = evaluationReference();
+        ref.displayResults.conditions.additionalInsights = 'test';
+
+        const e = normalizeEvaluation(ref);
+
+        expect(e.displayResults.conditions.additionalInsights.length).toBe(1);
+        expect(e.displayResults.conditions.additionalInsights[0]).toEqual({
+            displayName: '',
+            displayText: 'test',
+        });
+    });
+
+    test('normalizeEAnalysis insight LEGACY (string[])', () => {
+        const ref = evaluationReference();
+        ref.displayResults.conditions.additionalInsights = ['test'];
+
+        const e = normalizeEvaluation(ref);
+
+        expect(e.displayResults.conditions.additionalInsights.length).toBe(1);
+        expect(e.displayResults.conditions.additionalInsights[0]).toEqual({
+            displayName: '',
+            displayText: 'test',
+        });
+
+    });
+
+    test('normalizeEAnalysis insight LEGACY (mixed[])', () => {
+        const ref = evaluationReference();
+        ref.displayResults.conditions.additionalInsights = [
+            'test',
+            {
+                displayName: 'testName',
+                displayText: 'testText'
+            }
+        ];
+
+        const e = normalizeEvaluation(ref);
+
+        expect(e.displayResults.conditions.additionalInsights.length).toBe(2);
+        expect(e.displayResults.conditions.additionalInsights[0]).toEqual({
+            displayName: '',
+            displayText: 'test',
+        });
+        expect(e.displayResults.conditions.additionalInsights[1]).toEqual({
+            displayName: 'testName',
+            displayText: 'testText',
+        });
+
+    });
 });
