@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 
 import { normalizeEvaluation, evaluationPropTypes } from '../../Analysis';
 
+import Insights from './Insights';
 import Toggle from '../Toggle';
 
 const Evaluation = function({ index, evaluation }) {
@@ -91,7 +92,9 @@ const Evaluation = function({ index, evaluation }) {
                         <div className="list-group-item bg-light">
                             <div className="row">
                                 <div className="col-sm-3">Additional insights</div>
-                                <div className="col-sm-9">{ additionalInsights }</div>
+                                <div className="col-sm-9">
+                                    <Insights insights={ additionalInsights } />
+                                </div>
                             </div>
                         </div>
                     </div>
