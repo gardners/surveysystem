@@ -7,10 +7,10 @@ const InsightItem = function({ item }) {
     const insight = normalizeInsight(item);
 
     return (
-        <p>
+        <div className="mb-2">
             { insight.displayName && <div><strong>{ insight.displayName }</strong></div> }
             <div>{ insight.displayText }</div>
-        </p>
+        </div>
     );
 }
 
@@ -18,7 +18,7 @@ InsightItem.defaultProps = {};
 
 InsightItem.propTypes = {
     // #352, add complex model, allow simple strings
-    item: PropTypes.oneOf([
+    item: PropTypes.oneOfType([
         PropTypes.string,
         insightPropTypes(),
     ]),
@@ -42,7 +42,7 @@ Insights.defaultProps = {
 Insights.propTypes = {
     // #352, add complex model, allow simple strings
     insights: PropTypes.arrayOf([
-        PropTypes.oneOf([
+        PropTypes.oneOfType([
             PropTypes.string,
             insightPropTypes(),
         ])

@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import {Models,  normalizeAnalysis, analysisPropTypes } from '../../Analysis';
 
 const parseISODate = function(str) {
-console.log(str);
+
     if(!str) {
         return 'n/a';
     }
