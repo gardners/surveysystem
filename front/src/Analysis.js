@@ -167,7 +167,7 @@ const evaluationPropTypes = function () {
                 mainRecommendation: PropTypes.string,
                 mandatoryTips: PropTypes.string,
                 // #352, add complex model, allow simple strings
-                additionalInsights: PropTypes.oneOf([
+                additionalInsights: PropTypes.oneOfType([
                     PropTypes.string,
                     PropTypes.arrayOf(insightPropTypes()),
                 ])
