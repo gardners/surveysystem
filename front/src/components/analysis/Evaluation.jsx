@@ -10,7 +10,7 @@ const Evaluation = function({ index, evaluation }) {
     const data = normalizeEvaluation(evaluation);
     const { category, classification, rank, recommendation, riskRating } = data;
     const { condition, subcondition, mainText, learnMore, mainRecommendation, mandatoryTips, additionalInsights }  = data.displayResults.conditions;
-
+    const insights  = data.displayResults.additionalInsights || []
     return (
         <div>
             <p>Condition { index + 1 }</p>
@@ -64,7 +64,15 @@ const Evaluation = function({ index, evaluation }) {
                             </div>
                         </div>
                 }
-
+                {
+                    insights.length &&
+                        <div className="list-group-item">
+                            <div className="row">
+                            <div className="col-sm-3">Insights</div>
+                                <div className="col-sm-9"><Insights insights = { insights } /></div>
+                            </div>
+                        </div>
+                }
                 <div className="list-group-item bg-light">
                     <Toggle title="More..." className="mt-2 mb-2" titleTag="button" titleClassName="btn btn btn-primary d-print-none">
 

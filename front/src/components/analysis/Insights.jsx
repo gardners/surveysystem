@@ -41,12 +41,12 @@ Insights.defaultProps = {
 
 Insights.propTypes = {
     // #352, add complex model, allow simple strings
-    insights: PropTypes.arrayOf([
+    insights: PropTypes.arrayOf(
         PropTypes.oneOfType([
             PropTypes.string,
             insightPropTypes(),
         ])
-    ]),
+    ),
 };
 
 export default Insights;

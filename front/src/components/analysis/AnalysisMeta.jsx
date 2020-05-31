@@ -26,7 +26,7 @@ const Constraints = function({ constraints }) {
 
     return(
         <div className="alert alert-warning">
-            <strong className="text-danger">Constraints:</strong> The analysis encountered following unexpected surevey results:
+            <strong className="text-danger">Constraints:</strong> The analysis encountered following unexpected survey results:
             <ul>
             {
                 constraints.map((item, index) => <li key={ index }><strong>{ item.key }</strong>: { item.message }</li>)

@@ -38,6 +38,7 @@ class DemoAnalysis extends Component {
 
     render() {
         const { json, analysis } = this.state;
+
         const { evaluations } = analysis;
         const surveyID = 'DEMO-SURVEY';
         const sessionID = 'DEMO-SESSION';
