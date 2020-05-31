@@ -210,15 +210,10 @@ const mockAnalysis = function() {
                 learnMore: 'Make it totally clear that this gun has a right end and a wrong end. Make it totally clear to anyone standing at the wrong end that things are going badly for them.',
                 mainRecommendation: 'Make it totally clear that this gun has a right end and a wrong end. Make it totally clear to anyone standing at the wrong end that things are going badly for them.',
                 mandatoryTips: 'Eskimos had over two hundred different words for snow, without which their conversation would probably have got very monotonous.',
-                additionalInsights: [
-                    // #352, legacy format
-                    'A common mistake that people make when trying to design something completely foolproof is to underestimate the ingenuity of complete fools.',
-                    // #352, insight format
-                    {
-                        displayName: 'Don\'t panic',
-                        displayText: 'There is a theory which states that if ever anyone discovers exactly what the Universe is for and why it is here, it will instantly disappear and be replaced by something even more bizarre and inexplicable. There is another theory which states that this has already happened.'
-                    }
-                ]
+                additionalInsights: [{
+                    displayName: 'Don\'t panic',
+                    displayText: 'There is a theory which states that if ever anyone discovers exactly what the Universe is for and why it is here, it will instantly disappear and be replaced by something even more bizarre and inexplicable. There is another theory which states that this has already happened.'
+                }]
             }
         },
         rank: 2,
