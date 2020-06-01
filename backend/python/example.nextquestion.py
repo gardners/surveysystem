@@ -1,6 +1,6 @@
 """
-A simple example of a Python survey controller including the required hook functions for connectiing to the C backend
-Copy this file to "nextquestion.py" and restart the server without ENV "SURVEY_PYTHONDIR" (external package path) being set
+A simple example of a Python survey controller, includes the required C api hook functions
+Copy this file to "nextquestion.py" and restart the server without ENV "SURVEY_PYTHONDIR" (external package path) being set.
 """
 import os
 import json
