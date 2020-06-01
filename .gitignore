@@ -69,6 +69,7 @@ backend/src/question_types.c
 # surveys
 backend/surveys/*
 backend/python/*
+!backend/python/example.*
 
 # runtime
 backend/logs/*
