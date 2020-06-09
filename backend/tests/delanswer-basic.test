@@ -24,7 +24,7 @@ match_string {"status": 0, "message": "", "next_questions": []}
 
 verify_session
 del_basic/0b39e0c93f1b338433b8a8773d57f738dd405e17
-question1:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #! ------- delanswer question -------
@@ -33,7 +33,7 @@ match_string {"status": 0, "message": "", "next_questions": [{"id": "question1",
 
 verify_session
 del_basic/0b39e0c93f1b338433b8a8773d57f738dd405e17
-question1:Answer 1:0:0:0:0:0:0:0::1:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::1:<UTIME>
 endofsession
 
 #! ------- answer question again -------
@@ -42,5 +42,5 @@ match_string {"status": 0, "message": "", "next_questions": []}
 
 verify_session
 del_basic/0b39e0c93f1b338433b8a8773d57f738dd405e17
-question1:NEW Answer:0:0:0:0:0:0:0::0:<UTIME>
+question1:TEXT:NEW Answer:0:0:0:0:0:0:0::0:<UTIME>
 endofsession

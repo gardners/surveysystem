@@ -28,5 +28,5 @@ request 200 addanswer?sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:
 # Make sure answer ends up in file
 verify_session
 foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
-question1:Hello World:0:0:0:0:0:0:0::0:<UTIME>
+question1:TEXT:Hello World:0:0:0:0:0:0:0::0:<UTIME>
 endofsession

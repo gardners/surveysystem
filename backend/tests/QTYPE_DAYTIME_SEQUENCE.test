@@ -31,7 +31,7 @@ match_string {"status": 0, "message": "", "next_questions": []}
 # Make sure answer ends up in file
 verify_session
 field_unit/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
-meals:27000,43200,66600,75600:0:0:0:0:0:0:0:seconds:0:<UTIME>
+meals:DAYTIME_SEQUENCE:27000,43200,66600,75600:0:0:0:0:0:0:0:seconds:0:<UTIME>
 endofsession
 
 #! ------- delete question -------
@@ -42,5 +42,5 @@ match_string {"status": 0, "message": "", "next_questions": [{"id": "meals", "na
 # Make sure answer ends up in file
 verify_session
 field_unit/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
-meals:27000,43200,66600,75600:0:0:0:0:0:0:0:seconds:1:<UTIME>
+meals:DAYTIME_SEQUENCE:27000,43200,66600,75600:0:0:0:0:0:0:0:seconds:1:<UTIME>
 endofsession

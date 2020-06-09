@@ -29,5 +29,5 @@ match_string {"status": 0, "message": "", "next_questions": []}
 # Make sure answer ends up in file
 verify_session
 field_unit/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
-AreYouAwake:Checked:0:0:0:0:0:0:0::0:<UTIME>
+AreYouAwake:CHECKBOX:Checked:0:0:0:0:0:0:0::0:<UTIME>
 endofsession

@@ -28,5 +28,5 @@ request 200 addanswer?sessionid=$SESSION&answer=characterencoding:96ö:0:0:0:0:0
 # Make sure answer ends up in file
 verify_session
 field_unit/ee0a452e61f1a1a6f11084f9af7cbf2ac69cb728
-characterencoding:96ö:0:0:0:0:0:0:0::0:<UTIME>
+characterencoding:SINGLECHOICE:96ö:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
