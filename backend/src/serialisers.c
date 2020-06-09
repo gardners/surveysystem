@@ -555,6 +555,8 @@ int serialise_answer(struct answer *a, char *out, int max_len) {
     SERIALISE_BEGIN(out, len, max_len);
 
     SERIALISE_STRING(a->uid);
+    // #358, add question type
+    SERIALISE_THING(a->type, serialise_question_type);
     SERIALISE_STRING(a->text);
     SERIALISE_LONGLONG(a->value);
     SERIALISE_LONGLONG(a->lat);
@@ -593,6 +595,12 @@ int deserialise_answer(char *in, enum answer_visibility visibility,
     DESERIALISE_BEGIN(out, len, max_len);
 
     DESERIALISE_STRING(a->uid);
+
+    // #358, add question type
+    if (visibility > ANSWER_FIELDS_PUBLIC) {
+      DESERIALISE_THING(a->type, deserialise_question_type);
+    }
+
     DESERIALISE_STRING(a->text);
     DESERIALISE_LONGLONG(a->value);
     DESERIALISE_LONGLONG(a->lat);
