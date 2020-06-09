@@ -3,9 +3,9 @@
 
 /* clang-format off */
 /*
- * Disable code formatters in this section to avoid messing with the line breaks! 
+ * Disable code formatters in this section to avoid messing with the line breaks!
  * The make script does grep 'QTYPE_*' lines in order to generate 'question_types.h
- */ 
+ */
 struct question {
   // Unique identifier
   char *uid;
@@ -17,7 +17,7 @@ struct question {
 
   // Type of question
   int type;
-  
+
   // Answer is an integer, bounded by min_value and max_value
 #define QTYPE_INT               1
   // Answer is a fixed point value encoded as a 64-bit integer
@@ -103,13 +103,16 @@ struct question {
 
 /* clang-format off */
 struct answer {
-  
-  /* 
+
+  /*
    * Answer values (writable by REST API)
    */
-  
+
   // ID of question being answered
   char *uid;
+
+  // #358 associated question type (writable by backend only, readable by backend and nextquestion controllers)
+  int type;
 
   // Text response, including Y/N or 0-9/N response vectors for
   // multi-select and UUID
@@ -135,17 +138,17 @@ struct answer {
   int dst_delta;
   // #72 unit field
   char *unit;
-  
-  /* 
-   * Control fields (writable by backend only, readable by backend and nextquestion controllers
+
+  /*
+   * Control fields (writable by backend only, readable by backend and nextquestion controllers)
    */
 
   // #186 flags
   int flags;
-  
+
   // #162 answer storage timestamp
   long long stored;
-  
+
 #define ANSWER_DELETED 1
 };
 /* clang-format on */
