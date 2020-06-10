@@ -534,7 +534,7 @@ struct next_questions *init_next_questions() {
     nq->message = NULL;
     nq->question_count = 0;
   } while (0);
-  
+
   if (retVal) {
     nq = NULL;
   }
@@ -551,7 +551,7 @@ void free_next_questions(struct next_questions *nq) {
     free_question(nq->next_questions[i]);
   }
   nq->question_count = 0;
-  
+
   free(nq);
   return;
 }
@@ -1068,6 +1068,9 @@ int session_add_answer(struct session *ses, struct answer *a) {
 
     if (question_number == ses->question_count)
       LOG_ERRORV("There is no such question '%s'", a->uid);
+
+    // #358 set question type (for both, adding and deleting)
+    a->type = ses->questions[question_number]->type;
 
     // Don't allow multiple answers to the same question
     for (int i = 0; i < ses->answer_count; i++) {

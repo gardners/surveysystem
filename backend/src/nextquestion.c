@@ -5,7 +5,7 @@
 #include "errorlog.h"
 #include "question_types.h"
 #include "survey.h"
-
+#include "serialisers.h"
 #include <Python.h>
 
 #define REPORT_IF_FAILED()                                                     \
@@ -295,8 +295,16 @@ void log_python_object(char *msg, PyObject *result) {
  * the caller is responsible for derferencing the dict:  if(dict) Py_DECREF(dict);
  */
 PyObject *py_create_answer(struct answer *a) {
+
+  // #358 include question type
+  char stype[50];
+  if(!serialise_question_type(a->type, stype, 50)) { // serialise_question_type returns str length
+      return NULL;
+  }
+
   PyObject *dict = PyDict_New();
   PyObject *uid = PyUnicode_FromString(a->uid);
+  PyObject *type = PyUnicode_FromString(stype);
   PyObject *text = PyUnicode_FromString(a->text);
   PyObject *value = PyLong_FromLongLong(a->value);
   PyObject *lat = PyLong_FromLongLong(a->lat);
@@ -311,6 +319,7 @@ PyObject *py_create_answer(struct answer *a) {
   PyObject *stored = PyLong_FromLongLong(a->stored);
 
   PyObject *uid_l = PyUnicode_FromString("uid");
+  PyObject *type_l = PyUnicode_FromString("type");
   PyObject *text_l = PyUnicode_FromString("text");
   PyObject *value_l = PyUnicode_FromString("value");
   PyObject *lat_l = PyUnicode_FromString("latitude");
@@ -325,6 +334,7 @@ PyObject *py_create_answer(struct answer *a) {
   PyObject *stored_l = PyUnicode_FromString("stored");
 
   int errors = PyDict_SetItem(dict, uid_l, uid);
+  errors += PyDict_SetItem(dict, type_l, type);
   errors += PyDict_SetItem(dict, text_l, text);
   errors += PyDict_SetItem(dict, value_l, value);
   errors += PyDict_SetItem(dict, lat_l, lat);

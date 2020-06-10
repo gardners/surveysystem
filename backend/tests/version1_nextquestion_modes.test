@@ -34,7 +34,7 @@ request 500 addanswer?sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:
 # Make sure answer ends up in file
 verify_session
 without_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
-question1:Hello World:0:0:0:0:0:0:0::0:<UTIME>
+question1:TEXT:Hello World:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #!---------------------
@@ -102,6 +102,6 @@ match_string {"status": 0, "message": "end of survey", "next_questions": []}
 # Make sure answer ends up in file
 verify_session
 with_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
-question3:Hello World 3:0:0:0:0:0:0:0::0:<UTIME>
-question1:Hello World 1:0:0:0:0:0:0:0::0:<UTIME>
+question3:TEXT:Hello World 3:0:0:0:0:0:0:0::0:<UTIME>
+question1:TEXT:Hello World 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession

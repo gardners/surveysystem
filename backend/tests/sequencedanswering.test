@@ -30,7 +30,7 @@ match_string {"status": 0, "message": "", "next_questions": [{"id": "question2",
 # Make sure answer ends up in file
 verify_session
 foo/d4f5a62de47e9a5ea38f93c304d6c4cdee1e396c
-question1:Hello World:0:0:0:0:0:0:0::0:<UTIME>
+question1:MULTICHOICE:Hello World:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 request 200 addanswer?sessionid=$SESSION&answer=question2:Another+answer:0:0:0:0:0:0:0:
@@ -39,8 +39,8 @@ match_string {"status": 0, "message": "", "next_questions": [{"id": "question3",
 # Make sure answer ends up in file
 verify_session
 foo/d4f5a62de47e9a5ea38f93c304d6c4cdee1e396c
-question1:Hello World:0:0:0:0:0:0:0::0:<UTIME>
-question2:Another answer:0:0:0:0:0:0:0::0:<UTIME>
+question1:MULTICHOICE:Hello World:0:0:0:0:0:0:0::0:<UTIME>
+question2:TEXT:Another answer:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 request 200 addanswer?sessionid=$SESSION&answer=question3:Last+answer:0:0:0:0:0:0:0:
@@ -51,7 +51,7 @@ match_string {"status": 0, "message": "", "next_questions": []}
 # Make sure answer ends up in file
 verify_session
 foo/d4f5a62de47e9a5ea38f93c304d6c4cdee1e396c
-question1:Hello World:0:0:0:0:0:0:0::0:<UTIME>
-question2:Another answer:0:0:0:0:0:0:0::0:<UTIME>
-question3:Last answer:0:0:0:0:0:0:0::0:<UTIME>
+question1:MULTICHOICE:Hello World:0:0:0:0:0:0:0::0:<UTIME>
+question2:TEXT:Another answer:0:0:0:0:0:0:0::0:<UTIME>
+question3:TEXT:Last answer:0:0:0:0:0:0:0::0:<UTIME>
 endofsession

@@ -60,17 +60,18 @@ Format of an answer row:
 
 Location: `sessions/<session-prefix>/sessionID`
 
-| field                 | API access |               | data type | json   | notes       |
-| ---                   | ---        | ---           | ---       | ---    | ---         |
-| **uid**               | read/write | answer value  | char[]    | string | question id |
-| **text**              | read/write | answer value  | char[]    | string |             |
-| **value**             | read/write | answer value  | long long | number |             |
-| **lat**               | read/write | answer value  | long long | number |             |
-| **lon**               | read/write | answer value  | long long | number |             |
-| **time_begin**        | read/write | answer value  | long long | number |             |
-| **time_end**          | read/write | answer value  | long long | number |             |
-| **time_zone_delta**   | read/write | answer value  | int       | number |             |
-| **dst_delta**         | read/write | answer value  | int       | number |             |
+| field                 | API access |               | data type | json   | notes         |
+| ---                   | ---        | ---           | ---       | ---    | ---           |
+| **uid**               | read/write | answer value  | char[]    | string | question id   |
+| **type**              | -          | control field | int       | -      | question type |
+| **text**              | read/write | answer value  | char[]    | string |               |
+| **value**             | read/write | answer value  | long long | number |               |
+| **lat**               | read/write | answer value  | long long | number |               |
+| **lon**               | read/write | answer value  | long long | number |               |
+| **time_begin**        | read/write | answer value  | long long | number |               |
+| **time_end**          | read/write | answer value  | long long | number |               |
+| **time_zone_delta**   | read/write | answer value  | int       | number |               |
+| **dst_delta**         | read/write | answer value  | int       | number |               |
 | **unit**              | read/write | answer value  | char[]    | string | unit for numeric types, see below   |
 | **flag**              | -          | control field | int       | -      | bit control flag, see below |
 | **stored**            | -          | control field | long long | -      | UNIX timestamp, time of answer storage, see below |

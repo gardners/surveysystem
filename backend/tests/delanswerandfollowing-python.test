@@ -98,9 +98,9 @@ match_string {"status": 0, "message": "", "next_questions": []}
 
 verify_session
 delanswerandfollowingpython/0b39e0c93f1b338433b8a8773d57f738dd405e17
-question1:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
-question2:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
-question3:Answer 3:0:0:0:0:0:0:0::0:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
+question3:TEXT:Answer 3:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #! ------- delanswer question 1 -------
@@ -109,7 +109,7 @@ match_string {"status": 0, "message": "", "next_questions": [{"id": "question1",
 
 verify_session
 delanswerandfollowingpython/0b39e0c93f1b338433b8a8773d57f738dd405e17
-question1:Answer 1:0:0:0:0:0:0:0::1:<UTIME>
-question2:Answer 2:0:0:0:0:0:0:0::1:<UTIME>
-question3:Answer 3:0:0:0:0:0:0:0::1:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::1:<UTIME>
+question2:TEXT:Answer 2:0:0:0:0:0:0:0::1:<UTIME>
+question3:TEXT:Answer 3:0:0:0:0:0:0:0::1:<UTIME>
 endofsession
