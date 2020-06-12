@@ -1806,6 +1806,14 @@ int main(int argc, char **argv) {
   int fatals = 0;
 
   for (int i = 1; i < argc; i++) {
+
+    // handle only files with extension ".test", This allows us to store supporting configs in folder
+    char *e = strrchr(argv[i], '.');
+    if (!e || strlen(e) != 5 || strcmp(".test", e)) {
+        fprintf(stderr, "* NO TEST:%d: %s\n", i, argv[i]);
+        continue;
+    }
+
     switch (run_test(test_dir, argv[i])) {
     case 0:
       passes++;
