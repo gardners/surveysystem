@@ -767,12 +767,7 @@ int run_test(char *dir, char *test_file) {
                 "code\n",
                 tdelta);
 
-        if (configure_and_start_lighttpd(test_dir, 1)) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
-          fprintf(log, "T+%4.3fms : FATAL : Backend restart failed\n", tdelta);
-          goto fatal;
-        }
+        // #361, removed extra call to configure_and_start_lighttpd()
 
         tdelta = gettime_us() - start_time;
         tdelta /= 1000;
@@ -1438,6 +1433,7 @@ int run_test(char *dir, char *test_file) {
 }
 
 // #333 set max-procs to 1, dedicated test pifile
+// #361 add ENV SURVEY_FORCE_PYINIT for dynamic reloading python in backend
 char *config_template =
     "server.modules = (\n"
     "     \"mod_access\",\n"
@@ -1480,7 +1476,9 @@ char *config_template =
     "     \"bin-path\" => \"%s/surveyfcgi\",\n"
     "     \"bin-environment\" => (\n"
     "     \"SURVEY_HOME\" => \"%s\",\n"
-    "     \"SURVEY_PYTHONDIR\" => \"%s\"\n"
+    "     \"SURVEY_PYTHONDIR\" => \"%s\",\n"
+    "     ## --- DO NOT USE ON PRODUCTION: set below var only for test envs ---\n"
+    "     \"SURVEY_FORCE_PYINIT\" => \"1\",\n"
     "     ),\n"
     "     \"check-local\" => \"disable\",\n"
     "     \"docroot\" => \"%s/front/build\" # remote server may use \n"
