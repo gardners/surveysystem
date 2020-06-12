@@ -37,6 +37,9 @@ wchar_t *as_wchar(const char *s) {
   return as_wchar_out;
 }
 
+// #361 implement dynamic loading of python
+int end_python(void);
+
 // TODO, make thread-safe
 int is_python_started = 0;
 PyObject *py_module = NULL;
@@ -92,10 +95,20 @@ int setup_python() {
   int retVal = 0;
   do {
 
+    // // #361 force re-initalisation. use this only for tests!
+    char *force_init = getenv("SURVEY_FORCE_PYINIT");
+    if (force_init && atoi(force_init) == 1) {
+        LOG_INFO(" => env 'SURVEY_FORCE_PYINIT' was set restarting python");
+        // TODO check retVal, should we harcd exit here?
+        // sets is_python_started to 0
+        end_python();
+    }
+
     // Check if the python source has changed. If so, destroy the current python
     // instance, and start again.
 
     if (!is_python_started) {
+      LOG_INFO(" => starting python setup");
       if (!getenv("SURVEY_HOME"))
         LOG_ERROR("SURVEY_HOME environment variable not set");
 
@@ -133,10 +146,16 @@ int setup_python() {
 
     py_module = PyImport_ImportModule("nextquestion");
 
-    if (PyErr_Occurred()) {
+    if (!py_module) {
+      LOG_WARNV("PyImport_ImportModule('nextquestion') failed. returned NULL", 0);
       log_python_error();
       PyErr_Clear();
+    }
+
+    if (PyErr_Occurred()) {
       LOG_WARNV("PyImport_ImportModule('nextquestion') failed.", 0);
+      log_python_error();
+      PyErr_Clear();
     }
 
     if (!py_module) {
@@ -205,6 +224,7 @@ int setup_python() {
   return retVal;
 }
 
+// #361 implement dynamic loading of python
 int end_python(void) {
   int retVal = 0;
   do {
@@ -220,7 +240,13 @@ int end_python(void) {
       py_module = NULL;
     }
 
-    Py_Finalize();
+    is_python_started = 0;
+    if (Py_FinalizeEx()) { // # 361 added check on finalization
+        LOG_ERROR("Py_FinalizeEx() FAILED. Memory has been leaked!");
+    }
+
+    LOG_INFO("STOPPING python: python initerpreter and modules were destroyed");
+
   } while (0);
   return retVal;
 }
