@@ -313,6 +313,106 @@ int dump_logs(char *dir, FILE *log) {
 }
 
 /**
+ * parses a request directive line for defined patterns and creates a curl command
+ */
+int parse_request(char *line, char *out, int *expected_http_status, char *last_sessionid, char *dir, FILE *log) {
+    int retVal = 0;
+
+    do {
+        char url[65536];
+        char data[65536] = {'\0'};
+        char method[65536] = {'\0'};
+        char curl_args[65536]= {'\0'};
+        char url_sub[65536];
+
+        int done = 0;
+
+        // with code + url + curlargs + method + data
+        // example: request 200 addanswer curlargs(--user name:password) POST "sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0:"
+        if(!done && sscanf(line, "request %d %s curlargs(%[^)]) %s %s", expected_http_status, url, curl_args, method, data) == 5) {
+            done = 1;
+        }
+
+        // with code + url + curlargs
+        // example: request 200 newsession curlargs(--user name:password)
+        if(!done && sscanf(line, "request %d %s curlargs(%[^)])", expected_http_status, url, curl_args) == 3) {
+            done = 1;
+        }
+
+        // with code + url + optional( method + data)
+        // example: request 200 newsession?surveyid=mysurvey
+        if(!done && sscanf(line, "request %d %s %s %s", expected_http_status, url, method, data) == 4) {
+            done = 1;
+        }
+
+        int o = 0;
+        for (int i = 0; url[i]; i++) {
+
+          if (url[i] != '$') {
+            url_sub[o++] = url[i];
+          } else {
+
+            // $$ substitutes for $
+            if (url[i + 1] == '\"') {
+              // Escape quotes
+              url_sub[o++] = '\\';
+              url_sub[o++] = '\"';
+            } else if (url[i + 1] == '$') {
+              url_sub[o++] = '$';
+            } else if (!strncmp("$SESSION", &url[i], 8)) {
+              snprintf(&url_sub[o], 65535 - o, "%s", last_sessionid);
+              o = strlen(url_sub);
+              i += 7;
+            } else {
+              fprintf(log, "FATAL : Unknown $ substitution in URL");
+              retVal = -1;
+            } // endif
+
+          } // endif
+
+        } // endfor
+
+        if(retVal) {
+            break;
+        }
+
+        url_sub[o] = 0;
+        char tmp[65536];
+        if (strlen(data)) {
+          strncpy(tmp, data, 65536);
+          snprintf(data, 65536, " -d %s", tmp);
+        }
+
+        if (strlen(method)) {
+          strncpy(tmp, method, 65536);
+          snprintf(method, 65536, " -X %s", tmp);
+        }
+
+        if (strlen(curl_args)) {
+          strncpy(tmp, curl_args, 65536);
+          snprintf(curl_args, 65536, " %s", tmp);
+        }
+
+        // build and execute curl cod
+        snprintf(
+          out, 65536,
+          "curl%s%s%s -s -w \"HTTPRESULT=%%{http_code}\" -o "
+          "%s/request.out \"http://localhost:%d/surveyapi/%s\" > "
+          "%s/request.code",
+          curl_args,
+          method,
+          data,
+          dir,
+          HTTP_PORT,
+          url_sub,
+          dir
+        );
+    } while(0);
+
+    return retVal;
+}
+
+/**
  * Compares survey session line with a comparsion string
  * - the number of delimitors (Note, this includes escaped delimiters in fields, i.e "\:")
  * - string matches between delimitors
@@ -465,8 +565,6 @@ int run_test(char *dir, char *test_file) {
     long long start_time = gettime_us();
 
     char surveyname[8192] = "";
-    int expected_result = 200;
-    char url[65536];
     char glob[65536];
     double tdelta;
 
@@ -823,6 +921,7 @@ int run_test(char *dir, char *test_file) {
         ////
         // keyword: "match" (pattern)
         ////
+
         // Check that the response contains the supplied pattern
         regex_t regex;
         int matches = 0;
@@ -893,81 +992,44 @@ int run_test(char *dir, char *test_file) {
           goto fail;
         }
 
-      } else if (sscanf(line, "request %d %[^\r\n]", &expected_result, url) ==
-                 2) {
+      } else if (strncmp("request", line, strlen("request")) == 0) {
 
         ////
         // keyword: "request"
         ////
 
-        // Exeucte wget call. If it is a newsession command, then remember the session ID
+        // Exeucte curl call. If it is a newsession command, then remember the session ID
         // We also log the returned data from the request, so that we can look at that
         // as well, if required.
         char cmd[65536];
-        char url_sub[65536];
-
-        // adds extended request options (request method and request data)
-        char data[65536] = {'\0'};
-        char method[65536] = "GET";
-        sscanf(line, "request %d %s %s %s", &expected_result, url, method,
-               data);
-
-        int o = 0;
-        for (int i = 0; url[i]; i++) {
-
-          if (url[i] != '$') {
-            url_sub[o++] = url[i];
-          } else {
-
-            // $$ substitutes for $
-            if (url[i + 1] == '\"') {
-              // Escape quotes
-              url_sub[o++] = '\\';
-              url_sub[o++] = '\"';
-            } else if (url[i + 1] == '$') {
-              url_sub[o++] = '$';
-            } else if (!strncmp("$SESSION", &url[i], 8)) {
-              snprintf(&url_sub[o], 65535 - o, "%s", last_sessionid);
-              o = strlen(url_sub);
-              i += 7;
-            } else {
-              fprintf(log, "T+%4.3fms : FATAL : Unknown $ substitution in URL",
-                      tdelta);
-              goto fatal;
-            } // endif
-
-          } // endif
-
-        } // endfor
-        url_sub[o] = 0;
-
-        // Delete any old version of files laying around
-        snprintf(cmd, 65536, "%s/request.out", dir);
-        unlink(cmd);
-        if (!access(cmd, F_OK)) {
-          fprintf(log, "T+%4.3fms : FATAL : Could not unlink file '%s'", tdelta,
-                  cmd);
-          goto fatal;
-        }
-
-        snprintf(cmd, 65536, "%s/request.code", dir);
-        unlink(cmd);
-        if (!access(cmd, F_OK)) {
-          fprintf(log, "T+%4.3fms : FATAL : Could not unlink file '%s'", tdelta,
-                  cmd);
-          goto fatal;
-        }
-
-        // build and execute curl cod
-        snprintf(cmd, 65536,
-                 "curl -X %s -s -w \"HTTPRESULT=%%{http_code}\" %s%s -o "
-                 "%s/request.out \"http://localhost:%d/surveyapi/%s\" > "
-                 "%s/request.code",
-                 method, ((data[0] == '\0') ? "" : "-d "), data, dir, HTTP_PORT,
-                 url_sub, dir);
+        char tmp[65536];
+        int expected_http_status = 0;
 
         tdelta = gettime_us() - start_time;
         tdelta /= 1000;
+
+        // Delete any old version of files laying around
+        snprintf(tmp, 65536, "%s/request.out", dir);
+        unlink(tmp);
+        if (!access(tmp, F_OK)) {
+          fprintf(log, "T+%4.3fms : FATAL : Could not unlink file '%s'", tdelta,
+                  tmp);
+          goto fatal;
+        }
+
+        snprintf(tmp, 65536, "%s/request.code", dir);
+        unlink(tmp);
+        if (!access(tmp, F_OK)) {
+          fprintf(log, "T+%4.3fms : FATAL : Could not unlink file '%s'", tdelta,
+                  tmp);
+          goto fatal;
+        }
+
+        if (parse_request(line, cmd, &expected_http_status, last_sessionid, dir, log)) {
+          fprintf(log, "T+%4.3fms : FATAL : Could not parse args in declaration \"%s\"'", tdelta,
+                  line);
+          goto fatal;
+        }
         fprintf(log, "T+%4.3fms : HTTP API request command: '%s'\n", tdelta,
                 cmd);
 
@@ -1081,13 +1143,13 @@ int run_test(char *dir, char *test_file) {
           goto fatal;
         }
 
-        if (httpcode != expected_result) {
+        if (httpcode != expected_http_status) {
           tdelta = gettime_us() - start_time;
           tdelta /= 1000;
           fprintf(log,
                   "T+%4.3fms : ERROR : Expected HTTP response code %d, but got "
                   "%d.\n",
-                  tdelta, expected_result, httpcode);
+                  tdelta, expected_http_status, httpcode);
           goto fail;
         }
 
@@ -1744,6 +1806,14 @@ int main(int argc, char **argv) {
   int fatals = 0;
 
   for (int i = 1; i < argc; i++) {
+
+    // handle only files with extension ".test", This allows us to store supporting configs in folder
+    char *e = strrchr(argv[i], '.');
+    if (!e || strlen(e) != 5 || strcmp(".test", e)) {
+        fprintf(stderr, "* NO TEST:%d: %s\n", i, argv[i]);
+        continue;
+    }
+
     switch (run_test(test_dir, argv[i])) {
     case 0:
       passes++;
