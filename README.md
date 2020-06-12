@@ -23,14 +23,25 @@ Stale sessions can simply be deleted via the file system, and surveys added or u
 
 ## Environment Variables
 
+**SURVVEY_HOME** (required):
+
 All data lives in `SURVEY_HOME`. The `SURVEY_HOME` environment variable **must** be defined and represents an absolute directory path to the backend dir (no trailing slash).
+
+**SURVEY_PYTHONDIR** (optional):
 
 Optionally you can define an external Python controller path via `SURVEY_PYTHONDIR`. This must be an absolute directory path. The backend will look for `<SURVEY_PYTHONDIR>/nextquestion.py`. This is recommended for more complex analysis requirements.
 If not defined the backend falls back to the local `<SURVEY_HOME>/python/nextquestion.py` (see structure)
 
+**SURVEY_FORCE_PYINIT** (tests <span color="red">only!</span>):
+
+If `SURVEY_FORCE_PYINIT` is set to `"1"` the Python interpreter will re-initialise on *every* Python C-Api function call.
+
+Use this only for *testing* or *development* environments, as this substantially slows down the application and might cause side effects inside your python controller.
+
+
 # Installation (backend)
 
-This system requires python 3.7 and clang. Additionally, bmake is required for compiling [kcgi](https://kristaps.bsd.lv/kcgi/index.html). To install on Ubuntu:
+This system requires python >=3.7 and clang. Additionally, bmake is required for compiling [kcgi](https://kristaps.bsd.lv/kcgi/index.html). To install on Ubuntu:
 
 ```bash
 sudo apt-get install python3.7-dev python3.7 clang
