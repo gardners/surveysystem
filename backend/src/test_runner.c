@@ -46,6 +46,14 @@
 #define LIGHTY_GROUP "www-data"
 #define LIGHTY_PIDFILE "/var/run/lighttpd.pid"
 
+// test configuration
+struct Test {
+    int skip;
+    char name[1024];
+    char description[8192];
+};
+
+char *lighty_template =  "tests/lighttpd-default.conf.tpl";
 char test_dir[1024];
 int tests = 0;
 
@@ -72,42 +80,45 @@ int fix_ownership(char *dir) {
   return retVal;
 }
 
-void require_test_directory(char *sub_dir, int perm) {
-  char tmp[2048];
-  snprintf(tmp, 2048, "%s/%s", test_dir, sub_dir);
-  if (mkdir(tmp, perm)) {
-    if (errno != EEXIST) {
-      fprintf(stderr, "mkdir(%s, %o) failed.", tmp, perm);
-      exit(-3);
-    }
-  }
-}
-
-void require_test_file(char *file_name, int perm) {
-  char tmp[2048];
-  snprintf(tmp, 2048, "%s/%s", test_dir, file_name);
-
-  FILE *f = fopen(tmp, "w");
+void require_file(char *path, int perm) {
+  FILE *f = fopen(path, "w");
   if (!f) {
-    fprintf(stderr, "require_test_file() fopen(%s) failed.", tmp);
+    fprintf(stderr, "require_file() fopen(%s) failed.", path);
     exit(-3);
   }
   fclose(f);
 
-  // Now make sessions directory writeable by all users
-  if (chmod(tmp, perm)) {
-    fprintf(stderr, "require_test_file() chmod(%s) failed.", tmp);
+  if (chmod(path, perm)) {
+    fprintf(stderr, "require_file() chmod(%s) failed.", path);
     exit(-3);
   }
 }
 
-void require_directory(char *dir, int perm) {
-  if (mkdir(dir, perm)) {
+void require_directory(char *path, int perm) {
+  if (mkdir(path, perm)) {
     if (errno != EEXIST) {
-      fprintf(stderr, "mkdir(%s, %o) failed.", dir, perm);
+      fprintf(stderr, "mkpath(%s, %o) failed.", path, perm);
       exit(-3);
     }
   }
+
+  // bypassing umask
+  if (chmod(path, perm)) {
+    fprintf(stderr, "require_test_file() chmod(%s) failed.", path);
+    exit(-3);
+  }
+}
+
+void require_test_directory(char *sub_dir, int perm) {
+  char path[2048];
+  snprintf(path, 2048, "%s/%s", test_dir, sub_dir);
+  require_directory(path, perm);
+}
+
+void require_test_file(char *file_name, int perm) {
+  char path[2048];
+  snprintf(path, 2048, "%s/%s", test_dir, file_name);
+  require_file(path, perm);
 }
 
 // From https://stackoverflow.com/questions/2256945/removing-a-non-empty-directory-programmatically-in-c-or-c
@@ -466,6 +477,48 @@ int compare_session_line(char *session_line, char *comparison_line) {
   return 0;
 }
 
+FILE *load_test_header(char *test_file, struct Test *test) {
+    FILE *fp = fopen(test_file, "r");
+    if (!fp) {
+      fprintf(stderr, "\nCould not open test file '%s' for reading\n", test_file);
+      fclose(fp);
+      return NULL;
+    }
+
+    // Get name of test file without path
+    char *name = strrchr(test_file, '/');
+    name++;
+    strncpy(test->name, name, sizeof(test->name));
+
+    // fist line is description
+    char line[8192];
+    fgets(line, 8192, fp);
+    if (sscanf(line, "description %[^\r\n]", test->description) != 1) {
+      fprintf(stderr, "\nCould not parse description line of test.\n");
+      fclose(fp);
+      return NULL;
+    }
+
+    while(fgets(line, 8192, fp) != NULL) {
+        // end of config header
+        if (line[0] == '\n') {
+          break;
+        }
+
+        if (strncmp(line, "@skip!", 6) == 0) {
+            test->skip = 1;
+        }
+    }
+
+    if (feof(fp)) {
+      fprintf(stderr, "Error: File '%s' reached EOF before header parsing finished. Did you forget to separate the header with an empty line?\n", test_file);
+      fclose(fp);
+      return NULL;
+    }
+
+    return fp;
+}
+
 int run_test(char *dir, char *test_file) {
   // #198 flush errors accumulated by previous tests
   clear_errors();
@@ -479,69 +532,38 @@ int run_test(char *dir, char *test_file) {
   char response_lines[100][8192];
   char last_sessionid[100] = "";
 
+  // init test config
+  struct Test test = {
+      .skip = 0,
+      .name = "",
+      .description = "",
+  };
+
   do {
 
     // Erase log files from previous tests, see issue #198
     char log_path[8192];
     snprintf(log_path, 8192, "%s/logs", test_dir);
+
     recursive_delete(log_path);
-    if (mkdir(log_path, 0777)) {
-      perror("mkdir() failed for test/logs directory");
-      exit(-3);
-    }
-    // Now make sessions directory writeable by all users
-    if (chmod(log_path, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP |
-                            S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH)) {
-      perror("chmod() failed for test/logs directory");
-      exit(-3);
-    }
+    require_directory(log_path, 0777);
 
-    // Get name of test file without path
-    char *test_name = test_file;
-    for (int i = 0; test_file[i]; i++) {
-      if (test_file[i] == '/')
-        test_name = &test_file[i + 1];
-    }
-
-    in = fopen(test_file, "r");
+    // load header
+    in = load_test_header(test_file, &test);
     if (!in) {
-      fprintf(stderr, "\nCould not open test file '%s' for reading", test_file);
-      perror("fopen");
-      retVal = -1;
-      break;
+      fprintf(stderr, "\n[Fatal]: Loading test header for '%s' failed.\n", test_file);
+      exit(-3);
     }
 
-    // Read first line of test for description
-    line[0] = 0;
-    fgets(line, 8192, in);
-    if (!line[0]) {
-      fprintf(stderr, "\nFirst line of test definition must be description "
-                      "<description text>\n");
-      retVal = -1;
-      break;
-    }
-
-    char description[8192];
-    if (sscanf(line, "skip! description %[^\r\n]", description) == 1) {
-      fprintf(stderr, "\r\033[90m[\033[33mSKIP\033[39m]  %s : %s\n", test_name,
-              description);
+    // skip test if flag was set
+    if (test.skip) {
+      fprintf(stderr, "\r\033[90m[\033[33mSKIP\033[39m]  %s : %s\n", test.name, test.description);
       fflush(stderr);
       break;
     }
 
-    if (sscanf(line, "description %[^\r\n]", description) != 1) {
-      fprintf(stderr, "\nCould not parse description line of test.\n");
-      retVal = -1;
-      break;
-    }
-
-    fprintf(stderr, "\033[39m[    ]  \033[37m%s : %s\033[39m", test_name,
-            description);
-    fflush(stderr);
-
     char testlog[1024];
-    snprintf(testlog, 1024, "testlog/%s.log", test_name);
-
+    snprintf(testlog, 1024, "testlog/%s.log", test.name);
     log = fopen(testlog, "w");
 
     if (!log) {
@@ -551,6 +573,10 @@ int run_test(char *dir, char *test_file) {
               testlog, test_file, strerror(errno));
       goto error;
     }
+
+    // starting test
+    fprintf(stderr, "\033[39m[    ]  \033[37m%s : %s\033[39m", test.name, test.description);
+    fflush(stderr);
 
     time_t now = time(0);
     char *ctime_str = ctime(&now);
@@ -1368,8 +1394,7 @@ int run_test(char *dir, char *test_file) {
       dump_logs(log_path, log);
     }
 
-    fprintf(stderr, "\r\033[39m[\033[32mPASS\033[39m]  %s : %s\n", test_name,
-            description);
+    fprintf(stderr, "\r\033[39m[\033[32mPASS\033[39m]  %s : %s\n", test.name, test.description);
     fflush(stderr);
     break;
 
@@ -1380,8 +1405,7 @@ int run_test(char *dir, char *test_file) {
       dump_logs(log_path, log);
     }
 
-    fprintf(stderr, "\r\033[39m[\033[31mFAIL\033[39m]  %s : %s\n", test_name,
-            description);
+    fprintf(stderr, "\r\033[39m[\033[31mFAIL\033[39m]  %s : %s\n", test.name, test.description);
     fflush(stderr);
     retVal = 1;
     break;
@@ -1393,8 +1417,7 @@ int run_test(char *dir, char *test_file) {
       dump_logs(log_path, log);
     }
 
-    fprintf(stderr, "\r\033[39m[\033[31;1;5mERROR\033[39;0m]  %s : %s\n",
-            test_name, description);
+    fprintf(stderr, "\r\033[39m[\033[31;1;5mERROR\033[39;0m]  %s : %s\n", test.name, test.description);
     fflush(stderr);
     retVal = 2;
     break;
@@ -1406,8 +1429,7 @@ int run_test(char *dir, char *test_file) {
       dump_logs(log_path, log);
     }
 
-    fprintf(stderr, "\r\033[39m[\033[31;1;5mDIED\033[39;0m]  %s : %s\n",
-            test_name, description);
+    fprintf(stderr, "\r\033[39m[\033[31;1;5mDIED\033[39;0m]  %s : %s\n", test.name, test.description);
     fflush(stderr);
     retVal = 3;
     break;
