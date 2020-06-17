@@ -53,7 +53,7 @@ struct Test {
     char description[8192];
 };
 
-char *lighty_template =  "tests/lighttpd-default.conf.tpl";
+char *lighty_template =  "tests/config/lighttpd-default.conf.tpl";
 char test_dir[1024];
 int tests = 0;
 
@@ -1512,68 +1512,67 @@ int configure_and_start_lighttpd(char *test_dir, int silent_flag) {
   int retVal = 0;
 
   do {
+    char conf_path[1024];
+    char cmd[2048];
+
     // kill open ports
     if (stop_lighttpd()) {
         fprintf(stderr, "\nExiting.. stop_lighttpd failed\n");
         exit(-3);
     }
 
-    // Create config file
-    char conf_data[16384];
-    char cwd[1024];
-    int cwdlen = 1024;
-
     if (!tests) {
       fprintf(stderr, "Pulling configuration together...\n");
     }
 
-    // Make sure at least 10 seconds passes between restarts of the back end, so that we don't get
-    // spurious errors.
-    long long time_since_last = time(0) - last_config_time;
-    if (time_since_last < 10) {
-      sleep(11 - time_since_last);
-    }
-    last_config_time = time(0);
+    // path to conf
+    snprintf(conf_path, 1024, "%s/lighttpd.conf", test_dir);
 
-    // Create log file in test directory, and make it globally writeable
-    {
-      snprintf(conf_data, 16384, "%s/breakage.log", test_dir);
-      FILE *f = fopen(conf_data, "w");
-      if (f) {
-        fclose(f);
-      }
-      chmod(conf_data, 0777);
-    }
-
-    if (!tests) {
-      fprintf(stderr, "Created breakage.log\n");
-    }
+    // create log file in test directory, and make it globally writeable
+    require_test_file("breakage.log", 0777);
 
     // point python dir ALWAYS to test dir
-    char python_dir[4096];
-    snprintf(python_dir, 4096, "%s/python", test_dir);
-    require_directory(python_dir, 0775);
+    require_test_directory("python", 0775);
 
-    snprintf(conf_data, 16384, config_template, test_dir, getcwd(cwd, cwdlen),
-             test_dir, LIGHTY_PIDFILE, LIGHTY_USER, LIGHTY_GROUP, HTTP_PORT, test_dir,
-             SURVEYFCGI_PORT, test_dir, test_dir, python_dir,
-             getcwd(cwd, cwdlen));
-    char tmp_conf_file[1024];
-    snprintf(tmp_conf_file, 1024, "%s/lighttpd.conf", test_dir);
+    // create docroot for lighttpd, we do not use it, but it is required
+    require_test_directory("www", 0775);
 
-    FILE *f = fopen(tmp_conf_file, "w");
-    if (!f) {
-      fprintf(stderr, "Failed to open lighttpd.conf file: %s",
+    // copy lighttpd.conf from template
+    snprintf(cmd, 2048, "sudo cp %s %s", lighty_template, conf_path);
+    if (system(cmd)) {
+      fprintf(stderr, "system() call to copy surveyfcgi failed: %s",
                  strerror(errno));
       retVal = -1;
       break;
     }
 
-    fprintf(f, "%s", conf_data);
-    fclose(f);
+    snprintf(cmd, 16384,
+      // vars
+      "sed -i                        \\"
+      "-e 's|{BASE_DIR}|%s|g'        \\"
+      "-e 's|{PID_FILE}|%s|g'        \\"
+      "-e 's|{LIGHTY_USER}|%s|g'     \\"
+      "-e 's|{LIGHTY_GROUP}|%s|g'    \\"
+      "-e 's|{HTTP_PORT}|%d|g'       \\"
+      "-e 's|{SURVEYFCGI_PORT}|%d|g' \\"
+      // path
+      "%s",
+      // vars
+      test_dir,
+      LIGHTY_PIDFILE,
+      LIGHTY_USER,
+      LIGHTY_GROUP,
+      HTTP_PORT,
+      SURVEYFCGI_PORT,
+      // path
+      conf_path
+    );
 
-    if (!tests) {
-      fprintf(stderr, "Config file created.\n");
+    if (system(cmd)) {
+      fprintf(stderr, "replacing template string in lighttpd.conf failed: %s",
+                 conf_path);
+      retVal = -1;
+      break;
     }
 
     // #333 remove creating temp config in /etc/lighttpd,
@@ -1589,7 +1588,6 @@ int configure_and_start_lighttpd(char *test_dir, int silent_flag) {
       }
     }
 
-    char cmd[2048];
     snprintf(cmd, 2048, "sudo cp surveyfcgi %s/surveyfcgi", test_dir);
     if (!tests) {
       fprintf(stderr, "Running '%s'\n", cmd);
@@ -1601,7 +1599,7 @@ int configure_and_start_lighttpd(char *test_dir, int silent_flag) {
       break;
     }
 
-    snprintf(cmd, 2048, "sudo lighttpd -f %s", tmp_conf_file);
+    snprintf(cmd, 2048, "sudo lighttpd -f %s", conf_path);
     if (!tests) {
       fprintf(stderr, "Running '%s'\n", cmd);
     }
