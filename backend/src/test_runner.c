@@ -81,12 +81,6 @@ void require_test_directory(char *sub_dir, int perm) {
       exit(-3);
     }
   }
-  // Now make sessions directory writeable by all users
-  if (chmod(tmp, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP |
-                     S_IROTH | S_IWOTH | S_IXOTH)) {
-    fprintf(stderr, "require_test_directory() chmod(%s) failed.", tmp);
-    exit(-3);
-  }
 }
 
 void require_test_file(char *file_name, int perm) {
@@ -101,8 +95,7 @@ void require_test_file(char *file_name, int perm) {
   fclose(f);
 
   // Now make sessions directory writeable by all users
-  if (chmod(tmp, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP |
-                     S_IROTH | S_IWOTH | S_IXOTH)) {
+  if (chmod(tmp, perm)) {
     fprintf(stderr, "require_test_file() chmod(%s) failed.", tmp);
     exit(-3);
   }
