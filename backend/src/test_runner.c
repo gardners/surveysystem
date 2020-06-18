@@ -40,7 +40,8 @@
 #include "errorlog.h"
 #include "survey.h"
 
-#define HTTP_PORT 8099
+#define SERVER_PORT 8099
+#define AUTH_PROXY_PORT 8199
 #define SURVEYFCGI_PORT 9009
 #define LIGHTY_USER "www-data"
 #define LIGHTY_GROUP "www-data"
@@ -54,6 +55,7 @@ struct Test {
 };
 
 char *lighty_template =  "tests/config/lighttpd-default.conf.tpl";
+char *digest_userfile =  "tests/config/lighttpd.user";
 char test_dir[1024];
 int tests = 0;
 
@@ -323,29 +325,49 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
     int retVal = 0;
 
     do {
+        char tmp[65536];
+
+        char args[65536];
         char url[65536];
         char data[65536] = {'\0'};
         char method[65536] = {'\0'};
         char curl_args[65536]= {'\0'};
         char url_sub[65536];
 
+        // flags
         int done = 0;
+        int proxy =0;
+
+        // parse out arguments
+        if (sscanf(line, "request %[^\r\n]", args) != 1) {
+            fprintf(log, "FATAL : invalid directive '%s'", line);
+            retVal = -1;
+            break;
+        }
+
+        // check if proxy
+        // example: request proxy 200 addanswer curlargs(--user name:password) POST "sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0:"
+        if (sscanf(args, "proxy %[^\r\n]", tmp) == 1) {
+            proxy = 1;
+            strncpy(args, tmp, 65536);
+            tmp[0] = 0;
+        }
 
         // with code + url + curlargs + method + data
         // example: request 200 addanswer curlargs(--user name:password) POST "sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0:"
-        if(!done && sscanf(line, "request %d %s curlargs(%[^)]) %s %s", expected_http_status, url, curl_args, method, data) == 5) {
+        if(!done && sscanf(args, "%d %s curlargs(%[^)]) %s %s", expected_http_status, url, curl_args, method, data) == 5) {
             done = 1;
         }
 
         // with code + url + curlargs
         // example: request 200 newsession curlargs(--user name:password)
-        if(!done && sscanf(line, "request %d %s curlargs(%[^)])", expected_http_status, url, curl_args) == 3) {
+        if(!done && sscanf(args, "%d %s curlargs(%[^)])", expected_http_status, url, curl_args) == 3) {
             done = 1;
         }
 
         // with code + url + optional( method + data)
         // example: request 200 newsession?surveyid=mysurvey
-        if(!done && sscanf(line, "request %d %s %s %s", expected_http_status, url, method, data) == 4) {
+        if(!done && sscanf(args, "%d %s %s %s", expected_http_status, url, method, data) == 4) {
             done = 1;
         }
 
@@ -381,7 +403,7 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
         }
 
         url_sub[o] = 0;
-        char tmp[65536];
+
         if (strlen(data)) {
           strncpy(tmp, data, 65536);
           snprintf(data, 65536, " -d %s", tmp);
@@ -397,17 +419,18 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
           snprintf(curl_args, 65536, " %s", tmp);
         }
 
-        // build and execute curl cod
+        // build curl cmd
         snprintf(
           out, 65536,
           "curl%s%s%s -s -w \"HTTPRESULT=%%{http_code}\" -o "
-          "%s/request.out \"http://localhost:%d/surveyapi/%s\" > "
+          "%s/request.out \"http://localhost:%d/%s/%s\" > "
           "%s/request.code",
           curl_args,
           method,
           data,
           dir,
-          HTTP_PORT,
+          (proxy) ? AUTH_PROXY_PORT: SERVER_PORT,
+          "surveyapi",
           url_sub,
           dir
         );
@@ -557,9 +580,7 @@ int run_test(char *dir, char *test_file) {
 
     // skip test if flag was set
     if (test.skip) {
-      fprintf(stderr, "\r\033[90m[\033[33mSKIP\033[39m]  %s : %s\n", test.name, test.description);
-      fflush(stderr);
-      break;
+      goto skip;
     }
 
     char testlog[1024];
@@ -1398,6 +1419,14 @@ int run_test(char *dir, char *test_file) {
     fflush(stderr);
     break;
 
+  skip:
+
+    fix_ownership(test_dir);
+
+    fprintf(stderr, "\r\033[90m[\033[33mSKIP\033[39m]  %s : %s\n", test.name, test.description);
+    fflush(stderr);
+    break;
+
   fail:
 
     fix_ownership(test_dir);
@@ -1447,72 +1476,12 @@ int run_test(char *dir, char *test_file) {
   return retVal;
 }
 
-// #333 set max-procs to 1, dedicated test pifile
-// #361 add ENV SURVEY_FORCE_PYINIT for dynamic reloading python in backend
-char *config_template =
-    "server.modules = (\n"
-    "     \"mod_access\",\n"
-    "     \"mod_alias\",\n"
-    "     \"mod_fastcgi\",\n"
-    "     \"mod_compress\",\n"
-    "     \"mod_redirect\",\n"
-    "     \"mod_accesslog\",\n"
-    ")\n"
-    "\n"
-    "server.breakagelog          = \"%s/breakage.log\"\n"
-    "server.document-root        = \"%s/front/build\"\n"
-    "server.upload-dirs          = ( \"/var/cache/lighttpd/uploads\" )\n"
-    "server.errorlog             = \"%s/lighttpd-error.log\"\n"
-    "server.pid-file             = \"%s\"\n"
-    "server.username             = \"%s\"\n"
-    "server.groupname            = \"%s\"\n"
-    "server.port                 = %d\n"
-    "\n"
-    "accesslog.filename = \"%s/lighttpd-access.log\"\n"
-    "\n"
-    "index-file.names            = ( \"index.php\", \"index.html\", "
-    "\"index.lighttpd.html\" )\n"
-    "url.access-deny             = ( \"~\", \".inc\" )\n"
-    "static-file.exclude-extensions = ( \".php\", \".pl\", \".fcgi\" )\n"
-    "server.error-handler-404   = \"/index.html\"\n"
-    "\n"
-    "\n"
-    "compress.cache-dir          = \"/var/cache/lighttpd/compress/\"\n"
-    "compress.filetype           = ( \"application/javascript\", \"text/css\", "
-    "\"text/html\", \"text/plain\" )\n"
-    "\n"
-    "fastcgi.debug = 1\n"
-    "\n"
-    "fastcgi.server = (\n"
-    "  \"/surveyapi\" =>\n"
-    "  (( \"host\" => \"127.0.0.1\",\n"
-    "     \"port\" => %d,\n"
-    "     \"max-procs\" => 1,\n"
-    "     \"bin-path\" => \"%s/surveyfcgi\",\n"
-    "     \"bin-environment\" => (\n"
-    "     \"SURVEY_HOME\" => \"%s\",\n"
-    "     \"SURVEY_PYTHONDIR\" => \"%s\",\n"
-    "     ## --- DO NOT USE ON PRODUCTION: set below var only for test envs ---\n"
-    "     \"SURVEY_FORCE_PYINIT\" => \"1\",\n"
-    "     ),\n"
-    "     \"check-local\" => \"disable\",\n"
-    "     \"docroot\" => \"%s/front/build\" # remote server may use \n"
-    "                      # its own docroot\n"
-    "  ))\n"
-    ")\n"
-    "\n"
-    "# default listening port for IPv6 falls back to the IPv4 port\n"
-    "## Use ipv6 if available\n"
-    "#include_shell \"/usr/share/lighttpd/use-ipv6.pl \" + server.port\n"
-    "include_shell \"/usr/share/lighttpd/create-mime.assign.pl\"\n"
-    "include_shell \"/usr/share/lighttpd/include-conf-enabled.pl\"\n";
-
-time_t last_config_time = 0;
 int configure_and_start_lighttpd(char *test_dir, int silent_flag) {
   int retVal = 0;
 
   do {
     char conf_path[1024];
+    char userfile_path[1024];
     char cmd[2048];
 
     // kill open ports
@@ -1528,6 +1497,9 @@ int configure_and_start_lighttpd(char *test_dir, int silent_flag) {
     // path to conf
     snprintf(conf_path, 1024, "%s/lighttpd.conf", test_dir);
 
+    // path to user file
+    snprintf(userfile_path, 1024, "%s/lighttpd.user", test_dir);
+
     // create log file in test directory, and make it globally writeable
     require_test_file("breakage.log", 0777);
 
@@ -1540,21 +1512,31 @@ int configure_and_start_lighttpd(char *test_dir, int silent_flag) {
     // copy lighttpd.conf from template
     snprintf(cmd, 2048, "sudo cp %s %s", lighty_template, conf_path);
     if (system(cmd)) {
-      fprintf(stderr, "system() call to copy surveyfcgi failed: %s",
-                 strerror(errno));
+      fprintf(stderr, "system() call to copy lighttpd template failed");
+      retVal = -1;
+      break;
+    }
+
+    // copy userfile
+    snprintf(cmd, 2048, "sudo cp %s %s", digest_userfile, userfile_path);
+    perror(cmd);
+    if (system(cmd)) {
+      fprintf(stderr, "system() call to copy lighttpd user file failed");
       retVal = -1;
       break;
     }
 
     snprintf(cmd, 16384,
       // vars
-      "sed -i                        \\"
-      "-e 's|{BASE_DIR}|%s|g'        \\"
-      "-e 's|{PID_FILE}|%s|g'        \\"
-      "-e 's|{LIGHTY_USER}|%s|g'     \\"
-      "-e 's|{LIGHTY_GROUP}|%s|g'    \\"
-      "-e 's|{HTTP_PORT}|%d|g'       \\"
-      "-e 's|{SURVEYFCGI_PORT}|%d|g' \\"
+      "sed -i                         \\"
+      "-e 's|{BASE_DIR}|%s|g'         \\"
+      "-e 's|{PID_FILE}|%s|g'         \\"
+      "-e 's|{LIGHTY_USER}|%s|g'      \\"
+      "-e 's|{LIGHTY_GROUP}|%s|g'     \\"
+      "-e 's|{SERVER_PORT}|%d|g'      \\"
+      "-e 's|{AUTH_PROXY_PORT}|%d|g'  \\"
+      "-e 's|{SURVEYFCGI_PORT}|%d|g'  \\"
+      "-e 's|{DIGEST_USERFILE}|%s|g'  \\"
       // path
       "%s",
       // vars
@@ -1562,8 +1544,10 @@ int configure_and_start_lighttpd(char *test_dir, int silent_flag) {
       LIGHTY_PIDFILE,
       LIGHTY_USER,
       LIGHTY_GROUP,
-      HTTP_PORT,
+      SERVER_PORT,
+      AUTH_PROXY_PORT,
       SURVEYFCGI_PORT,
+      userfile_path,
       // path
       conf_path
     );
@@ -1612,7 +1596,7 @@ int configure_and_start_lighttpd(char *test_dir, int silent_flag) {
     snprintf(
         cmd, 2048,
         "curl -s -o /dev/null -f http://localhost:%d/surveyapi/fastcgitest",
-        HTTP_PORT);
+        SERVER_PORT);
     if (!tests) {
       fprintf(stderr, "Running '%s'\n", cmd);
     }
@@ -1653,7 +1637,7 @@ int stop_lighttpd() {
   int retVal = 0;
   do {
     if (!tests) {
-        fprintf(stderr, "Killing test port %d...", HTTP_PORT);
+        fprintf(stderr, "Killing test port %d...", SERVER_PORT);
     }
 
     char cmd[2048];
@@ -1661,7 +1645,7 @@ int stop_lighttpd() {
     FILE *fp;
     int status;
 
-    snprintf(cmd, 2048, "sudo ./scripts/killport %d 2>&1", HTTP_PORT);
+    snprintf(cmd, 2048, "sudo ./scripts/killport %d 2>&1", SERVER_PORT);
     fp = popen(cmd, "r");
     if (fp == NULL) {
         fprintf(stderr, "FAIL\nsystem(popen) call to stop lighttpd failed ('%s')\n", cmd);
@@ -1675,7 +1659,7 @@ int stop_lighttpd() {
 
     status = pclose(fp);
     if (status) {
-        fprintf(stderr, "stopping lighttpd on port '%d' failed (exit code: %d)\n", HTTP_PORT, WEXITSTATUS(status));
+        fprintf(stderr, "stopping lighttpd on port '%d' failed (exit code: %d)\n", SERVER_PORT, WEXITSTATUS(status));
         retVal = -1;
         break;
     }
@@ -1778,7 +1762,7 @@ int main(int argc, char **argv) {
            getpid());
   fprintf(stderr, "\e[33m *\e[0m Using \e[1m%s\e[0m as test directory\n",
           test_dir);
-  fprintf(stderr, "\e[33m *\e[0m Using \e[1m%d\e[0m as http port\n", HTTP_PORT);
+  fprintf(stderr, "\e[33m *\e[0m Using \e[1m%d\e[0m as http port\n", SERVER_PORT);
 
   require_directory(test_dir, 0755);
 
