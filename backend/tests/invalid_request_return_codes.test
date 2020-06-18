@@ -1,4 +1,5 @@
-skip! description requests with invalid or missing params should HTTP 400 or 500
+description requests with invalid or missing params should HTTP 400 or 500
+@skip!
 
 request 400 newsession
 request 500 newsession?surveyid=

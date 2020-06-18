@@ -40,12 +40,22 @@
 #include "errorlog.h"
 #include "survey.h"
 
-#define HTTP_PORT 8099
+#define SERVER_PORT 8099
+#define AUTH_PROXY_PORT 8199
 #define SURVEYFCGI_PORT 9009
 #define LIGHTY_USER "www-data"
 #define LIGHTY_GROUP "www-data"
 #define LIGHTY_PIDFILE "/var/run/lighttpd.pid"
 
+// test configuration
+struct Test {
+    int skip;
+    char name[1024];
+    char description[8192];
+};
+
+char *lighty_template =  "tests/config/lighttpd-default.conf.tpl";
+char *digest_userfile =  "tests/config/lighttpd.user";
 char test_dir[1024];
 int tests = 0;
 
@@ -72,49 +82,45 @@ int fix_ownership(char *dir) {
   return retVal;
 }
 
-void require_test_directory(char *sub_dir, int perm) {
-  char tmp[2048];
-  snprintf(tmp, 2048, "%s/%s", test_dir, sub_dir);
-  if (mkdir(tmp, perm)) {
-    if (errno != EEXIST) {
-      fprintf(stderr, "mkdir(%s, %o) failed.", tmp, perm);
-      exit(-3);
-    }
-  }
-  // Now make sessions directory writeable by all users
-  if (chmod(tmp, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP |
-                     S_IROTH | S_IWOTH | S_IXOTH)) {
-    fprintf(stderr, "require_test_directory() chmod(%s) failed.", tmp);
-    exit(-3);
-  }
-}
-
-void require_test_file(char *file_name, int perm) {
-  char tmp[2048];
-  snprintf(tmp, 2048, "%s/%s", test_dir, file_name);
-
-  FILE *f = fopen(tmp, "w");
+void require_file(char *path, int perm) {
+  FILE *f = fopen(path, "w");
   if (!f) {
-    fprintf(stderr, "require_test_file() fopen(%s) failed.", tmp);
+    fprintf(stderr, "require_file() fopen(%s) failed.", path);
     exit(-3);
   }
   fclose(f);
 
-  // Now make sessions directory writeable by all users
-  if (chmod(tmp, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP |
-                     S_IROTH | S_IWOTH | S_IXOTH)) {
-    fprintf(stderr, "require_test_file() chmod(%s) failed.", tmp);
+  if (chmod(path, perm)) {
+    fprintf(stderr, "require_file() chmod(%s) failed.", path);
     exit(-3);
   }
 }
 
-void require_directory(char *dir, int perm) {
-  if (mkdir(dir, perm)) {
+void require_directory(char *path, int perm) {
+  if (mkdir(path, perm)) {
     if (errno != EEXIST) {
-      fprintf(stderr, "mkdir(%s, %o) failed.", dir, perm);
+      fprintf(stderr, "mkpath(%s, %o) failed.", path, perm);
       exit(-3);
     }
   }
+
+  // bypassing umask
+  if (chmod(path, perm)) {
+    fprintf(stderr, "require_test_file() chmod(%s) failed.", path);
+    exit(-3);
+  }
+}
+
+void require_test_directory(char *sub_dir, int perm) {
+  char path[2048];
+  snprintf(path, 2048, "%s/%s", test_dir, sub_dir);
+  require_directory(path, perm);
+}
+
+void require_test_file(char *file_name, int perm) {
+  char path[2048];
+  snprintf(path, 2048, "%s/%s", test_dir, file_name);
+  require_file(path, perm);
 }
 
 // From https://stackoverflow.com/questions/2256945/removing-a-non-empty-directory-programmatically-in-c-or-c
@@ -319,29 +325,49 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
     int retVal = 0;
 
     do {
+        char tmp[65536];
+
+        char args[65536];
         char url[65536];
         char data[65536] = {'\0'};
         char method[65536] = {'\0'};
         char curl_args[65536]= {'\0'};
         char url_sub[65536];
 
+        // flags
         int done = 0;
+        int proxy =0;
+
+        // parse out arguments
+        if (sscanf(line, "request %[^\r\n]", args) != 1) {
+            fprintf(log, "FATAL : invalid directive '%s'", line);
+            retVal = -1;
+            break;
+        }
+
+        // check if proxy
+        // example: request proxy 200 addanswer curlargs(--user name:password) POST "sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0:"
+        if (sscanf(args, "proxy %[^\r\n]", tmp) == 1) {
+            proxy = 1;
+            strncpy(args, tmp, 65536);
+            tmp[0] = 0;
+        }
 
         // with code + url + curlargs + method + data
         // example: request 200 addanswer curlargs(--user name:password) POST "sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0:"
-        if(!done && sscanf(line, "request %d %s curlargs(%[^)]) %s %s", expected_http_status, url, curl_args, method, data) == 5) {
+        if(!done && sscanf(args, "%d %s curlargs(%[^)]) %s %s", expected_http_status, url, curl_args, method, data) == 5) {
             done = 1;
         }
 
         // with code + url + curlargs
         // example: request 200 newsession curlargs(--user name:password)
-        if(!done && sscanf(line, "request %d %s curlargs(%[^)])", expected_http_status, url, curl_args) == 3) {
+        if(!done && sscanf(args, "%d %s curlargs(%[^)])", expected_http_status, url, curl_args) == 3) {
             done = 1;
         }
 
         // with code + url + optional( method + data)
         // example: request 200 newsession?surveyid=mysurvey
-        if(!done && sscanf(line, "request %d %s %s %s", expected_http_status, url, method, data) == 4) {
+        if(!done && sscanf(args, "%d %s %s %s", expected_http_status, url, method, data) == 4) {
             done = 1;
         }
 
@@ -377,7 +403,7 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
         }
 
         url_sub[o] = 0;
-        char tmp[65536];
+
         if (strlen(data)) {
           strncpy(tmp, data, 65536);
           snprintf(data, 65536, " -d %s", tmp);
@@ -393,17 +419,18 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
           snprintf(curl_args, 65536, " %s", tmp);
         }
 
-        // build and execute curl cod
+        // build curl cmd
         snprintf(
           out, 65536,
           "curl%s%s%s -s -w \"HTTPRESULT=%%{http_code}\" -o "
-          "%s/request.out \"http://localhost:%d/surveyapi/%s\" > "
+          "%s/request.out \"http://localhost:%d/%s/%s\" > "
           "%s/request.code",
           curl_args,
           method,
           data,
           dir,
-          HTTP_PORT,
+          (proxy) ? AUTH_PROXY_PORT: SERVER_PORT,
+          "surveyapi",
           url_sub,
           dir
         );
@@ -473,6 +500,48 @@ int compare_session_line(char *session_line, char *comparison_line) {
   return 0;
 }
 
+FILE *load_test_header(char *test_file, struct Test *test) {
+    FILE *fp = fopen(test_file, "r");
+    if (!fp) {
+      fprintf(stderr, "\nCould not open test file '%s' for reading\n", test_file);
+      fclose(fp);
+      return NULL;
+    }
+
+    // Get name of test file without path
+    char *name = strrchr(test_file, '/');
+    name++;
+    strncpy(test->name, name, sizeof(test->name));
+
+    // fist line is description
+    char line[8192];
+    fgets(line, 8192, fp);
+    if (sscanf(line, "description %[^\r\n]", test->description) != 1) {
+      fprintf(stderr, "\nCould not parse description line of test.\n");
+      fclose(fp);
+      return NULL;
+    }
+
+    while(fgets(line, 8192, fp) != NULL) {
+        // end of config header
+        if (line[0] == '\n') {
+          break;
+        }
+
+        if (strncmp(line, "@skip!", 6) == 0) {
+            test->skip = 1;
+        }
+    }
+
+    if (feof(fp)) {
+      fprintf(stderr, "Error: File '%s' reached EOF before header parsing finished. Did you forget to separate the header with an empty line?\n", test_file);
+      fclose(fp);
+      return NULL;
+    }
+
+    return fp;
+}
+
 int run_test(char *dir, char *test_file) {
   // #198 flush errors accumulated by previous tests
   clear_errors();
@@ -486,69 +555,36 @@ int run_test(char *dir, char *test_file) {
   char response_lines[100][8192];
   char last_sessionid[100] = "";
 
+  // init test config
+  struct Test test = {
+      .skip = 0,
+      .name = "",
+      .description = "",
+  };
+
   do {
 
     // Erase log files from previous tests, see issue #198
     char log_path[8192];
     snprintf(log_path, 8192, "%s/logs", test_dir);
+
     recursive_delete(log_path);
-    if (mkdir(log_path, 0777)) {
-      perror("mkdir() failed for test/logs directory");
-      exit(-3);
-    }
-    // Now make sessions directory writeable by all users
-    if (chmod(log_path, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP |
-                            S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH)) {
-      perror("chmod() failed for test/logs directory");
-      exit(-3);
-    }
+    require_directory(log_path, 0777);
 
-    // Get name of test file without path
-    char *test_name = test_file;
-    for (int i = 0; test_file[i]; i++) {
-      if (test_file[i] == '/')
-        test_name = &test_file[i + 1];
-    }
-
-    in = fopen(test_file, "r");
+    // load header
+    in = load_test_header(test_file, &test);
     if (!in) {
-      fprintf(stderr, "\nCould not open test file '%s' for reading", test_file);
-      perror("fopen");
-      retVal = -1;
-      break;
+      fprintf(stderr, "\n[Fatal]: Loading test header for '%s' failed.\n", test_file);
+      exit(-3);
     }
 
-    // Read first line of test for description
-    line[0] = 0;
-    fgets(line, 8192, in);
-    if (!line[0]) {
-      fprintf(stderr, "\nFirst line of test definition must be description "
-                      "<description text>\n");
-      retVal = -1;
-      break;
+    // skip test if flag was set
+    if (test.skip) {
+      goto skip;
     }
-
-    char description[8192];
-    if (sscanf(line, "skip! description %[^\r\n]", description) == 1) {
-      fprintf(stderr, "\r\033[90m[\033[33mSKIP\033[39m]  %s : %s\n", test_name,
-              description);
-      fflush(stderr);
-      break;
-    }
-
-    if (sscanf(line, "description %[^\r\n]", description) != 1) {
-      fprintf(stderr, "\nCould not parse description line of test.\n");
-      retVal = -1;
-      break;
-    }
-
-    fprintf(stderr, "\033[39m[    ]  \033[37m%s : %s\033[39m", test_name,
-            description);
-    fflush(stderr);
 
     char testlog[1024];
-    snprintf(testlog, 1024, "testlog/%s.log", test_name);
-
+    snprintf(testlog, 1024, "testlog/%s.log", test.name);
     log = fopen(testlog, "w");
 
     if (!log) {
@@ -558,6 +594,10 @@ int run_test(char *dir, char *test_file) {
               testlog, test_file, strerror(errno));
       goto error;
     }
+
+    // starting test
+    fprintf(stderr, "\033[39m[    ]  \033[37m%s : %s\033[39m", test.name, test.description);
+    fflush(stderr);
 
     time_t now = time(0);
     char *ctime_str = ctime(&now);
@@ -1375,8 +1415,15 @@ int run_test(char *dir, char *test_file) {
       dump_logs(log_path, log);
     }
 
-    fprintf(stderr, "\r\033[39m[\033[32mPASS\033[39m]  %s : %s\n", test_name,
-            description);
+    fprintf(stderr, "\r\033[39m[\033[32mPASS\033[39m]  %s : %s\n", test.name, test.description);
+    fflush(stderr);
+    break;
+
+  skip:
+
+    fix_ownership(test_dir);
+
+    fprintf(stderr, "\r\033[90m[\033[33mSKIP\033[39m]  %s : %s\n", test.name, test.description);
     fflush(stderr);
     break;
 
@@ -1387,8 +1434,7 @@ int run_test(char *dir, char *test_file) {
       dump_logs(log_path, log);
     }
 
-    fprintf(stderr, "\r\033[39m[\033[31mFAIL\033[39m]  %s : %s\n", test_name,
-            description);
+    fprintf(stderr, "\r\033[39m[\033[31mFAIL\033[39m]  %s : %s\n", test.name, test.description);
     fflush(stderr);
     retVal = 1;
     break;
@@ -1400,8 +1446,7 @@ int run_test(char *dir, char *test_file) {
       dump_logs(log_path, log);
     }
 
-    fprintf(stderr, "\r\033[39m[\033[31;1;5mERROR\033[39;0m]  %s : %s\n",
-            test_name, description);
+    fprintf(stderr, "\r\033[39m[\033[31;1;5mERROR\033[39;0m]  %s : %s\n", test.name, test.description);
     fflush(stderr);
     retVal = 2;
     break;
@@ -1413,8 +1458,7 @@ int run_test(char *dir, char *test_file) {
       dump_logs(log_path, log);
     }
 
-    fprintf(stderr, "\r\033[39m[\033[31;1;5mDIED\033[39;0m]  %s : %s\n",
-            test_name, description);
+    fprintf(stderr, "\r\033[39m[\033[31;1;5mDIED\033[39;0m]  %s : %s\n", test.name, test.description);
     fflush(stderr);
     retVal = 3;
     break;
@@ -1432,133 +1476,87 @@ int run_test(char *dir, char *test_file) {
   return retVal;
 }
 
-// #333 set max-procs to 1, dedicated test pifile
-// #361 add ENV SURVEY_FORCE_PYINIT for dynamic reloading python in backend
-char *config_template =
-    "server.modules = (\n"
-    "     \"mod_access\",\n"
-    "     \"mod_alias\",\n"
-    "     \"mod_fastcgi\",\n"
-    "     \"mod_compress\",\n"
-    "     \"mod_redirect\",\n"
-    "     \"mod_accesslog\",\n"
-    ")\n"
-    "\n"
-    "server.breakagelog          = \"%s/breakage.log\"\n"
-    "server.document-root        = \"%s/front/build\"\n"
-    "server.upload-dirs          = ( \"/var/cache/lighttpd/uploads\" )\n"
-    "server.errorlog             = \"%s/lighttpd-error.log\"\n"
-    "server.pid-file             = \"%s\"\n"
-    "server.username             = \"%s\"\n"
-    "server.groupname            = \"%s\"\n"
-    "server.port                 = %d\n"
-    "\n"
-    "accesslog.filename = \"%s/lighttpd-access.log\"\n"
-    "\n"
-    "index-file.names            = ( \"index.php\", \"index.html\", "
-    "\"index.lighttpd.html\" )\n"
-    "url.access-deny             = ( \"~\", \".inc\" )\n"
-    "static-file.exclude-extensions = ( \".php\", \".pl\", \".fcgi\" )\n"
-    "server.error-handler-404   = \"/index.html\"\n"
-    "\n"
-    "\n"
-    "compress.cache-dir          = \"/var/cache/lighttpd/compress/\"\n"
-    "compress.filetype           = ( \"application/javascript\", \"text/css\", "
-    "\"text/html\", \"text/plain\" )\n"
-    "\n"
-    "fastcgi.debug = 1\n"
-    "\n"
-    "fastcgi.server = (\n"
-    "  \"/surveyapi\" =>\n"
-    "  (( \"host\" => \"127.0.0.1\",\n"
-    "     \"port\" => %d,\n"
-    "     \"max-procs\" => 1,\n"
-    "     \"bin-path\" => \"%s/surveyfcgi\",\n"
-    "     \"bin-environment\" => (\n"
-    "     \"SURVEY_HOME\" => \"%s\",\n"
-    "     \"SURVEY_PYTHONDIR\" => \"%s\",\n"
-    "     ## --- DO NOT USE ON PRODUCTION: set below var only for test envs ---\n"
-    "     \"SURVEY_FORCE_PYINIT\" => \"1\",\n"
-    "     ),\n"
-    "     \"check-local\" => \"disable\",\n"
-    "     \"docroot\" => \"%s/front/build\" # remote server may use \n"
-    "                      # its own docroot\n"
-    "  ))\n"
-    ")\n"
-    "\n"
-    "# default listening port for IPv6 falls back to the IPv4 port\n"
-    "## Use ipv6 if available\n"
-    "#include_shell \"/usr/share/lighttpd/use-ipv6.pl \" + server.port\n"
-    "include_shell \"/usr/share/lighttpd/create-mime.assign.pl\"\n"
-    "include_shell \"/usr/share/lighttpd/include-conf-enabled.pl\"\n";
-
-time_t last_config_time = 0;
 int configure_and_start_lighttpd(char *test_dir, int silent_flag) {
   int retVal = 0;
 
   do {
+    char conf_path[1024];
+    char userfile_path[1024];
+    char cmd[2048];
+
     // kill open ports
     if (stop_lighttpd()) {
         fprintf(stderr, "\nExiting.. stop_lighttpd failed\n");
         exit(-3);
     }
 
-    // Create config file
-    char conf_data[16384];
-    char cwd[1024];
-    int cwdlen = 1024;
-
     if (!tests) {
       fprintf(stderr, "Pulling configuration together...\n");
     }
 
-    // Make sure at least 10 seconds passes between restarts of the back end, so that we don't get
-    // spurious errors.
-    long long time_since_last = time(0) - last_config_time;
-    if (time_since_last < 10) {
-      sleep(11 - time_since_last);
-    }
-    last_config_time = time(0);
+    // path to conf
+    snprintf(conf_path, 1024, "%s/lighttpd.conf", test_dir);
 
-    // Create log file in test directory, and make it globally writeable
-    {
-      snprintf(conf_data, 16384, "%s/breakage.log", test_dir);
-      FILE *f = fopen(conf_data, "w");
-      if (f) {
-        fclose(f);
-      }
-      chmod(conf_data, 0777);
-    }
+    // path to user file
+    snprintf(userfile_path, 1024, "%s/lighttpd.user", test_dir);
 
-    if (!tests) {
-      fprintf(stderr, "Created breakage.log\n");
-    }
+    // create log file in test directory, and make it globally writeable
+    require_test_file("breakage.log", 0777);
 
     // point python dir ALWAYS to test dir
-    char python_dir[4096];
-    snprintf(python_dir, 4096, "%s/python", test_dir);
-    require_directory(python_dir, 0775);
+    require_test_directory("python", 0775);
 
-    snprintf(conf_data, 16384, config_template, test_dir, getcwd(cwd, cwdlen),
-             test_dir, LIGHTY_PIDFILE, LIGHTY_USER, LIGHTY_GROUP, HTTP_PORT, test_dir,
-             SURVEYFCGI_PORT, test_dir, test_dir, python_dir,
-             getcwd(cwd, cwdlen));
-    char tmp_conf_file[1024];
-    snprintf(tmp_conf_file, 1024, "%s/lighttpd.conf", test_dir);
+    // create docroot for lighttpd, we do not use it, but it is required
+    require_test_directory("www", 0775);
 
-    FILE *f = fopen(tmp_conf_file, "w");
-    if (!f) {
-      fprintf(stderr, "Failed to open lighttpd.conf file: %s",
-                 strerror(errno));
+    // copy lighttpd.conf from template
+    snprintf(cmd, 2048, "sudo cp %s %s", lighty_template, conf_path);
+    if (system(cmd)) {
+      fprintf(stderr, "system() call to copy lighttpd template failed");
       retVal = -1;
       break;
     }
 
-    fprintf(f, "%s", conf_data);
-    fclose(f);
+    // copy userfile
+    snprintf(cmd, 2048, "sudo cp %s %s", digest_userfile, userfile_path);
+    perror(cmd);
+    if (system(cmd)) {
+      fprintf(stderr, "system() call to copy lighttpd user file failed");
+      retVal = -1;
+      break;
+    }
 
-    if (!tests) {
-      fprintf(stderr, "Config file created.\n");
+    snprintf(cmd, 16384,
+      // vars
+      "sed -i                         \\"
+      "-e 's|{BASE_DIR}|%s|g'         \\"
+      "-e 's|{PID_FILE}|%s|g'         \\"
+      "-e 's|{LIGHTY_USER}|%s|g'      \\"
+      "-e 's|{LIGHTY_GROUP}|%s|g'     \\"
+      "-e 's|{SERVER_PORT}|%d|g'      \\"
+      "-e 's|{AUTH_PROXY_PORT}|%d|g'  \\"
+      "-e 's|{SURVEYFCGI_PORT}|%d|g'  \\"
+      "-e 's|{DIGEST_USERFILE}|%s|g'  \\"
+      // path
+      "%s",
+      // vars
+      test_dir,
+      LIGHTY_PIDFILE,
+      LIGHTY_USER,
+      LIGHTY_GROUP,
+      SERVER_PORT,
+      AUTH_PROXY_PORT,
+      SURVEYFCGI_PORT,
+      userfile_path,
+      // path
+      conf_path
+    );
+
+    if (system(cmd)) {
+      fprintf(stderr, "replacing template string in lighttpd.conf failed: %s",
+                 conf_path);
+      retVal = -1;
+      break;
     }
 
     // #333 remove creating temp config in /etc/lighttpd,
@@ -1574,7 +1572,6 @@ int configure_and_start_lighttpd(char *test_dir, int silent_flag) {
       }
     }
 
-    char cmd[2048];
     snprintf(cmd, 2048, "sudo cp surveyfcgi %s/surveyfcgi", test_dir);
     if (!tests) {
       fprintf(stderr, "Running '%s'\n", cmd);
@@ -1586,7 +1583,7 @@ int configure_and_start_lighttpd(char *test_dir, int silent_flag) {
       break;
     }
 
-    snprintf(cmd, 2048, "sudo lighttpd -f %s", tmp_conf_file);
+    snprintf(cmd, 2048, "sudo lighttpd -f %s", conf_path);
     if (!tests) {
       fprintf(stderr, "Running '%s'\n", cmd);
     }
@@ -1599,7 +1596,7 @@ int configure_and_start_lighttpd(char *test_dir, int silent_flag) {
     snprintf(
         cmd, 2048,
         "curl -s -o /dev/null -f http://localhost:%d/surveyapi/fastcgitest",
-        HTTP_PORT);
+        SERVER_PORT);
     if (!tests) {
       fprintf(stderr, "Running '%s'\n", cmd);
     }
@@ -1640,7 +1637,7 @@ int stop_lighttpd() {
   int retVal = 0;
   do {
     if (!tests) {
-        fprintf(stderr, "Killing test port %d...", HTTP_PORT);
+        fprintf(stderr, "Killing test port %d...", SERVER_PORT);
     }
 
     char cmd[2048];
@@ -1648,7 +1645,7 @@ int stop_lighttpd() {
     FILE *fp;
     int status;
 
-    snprintf(cmd, 2048, "sudo ./scripts/killport %d 2>&1", HTTP_PORT);
+    snprintf(cmd, 2048, "sudo ./scripts/killport %d 2>&1", SERVER_PORT);
     fp = popen(cmd, "r");
     if (fp == NULL) {
         fprintf(stderr, "FAIL\nsystem(popen) call to stop lighttpd failed ('%s')\n", cmd);
@@ -1662,7 +1659,7 @@ int stop_lighttpd() {
 
     status = pclose(fp);
     if (status) {
-        fprintf(stderr, "stopping lighttpd on port '%d' failed (exit code: %d)\n", HTTP_PORT, WEXITSTATUS(status));
+        fprintf(stderr, "stopping lighttpd on port '%d' failed (exit code: %d)\n", SERVER_PORT, WEXITSTATUS(status));
         retVal = -1;
         break;
     }
@@ -1765,7 +1762,7 @@ int main(int argc, char **argv) {
            getpid());
   fprintf(stderr, "\e[33m *\e[0m Using \e[1m%s\e[0m as test directory\n",
           test_dir);
-  fprintf(stderr, "\e[33m *\e[0m Using \e[1m%d\e[0m as http port\n", HTTP_PORT);
+  fprintf(stderr, "\e[33m *\e[0m Using \e[1m%d\e[0m as http port\n", SERVER_PORT);
 
   require_directory(test_dir, 0755);
 
