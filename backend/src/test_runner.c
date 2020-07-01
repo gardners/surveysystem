@@ -50,17 +50,44 @@
 // test configuration
 struct Test {
     int skip;
+
     char name[1024];
     char description[8192];
+
+    char file[1024];
+    char dir[1024];
+    char log[1024];
+
+    char lighty_template[1024];
+    char ligthy_userfile[1024];
+
+    int count;
+    int index;
 };
 
-char *lighty_template =  "tests/config/lighttpd-default.conf.tpl";
-char *digest_userfile =  "tests/config/lighttpd.user";
-char test_dir[1024];
+struct Test create_test_config() {
+  struct Test test = {
+    .skip = 0,
+
+    .name = "",
+    .description = "",
+
+    .file = "",
+    .dir = "",
+
+    .lighty_template =  "tests/config/lighttpd-default.conf.tpl",
+    .ligthy_userfile = "tests/config/lighttpd.user",
+
+    .count = 0,
+    .index = 0,
+  };
+  return test;
+}
+
 int tests = 0;
 
-int configure_and_start_lighttpd(char *test_dir, int silent_flag);
-int stop_lighttpd();
+void init_lighttpd(struct Test *test);
+void stop_lighttpd(int verbose);
 
 char *py_traceback_func =
     "def cmodule_traceback(exc_type, exc_value, exc_tb):\n"
@@ -106,21 +133,9 @@ void require_directory(char *path, int perm) {
 
   // bypassing umask
   if (chmod(path, perm)) {
-    fprintf(stderr, "require_test_file() chmod(%s) failed.", path);
+    fprintf(stderr, "require_directory() chmod(%s) failed.", path);
     exit(-3);
   }
-}
-
-void require_test_directory(char *sub_dir, int perm) {
-  char path[2048];
-  snprintf(path, 2048, "%s/%s", test_dir, sub_dir);
-  require_directory(path, perm);
-}
-
-void require_test_file(char *file_name, int perm) {
-  char path[2048];
-  snprintf(path, 2048, "%s/%s", test_dir, file_name);
-  require_file(path, perm);
 }
 
 // From https://stackoverflow.com/questions/2256945/removing-a-non-empty-directory-programmatically-in-c-or-c
@@ -318,6 +333,38 @@ int dump_logs(char *dir, FILE *log) {
   return retVal;
 }
 
+void print_test_config(FILE *in, struct Test *test) {
+  if(!test) {
+    fprintf(in, "struct *test is NULL\n");
+    return;
+  }
+
+  fprintf(
+    in,
+    "struct *test\n"
+    "    |_ skip: %d\n"
+    "    |_ name: '%s'\n"
+    "    |_ description: '%s'\n"
+    "    |_ file: '%s'\n"
+    "    |_ dir: '%s'\n"
+    "    |_ log: '%s'\n"
+    "    |_ lighty_template: '%s'\n"
+    "    |_ ligthy_userfile: '%s'\n"
+    "    |_ count: %d\n"
+    "    |_ index: %d\n",
+    test->skip,
+    test->name,
+    test->description,
+    test->file,
+    test->dir,
+    test->log,
+    test->lighty_template,
+    test->ligthy_userfile,
+    test->count,
+    test->index
+  );
+}
+
 /**
  * parses a request directive line for defined patterns and creates a curl command
  */
@@ -340,7 +387,7 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
 
         // parse out arguments
         if (sscanf(line, "request %[^\r\n]", args) != 1) {
-            fprintf(log, "FATAL : invalid directive '%s'", line);
+            fprintf(log, "FATAL: invalid directive '%s'", line);
             retVal = -1;
             break;
         }
@@ -390,7 +437,7 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
               o = strlen(url_sub);
               i += 7;
             } else {
-              fprintf(log, "FATAL : Unknown $ substitution in URL");
+              fprintf(log, "FATAL: Unknown $ substitution in URL");
               retVal = -1;
             } // endif
 
@@ -542,7 +589,113 @@ FILE *load_test_header(char *test_file, struct Test *test) {
     return fp;
 }
 
-int run_test(char *dir, char *test_file) {
+void init_parse_test_config(int test_count, int test_index, char *test_file, struct Test *test) {
+    FILE *fp = fopen(test_file, "r");
+    if (!fp) {
+      fprintf(stderr, "\nCould not open test file '%s' for reading\n", test_file);
+      fclose(fp);
+      exit(-3);
+    }
+
+
+    // set test->file
+    test->count = test_count;
+    test->index = test_index;
+    strncpy(test->file, test_file, 1024);
+
+    // set test->name
+    char *name = strrchr(test_file, '/');
+    name++;
+    strncpy(test->name, name, 1024);
+
+    // set test->dir
+    snprintf(test->dir, 1024, "/tmp/surveytestrunner.%s", name);
+
+    // set test->log
+    snprintf(test->log, 1024, "testlog/%s.log", name);
+
+    // fist line is description
+    char line[8192];
+    fgets(line, 8192, fp);
+    if (sscanf(line, "@description %[^\r\n]", test->description) != 1) {
+      fprintf(stderr, "\nCould not parse description line of test->\n");
+      exit(-3);
+    }
+
+    while(fgets(line, 8192, fp) != NULL) {
+        // end of config header
+        if (line[0] != '@') {
+          break;
+        }
+
+        if (strncmp(line, "@skip!", 6) == 0) {
+            test->skip = 1;
+        }
+    }
+
+    if (feof(fp)) {
+      fprintf(stderr, "Error: File '%s' reached EOF before header parsing finished. Did you forget to separate the header with an empty line?\n", test_file);
+      fclose(fp);
+      exit(-3);
+    }
+
+    if(fp) {
+      fclose(fp);
+    }
+}
+
+void init_test_filesystem(struct Test *test) {
+
+  // remove old test records
+  if (!access(test->dir, F_OK)) {
+    if(recursive_delete(test->dir)) {
+      fprintf(stderr, "FATAL: cannot remove old test dir '%s'\n", test->dir);
+      exit(-3);
+    }
+  }
+
+  // create test root
+  require_directory(test->dir, 0755);
+
+  // Make surveys, sessions and lock directories
+  // Also make sure the survey directory is writable when running tests
+  // (this is so accesstest will succeed.  For production, this can be
+  // avoided by making sure to use the commandline tool to create a single
+  // session in a survey after the survey has been modified, to make sure
+  // all the necessary hash files get created.)
+  char path[2048];
+
+  snprintf(path, 2048, "%s/surveys", test->dir);
+  require_directory(path, 0777);
+
+  snprintf(path, 2048, "%s/sessions", test->dir);
+  require_directory(path, 0777);
+
+  snprintf(path, 2048, "%s/logs", test->dir);
+  require_directory(path, 0777);
+
+  snprintf(path, 2048, "%s/locks", test->dir);
+  require_directory(path, 0777);
+
+  snprintf(path, 2048, "%s/lighttpd-access.log", test->dir);
+  require_file(path, 0777);
+
+  snprintf(path, 2048, "%s/lighttpd-error.log", test->dir);
+  require_file(path, 0777);
+
+  snprintf(path, 2048, "%s/breakage.log", test->dir);
+  require_file(path, 0777);
+
+  // point python dir ALWAYS to test dir
+  snprintf(path, 2048, "%s/python", test->dir);
+  require_directory(path, 0775);
+
+  // create docroot for lighttpd, we do not use it, but it is required by lighttpd
+  snprintf(path, 2048, "%s/www", test->dir);
+  require_directory(path, 0775);
+}
+
+int run_test(struct Test *test) {
   // #198 flush errors accumulated by previous tests
   clear_errors();
 
@@ -550,53 +703,41 @@ int run_test(char *dir, char *test_file) {
   FILE *in = NULL;
   FILE *log = NULL;
   char line[8192];
+  char log_dir[1024];
 
   int response_line_count = 0;
   char response_lines[100][8192];
   char last_sessionid[100] = "";
 
-  // init test config
-  struct Test test = {
-      .skip = 0,
-      .name = "",
-      .description = "",
-  };
-
   do {
-
-    // Erase log files from previous tests, see issue #198
-    char log_path[8192];
-    snprintf(log_path, 8192, "%s/logs", test_dir);
-
-    recursive_delete(log_path);
-    require_directory(log_path, 0777);
-
-    // load header
-    in = load_test_header(test_file, &test);
-    if (!in) {
-      fprintf(stderr, "\n[Fatal]: Loading test header for '%s' failed.\n", test_file);
-      exit(-3);
-    }
-
     // skip test if flag was set
-    if (test.skip) {
+    if (test->skip) {
       goto skip;
     }
 
-    char testlog[1024];
-    snprintf(testlog, 1024, "testlog/%s.log", test.name);
-    log = fopen(testlog, "w");
+    snprintf(log_dir, 1024,"%s/logs", test->dir);
 
+    in = fopen(test->file, "r");
+    if (!in) {
+      fprintf(stderr, "\n[Fatal]: Loading test header for '%s' failed.\n", test->file);
+      exit(-3);
+    }
+
+    log = fopen(test->log, "w");
     if (!log) {
       fprintf(stderr,
               "\rFATAL: Could not create test log file '%s' for test '%s': %s  "
               "                                  \n",
-              testlog, test_file, strerror(errno));
+              test->log, test->file, strerror(errno));
       goto error;
     }
 
+    fprintf(log, "--------- test config ----------\n");
+    print_test_config(log, test);
+    fprintf(log, "\n");
+
     // starting test
-    fprintf(stderr, "\033[39m[    ]  \033[37m%s : %s\033[39m", test.name, test.description);
+    fprintf(stderr, "\033[39m[    ]  \033[37m%s : %s\033[39m", test->name, test->description);
     fflush(stderr);
 
     time_t now = time(0);
@@ -632,7 +773,7 @@ int run_test(char *dir, char *test_file) {
 
       tdelta = gettime_us() - start_time;
       tdelta /= 1000;
-      if (line[0] && line[0] != '#') {
+      if (line[0] && line[0] != '@' && line[0] != '#') {
         fprintf(log, "T+%4.3fms : Executing directive '%s'\n", tdelta, line);
       }
 
@@ -654,7 +795,7 @@ int run_test(char *dir, char *test_file) {
           surveyname[strlen(surveyname) - 1] = 0;
         }
 
-        snprintf(survey_file, 8192, "%s/surveys/%s", dir, surveyname);
+        snprintf(survey_file, 8192, "%s/surveys/%s", test->dir, surveyname);
         mkdir(survey_file, 0777);
         if (chmod(survey_file, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP |
                                    S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH)) {
@@ -663,7 +804,7 @@ int run_test(char *dir, char *test_file) {
           goto error;
         }
 
-        snprintf(survey_file, 8192, "%s/surveys/%s/current", dir, surveyname);
+        snprintf(survey_file, 8192, "%s/surveys/%s/current", test->dir, surveyname);
         FILE *s = fopen(survey_file, "w");
         if (!s) {
           fprintf(stderr,
@@ -701,7 +842,7 @@ int run_test(char *dir, char *test_file) {
 
         // create python directory
         char python_dir[1024];
-        snprintf(python_dir, 1024, "%s/python", dir);
+        snprintf(python_dir, 1024, "%s/python", test->dir);
         mkdir(python_dir, 0755);
 
         if (chmod(python_dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP |
@@ -786,14 +927,14 @@ int run_test(char *dir, char *test_file) {
         // Compile the python
         char cmd[1024];
         snprintf(cmd, 1024, "python3.7 -m compileall %s 2>&1 >>%s",
-                 python_module, testlog);
+                 python_module, test->log);
         int compile_result = system(cmd);
 
         if (compile_result) {
           tdelta = gettime_us() - start_time;
           tdelta /= 1000;
           fprintf(log,
-                  "T+%4.3fms : FATAL : Failed to compile python module. Does "
+                  "T+%4.3fms : FATAL: Failed to compile python module. Does "
                   "the python have errors?\n",
                   tdelta);
           goto fatal;
@@ -900,7 +1041,7 @@ int run_test(char *dir, char *test_file) {
         if (for_count > 10) {
           tdelta = gettime_us() - start_time;
           tdelta /= 1000;
-          fprintf(log, "T+%4.3fms : FATAL : Too many FOR statements\n", tdelta);
+          fprintf(log, "T+%4.3fms : FATAL: Too many FOR statements\n", tdelta);
           goto fatal;
         }
 
@@ -909,7 +1050,7 @@ int run_test(char *dir, char *test_file) {
           tdelta /= 1000;
           fprintf(
               log,
-              "T+%4.3fms : FATAL : Variable name too long in FOR statement\n",
+              "T+%4.3fms : FATAL: Variable name too long in FOR statement\n",
               tdelta);
           goto fatal;
         }
@@ -929,7 +1070,7 @@ int run_test(char *dir, char *test_file) {
         if (!for_count) {
           tdelta = gettime_us() - start_time;
           tdelta /= 1000;
-          fprintf(log, "T+%4.3fms : FATAL : NEXT without FOR\n", tdelta);
+          fprintf(log, "T+%4.3fms : FATAL: NEXT without FOR\n", tdelta);
           goto fatal;
         }
 
@@ -969,7 +1110,7 @@ int run_test(char *dir, char *test_file) {
           tdelta /= 1000;
           fprintf(
               log,
-              "T+%4.3fms : FATAL : Could not compile regular expression: %s\n",
+              "T+%4.3fms : FATAL: Could not compile regular expression: %s\n",
               tdelta, err);
           goto fatal;
         }
@@ -983,7 +1124,7 @@ int run_test(char *dir, char *test_file) {
         if (!matches) {
           tdelta = gettime_us() - start_time;
           tdelta /= 1000;
-          fprintf(log, "T+%4.3fms : FAIL : No match for regular expression.\n",
+          fprintf(log, "T+%4.3fms : FAIL: No match for regular expression.\n",
                   tdelta);
           goto fail;
         }
@@ -1006,7 +1147,7 @@ int run_test(char *dir, char *test_file) {
           tdelta /= 1000;
           fprintf(
               log,
-              "T+%4.3fms : FATAL : Could not compile regular expression: %s\n",
+              "T+%4.3fms : FATAL: Could not compile regular expression: %s\n",
               tdelta, err);
           goto fatal;
         }
@@ -1021,7 +1162,7 @@ int run_test(char *dir, char *test_file) {
           tdelta = gettime_us() - start_time;
           tdelta /= 1000;
           fprintf(log,
-                  "T+%4.3fms : FAIL : There is a match to the regular "
+                  "T+%4.3fms : FAIL: There is a match to the regular "
                   "expression.\n",
                   tdelta);
           goto fail;
@@ -1044,24 +1185,24 @@ int run_test(char *dir, char *test_file) {
         tdelta /= 1000;
 
         // Delete any old version of files laying around
-        snprintf(tmp, 65536, "%s/request.out", dir);
+        snprintf(tmp, 65536, "%s/request.out", test->dir);
         unlink(tmp);
         if (!access(tmp, F_OK)) {
-          fprintf(log, "T+%4.3fms : FATAL : Could not unlink file '%s'", tdelta,
+          fprintf(log, "T+%4.3fms : FATAL: Could not unlink file '%s'", tdelta,
                   tmp);
           goto fatal;
         }
 
-        snprintf(tmp, 65536, "%s/request.code", dir);
+        snprintf(tmp, 65536, "%s/request.code", test->dir);
         unlink(tmp);
         if (!access(tmp, F_OK)) {
-          fprintf(log, "T+%4.3fms : FATAL : Could not unlink file '%s'", tdelta,
+          fprintf(log, "T+%4.3fms : FATAL: Could not unlink file '%s'", tdelta,
                   tmp);
           goto fatal;
         }
 
-        if (parse_request(line, cmd, &expected_http_status, last_sessionid, dir, log)) {
-          fprintf(log, "T+%4.3fms : FATAL : Could not parse args in declaration \"%s\"'", tdelta,
+        if (parse_request(line, cmd, &expected_http_status, last_sessionid, test->dir, log)) {
+          fprintf(log, "T+%4.3fms : FATAL: Could not parse args in declaration \"%s\"'", tdelta,
                   line);
           goto fatal;
         }
@@ -1086,7 +1227,7 @@ int run_test(char *dir, char *test_file) {
                 tdelta);
         FILE *rc;
 
-        snprintf(cmd, 65536, "%s/request.out", dir);
+        snprintf(cmd, 65536, "%s/request.out", test->dir);
         rc = fopen(cmd, "r");
 
         if (!rc) {
@@ -1096,7 +1237,7 @@ int run_test(char *dir, char *test_file) {
           fprintf(log,
                   "T+%4.3fms : NOTE : Could not open '%s/request.out'. No "
                   "response from web page?\n",
-                  tdelta, dir);
+                  tdelta, test->dir);
 
         } else {
 
@@ -1128,7 +1269,7 @@ int run_test(char *dir, char *test_file) {
 
         } // endif !rc
 
-        snprintf(cmd, 65536, "%s/request.code", dir);
+        snprintf(cmd, 65536, "%s/request.code", test->dir);
         rc = fopen(cmd, "r");
 
         if (!rc) {
@@ -1136,9 +1277,9 @@ int run_test(char *dir, char *test_file) {
           tdelta = gettime_us() - start_time;
           tdelta /= 1000;
           fprintf(log,
-                  "T+%4.3fms : FATAL : Could not open '%s/request.code' to "
+                  "T+%4.3fms : FATAL: Could not open '%s/request.code' to "
                   "retrieve HTTP response code.\n",
-                  tdelta, dir);
+                  tdelta, test->dir);
           goto fatal;
 
         } else {
@@ -1172,7 +1313,7 @@ int run_test(char *dir, char *test_file) {
           tdelta = gettime_us() - start_time;
           tdelta /= 1000;
           fprintf(log,
-                  "T+%4.3fms : FATAL : Could not find HTTP response code in "
+                  "T+%4.3fms : FATAL: Could not find HTTP response code in "
                   "request.code file.\n",
                   tdelta);
           goto fatal;
@@ -1198,7 +1339,7 @@ int run_test(char *dir, char *test_file) {
           tdelta = gettime_us() - start_time;
           tdelta /= 1000;
           fprintf(log,
-                  "T+%4.3fms : FATAL : No session ID has been captured. Use "
+                  "T+%4.3fms : FATAL: No session ID has been captured. Use "
                   "extract_sessionid following request directive.\n",
                   tdelta);
           goto fatal;
@@ -1206,15 +1347,15 @@ int run_test(char *dir, char *test_file) {
 
         // Build path to session file
         char session_file[8192];
-        snprintf(session_file, 1024, "%s/sessions/%c%c%c%c/%s", test_dir,
+        snprintf(session_file, 1024, "%s/sessions/%c%c%c%c/%s", test->dir,
                  last_sessionid[0], last_sessionid[1], last_sessionid[2],
                  last_sessionid[3], last_sessionid);
 
         char cmd[8192];
-        snprintf(cmd, 8192, "%s/session.log", dir);
+        snprintf(cmd, 8192, "%s/session.log", test->dir);
         unlink(cmd);
 
-        snprintf(cmd, 8192, "sudo cp %s %s/session.log", session_file, dir);
+        snprintf(cmd, 8192, "sudo cp %s %s/session.log", session_file, test->dir);
         system(cmd);
 
         tdelta = gettime_us() - start_time;
@@ -1223,7 +1364,7 @@ int run_test(char *dir, char *test_file) {
                 tdelta, session_file);
 
         // Check that the file exists
-        snprintf(cmd, 8192, "%s/session.log", dir);
+        snprintf(cmd, 8192, "%s/session.log", test->dir);
         FILE *s = fopen(cmd, "r");
         if (!s) {
           tdelta = gettime_us() - start_time;
@@ -1388,6 +1529,8 @@ int run_test(char *dir, char *test_file) {
       } else if (line[0] == 0) {
         // Ignore blank lines
       } else if (line[0] == '#') {
+        // Ignore header lines
+      } else if (line[0] == '@') {
         // print special comments starting with "#!"
         if (line[1] == '!') {
           char *l = line;
@@ -1398,8 +1541,8 @@ int run_test(char *dir, char *test_file) {
       } else {
         fprintf(
             log,
-            "T+%4.3fms : FATAL : Test script '%s' has unknown directive '%s'\n",
-            tdelta, test_file, line);
+            "T+%4.3fms : FATAL: Test script '%s' has unknown directive '%s'\n",
+            tdelta, test->file, line);
         goto fatal;
       }
 
@@ -1410,55 +1553,55 @@ int run_test(char *dir, char *test_file) {
 
     //    pass:
 
-    fix_ownership(test_dir);
+    fix_ownership(test->dir);
     if (log) {
-      dump_logs(log_path, log);
+      dump_logs(log_dir, log);
     }
 
-    fprintf(stderr, "\r\033[39m[\033[32mPASS\033[39m]  %s : %s\n", test.name, test.description);
+    fprintf(stderr, "\r\033[39m[\033[32mPASS\033[39m]  %s : %s\n", test->name, test->description);
     fflush(stderr);
     break;
 
   skip:
 
-    fix_ownership(test_dir);
+    fix_ownership(test->dir);
 
-    fprintf(stderr, "\r\033[90m[\033[33mSKIP\033[39m]  %s : %s\n", test.name, test.description);
+    fprintf(stderr, "\r\033[90m[\033[33mSKIP\033[39m]  %s : %s\n", test->name, test->description);
     fflush(stderr);
     break;
 
   fail:
 
-    fix_ownership(test_dir);
+    fix_ownership(test->dir);
     if (log) {
-      dump_logs(log_path, log);
+      dump_logs(log_dir, log);
     }
 
-    fprintf(stderr, "\r\033[39m[\033[31mFAIL\033[39m]  %s : %s\n", test.name, test.description);
+    fprintf(stderr, "\r\033[39m[\033[31mFAIL\033[39m]  %s : %s\n", test->name, test->description);
     fflush(stderr);
     retVal = 1;
     break;
 
   error:
 
-    fix_ownership(test_dir);
+    fix_ownership(test->dir);
     if (log) {
-      dump_logs(log_path, log);
+      dump_logs(log_dir, log);
     }
 
-    fprintf(stderr, "\r\033[39m[\033[31;1;5mERROR\033[39;0m]  %s : %s\n", test.name, test.description);
+    fprintf(stderr, "\r\033[39m[\033[31;1;5mERROR\033[39;0m]  %s : %s\n", test->name, test->description);
     fflush(stderr);
     retVal = 2;
     break;
 
   fatal:
 
-    fix_ownership(test_dir);
+    fix_ownership(test->dir);
     if (log) {
-      dump_logs(log_path, log);
+      dump_logs(log_dir, log);
     }
 
-    fprintf(stderr, "\r\033[39m[\033[31;1;5mDIED\033[39;0m]  %s : %s\n", test.name, test.description);
+    fprintf(stderr, "\r\033[39m[\033[31;1;5mDIED\033[39;0m]  %s : %s\n", test->name, test->description);
     fflush(stderr);
     retVal = 3;
     break;
@@ -1476,169 +1619,142 @@ int run_test(char *dir, char *test_file) {
   return retVal;
 }
 
-int configure_and_start_lighttpd(char *test_dir, int silent_flag) {
-  int retVal = 0;
+void init_lighttpd(struct Test *test) {
+  char conf_path[1024];
+  char userfile_path[1024];
+  char cmd[2048];
 
-  do {
-    char conf_path[1024];
-    char userfile_path[1024];
-    char cmd[2048];
+  // kill open ports
+  stop_lighttpd(test->count == 1);
 
-    // kill open ports
-    if (stop_lighttpd()) {
-        fprintf(stderr, "\nExiting.. stop_lighttpd failed\n");
-        exit(-3);
+  if (test->count == 1) {
+    fprintf(stderr, "Pulling configuration together...\n");
+  }
+
+  // path to conf
+  snprintf(conf_path, 1024, "%s/lighttpd.conf", test->dir);
+
+  // path to user file
+  snprintf(userfile_path, 1024, "%s/lighttpd.user", test->dir);
+
+  // copy lighttpd.conf from template
+  snprintf(cmd, 2048, "sudo cp %s %s", test->lighty_template, conf_path);
+  if (system(cmd)) {
+    fprintf(stderr, "system() call to copy lighttpd template failed");
+    exit(-3);
+  }
+
+  // copy userfile
+  snprintf(cmd, 2048, "sudo cp %s %s", test->ligthy_userfile, userfile_path);
+  if (system(cmd)) {
+    fprintf(stderr, "system() call to copy lighttpd user file failed");
+    exit(-3);
+  }
+
+  snprintf(cmd, 16384,
+    // vars
+    "sed -i                         \\"
+    "-e 's|{BASE_DIR}|%s|g'         \\"
+    "-e 's|{PID_FILE}|%s|g'         \\"
+    "-e 's|{LIGHTY_USER}|%s|g'      \\"
+    "-e 's|{LIGHTY_GROUP}|%s|g'     \\"
+    "-e 's|{SERVER_PORT}|%d|g'      \\"
+    "-e 's|{AUTH_PROXY_PORT}|%d|g'  \\"
+    "-e 's|{SURVEYFCGI_PORT}|%d|g'  \\"
+    "-e 's|{DIGEST_USERFILE}|%s|g'  \\"
+    // path
+    "%s",
+    // vars
+    test->dir,
+    LIGHTY_PIDFILE,
+    LIGHTY_USER,
+    LIGHTY_GROUP,
+    SERVER_PORT,
+    AUTH_PROXY_PORT,
+    SURVEYFCGI_PORT,
+    userfile_path,
+    // path
+    conf_path
+  );
+
+  if (system(cmd)) {
+    fprintf(stderr, "replacing template string in lighttpd.conf failed: %s",
+                conf_path);
+    exit(-3);
+  }
+
+  // #333 remove creating temp config in /etc/lighttpd,
+  // sysymlink /etc/lighttpd/conf-enabled into test dir (required by mod_fcgi)
+  char sym_path[1024];
+  snprintf(sym_path, 1024, "%s/conf-enabled", test->dir);
+  if (access(sym_path, F_OK)) {
+    if(symlink("/etc/lighttpd/conf-enabled", sym_path)) {
+      fprintf(stderr, "symlinking '/etc/lighttpd/conf-enabled' => '%s' failed, error: %s",
+                  sym_path, strerror(errno));
+      exit(-3);
     }
+  }
 
-    if (!tests) {
-      fprintf(stderr, "Pulling configuration together...\n");
+  snprintf(cmd, 2048, "sudo cp surveyfcgi %s/surveyfcgi", test->dir);
+  if (!tests) {
+    fprintf(stderr, "Running '%s'\n", cmd);
+  }
+
+  if (system(cmd)) {
+    fprintf(stderr, "system() call to copy surveyfcgi failed: %s",
+                strerror(errno));
+    exit(-3);
+  }
+
+  snprintf(cmd, 2048, "sudo lighttpd -f %s", conf_path);
+  if (test->count == 1) {
+    fprintf(stderr, "Running '%s'\n", cmd);
+  }
+
+  if (system(cmd)) {
+    fprintf(stderr, "system() call to start lighttpd failed: %s", strerror(errno));
+    exit(-3);
+  }
+
+  snprintf(
+      cmd, 2048,
+      "curl -s -o /dev/null -f http://localhost:%d/surveyapi/fastcgitest",
+      SERVER_PORT);
+
+  if (test->count == 1) {
+    fprintf(stderr, "Running '%s'\n", cmd);
+  }
+
+  int v = 0;
+  while ((v = system(cmd)) != 0) {
+    if (test->count == 1) {
+      fprintf(stderr, "cmd returned code %d\n", v);
     }
-
-    // path to conf
-    snprintf(conf_path, 1024, "%s/lighttpd.conf", test_dir);
-
-    // path to user file
-    snprintf(userfile_path, 1024, "%s/lighttpd.user", test_dir);
-
-    // create log file in test directory, and make it globally writeable
-    require_test_file("breakage.log", 0777);
-
-    // point python dir ALWAYS to test dir
-    require_test_directory("python", 0775);
-
-    // create docroot for lighttpd, we do not use it, but it is required
-    require_test_directory("www", 0775);
-
-    // copy lighttpd.conf from template
-    snprintf(cmd, 2048, "sudo cp %s %s", lighty_template, conf_path);
-    if (system(cmd)) {
-      fprintf(stderr, "system() call to copy lighttpd template failed");
-      retVal = -1;
-      break;
+    char log_dir[8192];
+    // This should be /logs, but it doesn't exist yet, and we really only need it for the
+    // ../ to get to breakage.log
+    snprintf(log_dir, 8192, "%s/sessions", test->dir);
+    if (test->count == 1) {
+      dump_logs(log_dir, stderr);
     }
+    sleep(2);
+    continue;
+  }
 
-    // copy userfile
-    snprintf(cmd, 2048, "sudo cp %s %s", digest_userfile, userfile_path);
-    perror(cmd);
-    if (system(cmd)) {
-      fprintf(stderr, "system() call to copy lighttpd user file failed");
-      retVal = -1;
-      break;
-    }
+  if (test->count == 1) {
+    fprintf(stderr, "lighttpd is now responding to requests.\n");
+  }
 
-    snprintf(cmd, 16384,
-      // vars
-      "sed -i                         \\"
-      "-e 's|{BASE_DIR}|%s|g'         \\"
-      "-e 's|{PID_FILE}|%s|g'         \\"
-      "-e 's|{LIGHTY_USER}|%s|g'      \\"
-      "-e 's|{LIGHTY_GROUP}|%s|g'     \\"
-      "-e 's|{SERVER_PORT}|%d|g'      \\"
-      "-e 's|{AUTH_PROXY_PORT}|%d|g'  \\"
-      "-e 's|{SURVEYFCGI_PORT}|%d|g'  \\"
-      "-e 's|{DIGEST_USERFILE}|%s|g'  \\"
-      // path
-      "%s",
-      // vars
-      test_dir,
-      LIGHTY_PIDFILE,
-      LIGHTY_USER,
-      LIGHTY_GROUP,
-      SERVER_PORT,
-      AUTH_PROXY_PORT,
-      SURVEYFCGI_PORT,
-      userfile_path,
-      // path
-      conf_path
-    );
-
-    if (system(cmd)) {
-      fprintf(stderr, "replacing template string in lighttpd.conf failed: %s",
-                 conf_path);
-      retVal = -1;
-      break;
-    }
-
-    // #333 remove creating temp config in /etc/lighttpd,
-    // sysymlink /etc/lighttpd/conf-enabled into test dir (required by mod_fcgi)
-    char sym_path[1024];
-    snprintf(sym_path, 1024, "%s/conf-enabled", test_dir);
-    if (access(sym_path, F_OK)) {
-      if(symlink("/etc/lighttpd/conf-enabled", sym_path)) {
-        fprintf(stderr, "symlinking '/etc/lighttpd/conf-enabled' => '%s' failed, error: %s",
-                    sym_path, strerror(errno));
-        retVal = -1;
-        break;
-      }
-    }
-
-    snprintf(cmd, 2048, "sudo cp surveyfcgi %s/surveyfcgi", test_dir);
-    if (!tests) {
-      fprintf(stderr, "Running '%s'\n", cmd);
-    }
-    if (system(cmd)) {
-      fprintf(stderr, "system() call to copy surveyfcgi failed: %s",
-                 strerror(errno));
-      retVal = -1;
-      break;
-    }
-
-    snprintf(cmd, 2048, "sudo lighttpd -f %s", conf_path);
-    if (!tests) {
-      fprintf(stderr, "Running '%s'\n", cmd);
-    }
-    if (system(cmd)) {
-      fprintf(stderr, "system() call to start lighttpd failed: %s", strerror(errno));
-      retVal = -1;
-      break;
-    }
-
-    snprintf(
-        cmd, 2048,
-        "curl -s -o /dev/null -f http://localhost:%d/surveyapi/fastcgitest",
-        SERVER_PORT);
-    if (!tests) {
-      fprintf(stderr, "Running '%s'\n", cmd);
-    }
-
-    int v = 0;
-    while ((v = system(cmd)) != 0) {
-      if (!silent_flag) {
-        fprintf(stderr, "cmd returned code %d\n", v);
-      }
-      char log_dir[8192];
-      // This should be /logs, but it doesn't exist yet, and we really only need it for the
-      // ../ to get to breakage.log
-      snprintf(log_dir, 8192, "%s/sessions", test_dir);
-      if (!silent_flag) {
-        dump_logs(log_dir, stderr);
-      }
-      sleep(2);
-      continue;
-    }
-
-    if (!tests) {
-      fprintf(stderr, "lighttpd is now responding to requests.\n");
-    }
-    if (!tests) {
-      fprintf(stderr, "All done.\n");
-    }
-
-  } while (0);
-
-  return 0;
+  if (test->count == 1) {
+    fprintf(stderr, "All done.\n");
+  }
 }
 
 /**
  * #333, kill connections synchronous
  * requires sh: ./scripts/killport
  */
-int stop_lighttpd() {
-  int retVal = 0;
-  do {
-    if (!tests) {
-        fprintf(stderr, "Killing test port %d...", SERVER_PORT);
-    }
+void stop_lighttpd(int verbose) {
 
     char cmd[2048];
     char out[2048];
@@ -1648,50 +1764,44 @@ int stop_lighttpd() {
     snprintf(cmd, 2048, "sudo ./scripts/killport %d 2>&1", SERVER_PORT);
     fp = popen(cmd, "r");
     if (fp == NULL) {
-        fprintf(stderr, "FAIL\nsystem(popen) call to stop lighttpd failed ('%s')\n", cmd);
-        retVal = -1;
-        break;
+      fprintf(stderr, "FAIL\nsystem(popen) call to stop lighttpd failed ('%s')\n", cmd);
+      exit(-3);
     }
 
     while (fgets(out, sizeof(out), fp) != NULL) {
-        fprintf(stderr, "%s", out);
+      if (verbose) {
+        fprintf(stderr, "%s\n", out);
+      }
     }
 
     status = pclose(fp);
     if (status) {
-        fprintf(stderr, "stopping lighttpd on port '%d' failed (exit code: %d)\n", SERVER_PORT, WEXITSTATUS(status));
-        retVal = -1;
-        break;
+      fprintf(stderr, "stopping lighttpd on port '%d' failed (exit code: %d)\n", SERVER_PORT, WEXITSTATUS(status));
+      exit(-3);
     }
-    fprintf(stderr, "\n");
+
     ////
 
     snprintf(cmd, 2048, "sudo ./scripts/killport %d 2>&1", SURVEYFCGI_PORT);
     fp = popen(cmd, "r");
     if (fp == NULL) {
-        fprintf(stderr, "FAIL\nsystem(popen) call to stop lighttpd failed ('%s')\n", cmd);
-        retVal = -1;
-        break;
+      fprintf(stderr, "FAIL\nsystem(popen) call to stop lighttpd failed ('%s')\n", cmd);
+      exit(-3);
     }
 
     while (fgets(out, sizeof(out), fp) != NULL) {
+      if (verbose) {
         fprintf(stderr, "%s", out);
+      }
     }
 
     status = pclose(fp);
     if (status) {
-        fprintf(stderr, "stopping lighttpd on port '%d' failed (exit code: %d)\n", SURVEYFCGI_PORT, WEXITSTATUS(status));
-        retVal = -1;
-        break;
+      fprintf(stderr, "stopping lighttpd on port '%d' failed (exit code: %d)\n", SURVEYFCGI_PORT, WEXITSTATUS(status));
+      exit(-3);
     }
 
     sleep(1);
-    if (!tests) {
-        fprintf(stderr, (!status) ? " \e[32mOK\e[0m" : " \e[31mFAIL\e[0m");
-        fprintf(stderr, "\n");
-    }
-  } while (0);
-  return retVal;
 }
 
 /**
@@ -1758,42 +1868,8 @@ int main(int argc, char **argv) {
     exit(-1);
   }
 
-  snprintf(test_dir, 1024, "/tmp/surveytestrunner.%d.%d", (int)time(0),
-           getpid());
-  fprintf(stderr, "\e[33m *\e[0m Using \e[1m%s\e[0m as test directory\n",
-          test_dir);
-  fprintf(stderr, "\e[33m *\e[0m Using \e[1m%d\e[0m as http port\n", SERVER_PORT);
-
-  require_directory(test_dir, 0755);
-
-  // Make surveys, sessions and lock directories
-  // Also make sure the survey directory is writable when running tests
-  // (this is so accesstest will succeed.  For production, this can be
-  // avoided by making sure to use the commandline tool to create a single
-  // session in a survey after the survey has been modified, to make sure
-  // all the necessary hash files get created.)
-  require_test_directory("surveys", 0777);
-  require_test_directory("sessions", 0777);
-  require_test_directory("logs", 0777);
-  require_test_directory("locks", 0777);
-  // note: python dir is created when setting up lighttpd conf
-  require_test_file("lighttpd-access.log", 0777);
-  require_test_file("lighttpd-error.log", 0777);
-
   // Make sure we have a test log directory
   require_directory("testlog", 0755);
-
-  if (stop_lighttpd()) {
-      fprintf(stderr, "\nExiting.. stop_lighttpd failed\n");
-      exit(-3);
-  }
-  fprintf(stderr, "About to request config gets pulled together\n");
-  // Make config file pointing to the temp_dir, and start the server
-  if (configure_and_start_lighttpd(test_dir, 0)) {
-    exit(-3);
-  }
-
-  fprintf(stderr, "\n");
 
   int passes = 0;
   int fails = 0;
@@ -1809,7 +1885,13 @@ int main(int argc, char **argv) {
         continue;
     }
 
-    switch (run_test(test_dir, argv[i])) {
+    struct Test test = create_test_config();
+    init_parse_test_config(argc - 1, i, argv[i], &test);
+    // print_test_config(stderr, &test);
+    init_test_filesystem(&test);
+    init_lighttpd(&test);
+
+    switch (run_test(&test)) {
     case 0:
       passes++;
       break;
@@ -1826,24 +1908,15 @@ int main(int argc, char **argv) {
       fatals++;
       break;
     }
+
     tests++;
   }
 
   // Clean up after ourselves
   fprintf(stderr, "Cleaning up...\n");
 
-#if 0
-  fix_ownership(test_dir);
-  if (recursive_delete(test_dir)) {
-    fprintf(stderr,"Error encountered while deleting temporary directories.\n");
-  }
-#endif
+  stop_lighttpd(argc == 2);
 
-  if (stop_lighttpd()) {
-      fprintf(stderr, "\nExiting.. stop_lighttpd failed\n");
-      exit(-3);
-  }
-  fprintf(stderr, "\n");
   fprintf(stderr,
           "Summary: %d/%d tests passed (%d failed, %d errors, %d fatalities "
           "during tests)\n",
