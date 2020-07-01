@@ -1,4 +1,4 @@
-description MULTISELECT question type: Answer a MULTISELECT question with a comma separated list of choices in a survey
+@description MULTISELECT question type: Answer a MULTISELECT question with a comma separated list of choices in a survey
 
 # Create a dummy survey
 definesurvey qtype_multiselect

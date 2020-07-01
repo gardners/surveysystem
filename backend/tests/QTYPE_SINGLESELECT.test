@@ -1,4 +1,4 @@
-description SINGLESELECT question type: Answer a SINGLESELECT question with a single choice in a survey
+@description SINGLESELECT question type: Answer a SINGLESELECT question with a single choice in a survey
 
 # Create a dummy survey
 definesurvey qtype_singleselect

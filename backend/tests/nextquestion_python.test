@@ -1,4 +1,4 @@
-description Python implementation of nextquestion can be used
+@description Python implementation of nextquestion can be used
 
 # Create a dummy survey
 # XXX - In any test where we use python, we need to make sure we don't reuse any survey name

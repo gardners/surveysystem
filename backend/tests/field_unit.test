@@ -1,4 +1,4 @@
-description Unit field: Answer a question in a survey
+@description Unit field: Answer a question in a survey
 
 # Create a dummy survey
 definesurvey field_unit

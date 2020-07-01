@@ -1,4 +1,4 @@
-description deleting an answer not being the last answer list passes python the hooks
+@description deleting an answer not being the last answer list passes python the hooks
 
 #!---------------------
 #! see https://github.com/gardners/surveysystem/issues/311

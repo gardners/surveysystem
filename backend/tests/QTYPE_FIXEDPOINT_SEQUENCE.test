@@ -1,4 +1,4 @@
-description FIXEDPOINT_SEQUENCE question type: Answer a FIXEDPOINT_SEQUENCE question with choices
+@description FIXEDPOINT_SEQUENCE question type: Answer a FIXEDPOINT_SEQUENCE question with choices
 
 # Create a dummy survey
 definesurvey qtype_fixedpointsequence

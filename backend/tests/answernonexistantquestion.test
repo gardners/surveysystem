@@ -1,4 +1,4 @@
-description Answer a question in a survey
+@description Answer a question in a survey
 
 # Create a dummy survey
 definesurvey foo

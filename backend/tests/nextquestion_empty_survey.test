@@ -1,4 +1,4 @@
-description An empty survey should return HTTP 400
+@description An empty survey should return HTTP 400
 
 # Create a dummy survey
 definesurvey nextquestion_empty_survey

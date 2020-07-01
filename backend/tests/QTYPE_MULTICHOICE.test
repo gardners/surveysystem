@@ -1,4 +1,4 @@
-description MULTICHOICE question type: Answer a MULTICHOICE question with a comma separated list of choices in a survey
+@description MULTICHOICE question type: Answer a MULTICHOICE question with a comma separated list of choices in a survey
 
 # Create a dummy survey
 definesurvey qtype_multichoice

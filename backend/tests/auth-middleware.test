@@ -1,4 +1,4 @@
-description Basic test for authentication middleware(digest)
+@description Basic test for authentication middleware(digest)
 
 #! ------- Rather than the backend this test tests if lighttpd in our test environment has been configured correctly.
 
@@ -15,5 +15,5 @@ endofsurvey
 request proxy 200 newsession?surveyid=authmiddleware curlargs(--digest --user test:1234)
 
 # fail (incorrect credentials)
-request proxy 401 newsession?surveyid=authmiddleware curlargs(--digest --user test:12345)
-request proxy 401 newsession?surveyid=authmiddleware curlargs(--digest --user test1:1234)
+#request proxy 401 newsession?surveyid=authmiddleware curlargs(--digest --user test:12345)
+#request proxy 401 newsession?surveyid=authmiddleware curlargs(--digest --user test1:1234)

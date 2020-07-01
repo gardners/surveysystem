@@ -1,4 +1,4 @@
-description character encoding question and answer (title, description and choices)
+@description character encoding question and answer (title, description and choices)
 
 # Create a dummy survey
 # The back quotes around 31 and 42 in the definition line below are upper-half ascii characters

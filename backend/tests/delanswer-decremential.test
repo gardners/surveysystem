@@ -1,4 +1,4 @@
-description Answer a sequence of questions and then delete answers (decremential)
+@description Answer a sequence of questions and then delete answers (decremential)
 
 #!---------------------
 #!running delanswer decremential

@@ -1,4 +1,4 @@
-description CHECKBOX question type: Answer a CHECKBOX question in a survey
+@description CHECKBOX question type: Answer a CHECKBOX question in a survey
 
 # Create a dummy survey
 definesurvey qtype_checkbox

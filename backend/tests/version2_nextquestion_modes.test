@@ -1,4 +1,4 @@
-description Version 2 python directives: "without python": next_question_generic() and "with python": call_python_nextquestion()
+@description Version 2 python directives: "without python": next_question_generic() and "with python": call_python_nextquestion()
 
 #!---------------------
 #!Survey WITHOUT python

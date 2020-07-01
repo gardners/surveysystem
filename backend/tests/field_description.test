@@ -1,4 +1,4 @@
-description HTML description field: Answer a question in a survey
+@description HTML description field: Answer a question in a survey
 
 # Create a dummy survey
 definesurvey field_description
