@@ -16,12 +16,12 @@ var.digest_userfile="{DIGEST_USERFILE}"
 server.modules = (
      "mod_access",
      "mod_alias",
-     
+
      # auth middleware
      "mod_auth",
      "mod_authn_file",
      "mod_proxy",
-     
+
      "mod_fastcgi",
      "mod_compress",
      "mod_redirect",
@@ -58,7 +58,7 @@ $SERVER["socket"] == ":" + auth_proxy_port {
               "require" => "valid-user",
          )
     )
-    
+
     proxy.server = ( "" => (
         ( "host" => "127.0.0.1", "port" => server_port )
     ) )
@@ -67,7 +67,7 @@ $SERVER["socket"] == ":" + auth_proxy_port {
 
 $SERVER["socket"] == ":" + server_port {
      fastcgi.debug = 1
-     
+
      fastcgi.server = (
           "/surveyapi" => ((
                "host" => "127.0.0.1",
@@ -86,9 +86,3 @@ $SERVER["socket"] == ":" + server_port {
           ))
      )
 }
-
-# default listening port for IPv6 falls back to the IPv4 port
-## Use ipv6 if available
-#include_shell "/usr/share/lighttpd/use-ipv6.pl " + server.port
-include_shell "/usr/share/lighttpd/create-mime.assign.pl"
-include_shell "/usr/share/lighttpd/include-conf-enabled.pl"

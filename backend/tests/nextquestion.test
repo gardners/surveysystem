@@ -1,4 +1,4 @@
-description nextquestion returns something
+@description nextquestion returns something
 
 # Create a dummy survey
 definesurvey nextquestion

@@ -1,4 +1,4 @@
-description Assert answer list completeness in python hooks
+@description Assert answer list completeness in python hooks
 
 # Create a dummy survey
 definesurvey python_answercompleteness

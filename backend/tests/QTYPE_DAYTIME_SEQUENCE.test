@@ -1,4 +1,4 @@
-description DAYTIME_SEQUENCE question type: Answer a DAYTIME_SEQUENCE question with choices
+@description DAYTIME_SEQUENCE question type: Answer a DAYTIME_SEQUENCE question with choices
 
 # Create a dummy survey
 definesurvey qtype_daytimesequence

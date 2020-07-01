@@ -1,4 +1,4 @@
-description Answer questions, and obtain a sensible next question each time
+@description Answer questions, and obtain a sensible next question each time
 
 # Create a dummy survey
 definesurvey foo

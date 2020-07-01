@@ -1,4 +1,4 @@
-description DURATION24 question type: Answer a DURATION24 question with a single choice in a survey
+@description DURATION24 question type: Answer a DURATION24 question with a single choice in a survey
 
 # Create a dummy survey
 definesurvey qtype_duration24

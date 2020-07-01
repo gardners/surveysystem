@@ -1,4 +1,4 @@
-description DIALOG_DATA_CRAWLER question type: Grant permission to a DIALOG_DATA_CRAWLER module in a survey
+@description DIALOG_DATA_CRAWLER question type: Grant permission to a DIALOG_DATA_CRAWLER module in a survey
 
 # Create a dummy survey
 definesurvey qtype_dialog_data_crawler

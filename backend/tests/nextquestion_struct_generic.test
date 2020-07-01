@@ -1,4 +1,4 @@
-description Generic nextquestion with struct next_questions
+@description Generic nextquestion with struct next_questions
 
 #!---------------------
 #!Survey WITHOUT python, see #322

@@ -1,4 +1,4 @@
-description Run post-survey analysis
+@description Run post-survey analysis
 
 # Create a dummy survey
 definesurvey runanalysis

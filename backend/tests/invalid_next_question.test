@@ -1,4 +1,4 @@
-description Invalid implementation of python def nextquestion() should return 500 and not fall back to flat sequencing
+@description Invalid implementation of python def nextquestion() should return 500 and not fall back to flat sequencing
 
 # Create a dummy survey
 # XXX - In any test where we use python, we need to make sure we don't reuse any survey name

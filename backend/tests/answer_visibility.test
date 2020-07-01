@@ -1,4 +1,4 @@
-description Answer field visibility, protected fields
+@description Answer field visibility, protected fields
 
 # Create a dummy survey
 definesurvey foo

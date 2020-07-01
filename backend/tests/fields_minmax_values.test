@@ -1,4 +1,4 @@
-description min_value and max_value fields (curr NO Validation: #342)
+@description min_value and max_value fields (curr NO Validation: #342)
 
 # Create a dummy survey
 definesurvey field_minmax_values

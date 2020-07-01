@@ -1,4 +1,4 @@
-description POST requests - open session and answer a question
+@description POST requests - open session and answer a question
 @skip!
 
 # Create a dummy survey

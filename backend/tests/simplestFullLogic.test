@@ -1,4 +1,4 @@
-description nextquestion returns something else
+@description nextquestion returns something else
 
 # Create a dummy survey
 definesurvey simplestFullLogic
