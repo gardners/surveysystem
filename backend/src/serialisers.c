@@ -10,9 +10,10 @@
 #include "question_types.h"
 #include "survey.h"
 
+// #366, set retVal condition to < 0
 #define REPORT_IF_FAILED()                                                     \
   {                                                                            \
-    if (retVal)                                                                \
+    if (retVal < 0)                                                            \
       fprintf(stderr, "%s:%d: %s() failed.\n", __FILE__, __LINE__,             \
               __FUNCTION__);                                                   \
   }
@@ -556,6 +557,7 @@ int serialise_answer(struct answer *a, char *out, int max_len) {
 
     SERIALISE_STRING(a->uid);
     // #358, add question type
+
     SERIALISE_THING(a->type, serialise_question_type);
     SERIALISE_STRING(a->text);
     SERIALISE_LONGLONG(a->value);
