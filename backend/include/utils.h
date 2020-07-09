@@ -3,6 +3,7 @@
 
 #include <time.h>
 
+void freez(void *p);
+void trim_crlf(char *line);
 struct tm *format_time_ISO8601(time_t t, char *buf, size_t len);
-
 #endif
