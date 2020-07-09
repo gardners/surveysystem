@@ -1,0 +1,18 @@
+@description Basic test for rejection of an middleware request (with valid creds) from an unknown middleware ip
+@useproxy!
+@fcgienv_middleware 127.0.0.1:99
+
+# Create a dummy survey
+definesurvey authmiddlewareunknownmwip
+version 2
+Silly test survey updated
+without python
+question1:Question 1?::TEXT:0::-1:-1:0:0::
+question2:Question 2?::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+#!---------------------
+#! with valid MW credentials but invalid remote
+#!---------------------
+
+request proxy 407 newsession?surveyid=authmiddlewareunknownmwip curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
