@@ -41,8 +41,21 @@ int main(int argc, char **argv) {
       }
 
       char session_id[1024];
-      if (create_session(argv[2], session_id))
+
+      // #363
+      struct session_meta meta = {
+        .user = NULL,
+        .group = NULL,
+        .authority = NULL,
+        .provider = IDENDITY_CLI,
+      };
+
+      if (create_session(argv[2], session_id, &meta)) {
         LOG_ERROR("create_session() failed");
+      }
+
+      free_session_meta(&meta);
+
       if (!retVal) {
         printf("%s\n", session_id);
       } else {
@@ -127,7 +140,7 @@ int main(int argc, char **argv) {
       for (int i = 0; nq->question_count; i++) {
         printf("%s\n", nq->next_questions[i]->uid);
       }
-      
+
       free_next_questions(nq);
 
     } else if (!strcmp(argv[1], "delanswer")) {

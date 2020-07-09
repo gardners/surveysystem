@@ -17,6 +17,7 @@
 #include "serialisers.h"
 #include "sha1.h"
 #include "survey.h"
+#include "utils.h"
 
 /*
   Verify that a session ID does not contain any illegal characters.
@@ -228,6 +229,83 @@ int random_session_id(char *session_id_out) {
   return retVal;
 }
 
+/**
+ * #363 save session meta data
+ */
+int save_session_meta(FILE *fp, struct session_meta *meta, int closed_flag) {
+  // LOG_INFOV(
+  //   "session_meta\n"
+  //   "  |_ user: %s\n"
+  //   "  |_ group: %s\n"
+  //   "  |_ authority: %s\n"
+  //   "  |_ provider: %d\n",
+  //
+  //   meta->user,
+  //   meta->group,
+  //   meta->authority,
+  //   meta->provider
+  // );
+
+  int retVal = 0;
+
+  do {
+    char line[65536];
+    time_t now = time(NULL);
+
+    char uid[1024];
+    char text[1024];
+
+    struct answer a = {
+      .uid = uid,
+      .type = QTYPE_META,
+      .text = text,
+      .unit = "",
+      .stored = (long long) now,
+    };
+
+    strncpy(a.uid, "@user", 1024);
+    text[0] = 0;
+    if (meta->user) {
+      strncpy(text, meta->user, 1024);
+    }
+    if (serialise_answer(&a, line, 65536)) {
+      LOG_ERRORV("meta: serialise_answer() failed for field '%s'", "@user");
+    }
+    fprintf(fp, "%s\n", line);
+
+    strncpy(a.uid, "@group", 1024);
+    text[0] = 0;
+    if (meta->group) {
+      strncpy(text, meta->group, 1024);
+    }
+    if (serialise_answer(&a, line, 65536)) {
+      LOG_ERRORV("meta: serialise_answer() failed for field '%s'", "@group");
+    }
+    fprintf(fp, "%s\n", line);
+
+    strncpy(a.uid, "@authority", 1024);
+    text[0] = 0;
+    if (meta->authority) {
+      strncpy(text, meta->authority, 1024);
+    }
+    if (serialise_answer(&a, line, 65536)) {
+      LOG_ERRORV("meta: serialise_answer() failed for field '%s'", "@authority");
+    }
+    fprintf(fp, "%s\n", line);
+
+    strncpy(a.uid, "@closed", 1024);
+    text[0] = 0; // clear string, but leave pointer ref
+    a.value = closed_flag;
+    if (serialise_answer(&a, line, 65536)) {
+      LOG_ERRORV("meta: serialise_answer() failed for field '%s'", "@closed");
+    }
+    fprintf(fp, "%s\n", line);
+
+  } while (0);
+
+  return retVal;
+}
+
 /*
   Create a new session for a given form, and return the new session ID
   via session_id_out.  This creates the session record file, as well as
@@ -245,7 +323,7 @@ int random_session_id(char *session_id_out) {
   have been answered), and if so, updates the session to use the latest version.
   This could even be implemented in load_session().)
  */
-int create_session(char *survey_id, char *session_id_out) {
+int create_session(char *survey_id, char *session_id_out, struct session_meta *meta) {
   int retVal = 0;
 
   do {
@@ -417,20 +495,25 @@ int create_session(char *survey_id, char *session_id_out) {
                  session_path_suffix, survey_id);
 
     FILE *f = fopen(session_path, "w");
-    if (!f)
+    if (!f) {
       LOG_ERRORV("Cannot create new session file '%s'", session_path);
+    }
 
     // Write survey_id to new empty session.
     // This must take the form <survey id>/<sha1 hash of current version of survey>
     fprintf(f, "%s/%s\n", survey_id, survey_sha1);
+
+    // #363 save session meta, with closed flag set to zero
+    if (save_session_meta(f, meta, 0)) {
+      fclose(f);
+      LOG_ERRORV("Cannot write session meta '%s'", session_path);
+    }
+
     fclose(f);
 
     // Export new session ID
     strncpy(session_id_out, session_id, 36 + 1);
-
-    LOG_INFOV("Created new session file '%s' for survey '%s'", session_path,
-              survey_id);
-
+    LOG_INFOV("Created new session file '%s' for survey '%s'", session_path, survey_id);
   } while (0);
 
   return retVal;
@@ -475,18 +558,6 @@ int delete_session(char *session_id) {
   } while (0);
 
   return retVal;
-}
-
-/*
-  Various functions for freeing data structures.
-  freez() is the same as free(), but just checks to make sure that it hasn't been
-  passed a null pointer.  This makes the latter functions a little simpler.
- */
-void freez(void *p) {
-  if (p) {
-    free(p);
-  }
-  return;
 }
 
 void free_answer(struct answer *a) {
@@ -580,6 +651,20 @@ void free_session(struct session *s) {
   return;
 }
 
+// #363 free struct session meta
+void free_session_meta(struct session_meta *m) {
+  if (!m) {
+    return;
+  }
+
+  freez(m->user);
+  freez(m->group);
+  freez(m->authority);
+
+  free(m);
+  return;
+}
+
 int dump_next_questions(FILE *f, struct next_questions *nq) {
   int retVal = 0;
   do {
@@ -607,21 +692,6 @@ int dump_next_questions(FILE *f, struct next_questions *nq) {
   } while (0);
 
   return retVal;
-}
-
-/*
-  Remove any trailing line feed or carriage returns from the input string.
- */
-void trim_crlf(char *line) {
-  if (!line) {
-    return;
-  }
-  int len = strlen(line);
-
-  while (len && (line[len - 1] == '\n' || line[len - 1] == '\r')) {
-    line[--len] = 0;
-  }
-  return;
 }
 
 /*
