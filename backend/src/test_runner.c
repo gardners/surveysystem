@@ -39,32 +39,46 @@
 
 #include "errorlog.h"
 #include "survey.h"
+#include "utils.h"
 
 #define SERVER_PORT 8099
-#define AUTH_PROXY_PORT 8199
 #define SURVEYFCGI_PORT 9009
 #define LIGHTY_USER "www-data"
 #define LIGHTY_GROUP "www-data"
 #define LIGHTY_PIDFILE "/var/run/lighttpd.pid"
 
-// test configuration
-struct Test {
-    int skip;
+#define MAX_LINE 8192
+#define MAX_BUFFER 65536
 
-    char name[1024];
-    char description[8192];
-
-    char file[1024];
-    char dir[1024];
-    char log[1024];
-
-    char lighty_template[1024];
-    char ligthy_userfile[1024];
-
-    int count;
-    int index;
+enum DiffResult {
+  DIFF_MATCH,
+  DIFF_MISMATCH,
+  DIFF_MISMATCH_LENGTH,
+  DIFF_MISMATCH_TOKEN,
 };
 
+// test configuration
+struct Test {
+    int skip;                      // (optional)skip! header directive
+
+    char name[1024];               // test name (derived from test file name)
+    char description[MAX_LINE];    // (required) first line @description directive
+
+    char file[1024];               // local test file path (./tests/%s)
+    char dir[1024];                // test roor dir (/tmp/%s)
+    char log[1024];                // local testlog path (./testlogs/%s)
+
+    char lighty_template[1024];    // (required) lighttpd.conf template
+    char ligthy_userfile[1024];    // (optional) lighttpd user digest file
+    char fcgienv_middleware[1024]; // (optional) @SS_TRUSTED_MIDDLEWARE %s directive, overwrites defaults
+
+    int count;                     // number of scheduled tests
+    int index;                     // current test
+};
+
+/**
+ * initialise test config with default values
+ */
 struct Test create_test_config() {
   struct Test test = {
     .skip = 0,
@@ -76,11 +90,13 @@ struct Test create_test_config() {
     .dir = "",
 
     .lighty_template =  "tests/config/lighttpd-default.conf.tpl",
-    .ligthy_userfile = "tests/config/lighttpd.user",
+    .ligthy_userfile = "",
 
     .count = 0,
     .index = 0,
   };
+
+  snprintf(test.fcgienv_middleware, 1024, "127.0.0.1(%d)", SERVER_PORT);
   return test;
 }
 
@@ -101,8 +117,8 @@ char *py_traceback_func =
 int fix_ownership(char *dir) {
   int retVal = 0;
   do {
-    char cmd[8192];
-    snprintf(cmd, 8192, "sudo chown -R %s:%s %s\n", LIGHTY_USER, LIGHTY_GROUP,
+    char cmd[MAX_LINE];
+    snprintf(cmd, MAX_LINE, "sudo chown -R %s:%s %s\n", LIGHTY_USER, LIGHTY_GROUP,
              dir);
     system(cmd);
   } while (0);
@@ -307,14 +323,14 @@ int dump_logs(char *dir, FILE *log) {
                   curr->fts_accpath);
         } else {
           fprintf(log, "--------- %s ----------\n", curr->fts_accpath);
-          char line[8192];
+          char line[MAX_LINE];
           line[0] = 0;
-          fgets(line, 8192, in);
+          fgets(line, MAX_LINE, in);
 
           while (line[0]) {
             fprintf(log, "%s", line);
             line[0] = 0;
-            fgets(line, 8192, in);
+            fgets(line, MAX_LINE, in);
           }
           fclose(in);
         }
@@ -350,6 +366,7 @@ void print_test_config(FILE *in, struct Test *test) {
     "    |_ log: '%s'\n"
     "    |_ lighty_template: '%s'\n"
     "    |_ ligthy_userfile: '%s'\n"
+    "    |_ fcgienv_middleware: '%s'\n"
     "    |_ count: %d\n"
     "    |_ index: %d\n",
     test->skip,
@@ -360,6 +377,7 @@ void print_test_config(FILE *in, struct Test *test) {
     test->log,
     test->lighty_template,
     test->ligthy_userfile,
+    test->fcgienv_middleware,
     test->count,
     test->index
   );
@@ -372,14 +390,14 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
     int retVal = 0;
 
     do {
-        char tmp[65536];
+        char tmp[MAX_BUFFER];
 
-        char args[65536];
-        char url[65536];
-        char data[65536] = {'\0'};
-        char method[65536] = {'\0'};
-        char curl_args[65536]= {'\0'};
-        char url_sub[65536];
+        char args[MAX_BUFFER];
+        char url[MAX_BUFFER];
+        char data[MAX_BUFFER] = {'\0'};
+        char method[MAX_BUFFER] = {'\0'};
+        char curl_args[MAX_BUFFER]= {'\0'};
+        char url_sub[MAX_BUFFER];
 
         // flags
         int done = 0;
@@ -396,7 +414,7 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
         // example: request proxy 200 addanswer curlargs(--user name:password) POST "sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0:"
         if (sscanf(args, "proxy %[^\r\n]", tmp) == 1) {
             proxy = 1;
-            strncpy(args, tmp, 65536);
+            strncpy(args, tmp, MAX_BUFFER);
             tmp[0] = 0;
         }
 
@@ -433,7 +451,7 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
             } else if (url[i + 1] == '$') {
               url_sub[o++] = '$';
             } else if (!strncmp("$SESSION", &url[i], 8)) {
-              snprintf(&url_sub[o], 65535 - o, "%s", last_sessionid);
+              snprintf(&url_sub[o], MAX_BUFFER - o, "%s", last_sessionid);
               o = strlen(url_sub);
               i += 7;
             } else {
@@ -452,23 +470,23 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
         url_sub[o] = 0;
 
         if (strlen(data)) {
-          strncpy(tmp, data, 65536);
-          snprintf(data, 65536, " -d %s", tmp);
+          strncpy(tmp, data, MAX_BUFFER);
+          snprintf(data, MAX_BUFFER, " -d %s", tmp);
         }
 
         if (strlen(method)) {
-          strncpy(tmp, method, 65536);
-          snprintf(method, 65536, " -X %s", tmp);
+          strncpy(tmp, method, MAX_BUFFER);
+          snprintf(method, MAX_BUFFER, " -X %s", tmp);
         }
 
         if (strlen(curl_args)) {
-          strncpy(tmp, curl_args, 65536);
-          snprintf(curl_args, 65536, " %s", tmp);
+          strncpy(tmp, curl_args, MAX_BUFFER);
+          snprintf(curl_args, MAX_BUFFER, " %s", tmp);
         }
 
         // build curl cmd
         snprintf(
-          out, 65536,
+          out, MAX_BUFFER,
           "curl%s%s%s -s -w \"HTTPRESULT=%%{http_code}\" -o "
           "%s/request.out \"http://localhost:%d/%s/%s\" > "
           "%s/request.code",
@@ -476,7 +494,7 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
           method,
           data,
           dir,
-          (proxy) ? AUTH_PROXY_PORT: SERVER_PORT,
+          SERVER_PORT,
           "surveyapi",
           url_sub,
           dir
@@ -484,6 +502,39 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
     } while(0);
 
     return retVal;
+}
+
+/**
+ * creates a copy of a given session and opens it for inspection
+ */
+FILE *open_session_file_copy(char *session_id, struct Test *test) {
+
+  // Build path to session file
+  char session_file[1024];
+
+  snprintf(session_file, 1024, "%s/sessions/%c%c%c%c/%s", test->dir,
+            session_id[0], session_id[1], session_id[2],
+            session_id[3], session_id);
+
+  char tmp[MAX_LINE];
+  snprintf(tmp, MAX_LINE, "%s/session.cpy", test->dir);
+  unlink(tmp);
+
+  snprintf(tmp, MAX_LINE, "sudo cp %s %s/session.cpy", session_file, test->dir);
+  if(system(tmp)) {
+    fprintf(stderr, "Command failed: '%s'\n", tmp);
+    return NULL;
+  }
+
+  // Check that the file exists
+  snprintf(tmp, MAX_LINE, "%s/session.cpy", test->dir);
+  FILE *copy = fopen(tmp, "r");
+  if (!copy) {
+    fprintf(stderr, "Could not open session file '%s': %s\n", tmp, strerror(errno));
+    return NULL;
+  }
+
+  return copy;
 }
 
 /**
@@ -500,22 +551,28 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
  *   -3: session line too long (column count)
  *   -4: session field <UTIME> is invalid (must be within the past hour from now)
  */
-int compare_session_line(char *session_line, char *comparison_line) {
-  // do not mutate arg strings
-  char *left_line = strdup(session_line);
-  char *right_line = strdup(comparison_line);
+enum DiffResult compare_session_line(char *session_line, char *comparison_line, struct Test *test) {
 
+  char left_line[MAX_LINE];
+  char right_line[MAX_LINE];
+
+  char *left;
+  char *right;
   char *left_ptr;
   char *right_ptr;
 
-  char *left = strtok_r(left_line, ":", &left_ptr);
-  char *right = strtok_r(right_line, ":", &right_ptr);
+  // do not mutate arg *strings
+  strncpy(left_line, session_line, MAX_LINE);
+  strncpy(right_line, comparison_line, MAX_LINE);
+
+  left = strtok_r(left_line, ":", &left_ptr);
+  right = strtok_r(right_line, ":", &right_ptr);
 
   while (right) {
 
     // match number of columns: session line too short
     if (!left) {
-      return -2;
+      return DIFF_MISMATCH_LENGTH;
     }
 
     // validate <UTIME> keyword (unix timestamp)
@@ -524,15 +581,24 @@ int compare_session_line(char *session_line, char *comparison_line) {
       int then = atoi(left);
 
       if (now <= 0 || now < then || now - then > 8600) {
-        return -4;
+        return DIFF_MISMATCH_TOKEN;
       }
 
-      return 0;
+      return DIFF_MATCH;
+    }
+
+    // validate <UTIME> keyword (unix timestamp)
+    if (!strcmp(right, "<FCGIENV_MIDDLEWARE>")) {
+      if (strcmp(left, test->fcgienv_middleware)) {
+        return DIFF_MISMATCH_TOKEN;
+      }
+
+      return DIFF_MATCH;
     }
 
     // compare column text
     if (strcmp(left, right)) {
-      return -1;
+      return DIFF_MISMATCH;
     }
 
     left = strtok_r(NULL, ":", &left_ptr);
@@ -541,11 +607,140 @@ int compare_session_line(char *session_line, char *comparison_line) {
 
   // match number of columns: session line too long
   if (left) {
-    return -3;
+    return DIFF_MISMATCH_LENGTH;
   }
 
+  return DIFF_MATCH;
+}
+
+/**
+ * All file pointers are left open and have to be closed externally
+ */
+int compare_session(FILE *sess, int skip_s, FILE *comp, int skip_c, struct Test *test, FILE *log, long long start_time) {
+  int retVal = 0;
+  double tdelta;
+
+  // Now go through reading lines from here and from the session file
+  char session_line[MAX_LINE];
+  char comparison_line[MAX_LINE];
+
+  int c_count = 0; // comparsion line count
+  int s_count = 0; // session line count
+  int diff = DIFF_MATCH; // diff result
+
+  char *s;
+  char *c;
+
+  // wind both files forward
+  while (c_count < skip_c) {
+    c = fgets(comparison_line, MAX_LINE, comp);
+    c_count++;
+  }
+
+  while (s_count < skip_s) {
+    s = fgets(session_line, MAX_LINE, sess);
+    s_count++;
+  }
+
+  while (1) {
+    // reset both containers, we need this for checks below
+    session_line[0] = 0;
+    comparison_line[0] = 0;
+
+    tdelta = gettime_us() - start_time;
+    tdelta /= 1000;
+
+    // read left and right
+    s = fgets(session_line, MAX_LINE, sess);
+    c = fgets(comparison_line, MAX_LINE, comp);
+
+    s_count++;
+    c_count++;
+
+    trim_crlf(comparison_line);
+    trim_crlf(session_line);
+
+    // End of session file before end of comparison list
+    // End of comparison list before end of session file
+
+    fprintf(log, "<<< %s\n", comparison_line);
+    fprintf(log, ">>> %s\n", session_line);
+
+    // end comparasion
+    if (!strcmp(comparison_line, "endofsession")) {
+      fprintf(log, "<<<<<< END OF EXPECTED SESSION DATA\n");
+      if (s != NULL) {
+        fprintf(log,"  [SESSION_TOO_LONG] comparsion 'endofsession' at line %d, but session file has content at line %d: '%s'\n", c_count, s_count, session_line);
+      }
+      break;
+    }
+
+    // no empty lines allowed
+    if (!strlen(comparison_line)) {
+      fprintf(log,"  [EMPTY_LINE_COMPARSION] line %d of comparsion is empty.\n", c_count);
+      retVal++;
+      // TODO check if eof session
+      break;
+    }
+
+    if (!strlen(session_line)) {
+      if (s == NULL) {
+        fprintf(log,"  [SESSION_TOO_SHORT] comparsion content at line %d, but session file ended before: '%s'\n", c_count,comparison_line);
+      } else {
+        fprintf(log,"  [EMPTY_LINE_SESSION] line %d of session file is empty.\n", s_count);
+      }
+      retVal++;
+      // TODO check if eof session
+      break;
+    }
+
+    // compare session line, we are relying on the string terminations set above
+    diff = compare_session_line(session_line, comparison_line, test);
+    // fprintf(stderr, "\n%d: line %d(%d), '%s' => '%s'", diff, s_count, c_count, session_line, comparison_line);
+
+    switch (diff) {
+      case DIFF_MATCH:
+        // ok, do nothing
+        break;
+
+      case DIFF_MISMATCH:
+        fprintf(log,
+          "  [DIFF_MISMATCH] compare_session_line() field mismatch (session line %d, comparsion line %d, code %d)\n", s_count, c_count, diff);
+        break;
+
+      case DIFF_MISMATCH_LENGTH:
+        fprintf(log,
+          "  [DIFF_MISMATCH_LENGTH] compare_session_line() session line number of fields don't match (session line %d, comparsion line %d, code %d)\n", s_count, c_count, diff);
+        break;
+
+      case DIFF_MISMATCH_TOKEN:
+        fprintf(log,
+          "  [DIFF_MISMATCH_TOKEN] compare_session_line() <TOKEN> ivalidation failed (session line %d, comparsion line %d, code %d)\n", s_count, c_count, diff);
+        break;
+
+      default:
+        fprintf(log,
+          "  [UNKWOWN MISMATCH] compare_session_line() unknown return (session line %d, comparsion line %d, code %d)\n", s_count, c_count, diff);
+    } // endswitch
+
+    // register error state
+    if (diff > DIFF_MATCH) {
+      retVal++;
+    }
+  } // end while 1
+
+  tdelta = gettime_us() - start_time;
+  tdelta /= 1000;
+
+  if (retVal) {
+    fprintf(log, "T+%4.3fms : FAIL : verifysession with %d errors.\n", tdelta, retVal);
+    return -1;
+  }
+
+  fprintf(log, "T+%4.3fms : OK : session file matches comparsion: %d session lines read, %d lines compared.\n", tdelta, s_count, c_count);
   return 0;
 }
+
 
 FILE *load_test_header(char *test_file, struct Test *test) {
     FILE *fp = fopen(test_file, "r");
@@ -561,15 +756,15 @@ FILE *load_test_header(char *test_file, struct Test *test) {
     strncpy(test->name, name, sizeof(test->name));
 
     // fist line is description
-    char line[8192];
-    fgets(line, 8192, fp);
+    char line[MAX_LINE];
+    fgets(line, MAX_LINE, fp);
     if (sscanf(line, "description %[^\r\n]", test->description) != 1) {
       fprintf(stderr, "\nCould not parse description line of test.\n");
       fclose(fp);
       return NULL;
     }
 
-    while(fgets(line, 8192, fp) != NULL) {
+    while(fgets(line, MAX_LINE, fp) != NULL) {
         // end of config header
         if (line[0] == '\n') {
           break;
@@ -597,6 +792,7 @@ void init_parse_test_config(int test_count, int test_index, char *test_file, str
       exit(-3);
     }
 
+    char tmp[1024];
 
     // set test->file
     test->count = test_count;
@@ -615,22 +811,32 @@ void init_parse_test_config(int test_count, int test_index, char *test_file, str
     snprintf(test->log, 1024, "testlog/%s.log", name);
 
     // fist line is description
-    char line[8192];
-    fgets(line, 8192, fp);
+    char line[MAX_LINE];
+    fgets(line, MAX_LINE, fp);
     if (sscanf(line, "@description %[^\r\n]", test->description) != 1) {
       fprintf(stderr, "\nCould not parse description line of test->\n");
       exit(-3);
     }
 
-    while(fgets(line, 8192, fp) != NULL) {
-        // end of config header
-        if (line[0] != '@') {
-          break;
-        }
+    while(fgets(line, MAX_LINE, fp) != NULL) {
 
-        if (strncmp(line, "@skip!", 6) == 0) {
-            test->skip = 1;
-        }
+      if (line[0] != '@') {
+        break; // end of config header
+      }
+
+      if (strncmp(line, "@skip!", 6) == 0) {
+          test->skip = 1;
+      }
+
+      if (strncmp(line, "@useproxy!", 10) == 0) {
+          strncpy(test->lighty_template, "tests/config/lighttpd-proxy.conf.tpl", 1024);
+          strncpy(test->ligthy_userfile, "tests/config/lighttpd.user", 1024);
+      }
+
+      if (sscanf(line, "@fcgienv_middleware %[^\r\n]", tmp) == 1) {
+        strncpy(test->fcgienv_middleware, tmp, 1024);
+      }
+
     }
 
     if (feof(fp)) {
@@ -702,11 +908,11 @@ int run_test(struct Test *test) {
   int retVal = 0;
   FILE *in = NULL;
   FILE *log = NULL;
-  char line[8192];
+  char line[MAX_LINE];
   char log_dir[1024];
 
   int response_line_count = 0;
-  char response_lines[100][8192];
+  char response_lines[100][MAX_LINE];
   char last_sessionid[100] = "";
 
   do {
@@ -745,12 +951,12 @@ int run_test(struct Test *test) {
     fprintf(log, "Started running test at %s", ctime_str);
     long long start_time = gettime_us();
 
-    char surveyname[8192] = "";
-    char glob[65536];
+    char surveyname[1024] = "";
+    char glob[MAX_BUFFER];
     double tdelta;
 
     // Variables for FOR NEXT loops
-    char var[8192];
+    char var[1024];
     int first, last;
     int for_count = 0;
     char for_var[10][16];
@@ -761,7 +967,7 @@ int run_test(struct Test *test) {
 
     // Now iterate through test script
     line[0] = 0;
-    fgets(line, 8192, in);
+    fgets(line, MAX_LINE, in);
 
     while (line[0]) {
 
@@ -788,14 +994,14 @@ int run_test(struct Test *test) {
         ////
 
         // Read survey definition and create survey file
-        char survey_file[8192];
+        char survey_file[1024];
 
         // Trim trailing white space from survey name to avoid annoying mismatches
         while (surveyname[0] && surveyname[strlen(surveyname) - 1] == ' ') {
           surveyname[strlen(surveyname) - 1] = 0;
         }
 
-        snprintf(survey_file, 8192, "%s/surveys/%s", test->dir, surveyname);
+        snprintf(survey_file, 1024, "%s/surveys/%s", test->dir, surveyname);
         mkdir(survey_file, 0777);
         if (chmod(survey_file, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP |
                                    S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH)) {
@@ -804,7 +1010,7 @@ int run_test(struct Test *test) {
           goto error;
         }
 
-        snprintf(survey_file, 8192, "%s/surveys/%s/current", test->dir, surveyname);
+        snprintf(survey_file, 1024, "%s/surveys/%s/current", test->dir, surveyname);
         FILE *s = fopen(survey_file, "w");
         if (!s) {
           fprintf(stderr,
@@ -815,7 +1021,7 @@ int run_test(struct Test *test) {
         }
 
         line[0] = 0;
-        fgets(line, 8192, in);
+        fgets(line, MAX_LINE, in);
 
         while (line[0]) {
           int len = strlen(line);
@@ -829,7 +1035,7 @@ int run_test(struct Test *test) {
           }
           fprintf(s, "%s\n", line);
           line[0] = 0;
-          fgets(line, 8192, in);
+          fgets(line, MAX_LINE, in);
         }
 
         fclose(s);
@@ -895,7 +1101,7 @@ int run_test(struct Test *test) {
 
         // write python content from testfile
         line[0] = 0;
-        fgets(line, 8192, in);
+        fgets(line, MAX_LINE, in);
         while (line[0]) {
           int len = strlen(line);
           // Trim CR/LF from the end of the line
@@ -909,7 +1115,7 @@ int run_test(struct Test *test) {
           fprintf(s, "%s\n", line);
 
           line[0] = 0;
-          fgets(line, 8192, in);
+          fgets(line, MAX_LINE, in);
         } // endwhile
         fclose(s);
 
@@ -1104,8 +1310,8 @@ int run_test(struct Test *test) {
         int error_code = regcomp(&regex, glob, REG_EXTENDED | REG_NOSUB);
 
         if (error_code) {
-          char err[8192] = "";
-          regerror(error_code, &regex, err, 8192);
+          char err[MAX_LINE] = "";
+          regerror(error_code, &regex, err, MAX_LINE);
           tdelta = gettime_us() - start_time;
           tdelta /= 1000;
           fprintf(
@@ -1141,8 +1347,8 @@ int run_test(struct Test *test) {
         int error_code = regcomp(&regex, glob, REG_EXTENDED | REG_NOSUB);
 
         if (error_code) {
-          char err[8192] = "";
-          regerror(error_code, &regex, err, 8192);
+          char err[MAX_LINE] = "";
+          regerror(error_code, &regex, err, MAX_LINE);
           tdelta = gettime_us() - start_time;
           tdelta /= 1000;
           fprintf(
@@ -1177,15 +1383,15 @@ int run_test(struct Test *test) {
         // Exeucte curl call. If it is a newsession command, then remember the session ID
         // We also log the returned data from the request, so that we can look at that
         // as well, if required.
-        char cmd[65536];
-        char tmp[65536];
+        char cmd[MAX_BUFFER];
+        char tmp[MAX_BUFFER];
         int expected_http_status = 0;
 
         tdelta = gettime_us() - start_time;
         tdelta /= 1000;
 
         // Delete any old version of files laying around
-        snprintf(tmp, 65536, "%s/request.out", test->dir);
+        snprintf(tmp, MAX_BUFFER, "%s/request.out", test->dir);
         unlink(tmp);
         if (!access(tmp, F_OK)) {
           fprintf(log, "T+%4.3fms : FATAL: Could not unlink file '%s'", tdelta,
@@ -1193,7 +1399,7 @@ int run_test(struct Test *test) {
           goto fatal;
         }
 
-        snprintf(tmp, 65536, "%s/request.code", test->dir);
+        snprintf(tmp, MAX_BUFFER, "%s/request.code", test->dir);
         unlink(tmp);
         if (!access(tmp, F_OK)) {
           fprintf(log, "T+%4.3fms : FATAL: Could not unlink file '%s'", tdelta,
@@ -1227,7 +1433,7 @@ int run_test(struct Test *test) {
                 tdelta);
         FILE *rc;
 
-        snprintf(cmd, 65536, "%s/request.out", test->dir);
+        snprintf(cmd, MAX_BUFFER, "%s/request.out", test->dir);
         rc = fopen(cmd, "r");
 
         if (!rc) {
@@ -1246,7 +1452,7 @@ int run_test(struct Test *test) {
           fprintf(log, "T+%4.3fms : HTTP request response body:\n", tdelta);
           response_line_count = 0;
           line[0] = 0;
-          fgets(line, 8192, rc);
+          fgets(line, MAX_LINE, rc);
 
           while (line[0]) {
             int len = strlen(line);
@@ -1263,13 +1469,13 @@ int run_test(struct Test *test) {
             }
 
             line[0] = 0;
-            fgets(line, 8192, rc);
+            fgets(line, MAX_LINE, rc);
           }
           fclose(rc);
 
         } // endif !rc
 
-        snprintf(cmd, 65536, "%s/request.code", test->dir);
+        snprintf(cmd, MAX_BUFFER, "%s/request.code", test->dir);
         rc = fopen(cmd, "r");
 
         if (!rc) {
@@ -1329,7 +1535,8 @@ int run_test(struct Test *test) {
           goto fail;
         }
 
-      } else if (!strcmp(line, "verify_session")) {
+      } else if (strncmp("verify_session", line, strlen("verify_session")) == 0) {
+        int skip_headers = 0;
 
         ////
         // keyword: "verify_session"
@@ -1339,187 +1546,66 @@ int run_test(struct Test *test) {
           tdelta = gettime_us() - start_time;
           tdelta /= 1000;
           fprintf(log,
-                  "T+%4.3fms : FATAL: No session ID has been captured. Use "
-                  "extract_sessionid following request directive.\n",
-                  tdelta);
+            "T+%4.3fms : FATAL: No session ID has been captured. Use "
+            "extract_sessionid following request directive.\n",
+            tdelta);
           goto fatal;
         }
 
-        // Build path to session file
-        char session_file[8192];
-        snprintf(session_file, 1024, "%s/sessions/%c%c%c%c/%s", test->dir,
-                 last_sessionid[0], last_sessionid[1], last_sessionid[2],
-                 last_sessionid[3], last_sessionid);
-
-        char cmd[8192];
-        snprintf(cmd, 8192, "%s/session.log", test->dir);
-        unlink(cmd);
-
-        snprintf(cmd, 8192, "sudo cp %s %s/session.log", session_file, test->dir);
-        system(cmd);
-
-        tdelta = gettime_us() - start_time;
-        tdelta /= 1000;
-        fprintf(log, "T+%4.3fms : Examining contents of session file '%s'.\n",
-                tdelta, session_file);
-
-        // Check that the file exists
-        snprintf(cmd, 8192, "%s/session.log", test->dir);
-        FILE *s = fopen(cmd, "r");
-        if (!s) {
+        FILE *s = open_session_file_copy(last_sessionid, test);
+        if(!s) {
           tdelta = gettime_us() - start_time;
           tdelta /= 1000;
-          fprintf(log, "T+%4.3fms : FAIL : Could not open session file: %s\n",
-                  tdelta, strerror(errno));
-          goto fail;
+          fprintf(log, "T+%4.3fms : Create copy of session file failed: '%s/%s.cpy'.\n", tdelta, test->dir, last_sessionid);
+          goto fatal;
         }
 
-        // Now go through reading lines from here and from the session file
-        char session_line[8192];
-        char comparison_line[8192];
+        // parse out optional args
+        char arg[1024];
+        if (sscanf(line, "verify_session(%s)", arg) == 1) {
+          arg[strlen(arg) - 1] = 0; // replase closing ')'
+          if(!strcmp(arg, "skip_headers")) {
+            skip_headers = 1;
+          }
+        }
 
+        // TODO for now(!) we always ignore the header line with the hashed session id
+        // read first line (survey sha) and ignore it
+        int skip_s = 1;
+        int skip_c = 1;
+
+        // skip n first session lines (headers)
+        if (skip_headers) {
+          char tmp[MAX_LINE];
+          int count = 0;
+          while (fgets(tmp, MAX_LINE, s)) {
+            count++;
+            if (count <= skip_s) {
+              continue;
+            }
+            if(tmp[0] != '@') {
+              count--;
+              break;
+            }
+          } //end while
+          skip_s = count;
+          rewind(s);
+        }
+
+        fprintf(log, "- skip_headers flag %s, skipping first %d lines of session file\n", (skip_headers) ? "set" : "not set", skip_s);
         fprintf(log, "<<<<<< START OF EXPECTED SESSION DATA\n");
         fprintf(log, ">>>>>> START OF SESSION FILE\n");
 
-        session_line[0] = 0;
-        fgets(session_line, 8192, s);
-        comparison_line[0] = 0;
-        fgets(comparison_line, 8192, in);
+        int ret = compare_session(s, skip_s, in, skip_c, test, log, start_time);
+        if (s) {
+          fclose(s);
+        }
 
-        int verify_errors = 0;
-        int verify_line = 0;
-
-        while (1) {
-
+        if (ret) {
           tdelta = gettime_us() - start_time;
           tdelta /= 1000;
-          if (comparison_line[0] && strcmp(comparison_line, "endofsession")) {
-            int len = strlen(comparison_line);
-            while (len && (comparison_line[len - 1] == '\r' ||
-                           comparison_line[len - 1] == '\n')) {
-              comparison_line[--len] = 0;
-            }
-            fprintf(log, "<<< %s\n", comparison_line);
-          } else {
-            fprintf(log, "<<<<<< END OF EXPECTED SESSION DATA\n");
-          }
-
-          if (session_line[0]) {
-            int len = strlen(session_line);
-            while (len && (session_line[len - 1] == '\r' ||
-                           session_line[len - 1] == '\n')) {
-              session_line[--len] = 0;
-            }
-            fprintf(log, ">>> %s\n", session_line);
-          } else {
-            fprintf(log, ">>>>>> END OF SESSION FILE\n");
-          }
-
-          // compare session line, we are relying on the string terminations set above
-          if (verify_line >
-              0) { // TODO for now(!) we ignore the header line with the hashed session id
-
-            if ((session_line[0] && comparison_line[0]) &&
-                strcmp(comparison_line, "endofsession")) {
-              verify_errors =
-                  compare_session_line(session_line, comparison_line);
-
-              switch (verify_errors) {
-              case 0:
-                // ok, do nothing
-                break;
-
-              case -1:
-                fprintf(log,
-                        "  MISMATCH : compare_session_line() field mismatch "
-                        "(line %d, code %d): \"%s\" != \"%s\"\n",
-                        verify_line, verify_errors, session_line,
-                        comparison_line);
-                break;
-
-              case -2:
-                fprintf(
-                    log,
-                    "  MISMATCH : compare_session_line() session line too "
-                    "short (columns) (line %d, code %d): \"%s\" != \"%s\"\n",
-                    verify_line, verify_errors, session_line, comparison_line);
-                break;
-
-              case -3:
-                fprintf(log,
-                        "  MISMATCH : compare_session_line() session line too "
-                        "long (columns) (line %d, code %d): \"%s\" != \"%s\"\n",
-                        verify_line, verify_errors, session_line,
-                        comparison_line);
-                break;
-
-              case -4:
-                fprintf(log,
-                        "  MISMATCH : compare_session_line() <UTIME> invalid "
-                        "(line %d, code %d): \"%s\" != \"%s\"\n",
-                        verify_line, verify_errors, session_line,
-                        comparison_line);
-                break;
-
-              default:
-                fprintf(log,
-                        "  MISMATCH : compare_session_line() unknown return "
-                        "code (line %d, code %d): \"%s\" != \"%s\"\n",
-                        verify_line, verify_errors, session_line,
-                        comparison_line);
-              } // endswitch
-            }
-
-          } // endif verify_line
-
-          if (session_line[0] && (!strcmp("endofsession", comparison_line))) {
-            // End of comparison list before end of session file
-            tdelta = gettime_us() - start_time;
-            tdelta /= 1000;
-            fprintf(log,
-                    "T+%4.3fms : FAIL : 1 Session log file contains more lines "
-                    "than expected.\n",
-                    tdelta);
-            goto fail;
-          }
-
-          if ((!session_line[0]) && (strcmp("endofsession", comparison_line))) {
-            // End of session file before end of comparison list
-            tdelta = gettime_us() - start_time;
-            tdelta /= 1000;
-            fprintf(log,
-                    "T+%4.3fms : FAIL : 2 Session log file contains less lines "
-                    "than expected.\n",
-                    tdelta);
-            goto fail;
-          }
-
-          if (!strcmp("endofsession", comparison_line)) {
-            break;
-          }
-
-          verify_line++;
-          session_line[0] = 0;
-          fgets(session_line, 8192, s);
-          comparison_line[0] = 0;
-          fgets(comparison_line, 8192, in);
-
-        } // end while 1
-
-        fclose(s);
-
-        // fail if session contents mismatch
-        if (verify_errors) {
-          fprintf(log,
-                  "T+%4.3fms : FAIL : verifysession: %d lines in session file "
-                  "do not match!.\n",
-                  tdelta, verify_errors);
+          fprintf(log, "T+%4.3fms : compare session failed: '%s'.\n", tdelta, last_sessionid);
           goto fail;
-        } else {
-          fprintf(
-              log,
-              "T+%4.3fms : verifysession: session file matches comparasion.\n",
-              tdelta);
         }
 
         ////
@@ -1528,9 +1614,9 @@ int run_test(struct Test *test) {
 
       } else if (line[0] == 0) {
         // Ignore blank lines
-      } else if (line[0] == '#') {
-        // Ignore header lines
       } else if (line[0] == '@') {
+        // Ignore header lines
+      } else if (line[0] == '#') {
         // print special comments starting with "#!"
         if (line[1] == '!') {
           char *l = line;
@@ -1558,7 +1644,7 @@ int run_test(struct Test *test) {
       dump_logs(log_dir, log);
     }
 
-    fprintf(stderr, "\r\033[39m[\033[32mPASS\033[39m]  %s : %s\n", test->name, test->description);
+    fprintf(stderr, "\r\033[39m[\033[32mPASS\033[39m] \033[37m(%d/%d)\033[39m %s : %s\n", test->index, test->count, test->name, test->description);
     fflush(stderr);
     break;
 
@@ -1566,7 +1652,7 @@ int run_test(struct Test *test) {
 
     fix_ownership(test->dir);
 
-    fprintf(stderr, "\r\033[90m[\033[33mSKIP\033[39m]  %s : %s\n", test->name, test->description);
+    fprintf(stderr, "\r\033[90m[\033[33mSKIP\033[39m] \033[37m(%d/%d)\033[39m %s : %s\n", test->index, test->count, test->name, test->description);
     fflush(stderr);
     break;
 
@@ -1577,7 +1663,7 @@ int run_test(struct Test *test) {
       dump_logs(log_dir, log);
     }
 
-    fprintf(stderr, "\r\033[39m[\033[31mFAIL\033[39m]  %s : %s\n", test->name, test->description);
+    fprintf(stderr, "\r\033[39m[\033[31mFAIL\033[39m] \033[37m(%d/%d)\033[39m %s : %s\n", test->index, test->count, test->name, test->description);
     fflush(stderr);
     retVal = 1;
     break;
@@ -1589,7 +1675,7 @@ int run_test(struct Test *test) {
       dump_logs(log_dir, log);
     }
 
-    fprintf(stderr, "\r\033[39m[\033[31;1;5mERROR\033[39;0m]  %s : %s\n", test->name, test->description);
+    fprintf(stderr, "\r\033[39m[\033[31;1;5mERROR\033[39;0m] \033[37m(%d/%d)\033[39m %s : %s\n", test->index, test->count, test->name, test->description);
     fflush(stderr);
     retVal = 2;
     break;
@@ -1601,7 +1687,7 @@ int run_test(struct Test *test) {
       dump_logs(log_dir, log);
     }
 
-    fprintf(stderr, "\r\033[39m[\033[31;1;5mDIED\033[39;0m]  %s : %s\n", test->name, test->description);
+    fprintf(stderr, "\r\033[39m[\033[31;1;5mDIED\033[39;0m] \033[37m(%d/%d)\033[39m %s : %s\n", test->index, test->count, test->name, test->description);
     fflush(stderr);
     retVal = 3;
     break;
@@ -1621,7 +1707,7 @@ int run_test(struct Test *test) {
 
 void init_lighttpd(struct Test *test) {
   char conf_path[1024];
-  char userfile_path[1024];
+  char userfile_path[1024] = { '\0' };
   char cmd[2048];
 
   // kill open ports
@@ -1644,24 +1730,26 @@ void init_lighttpd(struct Test *test) {
     exit(-3);
   }
 
-  // copy userfile
-  snprintf(cmd, 2048, "sudo cp %s %s", test->ligthy_userfile, userfile_path);
-  if (system(cmd)) {
-    fprintf(stderr, "system() call to copy lighttpd user file failed");
-    exit(-3);
+  if (strlen(test->ligthy_userfile)) {
+    // copy userfile
+    snprintf(cmd, 2048, "sudo cp %s %s", test->ligthy_userfile, userfile_path);
+    if (system(cmd)) {
+      fprintf(stderr, "system() call to copy lighttpd user file failed");
+      exit(-3);
+    }
   }
 
   snprintf(cmd, 16384,
     // vars
-    "sed -i                         \\"
-    "-e 's|{BASE_DIR}|%s|g'         \\"
-    "-e 's|{PID_FILE}|%s|g'         \\"
-    "-e 's|{LIGHTY_USER}|%s|g'      \\"
-    "-e 's|{LIGHTY_GROUP}|%s|g'     \\"
-    "-e 's|{SERVER_PORT}|%d|g'      \\"
-    "-e 's|{AUTH_PROXY_PORT}|%d|g'  \\"
-    "-e 's|{SURVEYFCGI_PORT}|%d|g'  \\"
-    "-e 's|{DIGEST_USERFILE}|%s|g'  \\"
+    "sed -i                              \\"
+    "-e 's|{BASE_DIR}|%s|g'              \\"
+    "-e 's|{PID_FILE}|%s|g'              \\"
+    "-e 's|{LIGHTY_USER}|%s|g'           \\"
+    "-e 's|{LIGHTY_GROUP}|%s|g'          \\"
+    "-e 's|{SERVER_PORT}|%d|g'           \\"
+    "-e 's|{FCGIENV_MIDDLEWARE}|%s|g' \\"
+    "-e 's|{SURVEYFCGI_PORT}|%d|g'       \\"
+    "-e 's|{DIGEST_USERFILE}|%s|g'       \\"
     // path
     "%s",
     // vars
@@ -1670,7 +1758,7 @@ void init_lighttpd(struct Test *test) {
     LIGHTY_USER,
     LIGHTY_GROUP,
     SERVER_PORT,
-    AUTH_PROXY_PORT,
+    test->fcgienv_middleware,
     SURVEYFCGI_PORT,
     userfile_path,
     // path
@@ -1728,12 +1816,12 @@ void init_lighttpd(struct Test *test) {
   int v = 0;
   while ((v = system(cmd)) != 0) {
     if (test->count == 1) {
-      fprintf(stderr, "cmd returned code %d\n", v);
+      fprintf(stderr, "curl returned code %d\n    - command: '%s'\n", v, cmd);
     }
-    char log_dir[8192];
+    char log_dir[1024];
     // This should be /logs, but it doesn't exist yet, and we really only need it for the
     // ../ to get to breakage.log
-    snprintf(log_dir, 8192, "%s/sessions", test->dir);
+    snprintf(log_dir, 1024, "%s/sessions", test->dir);
     if (test->count == 1) {
       dump_logs(log_dir, stderr);
     }

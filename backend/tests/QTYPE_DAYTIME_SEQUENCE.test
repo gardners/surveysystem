@@ -15,7 +15,7 @@ request 200 newsession?surveyid=qtype_daytimesequence
 extract_sessionid
 
 # Check that we have an empty session file created
-verify_session
+verify_session(skip_headers)verify_session
 qtype_daytimesequence/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 
@@ -29,7 +29,7 @@ request 200 addanswer?sessionid=$SESSION&answer=meals:27000,43200,66600,75600:0:
 match_string {"status": 0, "message": "", "next_questions": []}
 
 # Make sure answer ends up in file
-verify_session
+verify_session(skip_headers)
 field_unit/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 meals:DAYTIME_SEQUENCE:27000,43200,66600,75600:0:0:0:0:0:0:0:seconds:0:<UTIME>
 endofsession
@@ -40,7 +40,7 @@ request 200 delanswer?sessionid=$SESSION&questionid=meals
 match_string {"status": 0, "message": "", "next_questions": [{"id": "meals", "name": "meals", "title": "Your average daily meal times", "description": "", "type": "DAYTIME_SEQUENCE", "default_value": "27000,43200,66600,75600", "min_value": -1, "max_value": -1, "choices": ["Breakfast", "Lunch", "Tea", "Late Snack"], "unit": "seconds"}]}
 
 # Make sure answer ends up in file
-verify_session
+verify_session(skip_headers)
 field_unit/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 meals:DAYTIME_SEQUENCE:27000,43200,66600,75600:0:0:0:0:0:0:0:seconds:1:<UTIME>
 endofsession

@@ -16,7 +16,7 @@ request 200 newsession?surveyid=foo
 extract_sessionid
 
 # Check that we have an empty session file created
-verify_session
+verify_session(skip_headers)
 foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 endofsession
 
@@ -24,7 +24,7 @@ endofsession
 request 200 addanswer?sessionid=$SESSION&answer=question1:answer1:0:0:0:0:0:0:0:
 
 # Make sure answer ends up in file
-verify_session
+verify_session(skip_headers)
 foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 question1:TEXT:answer1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
@@ -33,7 +33,7 @@ endofsession
 request 400 addanswer?sessionid=$SESSION&answer=question2:SOMEQTYPE:answer2:0:0:0:0:0:0:0:
 
 # Make sure answer 'flag' and 'stored' are unchanged (not accepting the silly values in request)
-verify_session
+verify_session(skip_headers)
 foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 question1:TEXT:answer1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
@@ -42,7 +42,7 @@ endofsession
 request 200 addanswer?sessionid=$SESSION&answer=question2:answer2:0:0:0:0:0:0:0::-1:-1
 
 # Make sure answer 'flag' and 'stored' are unchanged (not accepting the silly values in request)
-verify_session
+verify_session(skip_headers)
 foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 question1:TEXT:answer1:0:0:0:0:0:0:0::0:<UTIME>
 question2:TEXT:answer2:0:0:0:0:0:0:0::0:<UTIME>

@@ -44,7 +44,7 @@ request 200 newsession?surveyid=pyanswer_qtpye
 extract_sessionid
 
 # Check that we have an empty session file created
-verify_session
+verify_session(skip_headers)
 pyanswer_qtpye/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 
@@ -61,7 +61,7 @@ request 200 addanswer?sessionid=$SESSION&answer=q1:Yes:0:0:0:0:0:0:0:
 match_string {"status": 0, "message": "", "next_questions": []}
 
 # verify qtypes are stored in session
-verify_session
+verify_session(skip_headers)
 foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 q2:INT::5:0:0:0:0:0:0::0:<UTIME>
 q1:MULTICHOICE:Yes:0:0:0:0:0:0:0::0:<UTIME>

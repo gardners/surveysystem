@@ -7,13 +7,21 @@ var.pid_file="{PID_FILE}"
 var.lighty_user="{LIGHTY_USER}"
 var.lighty_group="{LIGHTY_GROUP}"
 var.server_port="{SERVER_PORT}"
+var.auth_proxy_port="{AUTH_PROXY_PORT}"
 var.surveyfcgi_port="{SURVEYFCGI_PORT}"
+var.fcgienv_middleware="{FCGIENV_MIDDLEWARE}"
+var.digest_userfile="{DIGEST_USERFILE}"
 
 ## config
 
 server.modules = (
      "mod_access",
      "mod_alias",
+
+     # auth middleware
+     "mod_auth",
+     "mod_authn_file",
+     "mod_proxy",
 
      "mod_fastcgi",
      "mod_compress",
@@ -40,7 +48,27 @@ server.error-handler-404   = "/index.html"
 compress.cache-dir          = "/var/cache/lighttpd/compress/"
 compress.filetype           = ( "application/javascript", "text/css", "text/html", "text/plain" )
 
+auth.backend = "htdigest"
+auth.backend.htdigest.userfile = digest_userfile
+
 $SERVER["socket"] == ":" + server_port {
+
+     # block outside ips
+     $HTTP["remoteip"] !~ "127.0.0.[0-255]" {
+          url.access-deny = ( "" )
+     }
+
+     # everything needs to be authenticated except some test endpoints
+     $HTTP["url"] !~ "^/(surveyapi\/fastcgitest|surveyapi\/accesstest)"  {
+          auth.require = (
+               "" => (
+                    "method"  => "basic",
+                    "realm"   => "ss-middleware",
+                    "require" => "valid-user",
+               )
+          )
+     }
+
      fastcgi.debug = 1
 
      fastcgi.server = (
@@ -54,6 +82,8 @@ $SERVER["socket"] == ":" + server_port {
                     "SURVEY_PYTHONDIR" => base_dir + "/python",
                     ## --- DO NOT USE ON PRODUCTION: set below var only for test envs ---
                     "SURVEY_FORCE_PYINIT" => "1",
+                    ## --- register proxy auth middleware: {ip\:port} ---
+                    "SS_TRUSTED_MIDDLEWARE" => fcgienv_middleware,
                ),
                "check-local" => "disable",
                # remote server may use its own docroot
