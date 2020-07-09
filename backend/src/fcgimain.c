@@ -20,6 +20,8 @@
 #include "survey.h"
 #include "utils.h"
 
+#include "fcgirequest.h"
+
 #define CHECKPOINT()                                                           \
   {                                                                            \
     fprintf(stderr, "%s:%d:%s():pid=%d: Checkpoint\n", __FILE__, __LINE__,     \
@@ -169,10 +171,12 @@ int kvalid_answer(struct kpair *kp) {
 
 enum key { KEY_SURVEYID, KEY_SESSIONID, KEY_QUESTIONID, KEY_ANSWER, KEY__MAX };
 
-static const struct kvalid keys[KEY__MAX] = {{kvalid_surveyid, "surveyid"},
-                                             {kvalid_sessionid, "sessionid"},
-                                             {kvalid_questionid, "questionid"},
-                                             {kvalid_answer, "answer"}};
+static const struct kvalid keys[KEY__MAX] = {
+  { kvalid_surveyid, "surveyid" },
+  { kvalid_sessionid, "sessionid" },
+  { kvalid_questionid, "questionid" },
+  { kvalid_answer, "answer" }
+};
 
 enum page {
   PAGE_NEWSESSION,
@@ -208,10 +212,17 @@ static const disp disps[PAGE__MAX] = {
     fcgi_analyse};
 
 static const char *const pages[PAGE__MAX] = {
-    "newsession",   "addanswer",  "updateanswer",
-    "nextquestion", "delanswer",  "delanswerandfollowing",
-    "delsession",   "accesstest", "fastcgitest",
-    "analyse"};
+    "newsession",
+    "addanswer",
+    "updateanswer",
+    "nextquestion",
+    "delanswer",
+    "delanswerandfollowing",
+    "delsession",
+    "accesstest",
+    "fastcgitest",
+    "analyse"
+};
 
 void usage(void) {
   fprintf(stderr, "usage: surveyfcgi -- Start fast CGI service\n");
@@ -463,17 +474,37 @@ static void fcgi_newsession(struct kreq *req) {
     struct kpair *survey = req->fieldmap[KEY_SURVEYID];
     if (!survey) {
       // No survey ID, so return 400
-      LOG_ERROR("surveyid missing from query string");
       quick_error(req, KHTTP_400, "Surveyid missing.");
+      LOG_ERROR("surveyid missing from query string");
       break;
     }
 
+
+    // #363 parse session meta
+    struct session_meta *meta = calloc(sizeof(struct session_meta), 1);
+    if (parse_session_meta_kreq(req, meta)) {
+      quick_error(req, KHTTP_500, "Session could not be created (1).");
+      LOG_ERROR("create_session_meta_kreq() failed");
+      break;
+    }
+
+    // #363 validate session meta
+    enum khttp status = validate_session_meta_kreq(req, meta);
+    if (status >= KHTTP_400) {
+      // No survey ID, so return 400
+      quick_error(req, status, "Invalid idendity provider check app configuration");
+      LOG_ERRORV("validate_session_meta_kreq() returned status %status %d >= KHTTP_400 (%d)", KHTTP_400, status);
+      break;
+    }
+
+    // #363 save session meta
     char session_id[1024];
-    if (create_session(survey->val, session_id)) {
-      quick_error(req, KHTTP_500, "Session could not be created.");
+    if (create_session(survey->val, session_id, meta)) {
+      quick_error(req, KHTTP_500, "Session could not be created (2).");
       LOG_ERROR("create_session() failed");
       break;
     }
+    free_session_meta(meta);
 
     // create session meta log file, log user and creation time
 
