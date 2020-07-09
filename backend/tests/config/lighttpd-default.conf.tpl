@@ -7,20 +7,13 @@ var.pid_file="{PID_FILE}"
 var.lighty_user="{LIGHTY_USER}"
 var.lighty_group="{LIGHTY_GROUP}"
 var.server_port="{SERVER_PORT}"
-var.auth_proxy_port="{AUTH_PROXY_PORT}"
 var.surveyfcgi_port="{SURVEYFCGI_PORT}"
-var.digest_userfile="{DIGEST_USERFILE}"
 
 ## config
 
 server.modules = (
      "mod_access",
      "mod_alias",
-
-     # auth middleware
-     "mod_auth",
-     "mod_authn_file",
-     "mod_proxy",
 
      "mod_fastcgi",
      "mod_compress",
@@ -46,24 +39,6 @@ server.error-handler-404   = "/index.html"
 
 compress.cache-dir          = "/var/cache/lighttpd/compress/"
 compress.filetype           = ( "application/javascript", "text/css", "text/html", "text/plain" )
-
-auth.backend = "htdigest"
-auth.backend.htdigest.userfile = digest_userfile
-
-$SERVER["socket"] == ":" + auth_proxy_port {
-    auth.require = (
-         "" => (
-              "method"  => "digest",
-              "realm"   => "ss-middleware",
-              "require" => "valid-user",
-         )
-    )
-
-    proxy.server = ( "" => (
-        ( "host" => "127.0.0.1", "port" => server_port )
-    ) )
-}
-
 
 $SERVER["socket"] == ":" + server_port {
      fastcgi.debug = 1

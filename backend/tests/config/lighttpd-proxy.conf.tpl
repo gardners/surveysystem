@@ -9,6 +9,7 @@ var.lighty_group="{LIGHTY_GROUP}"
 var.server_port="{SERVER_PORT}"
 var.auth_proxy_port="{AUTH_PROXY_PORT}"
 var.surveyfcgi_port="{SURVEYFCGI_PORT}"
+var.fcgienv_middleware="{FCGIENV_MIDDLEWARE}"
 var.digest_userfile="{DIGEST_USERFILE}"
 
 ## config
@@ -52,13 +53,21 @@ auth.backend.htdigest.userfile = digest_userfile
 
 $SERVER["socket"] == ":" + server_port {
 
-    auth.require = (
-         "" => (
-              "method"  => "digest",
-              "realm"   => "ss-middleware",
-              "require" => "valid-user",
-         )
-    )
+     # block outside ips
+     $HTTP["remoteip"] !~ "127.0.0.[0-255]" {
+          url.access-deny = ( "" )
+     }
+
+     # everything needs to be authenticated except some test endpoints
+     $HTTP["url"] !~ "^/(surveyapi\/fastcgitest|surveyapi\/accesstest)"  {
+          auth.require = (
+               "" => (
+                    "method"  => "basic",
+                    "realm"   => "ss-middleware",
+                    "require" => "valid-user",
+               )
+          )
+     }
 
      fastcgi.debug = 1
 
@@ -73,8 +82,8 @@ $SERVER["socket"] == ":" + server_port {
                     "SURVEY_PYTHONDIR" => base_dir + "/python",
                     ## --- DO NOT USE ON PRODUCTION: set below var only for test envs ---
                     "SURVEY_FORCE_PYINIT" => "1",
-                    ## --- register proxy auth middleware: {ip:port} ---
-                    "SS_TRUSTED_MIDDLEWARE" => "127.0.0.0:" + auth_proxy_port,
+                    ## --- register proxy auth middleware: {ip\:port} ---
+                    "SS_TRUSTED_MIDDLEWARE" => fcgienv_middleware,
                ),
                "check-local" => "disable",
                # remote server may use its own docroot
