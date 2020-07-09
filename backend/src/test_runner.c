@@ -39,6 +39,7 @@
 
 #include "errorlog.h"
 #include "survey.h"
+#include "utils.h"
 
 #define SERVER_PORT 8099
 #define SURVEYFCGI_PORT 9009
@@ -504,6 +505,39 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
 }
 
 /**
+ * creates a copy of a given session and opens it for inspection
+ */
+FILE *open_session_file_copy(char *session_id, struct Test *test) {
+
+  // Build path to session file
+  char session_file[1024];
+
+  snprintf(session_file, 1024, "%s/sessions/%c%c%c%c/%s", test->dir,
+            session_id[0], session_id[1], session_id[2],
+            session_id[3], session_id);
+
+  char tmp[MAX_LINE];
+  snprintf(tmp, MAX_LINE, "%s/session.cpy", test->dir);
+  unlink(tmp);
+
+  snprintf(tmp, MAX_LINE, "sudo cp %s %s/session.cpy", session_file, test->dir);
+  if(system(tmp)) {
+    fprintf(stderr, "Command failed: '%s'\n", tmp);
+    return NULL;
+  }
+
+  // Check that the file exists
+  snprintf(tmp, MAX_LINE, "%s/session.cpy", test->dir);
+  FILE *copy = fopen(tmp, "r");
+  if (!copy) {
+    fprintf(stderr, "Could not open session file '%s': %s\n", tmp, strerror(errno));
+    return NULL;
+  }
+
+  return copy;
+}
+
+/**
  * Compares survey session line with a comparsion string
  * - the number of delimitors (Note, this includes escaped delimiters in fields, i.e "\:")
  * - string matches between delimitors
@@ -578,6 +612,135 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
 
   return DIFF_MATCH;
 }
+
+/**
+ * All file pointers are left open and have to be closed externally
+ */
+int compare_session(FILE *sess, int skip_s, FILE *comp, int skip_c, struct Test *test, FILE *log, long long start_time) {
+  int retVal = 0;
+  double tdelta;
+
+  // Now go through reading lines from here and from the session file
+  char session_line[MAX_LINE];
+  char comparison_line[MAX_LINE];
+
+  int c_count = 0; // comparsion line count
+  int s_count = 0; // session line count
+  int diff = DIFF_MATCH; // diff result
+
+  char *s;
+  char *c;
+
+  // wind both files forward
+  while (c_count < skip_c) {
+    c = fgets(comparison_line, MAX_LINE, comp);
+    c_count++;
+  }
+
+  while (s_count < skip_s) {
+    s = fgets(session_line, MAX_LINE, sess);
+    s_count++;
+  }
+
+  while (1) {
+    // reset both containers, we need this for checks below
+    session_line[0] = 0;
+    comparison_line[0] = 0;
+
+    tdelta = gettime_us() - start_time;
+    tdelta /= 1000;
+
+    // read left and right
+    s = fgets(session_line, MAX_LINE, sess);
+    c = fgets(comparison_line, MAX_LINE, comp);
+
+    s_count++;
+    c_count++;
+
+    trim_crlf(comparison_line);
+    trim_crlf(session_line);
+
+    // End of session file before end of comparison list
+    // End of comparison list before end of session file
+
+    fprintf(log, "<<< %s\n", comparison_line);
+    fprintf(log, ">>> %s\n", session_line);
+
+    // end comparasion
+    if (!strcmp(comparison_line, "endofsession")) {
+      fprintf(log, "<<<<<< END OF EXPECTED SESSION DATA\n");
+      if (s != NULL) {
+        fprintf(log,"  [SESSION_TOO_LONG] comparsion 'endofsession' at line %d, but session file has content at line %d: '%s'\n", c_count, s_count, session_line);
+      }
+      break;
+    }
+
+    // no empty lines allowed
+    if (!strlen(comparison_line)) {
+      fprintf(log,"  [EMPTY_LINE_COMPARSION] line %d of comparsion is empty.\n", c_count);
+      retVal++;
+      // TODO check if eof session
+      break;
+    }
+
+    if (!strlen(session_line)) {
+      if (s == NULL) {
+        fprintf(log,"  [SESSION_TOO_SHORT] comparsion content at line %d, but session file ended before: '%s'\n", c_count,comparison_line);
+      } else {
+        fprintf(log,"  [EMPTY_LINE_SESSION] line %d of session file is empty.\n", s_count);
+      }
+      retVal++;
+      // TODO check if eof session
+      break;
+    }
+
+    // compare session line, we are relying on the string terminations set above
+    diff = compare_session_line(session_line, comparison_line, test);
+    // fprintf(stderr, "\n%d: line %d(%d), '%s' => '%s'", diff, s_count, c_count, session_line, comparison_line);
+
+    switch (diff) {
+      case DIFF_MATCH:
+        // ok, do nothing
+        break;
+
+      case DIFF_MISMATCH:
+        fprintf(log,
+          "  [DIFF_MISMATCH] compare_session_line() field mismatch (session line %d, comparsion line %d, code %d)\n", s_count, c_count, diff);
+        break;
+
+      case DIFF_MISMATCH_LENGTH:
+        fprintf(log,
+          "  [DIFF_MISMATCH_LENGTH] compare_session_line() session line number of fields don't match (session line %d, comparsion line %d, code %d)\n", s_count, c_count, diff);
+        break;
+
+      case DIFF_MISMATCH_TOKEN:
+        fprintf(log,
+          "  [DIFF_MISMATCH_TOKEN] compare_session_line() <TOKEN> ivalidation failed (session line %d, comparsion line %d, code %d)\n", s_count, c_count, diff);
+        break;
+
+      default:
+        fprintf(log,
+          "  [UNKWOWN MISMATCH] compare_session_line() unknown return (session line %d, comparsion line %d, code %d)\n", s_count, c_count, diff);
+    } // endswitch
+
+    // register error state
+    if (diff > DIFF_MATCH) {
+      retVal++;
+    }
+  } // end while 1
+
+  tdelta = gettime_us() - start_time;
+  tdelta /= 1000;
+
+  if (retVal) {
+    fprintf(log, "T+%4.3fms : FAIL : verifysession with %d errors.\n", tdelta, retVal);
+    return -1;
+  }
+
+  fprintf(log, "T+%4.3fms : OK : session file matches comparsion: %d session lines read, %d lines compared.\n", tdelta, s_count, c_count);
+  return 0;
+}
+
 
 FILE *load_test_header(char *test_file, struct Test *test) {
     FILE *fp = fopen(test_file, "r");
@@ -1372,7 +1535,8 @@ int run_test(struct Test *test) {
           goto fail;
         }
 
-      } else if (!strcmp(line, "verify_session")) {
+      } else if (strncmp("verify_session", line, strlen("verify_session")) == 0) {
+        int skip_headers = 0;
 
         ////
         // keyword: "verify_session"
@@ -1382,175 +1546,66 @@ int run_test(struct Test *test) {
           tdelta = gettime_us() - start_time;
           tdelta /= 1000;
           fprintf(log,
-                  "T+%4.3fms : FATAL: No session ID has been captured. Use "
-                  "extract_sessionid following request directive.\n",
-                  tdelta);
+            "T+%4.3fms : FATAL: No session ID has been captured. Use "
+            "extract_sessionid following request directive.\n",
+            tdelta);
           goto fatal;
         }
 
-        // Build path to session file
-        char session_file[1024];
-        snprintf(session_file, 1024, "%s/sessions/%c%c%c%c/%s", test->dir,
-                 last_sessionid[0], last_sessionid[1], last_sessionid[2],
-                 last_sessionid[3], last_sessionid);
-
-        char cmd[MAX_LINE];
-        snprintf(cmd, MAX_LINE, "%s/session.log", test->dir);
-        unlink(cmd);
-
-        snprintf(cmd, MAX_LINE, "sudo cp %s %s/session.log", session_file, test->dir);
-        system(cmd);
-
-        tdelta = gettime_us() - start_time;
-        tdelta /= 1000;
-        fprintf(log, "T+%4.3fms : Examining contents of session file '%s'.\n",
-                tdelta, session_file);
-
-        // Check that the file exists
-        snprintf(cmd, MAX_LINE, "%s/session.log", test->dir);
-        FILE *s = fopen(cmd, "r");
-        if (!s) {
+        FILE *s = open_session_file_copy(last_sessionid, test);
+        if(!s) {
           tdelta = gettime_us() - start_time;
           tdelta /= 1000;
-          fprintf(log, "T+%4.3fms : FAIL : Could not open session file: %s\n",
-                  tdelta, strerror(errno));
-          goto fail;
+          fprintf(log, "T+%4.3fms : Create copy of session file failed: '%s/%s.cpy'.\n", tdelta, test->dir, last_sessionid);
+          goto fatal;
         }
 
-        // Now go through reading lines from here and from the session file
-        char session_line[MAX_LINE];
-        char comparison_line[MAX_LINE];
+        // parse out optional args
+        char arg[1024];
+        if (sscanf(line, "verify_session(%s)", arg) == 1) {
+          arg[strlen(arg) - 1] = 0; // replase closing ')'
+          if(!strcmp(arg, "skip_headers")) {
+            skip_headers = 1;
+          }
+        }
 
+        // TODO for now(!) we always ignore the header line with the hashed session id
+        // read first line (survey sha) and ignore it
+        int skip_s = 1;
+        int skip_c = 1;
+
+        // skip n first session lines (headers)
+        if (skip_headers) {
+          char tmp[MAX_LINE];
+          int count = 0;
+          while (fgets(tmp, MAX_LINE, s)) {
+            count++;
+            if (count <= skip_s) {
+              continue;
+            }
+            if(tmp[0] != '@') {
+              count--;
+              break;
+            }
+          } //end while
+          skip_s = count;
+          rewind(s);
+        }
+
+        fprintf(log, "- skip_headers flag %s, skipping first %d lines of session file\n", (skip_headers) ? "set" : "not set", skip_s);
         fprintf(log, "<<<<<< START OF EXPECTED SESSION DATA\n");
         fprintf(log, ">>>>>> START OF SESSION FILE\n");
 
-        session_line[0] = 0;
-        fgets(session_line, MAX_LINE, s);
-        comparison_line[0] = 0;
-        fgets(comparison_line, MAX_LINE, in);
+        int ret = compare_session(s, skip_s, in, skip_c, test, log, start_time);
+        if (s) {
+          fclose(s);
+        }
 
-        int count_errors = 0;
-        int verify_line = 0;
-
-        int diff = -1; // diff result
-
-        while (1) {
-
+        if (ret) {
           tdelta = gettime_us() - start_time;
           tdelta /= 1000;
-
-          // end session
-          if (comparison_line[0] && strcmp(comparison_line, "endofsession")) {
-            int len = strlen(comparison_line);
-            while (len && (comparison_line[len - 1] == '\r' ||
-                           comparison_line[len - 1] == '\n')) {
-              comparison_line[--len] = 0;
-            }
-            fprintf(log, "<<< %s\n", comparison_line);
-          } else {
-            fprintf(log, "<<<<<< END OF EXPECTED SESSION DATA\n");
-          }
-
-          // trim
-          if (session_line[0]) {
-            int len = strlen(session_line);
-            while (len && (session_line[len - 1] == '\r' ||
-                           session_line[len - 1] == '\n')) {
-              session_line[--len] = 0;
-            }
-            fprintf(log, ">>> %s\n", session_line);
-          } else {
-            fprintf(log, ">>>>>> END OF SESSION FILE\n");
-          }
-
-          // compare session line, we are relying on the string terminations set above
-          // TODO for now(!) we ignore the header line with the hashed session id
-          if (verify_line > 0) {
-
-            if ((session_line[0] && comparison_line[0]) && strcmp(comparison_line, "endofsession")) {
-              diff = compare_session_line(session_line, comparison_line, test);
-
-              // register error state
-              if (diff > DIFF_MATCH) {
-                count_errors ++;
-              }
-
-              switch (diff) {
-                case DIFF_MATCH:
-                  // ok, do nothing
-                  break;
-
-                case DIFF_MISMATCH:
-                  fprintf(log,
-                    "  [DIFF_MISMATCH] compare_session_line() field mismatch (line %d, code %d)\n", verify_line, diff);
-                  break;
-
-                case DIFF_MISMATCH_LENGTH:
-                  fprintf(log,
-                    "  [DIFF_MISMATCH_LENGTH] compare_session_line() session line number of fields don't match (line %d, code %d)\n", verify_line, diff);
-                  break;
-
-                case DIFF_MISMATCH_TOKEN:
-                  fprintf(log,
-                    "  [DIFF_MISMATCH_TOKEN] compare_session_line() <TOKEN> ivalidation failed (line %d, code %d)\n", verify_line, diff);
-                  break;
-
-                default:
-                  fprintf(log,
-                    "  [UNKWOWN MISMATCH] compare_session_line() unknown return (line %d, code %d)\n", verify_line, diff);
-              } // endswitch
-            }
-
-          } // endif verify_line
-
-          if (session_line[0] && (!strcmp("endofsession", comparison_line))) {
-            // End of comparison list before end of session file
-            tdelta = gettime_us() - start_time;
-            tdelta /= 1000;
-            fprintf(log,
-                    "T+%4.3fms : FAIL : 1 Session log file contains more lines "
-                    "than expected.\n",
-                    tdelta);
-            goto fail;
-          }
-
-          if ((!session_line[0]) && (strcmp("endofsession", comparison_line))) {
-            // End of session file before end of comparison list
-            tdelta = gettime_us() - start_time;
-            tdelta /= 1000;
-            fprintf(log,
-                    "T+%4.3fms : FAIL : 2 Session log file contains less lines "
-                    "than expected.\n",
-                    tdelta);
-            goto fail;
-          }
-
-          if (!strcmp("endofsession", comparison_line)) {
-            break;
-          }
-
-          verify_line++;
-          session_line[0] = 0;
-          fgets(session_line, MAX_LINE, s);
-          comparison_line[0] = 0;
-          fgets(comparison_line, MAX_LINE, in);
-
-        } // end while 1
-
-        fclose(s);
-
-        // fail if session contents mismatch
-        if (count_errors) {
-          fprintf(log,
-                  "T+%4.3fms : FAIL : verifysession: %d lines in session file "
-                  "do not match!.\n",
-                  tdelta, count_errors);
+          fprintf(log, "T+%4.3fms : compare session failed: '%s'.\n", tdelta, last_sessionid);
           goto fail;
-        } else {
-          fprintf(
-              log,
-              "T+%4.3fms : verifysession: session file matches comparasion.\n",
-              tdelta);
         }
 
         ////
