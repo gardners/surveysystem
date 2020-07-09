@@ -33,6 +33,10 @@ STATICSRCS=	$(SRCDIR)/serialisers.c \
 		$(SRCDIR)/errorlog.c \
 		$(SRCDIR)/utils.c
 
+# #363
+FCGIHEADERS=	$(INCDIR)/fcgirequest.h
+FCGISRC=	$(SRCDIR)/fcgirequest.c
+
 GENERATEDHEADERS=$(INCDIR)/question_types.h
 GENERATEDSRCS=	$(SRCDIR)/question_types.c
 
@@ -46,31 +50,32 @@ COREOBJS=	$(SRCDIR)/errorlog.o \
 		$(SRCDIR)/code_instrumentation.o \
 		$(SRCDIR)/filelocks.o \
 		$(SRCDIR)/question_types.o \
-		$(SRCDIR)/utils.o 
+		$(SRCDIR)/utils.o
 
-TESTOBJS=	$(COREOBJS) \
+TESTOBJS =	$(COREOBJS) \
 		$(SRCDIR)/test_serialisers.o
 
 CLIOBJS=	$(COREOBJS) \
 		$(SRCDIR)/main.o
 
 FCGIOBJS=	$(COREOBJS) \
-		$(SRCDIR)/fcgimain.o
+		$(SRCDIR)/fcgimain.o \
+		$(SRCDIR)/fcgirequest.o
 
-HEADERS=	$(STATICHEADERS) $(GENERATEDHEADERS)
+HEADERS=	$(STATICHEADERS) $(GENERATEDHEADERS) $(FCGIHEADERS)
 
 CC=	clang
 COPT=	-Wall -O3 -g -Iinclude `$(PYCONFIG) --includes` -Ikcgi
 LOPT=	`$(PYCONFIG) --libs --ldflags`
 
+
 all:	test_serialisers surveycli surveyfcgi test_runner
 
 test_runner:	Makefile $(SRCDIR)/test_runner.o $(COREOBJS)
-	$(CC) $(COPT) -o test_runner $(SRCDIR)/test_runner.o $(COREOBJS) $(LOPT)  
+	$(CC) $(COPT) -o test_runner $(SRCDIR)/test_runner.o $(COREOBJS) $(LOPT)
 
 %.o:	%.c $(HEADERS)
 	$(CC) $(COPT) -c $< -o $@
-
 
 $(INCDIR)/question_types.h:	$(INCDIR)/survey.h $(STATICHEADERS)
 	grep '#define QTYPE_' $(INCDIR)/survey.h | cut -c8- | sort -k2n -t' ' | tail -1 | awk -F' ' '{ printf("#define NUM_QUESTION_TYPES %s\n",$$2); }' >$@
