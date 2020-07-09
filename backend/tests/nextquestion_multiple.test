@@ -32,7 +32,7 @@ request 200 newsession?surveyid=nextquestion_multiple
 extract_sessionid
 
 # Check that we have an empty session file created
-verify_session
+verify_session(skip_headers)
 nextquestion_multiple/0b39e0c93f1b338433b8a8773d57f738dd405e17
 endofsession
 
@@ -40,7 +40,7 @@ endofsession
 request 200 nextquestion?sessionid=$SESSION
 match_string {"status": 0, "message": "", "next_questions": [{"id": "q1", "name": "q1", "title": "Question 1?", "description": "Question 1!", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}, {"id": "q2", "name": "q2", "title": "Question 2?", "description": "Question 2!", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
-verify_session
+verify_session(skip_headers)
 nextquestion_multiple/11b0c147a2e1e1dc1840ab719a031fccaa4014ab
 endofsession
 

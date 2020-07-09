@@ -96,7 +96,7 @@ match_string {"status": 0, "message": "", "next_questions": [{"id": "question3",
 request 200 addanswer?sessionid=$SESSION&answer=question3:Answer+3:0:0:0:0:0:0:0:
 match_string {"status": 0, "message": "", "next_questions": []}
 
-verify_session
+verify_session(skip_headers)
 delanswerandfollowingpython/0b39e0c93f1b338433b8a8773d57f738dd405e17
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
@@ -107,7 +107,7 @@ endofsession
 request 200 delanswerandfollowing?sessionid=$SESSION&questionid=question1
 match_string {"status": 0, "message": "", "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "Answer 1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
-verify_session
+verify_session(skip_headers)
 delanswerandfollowingpython/0b39e0c93f1b338433b8a8773d57f738dd405e17
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::1:<UTIME>
 question2:TEXT:Answer 2:0:0:0:0:0:0:0::1:<UTIME>

@@ -15,7 +15,7 @@ request 200 newsession?surveyid=qtype_datetimesequence
 extract_sessionid
 
 # Check that we have an empty session file created
-verify_session
+verify_session(skip_headers)
 qtype_datetimesequence/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 
@@ -29,7 +29,7 @@ request 200 addanswer?sessionid=$SESSION&answer=dates:-26258313,171165687,345171
 match_string {"status": 0, "message": "", "next_questions": []}
 
 # Make sure answer ends up in file
-verify_session
+verify_session(skip_headers)
 field_unit/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 dates:DATETIME_SEQUENCE:-26258313,171165687,345171687:0:0:0:0:0:0:0:seconds:0:<UTIME>
 endofsession
@@ -39,7 +39,7 @@ endofsession
 request 200 delanswer?sessionid=$SESSION&questionid=dates
 match_string {"status": 0, "message": "", "next_questions": [{"id": "dates", "name": "dates", "title": "Your Life", "description": "", "type": "DATETIME_SEQUENCE", "default_value": "-26258313,171165687,345171687", "min_value": -1, "max_value": -1, "choices": ["Birthday", "Start primary school", "Start high school"], "unit": "seconds"}]}
 # Make sure answer ends up in file
-verify_session
+verify_session(skip_headers)
 field_unit/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 dates:DATETIME_SEQUENCE:-26258313,171165687,345171687:0:0:0:0:0:0:0:seconds:1:<UTIME>
 endofsession

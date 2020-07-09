@@ -22,7 +22,7 @@ request 200 newsession?surveyid=without_python
 extract_sessionid
 
 # Check that we have an empty session file created
-verify_session
+verify_session(skip_headers)
 without_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 endofsession
 
@@ -32,7 +32,7 @@ request 500 addanswer?sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:
 # Check that we are offered the next question to answer
 
 # Make sure answer ends up in file
-verify_session
+verify_session(skip_headers)
 without_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 question1:TEXT:Hello World:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
@@ -81,7 +81,7 @@ request 200 newsession?surveyid=with_python
 extract_sessionid
 
 # Check that we have an empty session file created
-verify_session
+verify_session(skip_headers)
 with_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 endofsession
 
@@ -100,7 +100,7 @@ match_string {"status": 0, "message": "end of survey", "next_questions": []}
 # Check that we are offered the next question to answer
 
 # Make sure answer ends up in file
-verify_session
+verify_session(skip_headers)
 with_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 question3:TEXT:Hello World 3:0:0:0:0:0:0:0::0:<UTIME>
 question1:TEXT:Hello World 1:0:0:0:0:0:0:0::0:<UTIME>

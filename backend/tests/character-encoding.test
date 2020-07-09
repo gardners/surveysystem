@@ -16,7 +16,7 @@ request 200 newsession?surveyid=characterencoding
 extract_sessionid
 
 # Check that we have an empty session file created
-verify_session
+verify_session(skip_headers)
 characterencoding/ee0a452e61f1a1a6f11084f9af7cbf2ac69cb728
 endofsession
 
@@ -26,7 +26,7 @@ match_string {"status": 0, "message": "", "next_questions": [{"id": "characteren
 
 request 200 addanswer?sessionid=$SESSION&answer=characterencoding:96ö:0:0:0:0:0:0:0:
 # Make sure answer ends up in file
-verify_session
+verify_session(skip_headers)
 field_unit/ee0a452e61f1a1a6f11084f9af7cbf2ac69cb728
 characterencoding:SINGLECHOICE:96ö:0:0:0:0:0:0:0::0:<UTIME>
 endofsession

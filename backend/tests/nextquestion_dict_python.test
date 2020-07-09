@@ -69,7 +69,7 @@ request 200 newsession?surveyid=dict_python
 extract_sessionid
 
 # Check that we have an empty session file created
-verify_session
+verify_session(skip_headers)
 dict_python/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 
@@ -127,7 +127,7 @@ request 200 newsession?surveyid=dict_python_invalid
 extract_sessionid
 
 # Check that we have an empty session file created
-verify_session
+verify_session(skip_headers)
 dict_python_invalid/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 

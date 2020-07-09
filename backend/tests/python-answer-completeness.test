@@ -87,7 +87,7 @@ match_string {"status": 0, "message": "hello world", "next_questions": [{"id": "
 request 200 addanswer?sessionid=$SESSION&answer=question3:Answer+3:0:0:0:0:0:0:0:
 match_string {"status": 0, "message": "", "next_questions": []}
 
-verify_session
+verify_session(skip_headers)
 python_answercompleteness/0b39e0c93f1b338433b8a8773d57f738dd405e17
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>

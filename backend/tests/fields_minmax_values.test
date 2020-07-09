@@ -16,7 +16,7 @@ request 200 newsession?surveyid=field_minmax_values
 extract_sessionid
 
 # Check that we have an empty session file created
-verify_session
+verify_session(skip_headers)
 field_minmax_values/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 
@@ -30,7 +30,7 @@ request 200 addanswer?sessionid=$SESSION&answer=q1::99:0:0:0:0:0:0:
 match_string {"status": 0, "message": "", "next_questions": [{"id": "q2", "name": "q2", "title": "Question 2", "description": "", "type": "INT", "default_value": "", "min_value": -50, "max_value": 50, "choices": [], "unit": ""}]}
 
 # Make sure answer ends up in file
-verify_session
+verify_session(skip_headers)
 field_minmax_values/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 q1:INT::99:0:0:0:0:0:0::0:<UTIME>
 endofsession

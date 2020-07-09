@@ -15,7 +15,7 @@ request 200 newsession?surveyid=qtype_multichoice
 extract_sessionid
 
 # Check that we have an empty session file created
-verify_session
+verify_session(skip_headers)
 qtype_multichoice/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 
@@ -27,7 +27,7 @@ request 200 addanswer?sessionid=$SESSION&answer=multichoice:Marvin,Ford:0:0:0:0:
 match_string {"status": 0, "message": "", "next_questions": []}
 
 # Make sure answer ends up in file
-verify_session
+verify_session(skip_headers)
 field_unit/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 multichoice:MULTICHOICE:Marvin,Ford:0:0:0:0:0:0:0::0:<UTIME>
 endofsession

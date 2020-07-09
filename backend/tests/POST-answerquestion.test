@@ -17,7 +17,7 @@ match_string 0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 extract_sessionid
 
 # Check that we have an empty session file created
-verify_session
+verify_session(skip_headers)
 postrequests/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 
@@ -25,7 +25,7 @@ request 200 addanswer POST "sessionid=$SESSION&answer=question1:Hello+World:0:0:
 match_string {"status": 0, "message": "", "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 # Make sure answer ends up in file
-verify_session
+verify_session(skip_headers)
 postrequests/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 question1:TEXT:Hello World:0:0:0:0:0:0:0::0:<UTIME>
 endofsession

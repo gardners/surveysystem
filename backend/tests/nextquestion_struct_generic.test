@@ -21,7 +21,7 @@ request 200 newsession?surveyid=nextquestions_generic
 extract_sessionid
 
 # Check that we have an empty session file created
-verify_session
+verify_session(skip_headers)
 nextquestions_generic/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 
