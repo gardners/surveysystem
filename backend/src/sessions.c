@@ -285,12 +285,14 @@ int save_session_meta(FILE *fp, struct session_meta *meta, int closed_flag) {
 
     strncpy(a.uid, "@authority", 1024);
     text[0] = 0;
+    a.value = meta->provider;
     if (meta->authority) {
       strncpy(text, meta->authority, 1024);
     }
     if (serialise_answer(&a, line, 65536)) {
       LOG_ERRORV("meta: serialise_answer() failed for field '%s'", "@authority");
     }
+    a.value = 0; // reset second field
     fprintf(fp, "%s\n", line);
 
     strncpy(a.uid, "@closed", 1024);
@@ -952,9 +954,9 @@ struct session *load_session(char *session_id) {
       trim_crlf(line);
 
       // Add answer to list of answers
-      if (ses->answer_count >= MAX_QUESTIONS)
+      if (ses->answer_count >= MAX_ANSWERS)
         LOG_ERRORV(
-            "Too many answers in session file '%s' (increase MAX_QUESTIONS?)",
+            "Too many answers in session file '%s' (increase MAX_ANSWERS?)",
             session_path);
       ses->answers[ses->answer_count] = calloc(sizeof(struct answer), 1);
       if (!ses->answers[ses->answer_count])
@@ -1164,8 +1166,8 @@ int session_add_answer(struct session *ses, struct answer *a) {
       break;
     }
 
-    if (ses->answer_count >= MAX_QUESTIONS)
-      LOG_ERRORV("Too many answers in session '%s' (increase MAX_QUESTIONS?)",
+    if (ses->answer_count >= MAX_ANSWERS)
+      LOG_ERRORV("Too many answers in session '%s' (increase MAX_ANSWERS?)",
                  ses->session_id);
 
     // #186 Don't append answer if we are undeleting it.
