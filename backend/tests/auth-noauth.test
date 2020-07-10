@@ -1,0 +1,42 @@
+@description Basic test for session meta (public endpoint)
+
+#!------- Rather than the backend this test tests if lighttpd in our test environment has been configured correctly.
+
+# Create a dummy survey
+definesurvey authnoauth
+version 2
+Silly test survey updated
+without python
+question1:Question 1?::TEXT:0::-1:-1:0:0::
+question2:Question 2?::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+#!---------------------
+#!passes
+#!---------------------
+
+request 200 newsession?surveyid=authnoauth
+
+extract_sessionid
+verify_session
+authnoauth/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#!---------------------
+#! x-surveyproxy-* headers are being ignored
+#!---------------------
+
+request 200 newsession?surveyid=authnoauth curlargs(--user test:1234 -H "x-surveyproxy-auth-user: user1" -H "x-surveyproxy-auth-group: group1")
+
+extract_sessionid
+verify_session
+authnoauth/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+endofsession

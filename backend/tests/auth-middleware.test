@@ -23,7 +23,7 @@ verify_session
 authmiddleware/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 @user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
 @group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
-@authority:META:<FCGIENV_MIDDLEWARE>:0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_TRUSTED>:0:0:0:0:0:0::0:<UTIME>
 @closed:META::0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
@@ -38,7 +38,7 @@ verify_session
 authmiddleware/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 @user:META:user2:0:0:0:0:0:0:0::0:<UTIME>
 @group:META:group2:0:0:0:0:0:0:0::0:<UTIME>
-@authority:META:<FCGIENV_MIDDLEWARE>:0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_TRUSTED>:0:0:0:0:0:0::0:<UTIME>
 @closed:META::0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
