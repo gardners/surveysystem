@@ -22,6 +22,7 @@ struct question {
   // answer cannot be deleted and must not be passed to frontend
   // the position of the answer data is flexible and depenends on the uid, multiple fields may be used
   // answers of this type might be overwritten multiple times
+  // use in session header: uids start with '@' (i.e. '@user')
 #define QTYPE_META                1
   // Answer is an integer, bounded by min_value and max_value
 #define QTYPE_INT                 2
@@ -160,7 +161,10 @@ enum answer_visibility {
   ANSWER_FIELDS_PROTECTED,
 };
 
+// question and answer limits
+// #363 introducing meta answers, decouple max values
 #define MAX_QUESTIONS 8192
+#define MAX_ANSWERS 8192
 
 // #332 next_questions data struct
 #define MAX_NEXTQUESTIONS 1024
@@ -203,8 +207,11 @@ struct session {
 #define NEXTQUESTIONS_FLAG_GENERIC 1
 #define NEXTQUESTIONS_FLAG_PYTHON 2
 
+  // #363, update limit, offset for meta answers
   struct question *questions[MAX_QUESTIONS];
-  struct answer *answers[MAX_QUESTIONS];
+  struct answer *answers[MAX_ANSWERS];
+
+  int answer_offset;
   int answer_count;
   int question_count;
 };
