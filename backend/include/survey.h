@@ -245,7 +245,9 @@ int release_my_session_locks(void);
 // #332 next_question struct
 struct next_questions *init_next_questions();
 void free_next_questions(struct next_questions *nq);
+
 int dump_next_questions(FILE *f, struct next_questions *nq);
+int dump_session(FILE *f, struct session *ses);
 
 // #363 session meta
 void free_session_meta(struct session_meta *meta);

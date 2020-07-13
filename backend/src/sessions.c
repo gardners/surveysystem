@@ -667,30 +667,100 @@ void free_session_meta(struct session_meta *m) {
   return;
 }
 
+
 int dump_next_questions(FILE *f, struct next_questions *nq) {
   int retVal = 0;
+  int i;
   do {
+    if (!f) {
+      LOG_ERROR("dump_next_questions(): invalid file pointer.");
+    }
+
     fprintf(f, "{\n");
     if (!nq) {
-      fprintf(f, "  <NULL>\n");
+      fprintf(f, "next_questions { <NULL> }\n");
       break;
     }
-    fprintf(f, "  status: %d\n", nq->status);
-    fprintf(f, "  message: %s\n", nq->message);
-    fprintf(f, "  next_questions: [");
-    for (int i = 0; i < nq->question_count; i++) {
-      if (nq->next_questions[i]) {
-        fprintf(f, "%s", nq->next_questions[i]->uid);
-      } else {
-        fprintf(f, "<NULL>");
-      }
-      if (i < nq->question_count - 1) {
-        fprintf(f, ", ");
-      }
+
+    fprintf(
+      f,
+      "next_questions {\n"
+      "  status: %d\n"
+      "  message: %s\n"
+      "  question_count: %d\n"
+      "  questions: [\n",
+      nq->status,
+      nq->message,
+      nq->question_count
+    );
+
+    for (i = 0; i < nq->question_count; i++) {
+      fprintf(f, "    %s%s\n", nq->next_questions[i]->uid, (i < nq->question_count - 1) ? ",": "");
     }
-    fprintf(f, "]\n");
-    fprintf(f, "  question_count: %d\n", nq->question_count);
-    fprintf(f, "}\n");
+
+    fprintf(f , "  ]\n}\n");
+  } while (0);
+
+  return retVal;
+}
+
+int dump_session(FILE *f, struct session *ses) {
+  int retVal = 0;
+  int i;
+
+  do {
+    if (!f) {
+      LOG_ERROR("dump_session(): invalid file pointer.");
+    }
+
+    if (!ses) {
+      fprintf(f, "session { <NULL> }\n");
+      break;
+    }
+
+    fprintf(
+      f,
+
+      "session {\n"
+      "  survey_id: %s\n"
+      "  survey_description: %s\n"
+      "  session_id: %s\n"
+      "  user: %s\n"
+      "  group: %s\n"
+      "  authority: %s\n"
+      "  created: %ld\n"
+      "  closed: %ld\n"
+      "  answer_offset: %d\n"
+      "  answer_count: %d\n"
+      "  question_count: %d\n",
+
+      ses->survey_id,
+      ses->survey_description,
+      ses->session_id,
+      ses->user,
+      ses->group,
+      ses->authority,
+      ses->created,
+      ses->closed,
+
+      ses->answer_offset,
+      ses->answer_count,
+      ses->question_count
+    );
+
+    fprintf(f , "  questions: [\n");
+    for (i = 0; i < ses->question_count; i++) {
+      fprintf(f, "    %s%s\n", ses->questions[i]->uid, (i < ses->question_count - 1) ? ",": "");
+    }
+    fprintf(f , "  ]\n");
+
+    fprintf(f , "  answers: [\n");
+    for (i = 0; i < ses->answer_count; i++) {
+      fprintf(f, "    %s%s\n", ses->answers[i]->uid, (i < ses->answer_count - 1) ? ",": "");
+    }
+    fprintf(f , "  ]\n");
+
+  fprintf(f , "}\n");
   } while (0);
 
   return retVal;
