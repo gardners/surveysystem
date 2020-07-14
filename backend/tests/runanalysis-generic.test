@@ -1,0 +1,25 @@
+@description Run post-survey analysis (generic)
+
+# Create a dummy survey
+definesurvey runanalysisgeneric
+version 2
+Silly test survey updated
+without python
+question1:Question 1::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+# Request creation of a  new session
+request 200 newsession?surveyid=runanalysisgeneric
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session(skip_headers)
+runanalysisgeneric/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+endofsession
+
+#! ------- in progress, currently we expect only a placeholder json string here, see issue 300 -------
+request 200 analyse?sessionid=$SESSION
+match_string "NOT IMPLEMENTED"
+
