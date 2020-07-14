@@ -1,26 +1,26 @@
-@description Run post-survey analysis
+@description Run post-survey analysis (python)
 
 # Create a dummy survey
-definesurvey runanalysis
+definesurvey runanalysispython
 version 1
 Silly test survey updated
 question1:Question 1::TEXT:0::-1:-1:0:0::
 endofsurvey
 
 python
-def analyse_runanalysis(questions,answers):
+def analyse_runanalysispython(questions,answers):
         return "You will live"
 endofpython
 
 # Request creation of a  new session
-request 200 newsession?surveyid=runanalysis
+request 200 newsession?surveyid=runanalysispython
 
 # Get the session ID that newsession should have returned
 extract_sessionid
 
 # Check that we have an empty session file created
 verify_session(skip_headers)
-runanalysis/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+runanalysispython/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 
 request 200 analyse?sessionid=$SESSION

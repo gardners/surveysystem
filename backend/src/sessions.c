@@ -285,12 +285,14 @@ int save_session_meta(FILE *fp, struct session_meta *meta, int closed_flag) {
 
     strncpy(a.uid, "@authority", 1024);
     text[0] = 0;
+    a.value = meta->provider;
     if (meta->authority) {
       strncpy(text, meta->authority, 1024);
     }
     if (serialise_answer(&a, line, 65536)) {
       LOG_ERRORV("meta: serialise_answer() failed for field '%s'", "@authority");
     }
+    a.value = 0; // reset second field
     fprintf(fp, "%s\n", line);
 
     strncpy(a.uid, "@closed", 1024);
@@ -665,30 +667,100 @@ void free_session_meta(struct session_meta *m) {
   return;
 }
 
+
 int dump_next_questions(FILE *f, struct next_questions *nq) {
   int retVal = 0;
+  int i;
   do {
+    if (!f) {
+      LOG_ERROR("dump_next_questions(): invalid file pointer.");
+    }
+
     fprintf(f, "{\n");
     if (!nq) {
-      fprintf(f, "  <NULL>\n");
+      fprintf(f, "next_questions { <NULL> }\n");
       break;
     }
-    fprintf(f, "  status: %d\n", nq->status);
-    fprintf(f, "  message: %s\n", nq->message);
-    fprintf(f, "  next_questions: [");
-    for (int i = 0; i < nq->question_count; i++) {
-      if (nq->next_questions[i]) {
-        fprintf(f, "%s", nq->next_questions[i]->uid);
-      } else {
-        fprintf(f, "<NULL>");
-      }
-      if (i < nq->question_count - 1) {
-        fprintf(f, ", ");
-      }
+
+    fprintf(
+      f,
+      "next_questions {\n"
+      "  status: %d\n"
+      "  message: %s\n"
+      "  question_count: %d\n"
+      "  questions: [\n",
+      nq->status,
+      nq->message,
+      nq->question_count
+    );
+
+    for (i = 0; i < nq->question_count; i++) {
+      fprintf(f, "    %s%s\n", nq->next_questions[i]->uid, (i < nq->question_count - 1) ? ",": "");
     }
-    fprintf(f, "]\n");
-    fprintf(f, "  question_count: %d\n", nq->question_count);
-    fprintf(f, "}\n");
+
+    fprintf(f , "  ]\n}\n");
+  } while (0);
+
+  return retVal;
+}
+
+int dump_session(FILE *f, struct session *ses) {
+  int retVal = 0;
+  int i;
+
+  do {
+    if (!f) {
+      LOG_ERROR("dump_session(): invalid file pointer.");
+    }
+
+    if (!ses) {
+      fprintf(f, "session { <NULL> }\n");
+      break;
+    }
+
+    fprintf(
+      f,
+
+      "session {\n"
+      "  survey_id: %s\n"
+      "  survey_description: %s\n"
+      "  session_id: %s\n"
+      "  user: %s\n"
+      "  group: %s\n"
+      "  authority: %s\n"
+      "  created: %ld\n"
+      "  closed: %ld\n"
+      "  answer_offset: %d\n"
+      "  answer_count: %d\n"
+      "  question_count: %d\n",
+
+      ses->survey_id,
+      ses->survey_description,
+      ses->session_id,
+      ses->user,
+      ses->group,
+      ses->authority,
+      ses->created,
+      ses->closed,
+
+      ses->answer_offset,
+      ses->answer_count,
+      ses->question_count
+    );
+
+    fprintf(f , "  questions: [\n");
+    for (i = 0; i < ses->question_count; i++) {
+      fprintf(f, "    %s%s\n", ses->questions[i]->uid, (i < ses->question_count - 1) ? ",": "");
+    }
+    fprintf(f , "  ]\n");
+
+    fprintf(f , "  answers: [\n");
+    for (i = 0; i < ses->answer_count; i++) {
+      fprintf(f, "    %s%s\n", ses->answers[i]->uid, (i < ses->answer_count - 1) ? ",": "");
+    }
+    fprintf(f , "  ]\n");
+
+  fprintf(f , "}\n");
   } while (0);
 
   return retVal;
@@ -851,6 +923,8 @@ int load_survey_questions(struct session *ses) {
  */
 struct session *load_session(char *session_id) {
   int retVal = 0;
+
+  int is_header = 1;
   struct session *ses = NULL;
 
   do {
@@ -944,28 +1018,43 @@ struct session *load_session(char *session_id) {
       }
 
       int len = strlen(line);
-      if (!len)
+      if (!len) {
         LOG_ERRORV("Empty line in session file '%s'", session_path);
-      if (line[len - 1] != '\n' && line[len - 1] != '\r')
-        LOG_ERRORV("Line too long in session file '%s' (limit = 64K)",
-                   session_path);
+      }
+      if (line[len - 1] != '\n' && line[len - 1] != '\r') {
+        LOG_ERRORV("Line too long in session file '%s' (limit = 64K)", session_path);
+      }
+
       trim_crlf(line);
 
       // Add answer to list of answers
-      if (ses->answer_count >= MAX_QUESTIONS)
-        LOG_ERRORV(
-            "Too many answers in session file '%s' (increase MAX_QUESTIONS?)",
-            session_path);
+      if (ses->answer_count >= MAX_ANSWERS) {
+        LOG_ERRORV( "Too many answers in session file '%s' (increase MAX_ANSWERS?)", session_path);
+      }
+
       ses->answers[ses->answer_count] = calloc(sizeof(struct answer), 1);
-      if (!ses->answers[ses->answer_count])
-        LOG_ERRORV("calloc(%d,1) failed while reading session file '%s' ",
-                   sizeof(struct answer), session_path);
+      if (!ses->answers[ses->answer_count]) {
+        LOG_ERRORV("calloc(%d,1) failed while reading session file '%s' ", sizeof(struct answer), session_path);
+      }
+
       // #162 load complete answer, including protected fields
-      if (deserialise_answer(line, ANSWER_FIELDS_PROTECTED,
-                             ses->answers[ses->answer_count]))
-        LOG_ERRORV("Failed to deserialise answer '%s' from session file '%s'",
-                   line, session_path);
+      if (deserialise_answer(line, ANSWER_FIELDS_PROTECTED, ses->answers[ses->answer_count])) {
+        LOG_ERRORV("Failed to deserialise answer '%s' from session file '%s'", line, session_path);
+      }
+
+      // #363 set header offset
+      if (is_header) {
+        if (ses->answers[ses->answer_count]->uid[0] != '@') {
+          is_header = 0;
+        }
+      }
+
       ses->answer_count++;
+
+      // #363 set header offset
+      if (is_header) {
+        ses->answer_offset = ses->answer_count;
+      }
 
     } while (line[0]);
 
@@ -1164,8 +1253,8 @@ int session_add_answer(struct session *ses, struct answer *a) {
       break;
     }
 
-    if (ses->answer_count >= MAX_QUESTIONS)
-      LOG_ERRORV("Too many answers in session '%s' (increase MAX_QUESTIONS?)",
+    if (ses->answer_count >= MAX_ANSWERS)
+      LOG_ERRORV("Too many answers in session '%s' (increase MAX_ANSWERS?)",
                  ses->session_id);
 
     // #186 Don't append answer if we are undeleting it.
@@ -1200,7 +1289,8 @@ int session_delete_answers_by_question_uid(struct session *ses, char *uid,
           "Asked to remove answers to null question UID from session '%s'",
           ses->session_id);
 
-    for (int i = 0; i < ses->answer_count; i++) {
+    // #363, answer offset, exclude session header
+    for (int i = ses->answer_offset; i < ses->answer_count; i++) {
       if (!strcmp(ses->answers[i]->uid, uid)) {
         // Delete matching questions
         // #186 - Deletion now just sets the ANSWER_DELETED flag in the flags field for the answer.
@@ -1208,12 +1298,9 @@ int session_delete_answers_by_question_uid(struct session *ses, char *uid,
 
         char serialised_answer[65536] = "(could not serialise)";
         serialise_answer(ses->answers[i], serialised_answer, 65536);
-        LOG_INFOV("Deleted from session '%s' answer '%s'.", ses->session_id,
-                  serialised_answer);
+        LOG_INFOV("Deleted from session '%s' answer '%s'.", ses->session_id, serialised_answer);
 
         ses->answers[i]->flags |= ANSWER_DELETED;
-
-        // #162 add/update stored timestamp
         ses->answers[i]->stored = (long long)time(NULL);
 
         deletions++;
@@ -1259,7 +1346,8 @@ int session_delete_answer(struct session *ses, struct answer *a,
     // #162 add/update stored timestamp
     a->stored = (long long)time(NULL);
 
-    for (int i = 0; i < ses->answer_count; i++) {
+    // #363, answer offset, exclude session header
+    for (int i = ses->answer_offset; i < ses->answer_count; i++) {
       // XXX - Doesn't actually check the value of the answer, but deletes first instance of an answer to the
       // same question.
       if ((!strcmp(ses->answers[i]->uid, a->uid)) && (1)) {

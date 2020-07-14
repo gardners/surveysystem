@@ -551,7 +551,7 @@ FILE *open_session_file_copy(char *session_id, struct Test *test) {
  *   -3: session line too long (column count)
  *   -4: session field <UTIME> is invalid (must be within the past hour from now)
  */
-enum DiffResult compare_session_line(char *session_line, char *comparison_line, struct Test *test) {
+enum DiffResult compare_session_line(char *session_line, char *comparison_line, struct Test *test, int *row_count) {
 
   char left_line[MAX_LINE];
   char right_line[MAX_LINE];
@@ -561,6 +561,9 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
   char *left_ptr;
   char *right_ptr;
 
+  (*row_count) = 0;
+  int pass;
+
   // do not mutate arg *strings
   strncpy(left_line, session_line, MAX_LINE);
   strncpy(right_line, comparison_line, MAX_LINE);
@@ -569,6 +572,7 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
   right = strtok_r(right_line, ":", &right_ptr);
 
   while (right) {
+    pass = 0;
 
     // match number of columns: session line too short
     if (!left) {
@@ -583,8 +587,37 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
       if (now <= 0 || now < then || now - then > 8600) {
         return DIFF_MISMATCH_TOKEN;
       }
+      pass++;
+    }
 
-      return DIFF_MATCH;
+    // validate <IDENDITY_HTTP_PUBLIC>
+    if (!strcmp(right, "<IDENDITY_HTTP_PUBLIC>")) {
+      int val = atoi(left);
+
+      if (val != IDENDITY_HTTP_PUBLIC) {
+        return DIFF_MISMATCH_TOKEN;
+      }
+      pass++;
+    }
+
+    // validate <IDENDITY_HTTP_TRUSTED>
+    if (!strcmp(right, "<IDENDITY_HTTP_TRUSTED>")) {
+      int val = atoi(left);
+
+      if (val != IDENDITY_HTTP_TRUSTED) {
+        return DIFF_MISMATCH_TOKEN;
+      }
+      pass++;
+    }
+
+    // validate <AUTHORITY_NONE>, default authority: remote_ip(remote_port)
+    if (!strcmp(right, "<AUTHORITY_NONE>")) {
+      char tmp[16];
+      snprintf(tmp, 16, "127.0.0.1(%d)", SERVER_PORT);
+      if (strcmp(left, tmp)) {
+        return DIFF_MISMATCH_TOKEN;
+      }
+      pass++;
     }
 
     // validate <UTIME> keyword (unix timestamp)
@@ -592,17 +625,19 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
       if (strcmp(left, test->fcgienv_middleware)) {
         return DIFF_MISMATCH_TOKEN;
       }
-
-      return DIFF_MATCH;
+      pass++;
     }
 
     // compare column text
-    if (strcmp(left, right)) {
-      return DIFF_MISMATCH;
+    if(!pass) {
+      if (strcmp(left, right)) {
+        return DIFF_MISMATCH;
+      }
     }
 
     left = strtok_r(NULL, ":", &left_ptr);
     right = strtok_r(NULL, ":", &right_ptr);
+    (*row_count)++;
   }
 
   // match number of columns: session line too long
@@ -695,7 +730,8 @@ int compare_session(FILE *sess, int skip_s, FILE *comp, int skip_c, struct Test 
     }
 
     // compare session line, we are relying on the string terminations set above
-    diff = compare_session_line(session_line, comparison_line, test);
+    int row_count = 0;
+    diff = compare_session_line(session_line, comparison_line, test, &row_count);
     // fprintf(stderr, "\n%d: line %d(%d), '%s' => '%s'", diff, s_count, c_count, session_line, comparison_line);
 
     switch (diff) {
@@ -705,22 +741,22 @@ int compare_session(FILE *sess, int skip_s, FILE *comp, int skip_c, struct Test 
 
       case DIFF_MISMATCH:
         fprintf(log,
-          "  [DIFF_MISMATCH] compare_session_line() field mismatch (session line %d, comparsion line %d, code %d)\n", s_count, c_count, diff);
+          "  [DIFF_MISMATCH] compare_session_line() field mismatch (session line %d row %d, comparsion line %d, code %d)\n", s_count, row_count, c_count, diff);
         break;
 
       case DIFF_MISMATCH_LENGTH:
         fprintf(log,
-          "  [DIFF_MISMATCH_LENGTH] compare_session_line() session line number of fields don't match (session line %d, comparsion line %d, code %d)\n", s_count, c_count, diff);
+          "  [DIFF_MISMATCH_LENGTH] compare_session_line() session line number of fields don't match (session line %d row %d, comparsion line %d, code %d)\n", s_count, row_count, c_count, diff);
         break;
 
       case DIFF_MISMATCH_TOKEN:
         fprintf(log,
-          "  [DIFF_MISMATCH_TOKEN] compare_session_line() <TOKEN> ivalidation failed (session line %d, comparsion line %d, code %d)\n", s_count, c_count, diff);
+          "  [DIFF_MISMATCH_TOKEN] compare_session_line() <TOKEN> ivalidation failed (session line %d row %d, comparsion line %d, code %d)\n", s_count, row_count, c_count, diff);
         break;
 
       default:
         fprintf(log,
-          "  [UNKWOWN MISMATCH] compare_session_line() unknown return (session line %d, comparsion line %d, code %d)\n", s_count, c_count, diff);
+          "  [UNKWOWN MISMATCH] compare_session_line() unknown return (session line %d row %d, comparsion line %d, code %d)\n", s_count, row_count, c_count, diff);
     } // endswitch
 
     // register error state
@@ -1969,7 +2005,6 @@ int main(int argc, char **argv) {
     // handle only files with extension ".test", This allows us to store supporting configs in folder
     char *e = strrchr(argv[i], '.');
     if (!e || strlen(e) != 5 || strcmp(".test", e)) {
-        fprintf(stderr, "* NO TEST:%d: %s\n", i, argv[i]);
         continue;
     }
 

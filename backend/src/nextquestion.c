@@ -386,22 +386,25 @@ int call_python_nextquestion(struct session *s, struct next_questions *nq) {
   int is_error = 0;
 
   do {
-    if (!s->survey_id)
+    if (!s->survey_id) {
       LOG_ERROR("surveyname is NULL");
-    if (!s->session_id)
+    }
+    if (!s->session_id) {
       LOG_ERROR("session_uuid is NULL");
-    if (!nq)
+    }
+    if (!nq) {
       LOG_ERROR("next_questions is NULL");
-    if (nq->question_count)
+    }
+    if (nq->question_count) {
       LOG_ERROR("next_questions->question_count is > 0");
-
+    }
     // Setup python
     if (setup_python()) {
       LOG_ERROR("Failed to initialise python.\n");
     }
-    if (!py_module)
-      LOG_ERROR(
-          "Python module 'nextquestion' not loaded. Does it have an error?");
+    if (!py_module) {
+      LOG_ERROR( "Python module 'nextquestion' not loaded. Does it have an error?");
+    }
 
     // Build names of candidate functions.
     // nextquestion_<survey_id>_<hash of survey>
@@ -442,8 +445,9 @@ int call_python_nextquestion(struct session *s, struct next_questions *nq) {
       myFunction = PyObject_GetAttrString(py_module, function_name);
     }
 
-    if (!myFunction)
+    if (!myFunction) {
       LOG_ERRORV("No matching python function for survey '%s'", s->survey_id);
+    }
 
     if (!PyCallable_Check(myFunction)) {
       is_error = 1;
@@ -453,12 +457,13 @@ int call_python_nextquestion(struct session *s, struct next_questions *nq) {
     LOG_INFOV("Preparing to call python function '%s' to get next question(s)",
               function_name);
 
-    // TODO see get_analysis() - move answers and questions py list generation in separate unit
     // Okay, we have the function object, so build the argument list and call it.
+    //    #227 initialize answer list with the correct length (excluding ANSWER_DELETED)
+    //    #363, answer offset, exclude session header
+
     PyObject *questions = PyList_New(s->question_count);
-    // #227 initialize answer list with the correct length (excluding ANSWER_DELETED)
     int count_given_answers = 0;
-    for (int i = 0; i < s->answer_count; i++) {
+    for (int i = s->answer_offset; i < s->answer_count; i++) {
       if (!(s->answers[i]->flags & ANSWER_DELETED)) {
         count_given_answers++;
       }
@@ -474,29 +479,27 @@ int call_python_nextquestion(struct session *s, struct next_questions *nq) {
       }
     }
 
-    int listIndex = 0; // // #311, PyList increment
-    for (int i = 0; i < s->answer_count; i++) {
+    // #311, PyList increment
+    // #363, answer offset, exclude session header
+    int listIndex = 0;
+    for (int i = s->answer_offset; i < s->answer_count; i++) {
       // Don't include deleted answers in the list fed to Python. #186
       if (!(s->answers[i]->flags & ANSWER_DELETED)) {
         PyObject *dict = py_create_answer(s->answers[i]);
 
         if (!dict) {
-          LOG_ERRORV("Could not construct answer structure '%s' for Python. "
-                     "WARNING: Memory has been leaked.",
-                     s->answers[i]->uid);
+          LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.", s->answers[i]->uid);
         }
 
         if (PyList_SetItem(answers, listIndex, dict)) {
           Py_DECREF(dict);
-          LOG_ERRORV("Error inserting answer name '%s' into Python list",
-                     s->answers[i]->uid);
+          LOG_ERRORV("Error inserting answer name '%s' into Python list", s->answers[i]->uid);
         }
         listIndex++;
       }
     }
 
     //    log_python_object("Answers",answers);
-
     PyObject *args = PyTuple_Pack(2, questions, answers);
 
     PyObject *result = PyObject_CallObject(myFunction, args);
@@ -657,9 +660,9 @@ int get_next_questions_generic(struct session *s, struct next_questions *nq) {
     LOG_INFOV("Calling get_next_questions_generic()", 0);
 
     // Check each question to see if it has been answered already
+    // #363, answer offset, exclude session header
     for (i = 0; i < s->question_count; i++) {
-
-      for (j = 0; j < s->answer_count; j++) {
+      for (j = s->answer_offset; j < s->answer_count; j++) {
         if (!(s->answers[j]->flags & ANSWER_DELETED)) {
           if (!strcmp(s->answers[j]->uid, s->questions[i]->uid)) {
             break;
@@ -702,8 +705,7 @@ int get_next_questions(struct session *s, struct next_questions *nq) {
       LOG_ERROR("next_questions structure is null");
 
     if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_PYTHON) {
-      LOG_INFO(
-          "NEXTQUESTIONS_FLAG_PYTHON set, calling call_python_nextquestion())");
+      LOG_INFO("NEXTQUESTIONS_FLAG_PYTHON set, calling call_python_nextquestion())");
       int r = call_python_nextquestion(s, nq);
 
       if (r == -99) {
@@ -711,6 +713,7 @@ int get_next_questions(struct session *s, struct next_questions *nq) {
         retVal = -1;
         break;
       }
+
       if (!r) {
         retVal = 0;
         break;
@@ -733,10 +736,26 @@ int get_next_questions(struct session *s, struct next_questions *nq) {
 }
 
 /*
+ * #300 prepare analysis string response
+ * TODO (not yet implemeneted in main.c)
+ * **output needs to be freed outside of this function
+ */
+int get_analysis_generic(struct session *s, const char **output) {
+  int retVal = 0;
+
+  do {
+    *output = strdup("\"NOT IMPLEMENTED\""); // write something (valid json)
+  } while (0);
+
+  return retVal;
+}
+
+/*
  * Fetch analysis json string via Python script
  * #288, the parent unit is responsible for freeing *output pointer
+ * **output needs to be freed outside of this function
  */
-int get_analysis(struct session *s, const char **output) {
+int call_python_analysis(struct session *s, const char **output) {
   int retVal = 0;
   int is_error = 0;
   do {
@@ -806,9 +825,11 @@ int get_analysis(struct session *s, const char **output) {
     // TODO see get_analysis() - move answers and questions py list generation in separate unit
     // Okay, we have the function object, so build the argument list and call it.
     PyObject *questions = PyList_New(s->question_count);
+
     // #227 initialize answer list with the correct length (excluding ANSWER_DELETED)
+    // #363, answer offset, exclude session header
     int count_given_answers = 0;
-    for (int i = 0; i < s->answer_count; i++) {
+    for (int i = s->answer_offset; i < s->answer_count; i++) {
       if (!(s->answers[i]->flags & ANSWER_DELETED)) {
         count_given_answers++;
       }
@@ -824,8 +845,10 @@ int get_analysis(struct session *s, const char **output) {
       }
     }
 
-    int listIndex = 0; // #311, PyList increment
-    for (int i = 0; i < s->answer_count; i++) {
+    // #311, PyList increment
+    // #363, answer offset, exclude session header
+    int listIndex = 0;
+    for (int i = s->answer_offset; i < s->answer_count; i++) {
       // Don't include deleted answers in the list fed to Python. #186
       if (!(s->answers[i]->flags & ANSWER_DELETED)) {
         PyObject *dict = py_create_answer(s->answers[i]);
@@ -899,5 +922,47 @@ int get_analysis(struct session *s, const char **output) {
   if (is_error) {
     retVal = -99;
   }
+  return retVal;
+}
+
+int get_analysis(struct session *s, const char **output) {
+  // Call the function to get the next question(s) to ask.
+  // First see if we have a python function to do the job.
+  // If not, then return the list of all not-yet-answered questions
+  int retVal = 0;
+  do {
+    if (!s) {
+      LOG_ERROR("session structure is NULL");
+    }
+    if (!output) {
+      LOG_ERROR("output is NULL");
+    }
+
+    if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_PYTHON) {
+      LOG_INFO("NEXTQUESTIONS_FLAG_PYTHON set, calling call_python_analysis())");
+      int r = call_python_analysis(s, output);
+
+      if (r == -99) {
+        retVal = -1;
+        break;
+      }
+
+      if (!r) {
+        retVal = 0;
+        break;
+      }
+    }
+
+    // PGS: Disabled generic implementation of nextquestion, since if you have a python version and it can't be loaded
+    // for some reason we should NOT fall back, because it may expose questions and IP in a survey that should not be revealed.
+    if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_GENERIC) {
+      LOG_INFO("NEXTQUESTIONS_FLAG_GENERIC set, calling "
+               "get_next_qanalysis_generic())");
+      retVal = get_analysis_generic(s, output);
+    } else {
+      LOG_ERROR("Could not call python analysis function.");
+    }
+  } while (0);
+
   return retVal;
 }
