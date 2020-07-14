@@ -923,6 +923,8 @@ int load_survey_questions(struct session *ses) {
  */
 struct session *load_session(char *session_id) {
   int retVal = 0;
+
+  int is_header = 1;
   struct session *ses = NULL;
 
   do {
@@ -1016,28 +1018,43 @@ struct session *load_session(char *session_id) {
       }
 
       int len = strlen(line);
-      if (!len)
+      if (!len) {
         LOG_ERRORV("Empty line in session file '%s'", session_path);
-      if (line[len - 1] != '\n' && line[len - 1] != '\r')
-        LOG_ERRORV("Line too long in session file '%s' (limit = 64K)",
-                   session_path);
+      }
+      if (line[len - 1] != '\n' && line[len - 1] != '\r') {
+        LOG_ERRORV("Line too long in session file '%s' (limit = 64K)", session_path);
+      }
+
       trim_crlf(line);
 
       // Add answer to list of answers
-      if (ses->answer_count >= MAX_ANSWERS)
-        LOG_ERRORV(
-            "Too many answers in session file '%s' (increase MAX_ANSWERS?)",
-            session_path);
+      if (ses->answer_count >= MAX_ANSWERS) {
+        LOG_ERRORV( "Too many answers in session file '%s' (increase MAX_ANSWERS?)", session_path);
+      }
+
       ses->answers[ses->answer_count] = calloc(sizeof(struct answer), 1);
-      if (!ses->answers[ses->answer_count])
-        LOG_ERRORV("calloc(%d,1) failed while reading session file '%s' ",
-                   sizeof(struct answer), session_path);
+      if (!ses->answers[ses->answer_count]) {
+        LOG_ERRORV("calloc(%d,1) failed while reading session file '%s' ", sizeof(struct answer), session_path);
+      }
+
       // #162 load complete answer, including protected fields
-      if (deserialise_answer(line, ANSWER_FIELDS_PROTECTED,
-                             ses->answers[ses->answer_count]))
-        LOG_ERRORV("Failed to deserialise answer '%s' from session file '%s'",
-                   line, session_path);
+      if (deserialise_answer(line, ANSWER_FIELDS_PROTECTED, ses->answers[ses->answer_count])) {
+        LOG_ERRORV("Failed to deserialise answer '%s' from session file '%s'", line, session_path);
+      }
+
+      // #363 set header offset
+      if (is_header) {
+        if (ses->answers[ses->answer_count]->uid[0] != '@') {
+          is_header = 0;
+        }
+      }
+
       ses->answer_count++;
+
+      // #363 set header offset
+      if (is_header) {
+        ses->answer_offset = ses->answer_count;
+      }
 
     } while (line[0]);
 
@@ -1272,7 +1289,8 @@ int session_delete_answers_by_question_uid(struct session *ses, char *uid,
           "Asked to remove answers to null question UID from session '%s'",
           ses->session_id);
 
-    for (int i = 0; i < ses->answer_count; i++) {
+    // #363, answer offset, exclude session header
+    for (int i = ses->answer_offset; i < ses->answer_count; i++) {
       if (!strcmp(ses->answers[i]->uid, uid)) {
         // Delete matching questions
         // #186 - Deletion now just sets the ANSWER_DELETED flag in the flags field for the answer.
@@ -1280,12 +1298,9 @@ int session_delete_answers_by_question_uid(struct session *ses, char *uid,
 
         char serialised_answer[65536] = "(could not serialise)";
         serialise_answer(ses->answers[i], serialised_answer, 65536);
-        LOG_INFOV("Deleted from session '%s' answer '%s'.", ses->session_id,
-                  serialised_answer);
+        LOG_INFOV("Deleted from session '%s' answer '%s'.", ses->session_id, serialised_answer);
 
         ses->answers[i]->flags |= ANSWER_DELETED;
-
-        // #162 add/update stored timestamp
         ses->answers[i]->stored = (long long)time(NULL);
 
         deletions++;
@@ -1331,7 +1346,8 @@ int session_delete_answer(struct session *ses, struct answer *a,
     // #162 add/update stored timestamp
     a->stored = (long long)time(NULL);
 
-    for (int i = 0; i < ses->answer_count; i++) {
+    // #363, answer offset, exclude session header
+    for (int i = ses->answer_offset; i < ses->answer_count; i++) {
       // XXX - Doesn't actually check the value of the answer, but deletes first instance of an answer to the
       // same question.
       if ((!strcmp(ses->answers[i]->uid, a->uid)) && (1)) {

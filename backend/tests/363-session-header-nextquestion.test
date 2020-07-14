@@ -1,0 +1,60 @@
+@description  nextquestion ignores session header answers
+
+# Create a dummy survey
+definesurvey foo
+version 2
+Silly test survey updated
+without python
+q1:Question 1::TEXT:0::-1:-1:0:0::
+q2:Question 2::TEXT:0::-1:-1:0:0::
+q3:Question 3::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+# Request creation of a  new session
+request 200 newsession?surveyid=foo
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session(skip_headers)
+foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
+endofsession
+
+request 200 nextquestion?sessionid=$SESSION
+match_string {"status": 0, "message": "", "next_questions": [{"id": "q1", "name": "q1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+## q1
+
+request 200 addanswer?sessionid=$SESSION&answer=q1:answer+1:0:0:0:0:0:0:0:
+match_string {"status": 0, "message": "", "next_questions": [{"id": "q2", "name": "q2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+request 200 nextquestion?sessionid=$SESSION
+match_string {"status": 0, "message": "", "next_questions": [{"id": "q2", "name": "q2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+## q2
+
+request 200 addanswer?sessionid=$SESSION&answer=q2:answer+2:0:0:0:0:0:0:0:
+match_string {"status": 0, "message": "", "next_questions": [{"id": "q3", "name": "q3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+request 200 nextquestion?sessionid=$SESSION
+match_string {"status": 0, "message": "", "next_questions": [{"id": "q3", "name": "q3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+## q3
+
+request 200 addanswer?sessionid=$SESSION&answer=q3:answer+3:0:0:0:0:0:0:0:
+match_string {"status": 0, "message": "", "next_questions": []}
+
+request 200 nextquestion?sessionid=$SESSION
+match_string {"status": 0, "message": "", "next_questions": []}
+
+verify_session
+foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+q1:TEXT:answer 1:0:0:0:0:0:0:0::0:<UTIME>
+q2:TEXT:answer 2:0:0:0:0:0:0:0::0:<UTIME>
+q3:TEXT:answer 3:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
