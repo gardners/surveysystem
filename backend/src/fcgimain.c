@@ -567,7 +567,7 @@ static void fcgi_addanswer(struct kreq *req) {
 
     char *session_id = session->val;
 
-    // joerg: break if session could not be updated
+    // break if session could not be updated
     if (lock_session(session_id)) {
       quick_error(req, KHTTP_500, "Failed to lock session");
       LOG_ERRORV("failed to lock session '%s'", session_id);
@@ -575,6 +575,8 @@ static void fcgi_addanswer(struct kreq *req) {
     }
 
     struct session *s = load_session(session_id);
+    // FILE *f = open_log("session.log");
+    // dump_session(f, s);
 
     if (!s) {
       quick_error(req, KHTTP_400,
@@ -1483,6 +1485,10 @@ static void fcgi_fastcgitest(struct kreq *req) {
   return;
 }
 
+/**
+ * fetch analysis json
+ * #300 TODO deal with planned get_analysysis_generic() **output
+ */
 static void fcgi_analyse(struct kreq *req) {
   enum kcgi_err er;
   int retVal = 0;
