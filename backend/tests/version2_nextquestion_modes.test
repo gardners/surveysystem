@@ -21,19 +21,19 @@ def nextquestion(questions, answers):
     if len(answers) == 0:
         return {
             'status': 0,
-            'message': '',
+            'message': '0',
             'next_questions': ['question3'],
         }
     if len(answers) == 1:
         return {
             'status': 0,
-            'message': '',
+            'message': '1',
             'next_questions': ['question1'],
         }
     else:
         return {
             'status': 0,
-            'message': 'end of survey',
+            'message': '2',
             'next_questions': [],
         }
 endofpython
@@ -54,15 +54,15 @@ request 200 nextquestion?sessionid=$SESSION
 match_string {"status": 0, "message": "", "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 # should not invoke python and return next question
-request 200 addanswer?sessionid=$SESSION&answer=question1:Hello+World+1:0:0:0:0:0:0:0:
+request 200 addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0:
 match_string {"status": 0, "message": "", "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 # should not invoke python and return next question
-request 200 addanswer?sessionid=$SESSION&answer=question2:Hello+World+2:0:0:0:0:0:0:0:
+request 200 addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0:
 match_string {"status": 0, "message": "", "next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 # finish survey
-request 200 addanswer?sessionid=$SESSION&answer=question3:Hello+World+3:0:0:0:0:0:0:0:
+request 200 addanswer?sessionid=$SESSION&answer=question3:Answer+3:0:0:0:0:0:0:0:
 match_string {"status": 0, "message": "", "next_questions": []}
 
 # Check that we are offered the next question to answer
@@ -70,9 +70,9 @@ match_string {"status": 0, "message": "", "next_questions": []}
 # Make sure answer ends up in file
 verify_session(skip_headers)
 without_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
-question1:TEXT:Hello World 1:0:0:0:0:0:0:0::0:<UTIME>
-question2:TEXT:Hello World 2:0:0:0:0:0:0:0::0:<UTIME>
-question3:TEXT:Hello World 3:0:0:0:0:0:0:0::0:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
+question3:TEXT:Answer 3:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #!---------------------
@@ -96,19 +96,19 @@ def nextquestion(questions, answers):
     if len(answers) == 0:
         return {
             'status': 0,
-            'message': '',
+            'message': '0',
             'next_questions': ['question3'],
         }
     if len(answers) == 1:
         return {
             'status': 0,
-            'message': '',
+            'message': '1',
             'next_questions': ['question1'],
         }
     else:
         return {
             'status': 0,
-            'message': 'end of survey',
+            'message': '2',
             'next_questions': [],
         }
 endofpython
@@ -126,21 +126,21 @@ endofsession
 
 # Ask for "first" question - should return question3
 request 200 nextquestion?sessionid=$SESSION
-match_string {"status": 0, "message": "", "next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+match_string {"status": 0, "message": "0", "next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 # answer first question - should return question1
-request 200 addanswer?sessionid=$SESSION&answer=question3:Hello+World+1:0:0:0:0:0:0:0:
-match_string {"status": 0, "message": "", "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+request 200 addanswer?sessionid=$SESSION&answer=question3:Answer+3:0:0:0:0:0:0:0:
+match_string {"status": 0, "message": "1", "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 # finish survey
-request 200 addanswer?sessionid=$SESSION&answer=question1:Hello+World+1:0:0:0:0:0:0:0:
-match_string {"status": 0, "message": "end of survey", "next_questions": []}
+request 200 addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0:
+match_string {"status": 0, "message": "2", "next_questions": []}
 
 # Check that we are offered the next question to answer
 
 # Make sure answer ends up in file
 verify_session(skip_headers)
 with_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
-question3:TEXT:Hello World 3:0:0:0:0:0:0:0::0:<UTIME>
-question1:TEXT:Hello World 1:0:0:0:0:0:0:0::0:<UTIME>
+question3:TEXT:Answer 3:0:0:0:0:0:0:0::0:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
