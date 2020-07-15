@@ -1,26 +1,35 @@
-/*
-  Simple test runner for the survey system.
-  It runs tests that are each defined by a single file.
-  The test specification is as follows:
-
-  description <description>
-  definesurvey <name>
-  <questions in normal question format>
-  endofsurvey
-  request <expected response code> <url path and query>
-  extract_sessionid
-  match <regex to search for in body of last response>
-  nomatch <regex to search for in body of last response>
-  verifysession
-  <expected set of answers in the session file. Can be empty>
-  endofsession
-
-  These commands can be used more than once, so that more complex activities can be scripted.
-
-  Apart from running these scripts, all that it has to do to is to setup and cleanup the
-  directories for running the tests, and setup the config file for lighttpd for testing, and
-  actually stop and start lighttpd.
-
+/**
+ * Simple test runner for the survey system.
+ * It runs tests that are each defined by a single file.
+ * The test specification is as follows:
+ *
+ * @description <description> (required)
+ * @skip! (optional, skip test)
+ * @useproxy! (optional, start test with lighttpd for proxy auth)
+ * @fcgienv_middleware <ip:port> (optional, set fastcgi env "SS_TRUSTED_MIDDLEWARE")
+ *
+ * definesurvey <name>
+ * <questions in normal question format>
+ * endofsurvey
+ *
+ * request <expected response code> <url path and query>
+ * request proxy <expected response code> <url path and query> curlargs(`man curl`)
+ *
+ * extract_sessionid
+ *
+ * match <regex to search for in body of last response>
+ *
+ * nomatch <regex to search for in body of last response>
+ *
+ * verifysession
+ * <expected set of answers in the session file. Can be empty>
+ * endofsession
+ *
+ * These commands can be used more than once, so that more complex activities can be scripted.
+ *
+ * Apart from running these scripts, all that it has to do to is to setup and cleanup the
+ * directories for running the tests, and setup the config file for lighttpd for testing, and
+ * actually stop and start lighttpd.
 */
 
 #include <errno.h>
