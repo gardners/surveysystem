@@ -1,0 +1,88 @@
+@description header cannot be added or deleted
+@useproxy!
+
+#!------- Rather than the backend this test tests if lighttpd in our test environment has been configured correctly.
+
+# Create a dummy survey
+definesurvey foo
+version 2
+Silly test survey updated
+without python
+question1:Question 1::TEXT:0::-1:-1:0:0::
+question1:Question 1::TEXT:0::-1:-1:0:0::
+question2:Question 2::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+request proxy 200 newsession?surveyid=foo curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+extract_sessionid
+
+# ... internal check if prev directive worked
+verify_session
+foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
+@user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
+@group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_TRUSTED>:0:0:0:0:0:0::0:<UTIME>
+@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#!------- nextquestion  does not care about headers and returns first question
+request proxy 200 nextquestion?sessionid=$SESSION curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+match_string {"status": 0, "message": "", "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+#!------- addanswer adds answer to first question and leaves headers untouched
+request proxy 200 addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0: curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+match_string {"status": 0, "message": "", "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+verify_session
+foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
+@user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
+@group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_TRUSTED>:0:0:0:0:0:0::0:<UTIME>
+@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#!------- trying to add header question should fail
+request proxy 400 addanswer?sessionid=$SESSION&answer=@user:overwriting:0:0:0:0:0:0:0: curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 400 addanswer?sessionid=$SESSION&answer=@group:overwriting:0:0:0:0:0:0:0: curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 400 addanswer?sessionid=$SESSION&answer=@authority:overwriting:0:0:0:0:0:0:0: curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 400 addanswer?sessionid=$SESSION&answer=@aclosed::1:0:0:0:0:0:0: curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+
+verify_session
+foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
+@user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
+@group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_TRUSTED>:0:0:0:0:0:0::0:<UTIME>
+@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#!------- trying to delanswer header question should fail
+request proxy 400 delanswer?sessionid=$SESSION&questionid=@closed curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 400 delanswer?sessionid=$SESSION&questionid=@authority curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 400 delanswer?sessionid=$SESSION&questionid=@group curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 400 delanswer?sessionid=$SESSION&questionid=@user curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+
+verify_session
+foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
+@user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
+@group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_TRUSTED>:0:0:0:0:0:0::0:<UTIME>
+@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#!------- trying to delanswerandfollowing header question should fail
+request proxy 400 delanswerandfollowing?sessionid=$SESSION&questionid=@closed curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 400 delanswerandfollowing?sessionid=$SESSION&questionid=@authority curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 400 delanswerandfollowing?sessionid=$SESSION&questionid=@group curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 400 delanswerandfollowing?sessionid=$SESSION&questionid=@user curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+
+verify_session
+foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
+@user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
+@group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_TRUSTED>:0:0:0:0:0:0::0:<UTIME>
+@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
