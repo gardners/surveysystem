@@ -1253,11 +1253,19 @@ int session_add_answer(struct session *ses, struct answer *a) {
 
   do {
     // Add answer to list of answers
-    if (!ses) {
-      LOG_ERROR("Session structure is NULL");
+    if (!ses || !ses->session_id) {
+      LOG_ERRORV("Add answer: Session structure or ses->session_id is NULL %s", ses->session_id);
     }
-    if (!a) {
-      LOG_ERROR("Asked to add null answer to session");
+    if (!a || !a->uid) {
+      LOG_ERRORV("Add answer: Answer structure or a->uid is null, session '%s'", ses->session_id);
+    }
+    // #363, QTYPE_META answers cannot be deleted
+    if (a->type == QTYPE_META) {
+      LOG_ERRORV("Add answer: Invalid request to remove QTYPE_META answer '%s' from session '%s'", a->uid, ses->session_id);
+    }
+    // #363, header answers cannot be deleted
+    if (a->uid[0] == '@') {
+      LOG_ERRORV("Add answer: Invalid request to remove HEADER answer '%s' from session '%s'", a->uid, ses->session_id);
     }
 
     // #162 add/update stored timestamp
@@ -1323,24 +1331,31 @@ int session_add_answer(struct session *ses, struct answer *a) {
   Delete any and all answers to a given question from the provided session structure.
   It is not an error if there were no matching answers to delete
 */
-int session_delete_answers_by_question_uid(struct session *ses, char *uid,
-                                           int deleteFollowingP) {
+int session_delete_answers_by_question_uid(struct session *ses, char *uid, int deleteFollowingP) {
   int retVal = 0;
   int deletions = 0;
 
   do {
-    if (!ses) {
-      LOG_ERROR("Session structure is NULL");
+    if (!ses || !ses->session_id) {
+      LOG_ERROR("Delete Answer (by uid): Session structure or ses->session_id is NULL");
     }
     if (!uid) {
-      LOG_ERRORV(
-          "Asked to remove answers to null question UID from session '%s'",
-          ses->session_id);
+      LOG_ERRORV("Delete Answer (by uid): Asked to remove answers to null question UID from session '%s'", ses->session_id);
+    }
+    // #363, header answers cannot be deleted
+    if (uid[0] == '@') {
+      LOG_ERRORV("Delete Answer (by uid): Invalid request to remove HEADER answer '%s' from session '%s'", uid, ses->session_id);
     }
 
     // #363, answer offset, exclude session header
     for (int i = ses->answer_offset; i < ses->answer_count; i++) {
       if (!strcmp(ses->answers[i]->uid, uid)) {
+
+        // #363, QTYPE_META answers cannot be deleted
+        if (ses->answers[i]->type == QTYPE_META) {
+          LOG_ERRORV("Delete Answer (by uid): Invalid request to remove QTYPE_META answer '%s' from session '%s'", uid, ses->session_id);
+        }
+
         // Delete matching questions
         // #186 - Deletion now just sets the ANSWER_DELETED flag in the flags field for the answer.
         // If deleteFollowingP is non-zero, then this is applied to all later answers in the session also.
@@ -1357,6 +1372,14 @@ int session_delete_answers_by_question_uid(struct session *ses, char *uid,
         // Mark all following answers deleted, if required
         if (deleteFollowingP) {
           for (int j = i + 1; j < ses->answer_count; j++) {
+            // #363, header answers cannot be deleted
+            if (ses->answers[j]->uid[0] == '@') { // logically, this should never be the case
+              continue;
+            }
+            // #363, QTYPE_META answers cannot be deleted
+            if (ses->answers[j]->type == QTYPE_META) {
+              continue;
+            }
             ses->answers[j]->flags |= ANSWER_DELETED;
             deletions++;
           }
@@ -1380,17 +1403,24 @@ int session_delete_answers_by_question_uid(struct session *ses, char *uid,
   and return the number of answers deleted.
   If there is no exactly matching answer, it will return 0.
  */
-int session_delete_answer(struct session *ses, struct answer *a,
-                          int deleteFollowingP) {
+int session_delete_answer(struct session *ses, struct answer *a, int deleteFollowingP) {
   int retVal = 0;
   int deletions = 0;
 
   do {
-    if (!ses) {
-      LOG_ERROR("Session structure is NULL");
+    if (!ses || !ses->session_id) {
+      LOG_ERROR("Delete Answer: Session structure or ses->session_id is NULL");
     }
-    if (!a) {
-      LOG_ERRORV("Asked to remove null answer from session '%s'", ses->session_id ? ses->session_id : "(null)");
+    if (!a || !a->uid) {
+      LOG_ERRORV("Delete Answer: Answer structure or a->uid is null, session '%s'", ses->session_id);
+    }
+    // #363, QTYPE_META answers cannot be deleted
+    if (a->type == QTYPE_META) {
+      LOG_ERRORV("Delete Answer: Invalid request to remove QTYPE_META answer '%s' from session '%s'", a->uid, ses->session_id);
+    }
+    // #363, header answers cannot be deleted
+    if (a->uid[0] == '@') {
+      LOG_ERRORV("Delete Answer: Invalid request to remove HEADER answer '%s' from session '%s'", a->uid, ses->session_id);
     }
 
     // #162 add/update stored timestamp
