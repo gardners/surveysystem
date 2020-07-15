@@ -9,8 +9,8 @@ version 2
 Silly test survey updated
 without python
 question1:Question 1::TEXT:0::-1:-1:0:0::
-question1:Question 1::TEXT:0::-1:-1:0:0::
 question2:Question 2::TEXT:0::-1:-1:0:0::
+question3:Question 3::TEXT:0::-1:-1:0:0::
 endofsurvey
 
 request proxy 200 newsession?surveyid=foo curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
