@@ -1002,6 +1002,7 @@ int run_test(struct Test *test) {
 
     // Variables for FOR NEXT loops
     char var[1024];
+    char arg[1024]; // another temp storage for scanf
     int first, last;
     int for_count = 0;
     char for_var[10][16];
@@ -1580,6 +1581,61 @@ int run_test(struct Test *test) {
           goto fail;
         }
 
+      } else if (sscanf(line, "session_add_answer %[^\r\n]", arg) == 1) {
+
+        ////
+        // keyword: "session_add_answer"
+        ////
+
+       if (validate_session_id(last_sessionid)) {
+          tdelta = gettime_us() - start_time;
+          tdelta /= 1000;
+          fprintf(log,
+            "T+%4.3fms : FATAL: (session_add_answer) No session ID has been captured. Use "
+            "extract_sessionid following request directive.\n",
+            tdelta);
+          goto fatal;
+        }
+
+        trim_crlf(arg);
+        if (arg[0] == 0) {
+          tdelta = gettime_us() - start_time;
+          tdelta /= 1000;
+          fprintf(log,
+            "T+%4.3fms : FATAL: (session_add_answer) no answer defined.\n",
+            tdelta);
+          goto fatal;
+        }
+
+        // replace <UTIME> with timestamp
+        char parsed[1024];
+        char *hit = strstr(arg, "<UTIME>");
+        if (hit) {
+          size_t pos = strlen(arg) - strlen("<UTIME>");
+          arg[pos] = 0;
+          snprintf(parsed, 1024, "%s%d" , arg, (int)time(NULL));
+        } else{
+          strncpy(parsed, arg, 1024);
+        }
+
+        // TODO we could invoke backends: deserialise_answer() here for validation
+
+        // Build path to session file
+        char path[1024];
+        snprintf(path, 1024, "%s/sessions/%c%c%c%c/%s", test->dir,
+                  last_sessionid[0], last_sessionid[1], last_sessionid[2],
+                  last_sessionid[3], last_sessionid);
+
+        FILE *fp = fopen(path, "a");
+        if (!fp) {
+          fprintf(stderr, "Could not open session file '%s': %s\n", path, strerror(errno));
+          goto fatal;
+        }
+
+        fprintf(fp, "%s\n", parsed);
+        fclose(fp);
+        arg[0] = 0;
+
       } else if (strncmp("verify_session", line, strlen("verify_session")) == 0) {
         int skip_headers = 0;
 
@@ -1591,7 +1647,7 @@ int run_test(struct Test *test) {
           tdelta = gettime_us() - start_time;
           tdelta /= 1000;
           fprintf(log,
-            "T+%4.3fms : FATAL: No session ID has been captured. Use "
+            "T+%4.3fms : FATAL: (verify_session) No session ID has been captured. Use "
             "extract_sessionid following request directive.\n",
             tdelta);
           goto fatal;
