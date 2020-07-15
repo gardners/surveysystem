@@ -254,22 +254,25 @@ int end_python(void) {
 /**
  * Given a question uid load the question data and append it to the givven next_questions struct
  */
-int mark_next_question(struct session *s, struct question *next_questions[],
-                       int *next_question_count, const char *uid) {
+int mark_next_question(struct session *s, struct question *next_questions[], int *next_question_count, const char *uid) {
   int retVal = 0;
   do {
     int qn;
-    if (!s)
+    if (!s) {
       LOG_ERROR("session structure is NULL");
-    if (!next_questions)
+    }
+    if (!next_questions) {
       LOG_ERROR("next_questions is null");
-    if (!next_question_count)
+    }
+    if (!next_question_count) {
       LOG_ERROR("next_question_count is null");
-    if (!uid)
+    }
+    if (!uid) {
       LOG_ERROR("question UID is null");
-    if ((*next_question_count) >= MAX_QUESTIONS)
-      LOG_ERRORV("Too many questions in list when marking question uid='%s'",
-                 uid);
+    }
+    if ((*next_question_count) >= MAX_QUESTIONS) {
+      LOG_ERRORV("Too many questions in list when marking question uid='%s'", uid);
+    }
 
     for (qn = 0; qn < s->question_count; qn++) {
       if (!strcmp(s->questions[qn]->uid, uid)) {
@@ -277,8 +280,9 @@ int mark_next_question(struct session *s, struct question *next_questions[],
       }
     }
 
-    if (qn == s->question_count)
+    if (qn == s->question_count) {
       LOG_ERRORV("Asked to mark non-existent question UID '%s'", uid);
+    }
 
     for (int j = 0; j < (*next_question_count); j++) {
       if (next_questions[j] == s->questions[qn]) {
@@ -484,19 +488,31 @@ int call_python_nextquestion(struct session *s, struct next_questions *nq) {
     int listIndex = 0;
     for (int i = s->answer_offset; i < s->answer_count; i++) {
       // Don't include deleted answers in the list fed to Python. #186
-      if (!(s->answers[i]->flags & ANSWER_DELETED)) {
-        PyObject *dict = py_create_answer(s->answers[i]);
-
-        if (!dict) {
-          LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.", s->answers[i]->uid);
-        }
-
-        if (PyList_SetItem(answers, listIndex, dict)) {
-          Py_DECREF(dict);
-          LOG_ERRORV("Error inserting answer name '%s' into Python list", s->answers[i]->uid);
-        }
-        listIndex++;
+      if (s->answers[i]->flags & ANSWER_DELETED) {
+        continue;
       }
+
+      // #363, exclude QTYPE_META answers (any position)
+      if (s->answers[i]->type == QTYPE_META) {
+        continue;
+      }
+
+      // #363, exclude header answers (any position)
+      if (s->answers[i]->uid[0] == '@') {
+        continue;
+      }
+
+      PyObject *dict = py_create_answer(s->answers[i]);
+
+      if (!dict) {
+        LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.", s->answers[i]->uid);
+      }
+
+      if (PyList_SetItem(answers, listIndex, dict)) {
+        Py_DECREF(dict);
+        LOG_ERRORV("Error inserting answer name '%s' into Python list", s->answers[i]->uid);
+      }
+      listIndex++;
     }
 
     //    log_python_object("Answers",answers);
@@ -646,21 +662,28 @@ int get_next_questions_generic(struct session *s, struct next_questions *nq) {
   do {
     int i, j;
 
-    if (!s)
+    if (!s) {
       LOG_ERROR("struct session is NULL");
-    if (!s->survey_id)
+    }
+    if (!s->survey_id) {
       LOG_ERROR("surveyname is NULL");
-    if (!s->session_id)
+    }
+    if (!s->session_id) {
       LOG_ERROR("session_uuid is NULL");
-    if (!nq)
+    }
+    if (!nq) {
       LOG_ERROR("next_questions is NULL");
-    if (nq->question_count)
+    }
+    if (nq->question_count) {
       LOG_ERROR("next_questions->question_count is > 0");
+    }
 
     LOG_INFOV("Calling get_next_questions_generic()", 0);
 
     // Check each question to see if it has been answered already
     // #363, answer offset, exclude session header
+    // #363, note: QTYPE_META answers and @header answers are not affected here because they should not have questions
+    //   TODO it might be neccessary to add guards for questions 'abusing' the notation rules for automatted backend answers
     for (i = 0; i < s->question_count; i++) {
       for (j = s->answer_offset; j < s->answer_count; j++) {
         if (!(s->answers[j]->flags & ANSWER_DELETED)) {
