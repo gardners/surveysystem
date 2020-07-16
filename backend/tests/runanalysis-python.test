@@ -9,7 +9,7 @@ endofsurvey
 
 python
 def analyse_runanalysispython(questions,answers):
-        return "You will live"
+    return "You will live"
 endofpython
 
 # Request creation of a  new session

@@ -1201,6 +1201,9 @@ int run_test(struct Test *test) {
                 tdelta);
 
         // #361, removed extra call to configure_and_start_lighttpd()
+        //  give filesystem and python fs time to cope with newly created python file,
+        //  we had random ModuleNotFoundErrors on tests with both no python and python
+        sleep(1);
 
         tdelta = gettime_us() - start_time;
         tdelta /= 1000;
