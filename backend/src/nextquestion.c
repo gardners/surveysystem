@@ -252,6 +252,55 @@ int end_python(void) {
 }
 
 /**
+ * flags whether a survey answer has been answered, excluding internal system answers
+ *  - answer not deleted
+ *  - answer not of QTYPE_META
+ *  - answer not uid not pefixed with '@'
+ */
+int is_given_answer(struct answer *a) {
+  if (!a) {
+    LOG_WARNV("ERROR: is_given_answer() received NULL answer", 0);
+    return 0;
+  }
+
+  if (a->flags & ANSWER_DELETED) {
+    return 0;
+  }
+
+  if (a->type == QTYPE_META) {
+    return 0;
+  }
+
+  if (a->uid[0] == '@') {
+    return 0;
+  }
+
+  return 1;
+}
+
+/**
+ * flags whether a survey answer is an internal system answer
+ *  - answer is of QTYPE_META
+ *  - answer uid is pefixed with '@'
+ */
+int is_system_answer(struct answer *a) {
+  if (!a) {
+    LOG_WARNV("ERROR: is_system_answer() received NULL answer", 0);
+    return 1;
+  }
+
+  if (a->type == QTYPE_META) {
+    return 1;
+  }
+
+  if (a->uid[0] == '@') {
+    return 1;
+  }
+
+  return 0;
+}
+
+/**
  * Given a question uid load the question data and append it to the givven next_questions struct
  */
 int mark_next_question(struct session *s, struct question *next_questions[], int *next_question_count, const char *uid) {
@@ -468,7 +517,9 @@ int call_python_nextquestion(struct session *s, struct next_questions *nq) {
     PyObject *questions = PyList_New(s->question_count);
     int count_given_answers = 0;
     for (int i = s->answer_offset; i < s->answer_count; i++) {
-      if (!(s->answers[i]->flags & ANSWER_DELETED)) {
+      // #186 Don't include deleted answers in the list fed to Python
+      // #363, exclude system (any position)
+      if (is_given_answer(s->answers[i])) {
         count_given_answers++;
       }
     }
@@ -487,32 +538,22 @@ int call_python_nextquestion(struct session *s, struct next_questions *nq) {
     // #363, answer offset, exclude session header
     int listIndex = 0;
     for (int i = s->answer_offset; i < s->answer_count; i++) {
-      // Don't include deleted answers in the list fed to Python. #186
-      if (s->answers[i]->flags & ANSWER_DELETED) {
-        continue;
-      }
+      // #186 Don't include deleted answers in the list fed to Python
+      // #363, exclude system answers (any position)
+      if (is_given_answer(s->answers[i])) {
+        PyObject *dict = py_create_answer(s->answers[i]);
 
-      // #363, exclude QTYPE_META answers (any position)
-      if (s->answers[i]->type == QTYPE_META) {
-        continue;
-      }
+        if (!dict) {
+          LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.", s->answers[i]->uid);
+        }
 
-      // #363, exclude header answers (any position)
-      if (s->answers[i]->uid[0] == '@') {
-        continue;
-      }
+        if (PyList_SetItem(answers, listIndex, dict)) {
+          Py_DECREF(dict);
+          LOG_ERRORV("Error inserting answer name '%s' into Python list", s->answers[i]->uid);
+        }
 
-      PyObject *dict = py_create_answer(s->answers[i]);
-
-      if (!dict) {
-        LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.", s->answers[i]->uid);
+        listIndex++;
       }
-
-      if (PyList_SetItem(answers, listIndex, dict)) {
-        Py_DECREF(dict);
-        LOG_ERRORV("Error inserting answer name '%s' into Python list", s->answers[i]->uid);
-      }
-      listIndex++;
     }
 
     //    log_python_object("Answers",answers);
@@ -682,9 +723,10 @@ int get_next_questions_generic(struct session *s, struct next_questions *nq) {
 
     // Check each question to see if it has been answered already
     // #363, answer offset, exclude session header
-    // #363, note: QTYPE_META answers and @header answers are not affected here because they should not have questions
+    // #363, note: system answers (QTYPE_META or @uid) answers are not affected here because they should not have questions
     //   TODO it might be neccessary to add guards for questions 'abusing' the notation rules for automatted backend answers
     for (i = 0; i < s->question_count; i++) {
+
       for (j = s->answer_offset; j < s->answer_count; j++) {
         if (!(s->answers[j]->flags & ANSWER_DELETED)) {
           if (!strcmp(s->answers[j]->uid, s->questions[i]->uid)) {
@@ -853,7 +895,9 @@ int call_python_analysis(struct session *s, const char **output) {
     // #363, answer offset, exclude session header
     int count_given_answers = 0;
     for (int i = s->answer_offset; i < s->answer_count; i++) {
-      if (!(s->answers[i]->flags & ANSWER_DELETED)) {
+      // #186 Don't include deleted answers in the list fed to Python
+      // #363, exclude system (any position)
+      if (is_given_answer(s->answers[i])) {
         count_given_answers++;
       }
     }
@@ -872,8 +916,8 @@ int call_python_analysis(struct session *s, const char **output) {
     // #363, answer offset, exclude session header
     int listIndex = 0;
     for (int i = s->answer_offset; i < s->answer_count; i++) {
-      // Don't include deleted answers in the list fed to Python. #186
-      if (!(s->answers[i]->flags & ANSWER_DELETED)) {
+      // #363, exclude system (any position)
+      if (is_given_answer(s->answers[i])) {
         PyObject *dict = py_create_answer(s->answers[i]);
 
         if (!dict) {
