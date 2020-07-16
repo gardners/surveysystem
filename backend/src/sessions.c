@@ -761,6 +761,7 @@ int dump_session(FILE *f, struct session *ses) {
       "  authority: %s\n"
       "  created: %ld\n"
       "  closed: %ld\n"
+      "  nextquestions_flag: %d\n"
       "  answer_offset: %d\n"
       "  answer_count: %d\n"
       "  question_count: %d\n",
@@ -773,6 +774,8 @@ int dump_session(FILE *f, struct session *ses) {
       ses->authority,
       ses->created,
       ses->closed,
+
+      ses->nextquestions_flag,
 
       ses->answer_offset,
       ses->answer_count,
@@ -1259,13 +1262,9 @@ int session_add_answer(struct session *ses, struct answer *a) {
     if (!a || !a->uid) {
       LOG_ERRORV("Add answer: Answer structure or a->uid is null, session '%s'", ses->session_id);
     }
-    // #363, QTYPE_META answers cannot be deleted
-    if (a->type == QTYPE_META) {
-      LOG_ERRORV("Add answer: Invalid request to remove QTYPE_META answer '%s' from session '%s'", a->uid, ses->session_id);
-    }
-    // #363, header answers cannot be deleted
-    if (a->uid[0] == '@') {
-      LOG_ERRORV("Add answer: Invalid request to remove HEADER answer '%s' from session '%s'", a->uid, ses->session_id);
+    // #363, system answers (QTYPE_META or @uid) answers cannot be added
+    if (is_system_answer(a)) {
+      LOG_ERRORV("Add answer: Invalid request to remove private SYSTEM answer '%s' from session '%s'", a->uid, ses->session_id);
     }
 
     // #162 add/update stored timestamp
@@ -1342,18 +1341,18 @@ int session_delete_answers_by_question_uid(struct session *ses, char *uid, int d
     if (!uid) {
       LOG_ERRORV("Delete Answer (by uid): Asked to remove answers to null question UID from session '%s'", ses->session_id);
     }
-    // #363, header answers cannot be deleted
+    // #363, system answers (QTYPE_META or @uid) answers cannot be deleted
     if (uid[0] == '@') {
-      LOG_ERRORV("Delete Answer (by uid): Invalid request to remove HEADER answer '%s' from session '%s'", uid, ses->session_id);
+      LOG_ERRORV("Delete Answer (by uid): Invalid uid '%s' provided (session '%s')", uid, ses->session_id);
     }
 
     // #363, answer offset, exclude session header
     for (int i = ses->answer_offset; i < ses->answer_count; i++) {
       if (!strcmp(ses->answers[i]->uid, uid)) {
 
-        // #363, QTYPE_META answers cannot be deleted
-        if (ses->answers[i]->type == QTYPE_META) {
-          LOG_ERRORV("Delete Answer (by uid): Invalid request to remove QTYPE_META answer '%s' from session '%s'", uid, ses->session_id);
+        // #363, system answers (QTYPE_META or @uid) answers cannot be deleted
+        if (is_system_answer(ses->answers[i])) {
+          LOG_ERRORV("Delete Answer (by uid): Invalid request to remove private SYSTEM answer '%s' from session '%s'", uid, ses->session_id);
         }
 
         // Delete matching questions
@@ -1372,12 +1371,8 @@ int session_delete_answers_by_question_uid(struct session *ses, char *uid, int d
         // Mark all following answers deleted, if required
         if (deleteFollowingP) {
           for (int j = i + 1; j < ses->answer_count; j++) {
-            // #363, header answers cannot be deleted
-            if (ses->answers[j]->uid[0] == '@') { // logically, this should never be the case
-              continue;
-            }
-            // #363, QTYPE_META answers cannot be deleted
-            if (ses->answers[j]->type == QTYPE_META) {
+            // #363, system answers (QTYPE_META or @uid) answers cannot be deleted
+            if (is_system_answer(ses->answers[j])) {
               continue;
             }
             ses->answers[j]->flags |= ANSWER_DELETED;
@@ -1408,19 +1403,16 @@ int session_delete_answer(struct session *ses, struct answer *a, int deleteFollo
   int deletions = 0;
 
   do {
+
     if (!ses || !ses->session_id) {
       LOG_ERROR("Delete Answer: Session structure or ses->session_id is NULL");
     }
     if (!a || !a->uid) {
       LOG_ERRORV("Delete Answer: Answer structure or a->uid is null, session '%s'", ses->session_id);
     }
-    // #363, QTYPE_META answers cannot be deleted
-    if (a->type == QTYPE_META) {
-      LOG_ERRORV("Delete Answer: Invalid request to remove QTYPE_META answer '%s' from session '%s'", a->uid, ses->session_id);
-    }
-    // #363, header answers cannot be deleted
-    if (a->uid[0] == '@') {
-      LOG_ERRORV("Delete Answer: Invalid request to remove HEADER answer '%s' from session '%s'", a->uid, ses->session_id);
+    // #363, system answers (QTYPE_META or @uid) answers cannot be deleted
+    if (is_system_answer(a)) {
+      LOG_ERRORV("Delete Answer: Invalid request to remove private SYSTEM answer '%s' from session '%s'", a->uid, ses->session_id);
     }
 
     // #162 add/update stored timestamp
