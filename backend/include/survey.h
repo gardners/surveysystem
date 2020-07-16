@@ -219,6 +219,10 @@ struct session {
 int generate_path(char *path_in, char *path_out, int max_len);
 int generate_python_path(char *path_out, int max_len);
 
+//#363
+int is_given_answer(struct answer *a);
+int is_system_answer(struct answer *a);
+
 int get_next_questions(struct session *s, struct next_questions *nq);
 int get_analysis(struct session *s, const char **output);
 

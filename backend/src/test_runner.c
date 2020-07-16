@@ -1,26 +1,35 @@
-/*
-  Simple test runner for the survey system.
-  It runs tests that are each defined by a single file.
-  The test specification is as follows:
-
-  description <description>
-  definesurvey <name>
-  <questions in normal question format>
-  endofsurvey
-  request <expected response code> <url path and query>
-  extract_sessionid
-  match <regex to search for in body of last response>
-  nomatch <regex to search for in body of last response>
-  verifysession
-  <expected set of answers in the session file. Can be empty>
-  endofsession
-
-  These commands can be used more than once, so that more complex activities can be scripted.
-
-  Apart from running these scripts, all that it has to do to is to setup and cleanup the
-  directories for running the tests, and setup the config file for lighttpd for testing, and
-  actually stop and start lighttpd.
-
+/**
+ * Simple test runner for the survey system.
+ * It runs tests that are each defined by a single file.
+ * The test specification is as follows:
+ *
+ * @description <description> (required)
+ * @skip! (optional, skip test)
+ * @useproxy! (optional, start test with lighttpd for proxy auth)
+ * @fcgienv_middleware <ip:port> (optional, set fastcgi env "SS_TRUSTED_MIDDLEWARE")
+ *
+ * definesurvey <name>
+ * <questions in normal question format>
+ * endofsurvey
+ *
+ * request <expected response code> <url path and query>
+ * request proxy <expected response code> <url path and query> curlargs(`man curl`)
+ *
+ * extract_sessionid
+ *
+ * match <regex to search for in body of last response>
+ *
+ * nomatch <regex to search for in body of last response>
+ *
+ * verifysession
+ * <expected set of answers in the session file. Can be empty>
+ * endofsession
+ *
+ * These commands can be used more than once, so that more complex activities can be scripted.
+ *
+ * Apart from running these scripts, all that it has to do to is to setup and cleanup the
+ * directories for running the tests, and setup the config file for lighttpd for testing, and
+ * actually stop and start lighttpd.
 */
 
 #include <errno.h>
@@ -993,6 +1002,7 @@ int run_test(struct Test *test) {
 
     // Variables for FOR NEXT loops
     char var[1024];
+    char arg[1024]; // another temp storage for scanf
     int first, last;
     int for_count = 0;
     char for_var[10][16];
@@ -1191,6 +1201,9 @@ int run_test(struct Test *test) {
                 tdelta);
 
         // #361, removed extra call to configure_and_start_lighttpd()
+        //  give filesystem and python fs time to cope with newly created python file,
+        //  we had random ModuleNotFoundErrors on tests with both no python and python
+        sleep(1);
 
         tdelta = gettime_us() - start_time;
         tdelta /= 1000;
@@ -1571,6 +1584,61 @@ int run_test(struct Test *test) {
           goto fail;
         }
 
+      } else if (sscanf(line, "session_add_answer %[^\r\n]", arg) == 1) {
+
+        ////
+        // keyword: "session_add_answer"
+        ////
+
+       if (validate_session_id(last_sessionid)) {
+          tdelta = gettime_us() - start_time;
+          tdelta /= 1000;
+          fprintf(log,
+            "T+%4.3fms : FATAL: (session_add_answer) No session ID has been captured. Use "
+            "extract_sessionid following request directive.\n",
+            tdelta);
+          goto fatal;
+        }
+
+        trim_crlf(arg);
+        if (arg[0] == 0) {
+          tdelta = gettime_us() - start_time;
+          tdelta /= 1000;
+          fprintf(log,
+            "T+%4.3fms : FATAL: (session_add_answer) no answer defined.\n",
+            tdelta);
+          goto fatal;
+        }
+
+        // replace <UTIME> with timestamp
+        char parsed[1024];
+        char *hit = strstr(arg, "<UTIME>");
+        if (hit) {
+          size_t pos = strlen(arg) - strlen("<UTIME>");
+          arg[pos] = 0;
+          snprintf(parsed, 1024, "%s%d" , arg, (int)time(NULL));
+        } else{
+          strncpy(parsed, arg, 1024);
+        }
+
+        // TODO we could invoke backends: deserialise_answer() here for validation
+
+        // Build path to session file
+        char path[1024];
+        snprintf(path, 1024, "%s/sessions/%c%c%c%c/%s", test->dir,
+                  last_sessionid[0], last_sessionid[1], last_sessionid[2],
+                  last_sessionid[3], last_sessionid);
+
+        FILE *fp = fopen(path, "a");
+        if (!fp) {
+          fprintf(stderr, "Could not open session file '%s': %s\n", path, strerror(errno));
+          goto fatal;
+        }
+
+        fprintf(fp, "%s\n", parsed);
+        fclose(fp);
+        arg[0] = 0;
+
       } else if (strncmp("verify_session", line, strlen("verify_session")) == 0) {
         int skip_headers = 0;
 
@@ -1582,7 +1650,7 @@ int run_test(struct Test *test) {
           tdelta = gettime_us() - start_time;
           tdelta /= 1000;
           fprintf(log,
-            "T+%4.3fms : FATAL: No session ID has been captured. Use "
+            "T+%4.3fms : FATAL: (verify_session) No session ID has been captured. Use "
             "extract_sessionid following request directive.\n",
             tdelta);
           goto fatal;

@@ -29,14 +29,17 @@
 int validate_session_id(char *session_id) {
   int retVal = 0;
   do {
-    if (!session_id)
+    if (!session_id) {
       LOG_ERROR("session_id is NULL");
+    }
     LOG_WARNV("Validating session id '%s'", session_id);
-    if (strlen(session_id) != 36)
+    if (strlen(session_id) != 36) {
       LOG_ERRORV("session_id '%s' must be exactly 36 characters long",
                  session_id);
-    if (session_id[0] == '-')
+    }
+    if (session_id[0] == '-') {
       LOG_ERRORV("session_id '%s' may not begin with a dash", session_id);
+    }
 
     for (int i = 0; session_id[i]; i++) {
 
@@ -92,10 +95,12 @@ int validate_session_id(char *session_id) {
 int validate_survey_id(char *survey_id) {
   int retVal = 0;
   do {
-    if (!survey_id)
+    if (!survey_id) {
       LOG_ERROR("survey_id is NULL");
-    if (!survey_id[0])
+    }
+    if (!survey_id[0]) {
       LOG_ERROR("survey_id is empty string");
+    }
 
     for (int i = 0; survey_id[i]; i++) {
 
@@ -195,12 +200,14 @@ int urandombytes(unsigned char *buf, size_t len) {
 int random_session_id(char *session_id_out) {
   int retVal = 0;
   do {
-    if (!session_id_out)
+    if (!session_id_out) {
       LOG_ERROR("session_id_out is NULL");
+    }
 
     unsigned char randomness[32];
-    if (urandombytes(randomness, 32))
+    if (urandombytes(randomness, 32)) {
       LOG_ERROR("get_randomness() failed");
+    }
 
     sha1nfo s1;
     sha1_init(&s1);
@@ -334,33 +341,39 @@ int create_session(char *survey_id, char *session_id_out, struct session_meta *m
     char session_path_suffix[1024];
     char session_path[1024];
 
-    if (!survey_id)
+    if (!survey_id) {
       LOG_ERROR("survey_id is NULL");
-    if (!session_id_out)
+    }
+    if (!session_id_out) {
       LOG_ERROR("session_id_out is NULL");
-
-    if (validate_survey_id(survey_id))
+    }
+    if (validate_survey_id(survey_id)) {
       LOG_ERROR("Invalid survey ID");
+    }
 
     snprintf(session_path_suffix, 1024, "surveys/%s/current", survey_id);
-    if (generate_path(session_path_suffix, session_path, 1024))
+    if (generate_path(session_path_suffix, session_path, 1024)) {
       LOG_ERRORV("generate_path('%s') failed to build path for new session for "
                  "survey '%s'",
                  session_path_suffix, survey_id);
-    if (access(session_path, F_OK) == -1)
+    }
+    if (access(session_path, F_OK) == -1) {
       LOG_ERRORV("Survey '%s' does not exist", survey_id);
+    }
 
     // Get sha1 hash of survey file
     char survey_sha1[1024];
-    if (sha1_file(session_path, survey_sha1))
+    if (sha1_file(session_path, survey_sha1)) {
       LOG_ERRORV("Could not hash survey specification file '%s'", session_path);
+    }
 
-    snprintf(session_path_suffix, 1024, "surveys/%s/%s", survey_id,
-             survey_sha1);
-    if (generate_path(session_path_suffix, session_path, 1024))
+    snprintf(session_path_suffix, 1024, "surveys/%s/%s", survey_id, survey_sha1);
+    if (generate_path(session_path_suffix, session_path, 1024)) {
       LOG_ERRORV("generate_path('%s') failed to build path for new session for "
                  "survey '%s'",
                  session_path_suffix, survey_id);
+    }
+
     if (access(session_path, F_OK) == -1) {
       // No copy of the survey exists with the hash, so make one.
       // To avoid a race condition where the current survey form could be modified,
@@ -369,15 +382,18 @@ int create_session(char *survey_id, char *session_id_out, struct session_meta *m
 
       // Open input file
       snprintf(session_path_suffix, 1024, "surveys/%s/current", survey_id);
-      if (generate_path(session_path_suffix, session_path, 1024))
+      if (generate_path(session_path_suffix, session_path, 1024)) {
         LOG_ERRORV("generate_path('%s') failed to build path for new session "
                    "for survey '%s'",
                    session_path_suffix, survey_id);
+      }
+
       FILE *in = fopen(session_path, "r");
-      if (!in)
+      if (!in) {
         LOG_ERRORV("Could not read from survey specification file '%s' for "
                    "survey '%s'",
                    session_path, survey_id);
+      }
 
       // So make a hopefully unique name for the temporary file
       char temp_path[1024];
@@ -403,8 +419,9 @@ int create_session(char *survey_id, char *session_id_out, struct session_meta *m
 
       do {
         count = fread(buffer, 1, 8192, in);
-        if (count < 0)
+        if (count < 0) {
           LOG_ERRORV("Error hashing file '%s'", session_path);
+        }
 
         if (count > 0) {
           sha1_write(&s, buffer, count);
@@ -430,15 +447,18 @@ int create_session(char *survey_id, char *session_id_out, struct session_meta *m
       // Rename temporary file
       snprintf(session_path_suffix, 1024, "surveys/%s/%s", survey_id,
                survey_sha1);
-      if (generate_path(session_path_suffix, session_path, 1024))
+      if (generate_path(session_path_suffix, session_path, 1024)) {
         LOG_ERRORV("generate_path('%s') failed to build path for new session "
                    "for survey '%s'",
                    session_path_suffix, survey_id);
+      }
 
-      if (rename(temp_path, session_path))
+      if (rename(temp_path, session_path)) {
         LOG_ERRORV("Could not rename survey specification copy to name of hash "
                    "from '%s' to '%s'",
                    temp_path, session_path);
+      }
+
       LOG_INFOV(
           "Created new hashed survey specification file '%s' for survey '%s'",
           session_path, survey_id);
@@ -447,8 +467,9 @@ int create_session(char *survey_id, char *session_id_out, struct session_meta *m
     // Generate new unique session ID
     int tries = 0;
     for (tries = 0; tries < 5; tries++) {
-      if (random_session_id(session_id))
+      if (random_session_id(session_id)) {
         LOG_ERROR("random_session_id() failed to generate new session_id");
+      }
 
       for (int i = 0; i < 4; i++) {
         session_prefix[i] = session_id[i];
@@ -457,10 +478,11 @@ int create_session(char *survey_id, char *session_id_out, struct session_meta *m
 
       snprintf(session_path_suffix, 1024, "sessions/%s/%s", session_prefix,
                session_id);
-      if (generate_path(session_path_suffix, session_path, 1024))
+      if (generate_path(session_path_suffix, session_path, 1024)) {
         LOG_ERRORV("generate_path('%s') failed to build path for new session "
                    "for survey '%s'",
                    session_path_suffix, survey_id);
+      }
 
       // Try again if session ID already exists
       if (access(session_path, F_OK) != -1) {
@@ -471,30 +493,34 @@ int create_session(char *survey_id, char *session_id_out, struct session_meta *m
       }
     } // endfor
 
-    if (!session_id[0])
+    if (!session_id[0]) {
       LOG_ERROR("Failed to generate unique session ID after several tries");
+    }
 
     // Make directories if they don't already exist
-    if (generate_path("sessions", session_path, 1024))
+    if (generate_path("sessions", session_path, 1024)) {
       LOG_ERRORV("generate_path('%s') failed to build path for new session in "
                  "survey '%s'",
                  "sessions", survey_id);
+    }
     mkdir(session_path, 0750);
 
     snprintf(session_path_suffix, 1024, "sessions/%s", session_prefix);
-    if (generate_path(session_path_suffix, session_path, 1024))
+    if (generate_path(session_path_suffix, session_path, 1024)) {
       LOG_ERRORV("generate_path('%s') failed to build path for new session in "
                  "survey '%s'",
                  session_path_suffix, survey_id);
+    }
     mkdir(session_path, 0750);
 
     // Get full filename of session file again
     snprintf(session_path_suffix, 1024, "sessions/%s/%s", session_prefix,
              session_id);
-    if (generate_path(session_path_suffix, session_path, 1024))
+    if (generate_path(session_path_suffix, session_path, 1024)) {
       LOG_ERRORV("generate_path('%s') failed to build path for new session of "
                  "survey '%s'",
                  session_path_suffix, survey_id);
+    }
 
     FILE *f = fopen(session_path, "w");
     if (!f) {
@@ -533,10 +559,12 @@ int delete_session(char *session_id) {
     char session_path_suffix[1024];
     char session_path[1024];
 
-    if (!session_id)
+    if (!session_id) {
       LOG_ERROR("session_id is NULL");
-    if (validate_session_id(session_id))
+    }
+    if (validate_session_id(session_id)) {
       LOG_ERRORV("Session ID '%s' is malformed", session_id);
+    }
 
     for (int i = 0; i < 4; i++) {
       session_prefix[i] = session_id[i];
@@ -545,17 +573,20 @@ int delete_session(char *session_id) {
 
     snprintf(session_path_suffix, 1024, "sessions/%s/%s", session_prefix,
              session_id);
-    if (generate_path(session_path_suffix, session_path, 1024))
+    if (generate_path(session_path_suffix, session_path, 1024)) {
       LOG_ERRORV("generate_path('%s') failed to build path while deleting "
                  "session '%s'",
                  session_path_suffix, session_id);
+    }
 
     // Try again if session ID already exists
-    if (access(session_path, F_OK) == -1)
+    if (access(session_path, F_OK) == -1) {
       LOG_ERRORV("Session file '%s' does not exist", session_path);
+    }
 
-    if (unlink(session_path))
+    if (unlink(session_path)) {
       LOG_ERRORV("unlink('%s') failed", session_path);
+    }
     LOG_INFOV("Deleted session '%s'.", session_path);
   } while (0);
 
@@ -730,6 +761,7 @@ int dump_session(FILE *f, struct session *ses) {
       "  authority: %s\n"
       "  created: %ld\n"
       "  closed: %ld\n"
+      "  nextquestions_flag: %d\n"
       "  answer_offset: %d\n"
       "  answer_count: %d\n"
       "  question_count: %d\n",
@@ -742,6 +774,8 @@ int dump_session(FILE *f, struct session *ses) {
       ses->authority,
       ses->created,
       ses->closed,
+
+      ses->nextquestions_flag,
 
       ses->answer_offset,
       ses->answer_count,
@@ -775,10 +809,12 @@ int load_survey_questions(struct session *ses) {
   FILE *f = NULL;
 
   do {
-    if (!ses)
+    if (!ses) {
       LOG_ERROR("session structure is NULL");
-    if (!ses->survey_id)
+    }
+    if (!ses->survey_id) {
       LOG_ERROR("survey_id in session structure is NULL");
+    }
 
     char survey_path_suffix[1024];
     char survey_path[1024];
@@ -790,20 +826,23 @@ int load_survey_questions(struct session *ses) {
     }
 
     f = fopen(survey_path, "r");
-    if (!f)
+    if (!f) {
       LOG_ERRORV("Could not open survey file '%s'", survey_path);
+    }
     char line[8192];
 
     // Check survey file format version
     line[0] = 0;
-    if (!fgets(line, 8192, f))
+    if (!fgets(line, 8192, f)) {
       LOG_ERRORV("Failed to read survey file format version in survey "
                  "specification file '%s'",
                  survey_path);
-    if (!line[0])
+    }
+    if (!line[0]) {
       LOG_ERRORV("Failed to read survey file format version in survey "
                  "specification file '%s'",
                  survey_path);
+    }
 
     int format_version = 0;
     int offset = 0;
@@ -812,31 +851,34 @@ int load_survey_questions(struct session *ses) {
       LOG_ERRORV("Error parsing file format version in survey file '%s'",
                  survey_path);
     }
-    if (offset < strlen(line))
+
+    if (offset < strlen(line)) {
       LOG_ERRORV(
           "Junk at end of version string in survey file '%s'. Line was '%s'",
           survey_path, line);
-    if (format_version < 1 || format_version > 2)
+    }
+    if (format_version < 1 || format_version > 2) {
       LOG_ERRORV("Unknown survey file format version in survey file '%s'",
                  survey_path);
+    }
 
     // Get survey file description
     line[0] = 0;
-    if (!fgets(line, 8192, f))
+    if (!fgets(line, 8192, f)) {
       LOG_ERRORV(
-          "Failed to read survey description in survey specification file '%s'",
-          survey_path);
-    if (!line[0])
+          "Failed to read survey description in survey specification file '%s'", survey_path);
+    }
+    if (!line[0]) {
       LOG_ERRORV(
-          "Failed to read survey description in survey specification file '%s'",
-          survey_path);
+          "Failed to read survey description in survey specification file '%s'", survey_path);
+    }
 
     // Trim CR and LF chars from description
     trim_crlf(line);
     ses->survey_description = strdup(line);
-    if (!ses->survey_description)
-      LOG_ERRORV("strdup('%s') failed when loading survey file '%s'", line,
-                 survey_path);
+    if (!ses->survey_description) {
+      LOG_ERRORV("strdup('%s') failed when loading survey file '%s'", line, survey_path);
+    }
 
     // version 1: Only allow generic implementation of next question picker if explicitly allowed
     ses->nextquestions_flag = NEXTQUESTIONS_FLAG_PYTHON;
@@ -844,14 +886,17 @@ int load_survey_questions(struct session *ses) {
     if (format_version > 1) {
       // Check for python directives
       line[0] = 0;
-      if (!fgets(line, 8192, f))
+      if (!fgets(line, 8192, f)) {
         LOG_ERRORV("Failed to read survey description in survey specification "
                    "file '%s'",
                    survey_path);
-      if (!line[0])
+      }
+
+      if (!line[0]) {
         LOG_ERRORV("Failed to read survey description in survey specification "
                    "file '%s'",
                    survey_path);
+      }
 
       // Trim CR and LF chars from description
       trim_crlf(line);
@@ -877,10 +922,11 @@ int load_survey_questions(struct session *ses) {
         break;
       }
 
-      if (ses->question_count >= MAX_QUESTIONS)
+      if (ses->question_count >= MAX_QUESTIONS) {
         LOG_ERRORV(
             "Too many questions in survey '%s' (increase MAX_QUESTIONS?)",
             survey_path);
+      }
 
       // Remove end of line markers
       trim_crlf(line);
@@ -891,10 +937,11 @@ int load_survey_questions(struct session *ses) {
       }
 
       struct question *q = calloc(sizeof(struct question), 1);
-      if (!q)
+      if (!q) {
         LOG_ERRORV("calloc(struct question) failed while loading survey "
                    "question list from '%s'",
                    survey_path);
+      }
 
       if (deserialise_question(line, q)) {
         free_question(q);
@@ -928,10 +975,12 @@ struct session *load_session(char *session_id) {
   struct session *ses = NULL;
 
   do {
-    if (!session_id)
+    if (!session_id) {
       LOG_ERROR("session_id is NULL");
-    if (validate_session_id(session_id))
+    }
+    if (validate_session_id(session_id)) {
       LOG_ERRORV("validate_session_id('%s') failed", session_id);
+    }
 
     char session_path[1024];
     char session_path_suffix[1024];
@@ -942,37 +991,34 @@ struct session *load_session(char *session_id) {
     }
     session_prefix[4] = 0;
 
-    snprintf(session_path_suffix, 1024, "sessions/%s/%s", session_prefix,
-             session_id);
+    snprintf(session_path_suffix, 1024, "sessions/%s/%s", session_prefix, session_id);
     if (generate_path(session_path_suffix, session_path, 1024)) {
-      LOG_ERRORV(
-          "generate_path('%s') failed to build path for loading session '%s'",
-          session_path_suffix, session_id);
+      LOG_ERRORV("generate_path('%s') failed to build path for loading session '%s'", session_path_suffix, session_id);
     }
 
     FILE *s = fopen(session_path, "r");
-    if (!s)
+    if (!s) {
       LOG_ERRORV("Could not read from session file '%s'", session_path);
+    }
 
     // Session file consists of:
     // First line = survey name in form <survey id>/<sha1 hash>
     // (this allows the survey to change without messing up sessions that are
     // in progress).
-    // Subesequent lines:
-    // <timestamp in seconds since 1970> <add|del> <serialised answer>
+    // Subsequent lines:
+    // @header answers: <serialised META answer> <add>
+    // survey answers; <serialised MISC TYPES answer> <add|del>
 
     // Read survey ID line
     char survey_id[1024];
     survey_id[0] = 0;
     if (!fgets(survey_id, 1024, s)) {
       fclose(s);
-      LOG_ERRORV("Could not read survey ID from session file '%s'",
-                 session_path);
+      LOG_ERRORV("Could not read survey ID from session file '%s'", session_path);
     }
     if (!survey_id[0]) {
       fclose(s);
-      LOG_ERRORV("Could not read survey ID from session file '%s'",
-                 session_path);
+      LOG_ERRORV("Could not read survey ID from session file '%s'", session_path);
     }
 
     // Trim CR / LF characters from the end
@@ -981,32 +1027,31 @@ struct session *load_session(char *session_id) {
     ses = calloc(sizeof(struct session), 1);
     if (!ses) {
       fclose(s);
-      LOG_ERRORV("calloc(%d,1) failed when loading session '%s'",
-                 sizeof(struct session), session_id);
+      LOG_ERRORV("calloc(%d,1) failed when loading session '%s'", sizeof(struct session), session_id);
     }
 
     ses->survey_id = strdup(survey_id);
     ses->session_id = strdup(session_id);
-    if (!ses->survey_id)
-      LOG_ERRORV("strdup(survey_id='%s') failed when loading session '%s'",
-                 survey_id, session_id);
-    if (!ses->session_id)
-      LOG_ERRORV("strdup(session_id) failed when loading session '%s'",
-                 session_id);
+    if (!ses->survey_id) {
+      LOG_ERRORV("strdup(survey_id='%s') failed when loading session '%s'", survey_id, session_id);
+    }
+    if (!ses->session_id) {
+      LOG_ERRORV("strdup(session_id) failed when loading session '%s'", session_id);
+    }
 
     // Load survey
     if (load_survey_questions(ses)) {
       fclose(s);
       LOG_ERRORV("Failed to load questions from survey '%s'", survey_id);
     }
-    if (!ses->question_count)
-      LOG_ERRORV("Failed to load questions from survey '%s', or survey "
-                 "contains no questions",
-                 survey_id);
+    if (!ses->question_count) {
+      LOG_ERRORV("Failed to load questions from survey '%s', or survey  contains no questions", survey_id);
+    }
 
     // Load answers from session file
     char line[65536];
     line[0] = 0;
+
     do {
       // Get next line with an answer in it
       line[0] = 0;
@@ -1086,13 +1131,15 @@ int save_session(struct session *s) {
   FILE *o = NULL;
 
   do {
-    if (!s)
+    if (!s) {
       LOG_ERROR("session structure is NULL");
-    if (!s->session_id)
+    }
+    if (!s->session_id) {
       LOG_ERROR("s->session_id is NULL");
-
-    if (validate_session_id(s->session_id))
+    }
+    if (validate_session_id(s->session_id)) {
       LOG_ERRORV("validate_session_id('%s') failed", s->session_id);
+    }
 
     char session_path[1024];
     char session_path_final[1024];
@@ -1113,9 +1160,9 @@ int save_session(struct session *s) {
     }
 
     o = fopen(session_path, "w");
-    if (!o)
-      LOG_ERRORV("Could not create or open session file '%s' for write",
-                 session_path);
+    if (!o) {
+      LOG_ERRORV("Could not create or open session file '%s' for write", session_path);
+    }
     fprintf(o, "%s\n", s->survey_id);
 
     for (int i = 0; i < s->answer_count; i++) {
@@ -1130,8 +1177,8 @@ int save_session(struct session *s) {
     fclose(o);
     o = NULL;
 
-    snprintf(session_path_suffix, 1024, "sessions/%s/%s", session_prefix,
-             s->session_id);
+    snprintf(session_path_suffix, 1024, "sessions/%s/%s", session_prefix, s->session_id);
+
     if (generate_path(session_path_suffix, session_path_final, 1024)) {
       LOG_ERRORV(
           "generate_path('%s') failed to build path for loading session '%s'",
@@ -1159,8 +1206,9 @@ struct answer *copy_answer(struct answer *aa) {
     // Duplicate aa into a, so that we don't put pointers to structures that are on the
     // stack into our list.
     a = malloc(sizeof(struct answer));
-    if (!a)
+    if (!a) {
       LOG_ERROR("malloc() of struct answer failed.");
+    }
     bcopy(aa, a, sizeof(struct answer));
 
     if (a->uid) {
@@ -1208,25 +1256,31 @@ int session_add_answer(struct session *ses, struct answer *a) {
 
   do {
     // Add answer to list of answers
-    if (!ses)
-      LOG_ERROR("Session structure is NULL");
-    if (!a)
-      LOG_ERROR("Asked to add null answer to session");
+    if (!ses || !ses->session_id) {
+      LOG_ERRORV("Add answer: Session structure or ses->session_id is NULL %s", ses->session_id);
+    }
+    if (!a || !a->uid) {
+      LOG_ERRORV("Add answer: Answer structure or a->uid is null, session '%s'", ses->session_id);
+    }
+    // #363, system answers (QTYPE_META or @uid) answers cannot be added
+    if (is_system_answer(a)) {
+      LOG_ERRORV("Add answer: Invalid request to remove private SYSTEM answer '%s' from session '%s'", a->uid, ses->session_id);
+    }
 
     // #162 add/update stored timestamp
     a->stored = (long long)time(NULL);
 
     // Don't allow answers to questions that don't exist
     int question_number = 0;
-    for (question_number = 0; question_number < ses->question_count;
-         question_number++) {
+    for (question_number = 0; question_number < ses->question_count; question_number++) {
       if (!strcmp(ses->questions[question_number]->uid, a->uid)) {
         break;
       }
     }
 
-    if (question_number == ses->question_count)
+    if (question_number == ses->question_count) {
       LOG_ERRORV("There is no such question '%s'", a->uid);
+    }
 
     // #358 set question type (for both, adding and deleting)
     a->type = ses->questions[question_number]->type;
@@ -1253,9 +1307,9 @@ int session_add_answer(struct session *ses, struct answer *a) {
       break;
     }
 
-    if (ses->answer_count >= MAX_ANSWERS)
-      LOG_ERRORV("Too many answers in session '%s' (increase MAX_ANSWERS?)",
-                 ses->session_id);
+    if (ses->answer_count >= MAX_ANSWERS) {
+      LOG_ERRORV("Too many answers in session '%s' (increase MAX_ANSWERS?)", ses->session_id);
+    }
 
     // #186 Don't append answer if we are undeleting it.
     if (!undeleted) {
@@ -1276,22 +1330,31 @@ int session_add_answer(struct session *ses, struct answer *a) {
   Delete any and all answers to a given question from the provided session structure.
   It is not an error if there were no matching answers to delete
 */
-int session_delete_answers_by_question_uid(struct session *ses, char *uid,
-                                           int deleteFollowingP) {
+int session_delete_answers_by_question_uid(struct session *ses, char *uid, int deleteFollowingP) {
   int retVal = 0;
   int deletions = 0;
 
   do {
-    if (!ses)
-      LOG_ERROR("Session structure is NULL");
-    if (!uid)
-      LOG_ERRORV(
-          "Asked to remove answers to null question UID from session '%s'",
-          ses->session_id);
+    if (!ses || !ses->session_id) {
+      LOG_ERROR("Delete Answer (by uid): Session structure or ses->session_id is NULL");
+    }
+    if (!uid) {
+      LOG_ERRORV("Delete Answer (by uid): Asked to remove answers to null question UID from session '%s'", ses->session_id);
+    }
+    // #363, system answers (QTYPE_META or @uid) answers cannot be deleted
+    if (uid[0] == '@') {
+      LOG_ERRORV("Delete Answer (by uid): Invalid uid '%s' provided (session '%s')", uid, ses->session_id);
+    }
 
     // #363, answer offset, exclude session header
     for (int i = ses->answer_offset; i < ses->answer_count; i++) {
       if (!strcmp(ses->answers[i]->uid, uid)) {
+
+        // #363, system answers (QTYPE_META or @uid) answers cannot be deleted
+        if (is_system_answer(ses->answers[i])) {
+          LOG_ERRORV("Delete Answer (by uid): Invalid request to remove private SYSTEM answer '%s' from session '%s'", uid, ses->session_id);
+        }
+
         // Delete matching questions
         // #186 - Deletion now just sets the ANSWER_DELETED flag in the flags field for the answer.
         // If deleteFollowingP is non-zero, then this is applied to all later answers in the session also.
@@ -1308,6 +1371,10 @@ int session_delete_answers_by_question_uid(struct session *ses, char *uid,
         // Mark all following answers deleted, if required
         if (deleteFollowingP) {
           for (int j = i + 1; j < ses->answer_count; j++) {
+            // #363, system answers (QTYPE_META or @uid) answers cannot be deleted
+            if (is_system_answer(ses->answers[j])) {
+              continue;
+            }
             ses->answers[j]->flags |= ANSWER_DELETED;
             deletions++;
           }
@@ -1331,17 +1398,22 @@ int session_delete_answers_by_question_uid(struct session *ses, char *uid,
   and return the number of answers deleted.
   If there is no exactly matching answer, it will return 0.
  */
-int session_delete_answer(struct session *ses, struct answer *a,
-                          int deleteFollowingP) {
+int session_delete_answer(struct session *ses, struct answer *a, int deleteFollowingP) {
   int retVal = 0;
   int deletions = 0;
 
   do {
-    if (!ses)
-      LOG_ERROR("Session structure is NULL");
-    if (!a)
-      LOG_ERRORV("Asked to remove null answer from session '%s'",
-                 ses->session_id ? ses->session_id : "(null)");
+
+    if (!ses || !ses->session_id) {
+      LOG_ERROR("Delete Answer: Session structure or ses->session_id is NULL");
+    }
+    if (!a || !a->uid) {
+      LOG_ERRORV("Delete Answer: Answer structure or a->uid is null, session '%s'", ses->session_id);
+    }
+    // #363, system answers (QTYPE_META or @uid) answers cannot be deleted
+    if (is_system_answer(a)) {
+      LOG_ERRORV("Delete Answer: Invalid request to remove private SYSTEM answer '%s' from session '%s'", a->uid, ses->session_id);
+    }
 
     // #162 add/update stored timestamp
     a->stored = (long long)time(NULL);
