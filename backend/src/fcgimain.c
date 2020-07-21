@@ -479,32 +479,30 @@ static void fcgi_newsession(struct kreq *req) {
       break;
     }
 
-
-    // #363 parse session meta
-    struct session_meta *meta = calloc(sizeof(struct session_meta), 1);
-    if (parse_session_meta_kreq(req, meta)) {
-      quick_error(req, KHTTP_500, "Session could not be created (1).");
-      LOG_ERROR("create_session_meta_kreq() failed");
+    // #363 parse and validate session meta session meta
+    struct session_meta *meta = fcgirequest_parse_session_meta(req);
+    if (!meta) {
+      quick_error(req, KHTTP_500, "Could not parse request, server incorrect configured");
+      LOG_ERROR("fcgirequest_parse_session_meta() struct session_meta is null");
       break;
     }
 
-    // #363 validate session meta
-    enum khttp status = validate_session_meta_kreq(req, meta);
+    enum khttp status = fcgirequest_validate_request(req, meta);
     if (status >= KHTTP_400) {
-      // No survey ID, so return 400
+      free_session_meta(meta);
       quick_error(req, status, "Invalid idendity provider check app configuration");
       LOG_ERRORV("validate_session_meta_kreq() returned status %status %d >= KHTTP_400 (%d)", KHTTP_400, status);
       break;
     }
 
-    // #363 save session meta
+    // create session, #363 save session meta
     char session_id[1024];
     if (create_session(survey->val, session_id, meta)) {
+      free_session_meta(meta);
       quick_error(req, KHTTP_500, "Session could not be created (2).");
       LOG_ERROR("create_session() failed");
       break;
     }
-    free_session_meta(meta);
 
     // create session meta log file, log user and creation time
 
