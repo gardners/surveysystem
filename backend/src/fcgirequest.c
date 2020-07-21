@@ -9,56 +9,6 @@
 #include "fcgirequest.h"
 #include "errorlog.h"
 
-// some debug functions
-
-extern char **environ;
-void log_envs() {
-  int i = 1;
-  char *s = *environ;
-
-  char tmp[1024];
-  char debug[8029] = "env:\n";
-  for (; s; i++) {
-    snprintf(tmp, 1024, "  |_ %s\n", s);
-    strcat(debug, tmp);
-    s = *(environ+i);
-  }
-  LOG_INFO(debug);
-}
-
-void log_headers(struct kreq *req){
-  char tmp[1024];
-  char debug[8029] = "Request headers:\n";
-  for (int i = 0; i < req->reqsz; i++) {
-    snprintf(tmp, 1024, "  |_ %s: %s\n", req->reqs[i].key, req->reqs[i].val);
-    strcat(debug, tmp);
-  }
-
-  LOG_INFO(debug);
-}
-
-void log_fields(struct kreq *req){
-  char tmp[1024];
-  char debug[8029] = "Request fields:\n";
-  for (int i = 0; i < req->fieldsz; i++) {
-    snprintf(tmp, 1024, "  |_ %s: %s\n", req->fields[i].key, req->fields[i].val);
-    strcat(debug, tmp);
-  }
-
-  LOG_INFO(debug);
-}
-
-void log_cookies(struct kreq *req){
-  char tmp[1024];
-  char debug[8029] = "Cookies:\n";
-  for (int i = 0; i < req->cookiesz; i++) {
-    snprintf(tmp, 1024, "  |_ %s: %s\n", req->cookies[i].key, req->cookies[i].val);
-    strcat(debug, tmp);
-  }
-
-  LOG_INFO(debug);
-}
-
 void log_session_meta(struct session_meta *meta){
   LOG_INFOV(
     "session_meta\n"
@@ -75,19 +25,17 @@ void log_session_meta(struct session_meta *meta){
 }
 
 /**
- * parses (but does not validate) authorisation type
+ * Determines (but does not validate) authorisation type from an incoming kcgi request
  * #363
  */
 int get_autorisation_type(struct kreq *req) {
-
-  // case trusted middleware
+  // is trusted middleware
   if (getenv("SS_TRUSTED_MIDDLEWARE")) {
     return IDENDITY_HTTP_TRUSTED;
   }
 
-  // case server auth
+  // direct auth (server)
   if (req->auth) {
-
     if (req->rawauth.type == KAUTH_BASIC) {
       return IDENDITY_HTTP_BASIC;
     }
@@ -95,20 +43,18 @@ int get_autorisation_type(struct kreq *req) {
     if (req->rawauth.type == KAUTH_DIGEST) {
       return IDENDITY_HTTP_DIGEST;
     }
-
   }
 
-  // no server auth
+  // no auth
   return IDENDITY_HTTP_PUBLIC;
 }
 
 /**
- * parse session meta from request
- * Note that *meta needs to be freed
+ * Parses session meta from an incoming kcgi request
+ * The returned session_meta structure needs to be freed
  * #363
  */
-int parse_session_meta_kreq(struct kreq *req, struct session_meta *meta) {
-  int retVal = 0;
+struct session_meta *fcgirequest_parse_session_meta(struct kreq *req) {
 
   /*
   LOG_INFOV(
@@ -129,69 +75,69 @@ int parse_session_meta_kreq(struct kreq *req, struct session_meta *meta) {
     (req->rawauth.type == KAUTH_BASIC) ? req->rawauth.d.basic.response : "none");
   */
 
-  do {
-    // authority
-    char authority[1024];
-    int l = snprintf(authority, 1024, "%s(%hu)", req->remote, req->port);
-    if (l < 1) {
-      LOG_ERROR("idendity provider snprintf() for authority failed");
-    }
-    meta->authority = strndup(authority, 1024);
+  // #363 parse session meta
+  struct session_meta *meta = calloc(sizeof(struct session_meta), 1);
+  if (!meta) {
+    LOG_WARNV("Could not calloc() session_meta structure.", 0);
+    return NULL;
+  }
 
-    // authorisation type
-    meta->provider = get_autorisation_type(req);
+  // authority
+  char authority[1024];
+  int l = snprintf(authority, 1024, "%s(%hu)", req->remote, req->port);
+  if (l < 1) {
+    LOG_WARNV("idendity provider snprintf() for authority failed", 0);
+    return NULL;
+  }
+  meta->authority = strndup(authority, 1024);
 
-    // provider
-    if (meta->provider == IDENDITY_HTTP_DIGEST ) {
-      meta->user = strndup(req->rawauth.d.digest.user, 1024);
-      meta->group = strndup(req->rawauth.d.digest.realm, 1024);
-      break;
-    }
+  // authorisation type
+  meta->provider = get_autorisation_type(req);
 
-    if (meta->provider == IDENDITY_HTTP_BASIC ) {
-        meta->user = strndup(req->rawauth.d.basic.response, 1024);
-        meta->group = NULL;
-      break;
-    }
+  // user and group
+  if (meta->provider == IDENDITY_HTTP_DIGEST ) {
+    meta->user = strndup(req->rawauth.d.digest.user, 1024);
+    meta->group = strndup(req->rawauth.d.digest.realm, 1024);
+    return meta;
+  }
 
-    // user, group
-    if (meta->provider == IDENDITY_HTTP_TRUSTED) {
-
-      // fetch user info from x-headers
-      // check if x -headers are set and copy
-      int count = 0;
-      for (int i = 0; i < req->reqsz; i++) {
-        if (0 == strcasecmp(req->reqs[i].key, X_HEADER_MW_USER)) {
-          meta->user = strndup(req->reqs[i].val, 1024);
-          count++;
-        }
-        if (0 == strcasecmp(req->reqs[i].key, X_HEADER_MW_GROUP)) {
-
-          meta->group = strndup(req->reqs[i].val, 1024);
-          count++;
-        }
-        if (count == 2) {
-          break;
-        }
-      }
-
-      break;
-    }
-
-    //case IDENDITY_HTTP_PUBLIC
-    meta->user = NULL;
+  if (meta->provider == IDENDITY_HTTP_BASIC ) {
+    meta->user = strndup(req->rawauth.d.basic.response, 1024);
     meta->group = NULL;
+    return meta;
+  }
 
-  } while (0);
+  if (meta->provider == IDENDITY_HTTP_TRUSTED) {
+    // fetch user info from x-headers
+    // check if x -headers are set and copy
+    int count = 0;
+    for (int i = 0; i < req->reqsz; i++) {
+      if (0 == strcasecmp(req->reqs[i].key, X_HEADER_MW_USER)) {
+        meta->user = strndup(req->reqs[i].val, 1024);
+        count++;
+      }
+      if (0 == strcasecmp(req->reqs[i].key, X_HEADER_MW_GROUP)) {
+        meta->group = strndup(req->reqs[i].val, 1024);
+        count++;
+      }
+      if (count == 2) {
+        break;
+      }
+    }
+    return meta;
+  }
 
-  return retVal;
+  //IDENDITY_HTTP_PUBLIC
+  meta->user = NULL;
+  meta->group = NULL;
+  return meta;
 }
 
 /**
- * validate parsed session meta and return http status code
+ * Validates incoming kcgi request against server config, using previously parsed session meta
  * #363
  */
-enum khttp validate_session_meta_kreq(struct kreq *req, struct session_meta *meta) {
+enum khttp fcgirequest_validate_request(struct kreq *req, struct session_meta *meta) {
 
   // no authorisation
   if (meta->provider <= IDENDITY_HTTP_PUBLIC) {
@@ -256,5 +202,94 @@ enum khttp validate_session_meta_kreq(struct kreq *req, struct session_meta *met
   }
 
   // valid auth
+  return KHTTP_200;
+}
+
+/**
+ * Validates session meta, parsed from incoming kcgi request, against previously stored session meta (header)
+ * We do not manage authorisation or idendity in the backend, only verify if the request source is consitent with thew initial newsession request
+ */
+enum khttp fcgirequest_validate_session_authority( struct session_meta *meta, struct session *ses) {
+  if (!meta) {
+    LOG_WARNV("Cannot validate request. request meta is null for session '%s'.", ses->session_id);
+    return KHTTP_500;
+  }
+
+  if (!ses) {
+    LOG_WARNV("Cannot validate request. session is null.", 0);
+    return KHTTP_500;
+  }
+
+  // parse initial authority from session
+  struct answer *authority = session_get_header("@authority", ses);
+  if (!authority) {
+    LOG_WARNV("'@authority' header missing in session '%s'", ses->session_id);
+    return KHTTP_502;
+  }
+
+  // all requests must match provider type
+  int provider = authority->value;
+  if(provider != meta->provider) {
+    LOG_WARNV("Invalid request. Provider type mismatch %d != %d for session '%s'.", provider, meta->provider, ses->session_id);
+    return KHTTP_502;
+  }
+
+  // if middleware: (fcgi env SS_TRUSTED_MIDDLEWARE is set) match current authority (ip, port)
+  if (!authority->text || !strlen(authority->text)){
+    LOG_WARNV("Invalid request. authority value is empty in session '%s'.", ses->session_id);
+    return KHTTP_502;
+  }
+  if (strcmp(authority->text, meta->authority)) {
+    LOG_WARNV("Invalid request. Provider type mismatch '%s' != '%s' for session '%s'.", authority->text, meta->authority, ses->session_id);
+    return KHTTP_502;
+  }
+
+  return KHTTP_200;
+}
+
+/**
+ * Validate a loaded session against request
+ * The backend does not manage authorisation or idendity, it relies on outer wrappers,
+ * We only verify if the request source is consitent with thew initial newsession request
+ */
+
+enum khttp fcgirequest_validate_session_request(struct kreq *req, struct session *ses) {
+  enum khttp status;
+  struct session_meta *meta = NULL;
+
+  if (!req) {
+    LOG_WARNV("Cannot validate request. request meta is null for session '%s'.", ses->session_id);
+    return KHTTP_500;
+  }
+
+  if (!ses) {
+    LOG_WARNV("Cannot validate request. session is null.", 0);
+    return KHTTP_500;
+  }
+
+  // #363 parse session meta
+  meta = fcgirequest_parse_session_meta(req);
+  if (!meta) {
+    LOG_WARNV("create_session_meta_kreq() failed",  0);
+    return KHTTP_500;
+  }
+
+  // validate session meta against request
+  status = fcgirequest_validate_request(req, meta);
+  if (status != KHTTP_200) {
+    free_session_meta(meta);
+    LOG_WARNV("fcgirequest_validate_request() status %status %d != (%d)", KHTTP_200, status);
+    return status;
+  }
+
+  // validate session meta against session
+  status = fcgirequest_validate_session_authority(meta, ses);
+  if (status != KHTTP_200) {
+    free_session_meta(meta);
+    LOG_WARNV("fcgirequest_validate_session_authority() status %status %d != (%d)", KHTTP_200, status);
+    return status;
+  }
+
+  free_session_meta(meta);
   return KHTTP_200;
 }
