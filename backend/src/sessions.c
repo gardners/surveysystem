@@ -238,6 +238,7 @@ int random_session_id(char *session_id_out) {
 
 /**
  * #363 save session meta data
+ * This function leaves the file pointer open, regardless of success or fail
  */
 int save_session_meta(FILE *fp, struct session_meta *meta, int closed_flag) {
   // LOG_INFOV(
@@ -756,11 +757,6 @@ int dump_session(FILE *f, struct session *ses) {
       "  survey_id: %s\n"
       "  survey_description: %s\n"
       "  session_id: %s\n"
-      "  user: %s\n"
-      "  group: %s\n"
-      "  authority: %s\n"
-      "  created: %ld\n"
-      "  closed: %ld\n"
       "  nextquestions_flag: %d\n"
       "  answer_offset: %d\n"
       "  answer_count: %d\n"
@@ -769,12 +765,6 @@ int dump_session(FILE *f, struct session *ses) {
       ses->survey_id,
       ses->survey_description,
       ses->session_id,
-      ses->user,
-      ses->group,
-      ses->authority,
-      ses->created,
-      ses->closed,
-
       ses->nextquestions_flag,
 
       ses->answer_offset,
@@ -1199,6 +1189,23 @@ int save_session(struct session *s) {
   return retVal;
 }
 
+/**
+ * #363, query a header answer
+ */
+struct answer *session_get_header(char *uid, struct session *ses) {
+  if (!ses) {
+    LOG_WARNV("session_get_header(): session is null", 0);
+    return NULL;
+  }
+
+  for (int i = 0; i < ses->answer_offset; i++) {
+    if (!strcmp(ses->answers[i]->uid, uid)) {
+      return ses->answers[i];
+    }
+  }
+  return NULL;
+}
+
 struct answer *copy_answer(struct answer *aa) {
   int retVal = 0;
   struct answer *a = NULL;
@@ -1245,6 +1252,7 @@ struct answer *copy_answer(struct answer *aa) {
     return a;
   }
 }
+
 
 /*
   Add the provided answer to the set of answers in the provided session.
