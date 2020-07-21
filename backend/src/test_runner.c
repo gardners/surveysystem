@@ -25,6 +25,8 @@
  * <expected set of answers in the session file. Can be empty>
  * endofsession
  *
+ * session_add_answer <serialised answer>
+ *
  * These commands can be used more than once, so that more complex activities can be scripted.
  *
  * Apart from running these scripts, all that it has to do to is to setup and cleanup the
@@ -547,6 +549,94 @@ FILE *open_session_file_copy(char *session_id, struct Test *test) {
 }
 
 /**
+ * Replace pattern with string.
+ */
+void replace_str(char *str, char *pattern, char *replacement, size_t sz) {
+    char *pos;
+    char tmp[sz];
+    int index = 0;
+    int plen;
+
+    plen = strlen(pattern);
+
+    while ((pos = strstr(str, pattern)) != NULL) {
+        strcpy(tmp, str);
+        index = pos - str;
+        str[index] = '\0';
+        strcat(str, replacement);
+
+        // cat str with remainder
+        strcat(str, tmp + index + plen);
+    }
+}
+
+/**
+ * Replace pattern with int.
+ */
+void replace_int(char *str, char *pattern, int replacement, size_t sz) {
+  char tmp[sz];
+  snprintf(tmp, sz, "%d", replacement);
+  replace_str(str, pattern, tmp, sz);
+}
+
+int define_session(FILE *in, char *session_id, struct Test *test) {
+  char session_dir[1024];
+  char session_file[1024];
+  char line[MAX_LINE];
+
+  // copen session file
+  snprintf(session_dir, 1024, "%s/sessions/%c%c%c%c", test->dir,
+            session_id[0], session_id[1], session_id[2],
+            session_id[3]);
+
+  mkdir(session_dir, 0755);
+
+  if (chmod(session_dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH)) {
+    fprintf(stderr, "\nERROR: chmod() failed for new session directory %s", session_dir);
+    return -1;
+  }
+
+  snprintf(session_file, 1024, "%s/%s", session_dir, session_id);
+
+  FILE *s = fopen(session_file, "w");
+  if (!s) {
+    fprintf(stderr,
+            "\rERROR: Could not create survey session file '%s'                  "
+            "                                             \n",
+            session_file);
+    return -1;
+  }
+
+  // now read definition into session
+  line[0] = 0;
+  fgets(line, MAX_LINE, in);
+
+  while (line[0]) {
+    trim_crlf(line);
+
+    replace_int(line, "<UTIME>", (int)time(0), MAX_LINE);
+    replace_str(line, "<FCGIENV_MIDDLEWARE>", test->fcgienv_middleware, MAX_LINE);
+    replace_int(line, "<IDENDITY_CLI>", IDENDITY_CLI, MAX_LINE);
+    replace_int(line, "<IDENDITY_HTTP_PUBLIC>", IDENDITY_HTTP_PUBLIC, MAX_LINE);
+    replace_int(line, "<IDENDITY_HTTP_BASIC>", IDENDITY_HTTP_BASIC, MAX_LINE);
+    replace_int(line, "<IDENDITY_HTTP_DIGEST>", IDENDITY_HTTP_DIGEST, MAX_LINE);
+    replace_int(line, "<IDENDITY_HTTP_TRUSTED>", IDENDITY_HTTP_TRUSTED, MAX_LINE);
+    replace_int(line, "<IDENDITY_UNKOWN>", IDENDITY_UNKOWN, MAX_LINE);
+
+    if (!strcmp(line, "endofsession")) {
+      break;
+    }
+
+    fprintf(s, "%s\n", line);
+    line[0] = 0;
+    fgets(line, MAX_LINE, in);
+  }
+
+  fclose(s);
+  return 0;
+}
+
+/**
  * Compares survey session line with a comparsion string
  * - the number of delimitors (Note, this includes escaped delimiters in fields, i.e "\:")
  * - string matches between delimitors
@@ -599,6 +689,16 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
       pass++;
     }
 
+    // validate <IDENDITY_CLI>
+    if (!strcmp(right, "<IDENDITY_CLI>")) {
+      int val = atoi(left);
+
+      if (val != IDENDITY_CLI) {
+        return DIFF_MISMATCH_TOKEN;
+      }
+      pass++;
+    }
+
     // validate <IDENDITY_HTTP_PUBLIC>
     if (!strcmp(right, "<IDENDITY_HTTP_PUBLIC>")) {
       int val = atoi(left);
@@ -609,11 +709,41 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
       pass++;
     }
 
+    // validate <IDENDITY_HTTP_BASIC>
+    if (!strcmp(right, "<IDENDITY_HTTP_BASIC>")) {
+      int val = atoi(left);
+
+      if (val != IDENDITY_HTTP_BASIC) {
+        return DIFF_MISMATCH_TOKEN;
+      }
+      pass++;
+    }
+
+    // validate <IDENDITY_HTTP_DIGEST>
+    if (!strcmp(right, "<IDENDITY_HTTP_DIGEST>")) {
+      int val = atoi(left);
+
+      if (val != IDENDITY_HTTP_DIGEST) {
+        return DIFF_MISMATCH_TOKEN;
+      }
+      pass++;
+    }
+
     // validate <IDENDITY_HTTP_TRUSTED>
     if (!strcmp(right, "<IDENDITY_HTTP_TRUSTED>")) {
       int val = atoi(left);
 
       if (val != IDENDITY_HTTP_TRUSTED) {
+        return DIFF_MISMATCH_TOKEN;
+      }
+      pass++;
+    }
+
+    // validate <IDENDITY_UNKOWN>
+    if (!strcmp(right, "<IDENDITY_UNKOWN>")) {
+      int val = atoi(left);
+
+      if (val != IDENDITY_UNKOWN) {
         return DIFF_MISMATCH_TOKEN;
       }
       pass++;
@@ -997,6 +1127,7 @@ int run_test(struct Test *test) {
     long long start_time = gettime_us();
 
     char surveyname[1024] = "";
+    char custom_sessionid[1024] = "";
     char glob[MAX_BUFFER];
     double tdelta;
 
@@ -1085,8 +1216,24 @@ int run_test(struct Test *test) {
         }
 
         fclose(s);
+      } else if (sscanf(line, "definesession %[^\r\n]", custom_sessionid) == 1) {
 
-      } else if (!strcmp(line, "python")) {
+        ////
+        // keyword: "definesession"
+        ////
+
+        // register session id
+        trim_crlf(custom_sessionid);
+        strcpy(last_sessionid, custom_sessionid);
+
+        if(define_session(in, custom_sessionid, test)) {
+          fprintf(stderr, "\nERROR: define_session() failed for custom sessionid %s", custom_sessionid);
+          goto error;
+        }
+
+      } else if (sscanf(line, "definesession %[^\r\n]", custom_sessionid) == 1) {
+
+      }else if (!strcmp(line, "python")) {
 
         ////
         // keyword: "python"
