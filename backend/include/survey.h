@@ -195,13 +195,6 @@ struct session {
   char *survey_description;
   char *session_id;
 
-  // #363 add session meta
-  char *user;
-  char *group;
-  char *authority;
-  unsigned long created;
-  unsigned long closed;
-
   // #184, add nextquestion provider mode flag
   unsigned int nextquestions_flag;
 #define NEXTQUESTIONS_FLAG_GENERIC 1
@@ -211,6 +204,7 @@ struct session {
   struct question *questions[MAX_QUESTIONS];
   struct answer *answers[MAX_ANSWERS];
 
+  // #363, add offset for header answers
   int answer_offset;
   int answer_count;
   int question_count;
@@ -245,6 +239,8 @@ int session_add_datafile(char *session_id, char *filename_suffix,
                          const char *data);
 int lock_session(char *session_id);
 int release_my_session_locks(void);
+
+struct answer *session_get_header(char *uid, struct session *ses);
 
 // #332 next_question struct
 struct next_questions *init_next_questions();
