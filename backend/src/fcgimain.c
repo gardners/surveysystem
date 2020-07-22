@@ -636,7 +636,15 @@ static void fcgi_addanswer(struct kreq *req) {
     }
 
     // All ok, so tell the caller the next question to be answered
-    fcgi_nextquestion(req);
+    // #373, separate response handler for nextquestions
+    if (response_nextquestion(req, s)) {
+      free_session(s);
+      quick_error(req, KHTTP_500, "Could not load next questions for specified session.");
+      LOG_ERRORV("Could not load next questions for specified session '%s'", session_id);
+      break;
+    }
+
+    free_session(s);
     LOG_INFO("Leaving page handler.");
 
   } while (0);
@@ -1172,6 +1180,7 @@ static void fcgi_nextquestion(struct kreq *req) {
       break;
     }
 
+    // #373, separate response handler for nextquestions
     if (response_nextquestion(req, ses)) {
       free_session(ses);
       quick_error(req, KHTTP_500, "Could not load next questions for specified session.");
