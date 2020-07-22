@@ -234,13 +234,17 @@ enum khttp fcgirequest_validate_session_authority( struct session_meta *meta, st
     return KHTTP_502;
   }
 
+  if (provider != IDENDITY_HTTP_TRUSTED) {
+    return KHTTP_200;
+  }
+
   // if middleware: (fcgi env SS_TRUSTED_MIDDLEWARE is set) match current authority (ip, port)
   if (!authority->text || !strlen(authority->text)){
     LOG_WARNV("Invalid request. authority value is empty in session '%s'.", ses->session_id);
     return KHTTP_502;
   }
   if (strcmp(authority->text, meta->authority)) {
-    LOG_WARNV("Invalid request. Provider type mismatch '%s' != '%s' for session '%s'.", authority->text, meta->authority, ses->session_id);
+    LOG_WARNV("Invalid request. Provider authority string mismatch '%s' != '%s' for session '%s'.", authority->text, meta->authority, ses->session_id);
     return KHTTP_502;
   }
 
@@ -278,7 +282,7 @@ enum khttp fcgirequest_validate_session_request(struct kreq *req, struct session
   status = fcgirequest_validate_request(req, meta);
   if (status != KHTTP_200) {
     free_session_meta(meta);
-    LOG_WARNV("fcgirequest_validate_request() status %status %d != (%d)", KHTTP_200, status);
+    LOG_WARNV("fcgirequest_validate_request() status %d != (%d)", KHTTP_200, status);
     return status;
   }
 
@@ -286,7 +290,7 @@ enum khttp fcgirequest_validate_session_request(struct kreq *req, struct session
   status = fcgirequest_validate_session_authority(meta, ses);
   if (status != KHTTP_200) {
     free_session_meta(meta);
-    LOG_WARNV("fcgirequest_validate_session_authority() status %status %d != (%d)", KHTTP_200, status);
+    LOG_WARNV("fcgirequest_validate_session_authority() status %d != (%d)", KHTTP_200, status);
     return status;
   }
 
