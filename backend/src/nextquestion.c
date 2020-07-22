@@ -498,7 +498,6 @@ struct nextquestions *init_next_questions() {
 
 // #332 free nextquestions data struct
 void free_next_questions(struct nextquestions *nq) {
-  LOG_INFO(" ----> free nq");
   if (!nq) {
     return;
   }
