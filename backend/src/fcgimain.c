@@ -481,23 +481,24 @@ static void fcgi_newsession(struct kreq *req) {
       break;
     }
 
-    // #363 parse and validate session meta session meta
+    // #363 parse session meta
     struct session_meta *meta = fcgirequest_parse_session_meta(req);
     if (!meta) {
-      quick_error(req, KHTTP_500, "Could not parse request, server incorrect configured");
-      LOG_ERROR("fcgirequest_parse_session_meta() struct session_meta is null");
+      quick_error(req, KHTTP_500, "Session could not be created (1).");
+      LOG_ERROR("fcgirequest_parse_session_meta() failed");
       break;
     }
 
+    // #363 validate session meta
     enum khttp status = fcgirequest_validate_request(req, meta);
     if (status >= KHTTP_400) {
       free_session_meta(meta);
       quick_error(req, status, "Invalid idendity provider check app configuration");
-      LOG_ERRORV("validate_session_meta_kreq() returned status %status %d >= KHTTP_400 (%d)", KHTTP_400, status);
+      LOG_ERRORV("fcgirequest_validate_request() returned status %status %d >= KHTTP_400 (%d)", KHTTP_400, status);
       break;
     }
 
-    // create session, #363 save session meta
+    // #363 save session meta
     char session_id[1024];
     if (create_session(survey->val, session_id, meta)) {
       free_session_meta(meta);
@@ -505,6 +506,9 @@ static void fcgi_newsession(struct kreq *req) {
       LOG_ERROR("create_session() failed");
       break;
     }
+
+    // #363 free session_meta
+    free_session_meta(meta);
 
     // create session meta log file, log user and creation time
 
@@ -574,14 +578,24 @@ static void fcgi_addanswer(struct kreq *req) {
       break;
     }
 
+    // load session
     struct session *s = load_session(session_id);
-    // FILE *f = open_log("session.log");
-    // dump_session(f, s);
-
     if (!s) {
-      quick_error(req, KHTTP_400,
-                  "Could not load specified session. Does it exist?");
+      quick_error(req, KHTTP_400, "Could not load specified session. Does it exist?");
       LOG_ERRORV("Could not load session '%s'", session_id);
+      break;
+    }
+
+    /*
+     FILE *f = open_log("session.log");
+     dump_session(f, s);
+    */
+
+    // #363 validate request against session meta
+    enum khttp status = fcgirequest_validate_session_request(req, s);
+    if (status != KHTTP_200) {
+      quick_error(req, status, "Invalid idendity provider, check app configuration");
+      LOG_ERRORV("validate_session_meta_kreq() returned status %status %d != (%d)", KHTTP_200, status);
       break;
     }
 
@@ -659,7 +673,6 @@ static void fcgi_updateanswer(struct kreq *req) {
   do {
 
     LOG_INFO("Entering page handler.");
-
     struct kpair *session = req->fieldmap[KEY_SESSIONID];
 
     if (!session) {
@@ -685,11 +698,18 @@ static void fcgi_updateanswer(struct kreq *req) {
     }
 
     struct session *s = load_session(session_id);
-
     if (!s) {
       quick_error(req, KHTTP_400,
                   "Could not load specified session. Does it exist?");
       LOG_ERRORV("Could not load session '%s'", session_id);
+      break;
+    }
+
+    // #363 validate request against session meta
+    enum khttp status = fcgirequest_validate_session_request(req, s);
+    if (status != KHTTP_200) {
+      quick_error(req, status, "Invalid idendity provider, check app configuration");
+      LOG_ERRORV("validate_session_meta_kreq() returned status %status %d != (%d)", KHTTP_200, status);
       break;
     }
 
@@ -806,11 +826,18 @@ static void fcgi_delanswer(struct kreq *req) {
     }
 
     struct session *s = load_session(session_id);
-
     if (!s) {
       quick_error(req, KHTTP_400,
                   "Could not load specified session. Does it exist?");
       LOG_ERRORV("Could not load session '%s'", session_id);
+      break;
+    }
+
+    // #363 validate request against session meta
+    enum khttp status = fcgirequest_validate_session_request(req, s);
+    if (status != KHTTP_200) {
+      quick_error(req, status, "Invalid idendity provider, check app configuration");
+      LOG_ERRORV("validate_session_meta_kreq() returned status %status %d != (%d)", KHTTP_200, status);
       break;
     }
 
@@ -959,11 +986,18 @@ static void fcgi_delanswerandfollowing(struct kreq *req) {
     }
 
     struct session *s = load_session(session_id);
-
     if (!s) {
       quick_error(req, KHTTP_400,
                   "Could not load specified session. Does it exist?");
       LOG_ERRORV("Could not load session '%s'", session_id);
+      break;
+    }
+
+    // #363 validate request against session meta
+    enum khttp status = fcgirequest_validate_session_request(req, s);
+    if (status != KHTTP_200) {
+      quick_error(req, status, "Invalid idendity provider, check app configuration");
+      LOG_ERRORV("validate_session_meta_kreq() returned status %status %d != (%d)", KHTTP_200, status);
       break;
     }
 
@@ -1111,11 +1145,18 @@ static void fcgi_delsession(struct kreq *req) {
     }
 
     struct session *s = load_session(session_id);
-
     if (!s) {
       quick_error(req, KHTTP_400,
                   "Could not load specified session. Does it exist?");
       LOG_ERRORV("Could not load session '%s'", session_id);
+      break;
+    }
+
+    // #363 validate request against session meta
+    enum khttp status = fcgirequest_validate_session_request(req, s);
+    if (status != KHTTP_200) {
+      quick_error(req, status, "Invalid idendity provider, check app configuration");
+      LOG_ERRORV("validate_session_meta_kreq() returned status %status %d != (%d)", KHTTP_200, status);
       break;
     }
 
@@ -1200,6 +1241,14 @@ static void fcgi_nextquestion(struct kreq *req) {
       quick_error(req, KHTTP_400,
                   "Could not load specified session. Does it exist?");
       LOG_ERRORV("Could not load session '%s'", session_id);
+      break;
+    }
+
+    // #363 validate request against session meta
+    enum khttp status = fcgirequest_validate_session_request(req, ses);
+    if (status != KHTTP_200) {
+      quick_error(req, status, "Invalid idendity provider, check app configuration");
+      LOG_ERRORV("validate_session_meta_kreq() returned status %status %d != (%d)", KHTTP_200, status);
       break;
     }
 
