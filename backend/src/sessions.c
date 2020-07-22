@@ -1179,6 +1179,73 @@ struct answer *copy_answer(struct answer *aa) {
   }
 }
 
+struct question *copy_question(struct question *qq) {
+  int retVal = 0;
+  struct question *q = NULL;
+  do {
+    // Duplicate aa into a, so that we don't put pointers to structures that are on the
+    // stack into our list.
+    q = malloc(sizeof(struct question));
+    if (!q) {
+      LOG_ERROR("malloc() of struct question failed.");
+    }
+    bcopy(qq, q, sizeof(struct question));
+
+    if (q->uid) {
+      q->uid = strdup(q->uid);
+      if (!q->uid) {
+        LOG_ERROR("Could not copy q->uid");
+      }
+    }
+
+    if (q->question_text) {
+      q->question_text = strdup(q->question_text);
+      if (!q->question_text) {
+        LOG_ERROR("Could not copy q->question_text");
+      }
+    }
+
+    if (q->question_html) {
+      q->question_html = strdup(q->question_html);
+      if (!q->question_html) {
+        LOG_ERROR("Could not copy q->question_text");
+      }
+    }
+
+    if (q->default_value) {
+      q->default_value = strdup(q->default_value);
+      if (!q->default_value) {
+        LOG_ERROR("Could not copy q->question_text");
+      }
+    }
+
+    if (q->choices) {
+      q->choices = strdup(q->choices);
+      if (!q->choices) {
+        LOG_ERROR("Could not copy q->question_text");
+      }
+    }
+
+    if (q->unit) {
+      q->unit = strdup(q->unit);
+      if (!q->unit) {
+        LOG_ERROR("Could not copy q->question_text");
+      }
+    }
+  } while (0);
+
+  if (retVal) {
+
+    if (q) {
+      free_question(q);
+    }
+    q = NULL;
+    return NULL;
+
+  } else {
+    return q;
+  }
+}
 
 /*
   Add the provided answer to the set of answers in the provided session.
