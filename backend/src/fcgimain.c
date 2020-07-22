@@ -224,6 +224,8 @@ static const char *const pages[PAGE__MAX] = {
     "analyse"
 };
 
+int response_nextquestion(struct kreq *req, struct session *ses);
+
 void usage(void) {
   fprintf(stderr, "usage: surveyfcgi -- Start fast CGI service\n");
 };
@@ -1161,206 +1163,23 @@ static void fcgi_nextquestion(struct kreq *req) {
       break;
     }
 
-    struct session *s = load_session(session_id);
+    struct session *ses = load_session(session_id);
 
-    if (!s) {
+    if (!ses) {
       quick_error(req, KHTTP_400,
                   "Could not load specified session. Does it exist?");
       LOG_ERRORV("Could not load session '%s'", session_id);
       break;
     }
 
-    // #332 nextquestions data struct
-    struct nextquestions *nq = init_next_questions();
-    if (get_next_questions(s, nq)) {
-      free_next_questions(nq);
-      quick_error(req, KHTTP_500, "Could not get next questions.");
-      LOG_ERRORV("get_next_questions('%s') failed", session_id);
+    if (response_nextquestion(req, ses)) {
+      free_session(ses);
+      quick_error(req, KHTTP_500, "Could not load next questions for specified session.");
+      LOG_ERRORV("Could not load next questions for specified session '%s'", session_id);
       break;
     }
 
-    // json response
-
-    struct kjsonreq resp;
-    kjson_open(&resp, req);
-    kcgi_writer_disable(req);
-    khttp_head(req, kresps[KRESP_STATUS], "%s", khttps[KHTTP_200]);
-    khttp_head(req, kresps[KRESP_CONTENT_TYPE], "%s",
-               kmimetypes[KMIME_APP_JSON]);
-    khttp_body(req);
-
-    kjson_obj_open(&resp);
-    // #332 add status, message
-    kjson_putintp(&resp, "status", nq->status);
-    kjson_putstringp(&resp, "message", (nq->message != NULL) ? nq->message : "");
-
-    kjson_arrayp_open(&resp, "next_questions");
-
-    for (int i = 0; i < nq->question_count; i++) {
-
-      // #269 add a flag indicating id default_value was set: kjson_putstringp() does not check keys and simply appends fields with the same key
-      int default_value_flag = 0;
-      // Output each question
-      kjson_obj_open(&resp);
-      kjson_putstringp(&resp, "id",          nq->next_questions[i]->uid);
-      kjson_putstringp(&resp, "name",        nq->next_questions[i]->uid);
-      kjson_putstringp(&resp, "title",       nq->next_questions[i]->question_text);
-      kjson_putstringp(&resp, "description", nq->next_questions[i]->question_html);
-      kjson_putstringp(&resp, "type",        question_type_names[nq->next_questions[i]->type]);
-      // Provide default value if question not previously answered,
-      // else provide the most recent deleted answer for this question. #186
-      {
-        for (int j = 0; j < s->answer_count; j++) {
-          if (!strcmp(s->answers[j]->uid, nq->next_questions[i]->uid)) {
-
-            if (s->answers[j]->flags & ANSWER_DELETED) {
-              char rendered[8192];
-              snprintf(rendered, 8192, "%s", s->answers[j]->text);
-
-              switch (nq->next_questions[i]->type) {
-              case QTYPE_INT:
-                snprintf(rendered, 8192, "%lld", s->answers[j]->value);
-                break;
-              case QTYPE_FIXEDPOINT:
-                snprintf(rendered, 8192, "%lld", s->answers[j]->value);
-                break;
-              case QTYPE_MULTICHOICE:
-                break;
-              case QTYPE_MULTISELECT:
-                break;
-              case QTYPE_LATLON:
-                snprintf(rendered, 8192, "%lld,%lld", s->answers[j]->lat,
-                         s->answers[j]->lon);
-                break;
-              case QTYPE_DATETIME:
-                snprintf(rendered, 8192, "%lld", s->answers[j]->time_begin);
-                break;
-              case QTYPE_DAYTIME:
-                snprintf(rendered, 8192, "%lld", s->answers[j]->time_begin);
-                break;
-              case QTYPE_TIMERANGE:
-                snprintf(rendered, 8192, "%lld,%lld", s->answers[j]->time_begin,
-                         s->answers[j]->time_end);
-                break;
-              case QTYPE_UPLOAD:
-                break;
-              case QTYPE_TEXT:
-                break;
-              case QTYPE_CHECKBOX:
-                break;
-              case QTYPE_HIDDEN:
-                break;
-              case QTYPE_TEXTAREA:
-                break;
-              case QTYPE_EMAIL:
-                break;
-              case QTYPE_PASSWORD:
-                break;
-              case QTYPE_SINGLECHOICE:
-                break;
-              case QTYPE_SINGLESELECT:
-                break;
-              case QTYPE_UUID:
-                break;
-              // #205 add sequence fields
-              case QTYPE_FIXEDPOINT_SEQUENCE:
-                break;
-              case QTYPE_DAYTIME_SEQUENCE:
-                break;
-              case QTYPE_DATETIME_SEQUENCE:
-                break;
-              case QTYPE_DIALOG_DATA_CRAWLER:
-                break;
-
-              default:
-                free_next_questions(nq);
-                LOG_ERRORV("Unknown question type #%d in session '%s'",
-                           nq->next_questions[i]->type, session_id);
-                break;
-              }
-              kjson_putstringp(&resp, "default_value", rendered);
-              default_value_flag = 1;
-            } //endif
-          }   // endif
-        }     // endfor
-      }
-
-      // #269 add default_value if not set before
-      if (!default_value_flag) {
-        kjson_putstringp(&resp, "default_value", nq->next_questions[i]->default_value);
-        default_value_flag = 1;
-      }
-
-      // #341 add min/max values, man kjson_putintp
-      kjson_putintp(&resp, "min_value", (int64_t) nq->next_questions[i]->min_value);
-      kjson_putintp(&resp, "max_value", (int64_t) nq->next_questions[i]->max_value);
-
-      // open "choices"
-      kjson_arrayp_open(&resp, "choices");
-      int len = strlen(nq->next_questions[i]->choices);
-
-      switch (nq->next_questions[i]->type) {
-        case QTYPE_MULTICHOICE:
-        case QTYPE_MULTISELECT:
-        // #98 add single checkbox choices
-        case QTYPE_SINGLESELECT:
-        case QTYPE_SINGLECHOICE:
-        case QTYPE_CHECKBOX:
-        // #205 add sequence fields
-        case QTYPE_FIXEDPOINT_SEQUENCE:
-        case QTYPE_DAYTIME_SEQUENCE:
-        case QTYPE_DATETIME_SEQUENCE:
-        case QTYPE_DIALOG_DATA_CRAWLER:
-
-        if (len) {
-          for (int j = 0; nq->next_questions[i]->choices[j];) {
-
-            char choice[65536];
-            int cl = 0;
-            choice[0] = 0;
-
-            while (((j + cl) < len) && nq->next_questions[i]->choices[j + cl] &&
-                   (nq->next_questions[i]->choices[j + cl] != ',')) {
-              if (cl < 65535) {
-                choice[cl] = nq->next_questions[i]->choices[j + cl];
-                choice[cl + 1] = 0;
-              }
-              cl++;
-            } // endwhile
-
-            // #74 skip empty values
-            if (nq->next_questions[i]->choices[j] != ',') {
-              kjson_putstring(&resp, choice);
-            }
-
-            j += cl;
-            if (nq->next_questions[i]->choices[j + cl] == ',') {
-              j++;
-            }
-
-          } // endfor
-        }   // endif len
-
-        break;
-
-      default:
-        break;
-      } // switch
-
-      // close "choices"
-      kjson_array_close(&resp);
-
-      // #72 unit field
-      kjson_putstringp(&resp, "unit", nq->next_questions[i]->unit);
-      kjson_obj_close(&resp);
-
-    } // endfor
-
-    free_next_questions(nq);
-    kjson_array_close(&resp);
-    kjson_obj_close(&resp);
-    kjson_close(&resp);
-
+    free_session(ses);
     LOG_INFO("Leaving page handler.");
 
   } while (0);
@@ -1630,4 +1449,217 @@ static void fcgi_analyse(struct kreq *req) {
   (void)retVal;
 
   return;
+}
+
+/**
+ * Shared handler for getting nextquestions and rendering kcgi JSON response
+ * #373, #363
+ */
+int response_nextquestion(struct kreq *req, struct session *ses) {
+  int retVal = 0;
+
+  do {
+    if (!req) {
+       LOG_ERROR("response_nextquestion(): kreq required (null)");
+       break;
+    }
+    if (!ses) {
+      LOG_ERROR("response_nextquestion(): kreq required (null)");
+      break;
+    }
+
+    // #332 next_questions data struct
+    struct nextquestions *nq = init_next_questions();
+    if (get_next_questions(ses, nq)) {
+      free_next_questions(nq);
+      LOG_ERROR("init_next_questions('%s') failed");
+      break;
+    }
+
+    // json response
+
+    struct kjsonreq resp;
+    kjson_open(&resp, req);
+    kcgi_writer_disable(req);
+    khttp_head(req, kresps[KRESP_STATUS], "%s", khttps[KHTTP_200]);
+    khttp_head(req, kresps[KRESP_CONTENT_TYPE], "%s",
+               kmimetypes[KMIME_APP_JSON]);
+    khttp_body(req);
+
+    kjson_obj_open(&resp);
+    // #332 add status, message
+    kjson_putintp(&resp, "status", nq->status);
+    kjson_putstringp(&resp, "message", (nq->message != NULL) ? nq->message : "");
+
+    kjson_arrayp_open(&resp, "next_questions");
+
+    for (int i = 0; i < nq->question_count; i++) {
+
+      // #269 add a flag indicating id default_value was set: kjson_putstringp() does not check keys and simply appends fields with the same key
+      int default_value_flag = 0;
+      // Output each question
+      kjson_obj_open(&resp);
+      kjson_putstringp(&resp, "id",          nq->next_questions[i]->uid);
+      kjson_putstringp(&resp, "name",        nq->next_questions[i]->uid);
+      kjson_putstringp(&resp, "title",       nq->next_questions[i]->question_text);
+      kjson_putstringp(&resp, "description", nq->next_questions[i]->question_html);
+      kjson_putstringp(&resp, "type",        question_type_names[nq->next_questions[i]->type]);
+      // Provide default value if question not previously answered,
+      // else provide the most recent deleted answer for this question. #186
+      {
+        for (int j = 0; j < ses->answer_count; j++) {
+          if (!strcmp(ses->answers[j]->uid, nq->next_questions[i]->uid)) {
+
+            if (ses->answers[j]->flags & ANSWER_DELETED) {
+              char rendered[8192];
+              snprintf(rendered, 8192, "%s", ses->answers[j]->text);
+
+              switch (nq->next_questions[i]->type) {
+              case QTYPE_INT:
+                snprintf(rendered, 8192, "%lld", ses->answers[j]->value);
+                break;
+              case QTYPE_FIXEDPOINT:
+                snprintf(rendered, 8192, "%lld", ses->answers[j]->value);
+                break;
+              case QTYPE_MULTICHOICE:
+                break;
+              case QTYPE_MULTISELECT:
+                break;
+              case QTYPE_LATLON:
+                snprintf(rendered, 8192, "%lld,%lld", ses->answers[j]->lat,
+                         ses->answers[j]->lon);
+                break;
+              case QTYPE_DATETIME:
+                snprintf(rendered, 8192, "%lld", ses->answers[j]->time_begin);
+                break;
+              case QTYPE_DAYTIME:
+                snprintf(rendered, 8192, "%lld", ses->answers[j]->time_begin);
+                break;
+              case QTYPE_TIMERANGE:
+                snprintf(rendered, 8192, "%lld,%lld", ses->answers[j]->time_begin,
+                         ses->answers[j]->time_end);
+                break;
+              case QTYPE_UPLOAD:
+                break;
+              case QTYPE_TEXT:
+                break;
+              case QTYPE_CHECKBOX:
+                break;
+              case QTYPE_HIDDEN:
+                break;
+              case QTYPE_TEXTAREA:
+                break;
+              case QTYPE_EMAIL:
+                break;
+              case QTYPE_PASSWORD:
+                break;
+              case QTYPE_SINGLECHOICE:
+                break;
+              case QTYPE_SINGLESELECT:
+                break;
+              case QTYPE_UUID:
+                break;
+              // #205 add sequence fields
+              case QTYPE_FIXEDPOINT_SEQUENCE:
+                break;
+              case QTYPE_DAYTIME_SEQUENCE:
+                break;
+              case QTYPE_DATETIME_SEQUENCE:
+                break;
+              case QTYPE_DIALOG_DATA_CRAWLER:
+                break;
+
+              default:
+                free_next_questions(nq);
+                LOG_ERRORV("Unknown question type #%d", nq->next_questions[i]->type);
+                break;
+              }
+              kjson_putstringp(&resp, "default_value", rendered);
+              default_value_flag = 1;
+            } //endif
+          }   // endif
+        }     // endfor
+      }
+
+      // #269 add default_value if not set before
+      if (!default_value_flag) {
+        kjson_putstringp(&resp, "default_value", nq->next_questions[i]->default_value);
+        default_value_flag = 1;
+      }
+
+      // #341 add min/max values, man kjson_putintp
+      kjson_putintp(&resp, "min_value", (int64_t) nq->next_questions[i]->min_value);
+      kjson_putintp(&resp, "max_value", (int64_t) nq->next_questions[i]->max_value);
+
+      // open "choices"
+      kjson_arrayp_open(&resp, "choices");
+      int len = strlen(nq->next_questions[i]->choices);
+
+      switch (nq->next_questions[i]->type) {
+        case QTYPE_MULTICHOICE:
+        case QTYPE_MULTISELECT:
+        // #98 add single checkbox choices
+        case QTYPE_SINGLESELECT:
+        case QTYPE_SINGLECHOICE:
+        case QTYPE_CHECKBOX:
+        // #205 add sequence fields
+        case QTYPE_FIXEDPOINT_SEQUENCE:
+        case QTYPE_DAYTIME_SEQUENCE:
+        case QTYPE_DATETIME_SEQUENCE:
+        case QTYPE_DIALOG_DATA_CRAWLER:
+
+        if (len) {
+          for (int j = 0; nq->next_questions[i]->choices[j];) {
+
+            char choice[65536];
+            int cl = 0;
+            choice[0] = 0;
+
+            while (((j + cl) < len) && nq->next_questions[i]->choices[j + cl] &&
+                   (nq->next_questions[i]->choices[j + cl] != ',')) {
+              if (cl < 65535) {
+                choice[cl] = nq->next_questions[i]->choices[j + cl];
+                choice[cl + 1] = 0;
+              }
+              cl++;
+            } // endwhile
+
+            // #74 skip empty values
+            if (nq->next_questions[i]->choices[j] != ',') {
+              kjson_putstring(&resp, choice);
+            }
+
+            j += cl;
+            if (nq->next_questions[i]->choices[j + cl] == ',') {
+              j++;
+            }
+
+          } // endfor
+        }   // endif len
+
+        break;
+
+      default:
+        break;
+      } // switch
+
+      // close "choices"
+      kjson_array_close(&resp);
+
+      // #72 unit field
+      kjson_putstringp(&resp, "unit", nq->next_questions[i]->unit);
+      kjson_obj_close(&resp);
+
+    } // endfor
+
+    free_next_questions(nq);
+    kjson_array_close(&resp);
+    kjson_obj_close(&resp);
+    kjson_close(&resp);
+
+    LOG_INFO("End next questions handler.");
+
+  } while(0);
+
+  return retVal;
 }
