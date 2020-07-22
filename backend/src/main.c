@@ -129,8 +129,8 @@ int main(int argc, char **argv) {
       char *session_id = argv[2];
       struct session *s = load_session(session_id);
 
-      // #332 next_questions data struct
-      struct next_questions *nq = init_next_questions();
+      // #332 nextquestions data struct
+      struct nextquestions *nq = init_next_questions();
       if (get_next_questions(s, nq)) {
         free_next_questions(nq);
         LOG_ERRORV("get_next_questions('%s') failed", session_id);

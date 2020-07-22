@@ -1170,8 +1170,8 @@ static void fcgi_nextquestion(struct kreq *req) {
       break;
     }
 
-    // #332 next_questions data struct
-    struct next_questions *nq = init_next_questions();
+    // #332 nextquestions data struct
+    struct nextquestions *nq = init_next_questions();
     if (get_next_questions(s, nq)) {
       free_next_questions(nq);
       quick_error(req, KHTTP_500, "Could not get next questions.");

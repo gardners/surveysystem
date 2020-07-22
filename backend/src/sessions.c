@@ -624,16 +624,15 @@ void free_question(struct question *q) {
   return;
 }
 
-// #332 initialise next_questions data struct
-struct next_questions *init_next_questions() {
+// #332 initialise nextquestions data struct
+struct nextquestions *init_next_questions() {
   int retVal = 0;
-  struct next_questions *nq = NULL;
+  struct nextquestions *nq = NULL;
 
   do {
-    nq = calloc(sizeof(struct next_questions), 1);
+    nq = calloc(sizeof(struct nextquestions), 1);
     if (!nq) {
-      LOG_ERRORV("calloc(%d,1) failed when loading struct next_questions",
-                 sizeof(struct next_questions));
+      LOG_ERRORV("calloc(%d,1) failed when loading struct nextquestions", sizeof(struct nextquestions));
     }
     nq->status = 0;
     nq->message = NULL;
@@ -646,8 +645,8 @@ struct next_questions *init_next_questions() {
   return nq;
 }
 
-// #332 free next_questions data struct
-void free_next_questions(struct next_questions *nq) {
+// #332 free nextquestions data struct
+void free_next_questions(struct nextquestions *nq) {
   if (!nq) {
     return;
   }
@@ -700,7 +699,7 @@ void free_session_meta(struct session_meta *m) {
 }
 
 
-int dump_next_questions(FILE *f, struct next_questions *nq) {
+int dump_next_questions(FILE *f, struct nextquestions *nq) {
   int retVal = 0;
   int i;
   do {
@@ -710,13 +709,13 @@ int dump_next_questions(FILE *f, struct next_questions *nq) {
 
     fprintf(f, "{\n");
     if (!nq) {
-      fprintf(f, "next_questions { <NULL> }\n");
+      fprintf(f, "nextquestions { <NULL> }\n");
       break;
     }
 
     fprintf(
       f,
-      "next_questions {\n"
+      "nextquestions {\n"
       "  status: %d\n"
       "  message: %s\n"
       "  question_count: %d\n"

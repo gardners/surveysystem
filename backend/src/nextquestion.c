@@ -434,7 +434,7 @@ PyObject *py_create_answer(struct answer *a) {
   return dict;
 }
 
-int call_python_nextquestion(struct session *s, struct next_questions *nq) {
+int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
   int retVal = 0;
   int is_error = 0;
 
@@ -446,10 +446,10 @@ int call_python_nextquestion(struct session *s, struct next_questions *nq) {
       LOG_ERROR("session_uuid is NULL");
     }
     if (!nq) {
-      LOG_ERROR("next_questions is NULL");
+      LOG_ERROR("nextquestions is NULL");
     }
     if (nq->question_count) {
-      LOG_ERROR("next_questions->question_count is > 0");
+      LOG_ERROR("nextquestions->question_count is > 0");
     }
     // Setup python
     if (setup_python()) {
@@ -631,7 +631,7 @@ int call_python_nextquestion(struct session *s, struct next_questions *nq) {
     // 4. assign message
     nq->message = strdup(message);
 
-    // 5. extract next_questions
+    // 5. extract nextquestions
     PyObject *py_next_questions = PyDict_GetItemString(result, "next_questions");
     if (!py_next_questions) {
       is_error = 1;
@@ -697,7 +697,7 @@ int call_python_nextquestion(struct session *s, struct next_questions *nq) {
   Generic next question selector, which selects the first question lacking an answer.
   #332 next_questions data struct
 */
-int get_next_questions_generic(struct session *s, struct next_questions *nq) {
+int get_next_questions_generic(struct session *s, struct nextquestions *nq) {
   int retVal = 0;
 
   do {
@@ -713,10 +713,10 @@ int get_next_questions_generic(struct session *s, struct next_questions *nq) {
       LOG_ERROR("session_uuid is NULL");
     }
     if (!nq) {
-      LOG_ERROR("next_questions is NULL");
+      LOG_ERROR("nextquestions is NULL");
     }
     if (nq->question_count) {
-      LOG_ERROR("next_questions->question_count is > 0");
+      LOG_ERROR("nextquestions->question_count is > 0");
     }
 
     LOG_INFOV("Calling get_next_questions_generic()", 0);
@@ -757,8 +757,8 @@ int get_next_questions_generic(struct session *s, struct next_questions *nq) {
   return retVal;
 }
 
-// #332 next_questions data struct
-int get_next_questions(struct session *s, struct next_questions *nq) {
+// #332 nextquestions data struct
+int get_next_questions(struct session *s, struct nextquestions *nq) {
   // Call the function to get the next question(s) to ask.
   // First see if we have a python function to do the job.
   // If not, then return the list of all not-yet-answered questions
