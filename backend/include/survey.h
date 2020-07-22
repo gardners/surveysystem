@@ -233,6 +233,10 @@ int delete_session(char *session_id);
 void free_session(struct session *s);
 void free_question(struct question *q);
 void free_answer(struct answer *a);
+
+struct answer *copy_answer(struct answer *aa);
+struct question *copy_question(struct question *qq);
+
 int validate_session_id(char *session_id);
 int session_add_userlog_message(char *session_id, char *message);
 int session_add_datafile(char *session_id, char *filename_suffix,
