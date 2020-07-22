@@ -1903,7 +1903,7 @@ int run_test(struct Test *test) {
 
     fix_ownership(test->dir);
 
-    fprintf(stderr, "\r\033[90m[\033[33mSKIP\033[39m] \033[37m(%d/%d)\033[39m %s : %s\n", test->index, test->count, test->name, test->description);
+    fprintf(stderr, "\r\033[39m[\033[33mSKIP\033[39m] \033[37m(%d/%d)\033[39m %s : %s\n", test->index, test->count, test->name, test->description);
     fflush(stderr);
     break;
 

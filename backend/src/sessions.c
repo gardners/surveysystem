@@ -624,42 +624,6 @@ void free_question(struct question *q) {
   return;
 }
 
-// #332 initialise nextquestions data struct
-struct nextquestions *init_next_questions() {
-  int retVal = 0;
-  struct nextquestions *nq = NULL;
-
-  do {
-    nq = calloc(sizeof(struct nextquestions), 1);
-    if (!nq) {
-      LOG_ERRORV("calloc(%d,1) failed when loading struct nextquestions", sizeof(struct nextquestions));
-    }
-    nq->status = 0;
-    nq->message = NULL;
-    nq->question_count = 0;
-  } while (0);
-
-  if (retVal) {
-    nq = NULL;
-  }
-  return nq;
-}
-
-// #332 free nextquestions data struct
-void free_next_questions(struct nextquestions *nq) {
-  if (!nq) {
-    return;
-  }
-  freez(nq->message);
-  for (int i = 0; i < nq->question_count; i++) {
-    free_question(nq->next_questions[i]);
-  }
-  nq->question_count = 0;
-
-  free(nq);
-  return;
-}
-
 void free_session(struct session *s) {
   if (!s) {
     return;
@@ -696,43 +660,6 @@ void free_session_meta(struct session_meta *m) {
 
   free(m);
   return;
-}
-
-
-int dump_next_questions(FILE *f, struct nextquestions *nq) {
-  int retVal = 0;
-  int i;
-  do {
-    if (!f) {
-      LOG_ERROR("dump_next_questions(): invalid file pointer.");
-    }
-
-    fprintf(f, "{\n");
-    if (!nq) {
-      fprintf(f, "nextquestions { <NULL> }\n");
-      break;
-    }
-
-    fprintf(
-      f,
-      "nextquestions {\n"
-      "  status: %d\n"
-      "  message: %s\n"
-      "  question_count: %d\n"
-      "  questions: [\n",
-      nq->status,
-      nq->message,
-      nq->question_count
-    );
-
-    for (i = 0; i < nq->question_count; i++) {
-      fprintf(f, "    %s%s\n", nq->next_questions[i]->uid, (i < nq->question_count - 1) ? ",": "");
-    }
-
-    fprintf(f , "  ]\n}\n");
-  } while (0);
-
-  return retVal;
 }
 
 int dump_session(FILE *f, struct session *ses) {
