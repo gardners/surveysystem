@@ -336,12 +336,16 @@ int mark_next_question(struct session *s, struct question *next_questions[], int
 
     for (int j = 0; j < (*next_question_count); j++) {
       if (next_questions[j] == s->questions[qn]) {
-        LOG_ERRORV("Duplicate question UID '%s' in list of next questions",
-                   uid);
+        LOG_ERRORV("Duplicate question UID '%s' in list of next questions", uid);
+        break;
       }
     }
 
-    next_questions[*next_question_count] = s->questions[qn];
+    // #373 separate allocated space for questions
+    next_questions[*next_question_count] = copy_question(s->questions[qn]);
+    if (!next_questions[*next_question_count]) {
+      LOG_ERRORV("Copying question '%s' in list of next questions failed", uid);
+    }
     (*next_question_count)++;
   } while (0);
   return retVal;
@@ -494,6 +498,7 @@ struct nextquestions *init_next_questions() {
 
 // #332 free nextquestions data struct
 void free_next_questions(struct nextquestions *nq) {
+  LOG_INFO(" ----> free nq");
   if (!nq) {
     return;
   }
@@ -813,7 +818,12 @@ int get_next_questions_generic(struct session *s, struct nextquestions *nq) {
         continue;
       } else {
         if (nq->question_count < MAX_NEXTQUESTIONS) {
-          nq->next_questions[nq->question_count] = s->questions[i];
+          // #373 separate allocated space for questions
+          nq->next_questions[nq->question_count] = copy_question(s->questions[i]);
+          if (!nq->next_questions[nq->question_count]) {
+            LOG_ERRORV("Copying question '%s' in list of next questions failed", s->questions[i]->uid);
+            break;
+          }
           nq->question_count++;
 
           LOG_INFOV("Need answer to question %d.", i);
