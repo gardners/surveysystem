@@ -39,6 +39,10 @@ If `SURVEY_FORCE_PYINIT` is set to `"1"` the Python interpreter will re-initiali
 Use this only for *testing* or *development* environments, as this substantially slows down the application and might cause side effects inside your python controller.
 
 
+**SS_TRUSTED_MIDDLEWARE**:
+
+Register a trusted authentication middleware source. For details see [authorisation-and-middleware.md](docs/authorisation-and-middleware.md)
+
 # Installation (backend)
 
 This system requires python >=3.7 and clang. Additionally, bmake is required for compiling [kcgi](https://kristaps.bsd.lv/kcgi/index.html). To install on Ubuntu:
