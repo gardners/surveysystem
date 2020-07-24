@@ -510,31 +510,6 @@ static void fcgi_newsession(struct kreq *req) {
     // #363 free session_meta
     free_session_meta(meta);
 
-    // create session meta log file, log user and creation time
-
-    char *user = NULL;
-    if (req->rawauth.d.digest.user) {
-      user = req->rawauth.d.digest.user;
-    }
-
-    time_t now = time(0);
-    char created[25] = {'\0'};
-    if (!format_time_ISO8601(now, created, 25)) {
-      LOG_WARNV("could not fromat ISO8601 timestamp for session %s.",
-                session_id);
-    }
-
-    char user_message[1024];
-    snprintf(user_message, 1024,
-             "username %s\nsurveyid %s\nsessionid %s\ncreated %s by user %s",
-             (user) ? user: "anonymous", survey->val, session_id, created, (user) ? user: "anonymous");
-
-    if (session_add_userlog_message(session_id, user_message)) {
-      quick_error(req, KHTTP_500, "Error handling session user data.");
-      LOG_ERRORV("Could not add user info for session %s.", session_id);
-      break;
-    }
-
     // reply
     begin_200(req);
     er = khttp_puts(req, session_id);
@@ -1168,29 +1143,6 @@ static void fcgi_delsession(struct kreq *req) {
       break;
     }
 
-    // log event in session meta log file
-
-    char *user = NULL;
-    if (req->rawauth.d.digest.user) {
-      user = req->rawauth.d.digest.user;
-    }
-
-    time_t now = time(0);
-    char deleted[25] = {'\0'};
-    if (!format_time_ISO8601(now, deleted, 25)) {
-      LOG_WARNV("could not fromat ISO8601 timestamp for session %s.",
-                session_id);
-    }
-
-    char user_message[1024];
-    snprintf(user_message, 1024, "deleted %s by user %s", deleted, (user) ? user: "anonymous");
-
-    if (session_add_userlog_message(session_id, user_message)) {
-      quick_error(req, KHTTP_500, "Error handling session user data.");
-      LOG_ERRORV("Could not add user info for session %s.", session_id);
-      break;
-    }
-
     // reply
     begin_200(req);
     er = khttp_puts(req, "Session deleted");
@@ -1447,29 +1399,6 @@ static void fcgi_analyse(struct kreq *req) {
       quick_error(req, KHTTP_500,
                   "Could not retrieve analysis (empty result).");
       LOG_ERRORV("get_analysis('%s') returned empty result", session_id);
-      break;
-    }
-
-    // log event in session meta log file
-
-    char *user = NULL;
-    if (req->rawauth.d.digest.user) {
-      user = req->rawauth.d.digest.user;
-    }
-
-    time_t now = time(0);
-    char finished[25] = {'\0'};
-    if (!format_time_ISO8601(now, finished, 25)) {
-      LOG_WARNV("could not fromat ISO8601 timestamp for session %s.",
-                session_id);
-    }
-
-    char user_message[1024];
-    snprintf(user_message, 1024, "finished %s by user %s", finished, (user) ? user : "anonymous");
-
-    if (session_add_userlog_message(session_id, user_message)) {
-      quick_error(req, KHTTP_500, "Error handling session user data.");
-      LOG_ERRORV("Could not add user info for session %s.", session_id);
       break;
     }
 
