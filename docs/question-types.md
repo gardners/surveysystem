@@ -7,7 +7,7 @@
 
 | Question tpye         | Backend dev state     | Frontend dev state    | Answer fields                 | Unit           | description |
 | ---                   | ---                   | ---                   | ---                           | ---            | ---         |
-| META                  | x                     | x                     | **any**                       | -              | **Reserved type for sessions**. No question definition. Set by backend |
+| META                  | x                     | x                     | **any**                       | -              | **Reserved type for sessions**. No question definition. [Set by backend](sessions.md) |
 | INT                   | x                     | x                     | `value`                       | set by backend | Answer is an integer, bounded by min_value and max_value. |
 | FIXEDPOINT            | x                     | x                     | `value`                       | -              | Answer is a fixed point value encoded as a 64-bit integer and with decimal_places places after the decimal. |
 | MULTICHOICE           | x                     | x                     | `text`                        | -              | Answer is a single choice or comma separated list choices, out of `question->choices`. |

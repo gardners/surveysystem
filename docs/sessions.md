@@ -5,7 +5,8 @@
 This is an example of a session with the id `381544dc-0000-0000-0d04-01123f06e306`.
 
 It contains two answered questions.
-The session file is located in `<project_ root>/backend/sessions/3815/381544dc-0000-0000-0d04-01123f06e306`
+The session file is located in `<project_ root>/backend/sessions/3815/381544dc-0000-0000-0d04-01123f06e306`.
+Our session id stored as the file name.
 
 ```
 foo/9d8a5066756c437445aca87593e7cd35bca155d5
@@ -34,7 +35,7 @@ When a session is created the backend saves a *snapshot copy* of the "current" `
 
 `<project_ root>/backend/surveys/foo/current` > `<project_ root>/backend/surveys/foo/9d8a5066756c437445aca87593e7cd35bca155d5`
 
-For the remainder of the session this SHA1 copy is being loaded and matched against the session answers.
+For the remainder of the session *that copy* is being loaded and matched against the session answers.
 
 ## Session structure
 
@@ -51,6 +52,8 @@ session body           | question1:TEXT:Hello World 1:0:0:0:0:0:0:0::0:159555808
                        | question2:TEXT:Hello World 2:0:0:0:0:0:0:0::0:1595559084
                        ------
 ```
+
+Sections:
 
 1) survey definition: Identifies the linked survey defintion cpy in format `<survey name>/<survey_sha>`.
 2) session header: meta data set by backend: see below
