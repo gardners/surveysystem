@@ -7,7 +7,7 @@ Access control (via fastcgi) can be implemented either by *(a)* direct authentic
 ## (A) Direct authentication
 
 * HTTP DIGEST: `user` and `realm` are reported into `@user` and `@group` session header.
-* HTTP BASIC: Not recommended for production! User data are not recoded into the session. Can be used for the internal authentication of an registered middleware (b)
+* HTTP BASIC: Not recommended for production! User data are not recorded into the session. Should only be used for the internal authentication of an registered middleware (b)
 
 ## (B) Registration of a trusted authentication middleware
 
@@ -17,7 +17,7 @@ Access control (via fastcgi) can be implemented either by *(a)* direct authentic
 
 3) The middleware needs to authenticate itself directly via HTTP BASIC or HTTP Digest (see a))
 
-4) All requests within a session need to come from the *same middleware* (consistency verification). The middleware authentication credentials themselves may change (ie. user, admin)
+4) All requests within a session need to come from the *same middleware* (consistency verification). The middleware authentication credentials may change (ie. user, admin)
 
 6) All middleware requests require the following *X-HEADERS* to be set:
 
