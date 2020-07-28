@@ -60,7 +60,7 @@ class SurveyManager {
         this.surveyID = surveyID || null;
         this.sessionID = null;
         this.endpoint = endpoint;
-        this.closed = false; // all questions are answered && survey is closed
+        // #379, remove Surveymanager.closed property
         // #332
         this.status = 0;
         this.message = '';
@@ -86,21 +86,19 @@ class SurveyManager {
         this.sessionID = sessionID;
     }
 
-    /**
-    * Finalizes session
-    * @returns {void}
-    */
-    close() {
-        this.closed = true;
-        return this.closed;
-    }
+    // #379, remove Surveymanager.close()
+    // #379, remove Surveymanager.open()
 
     /**
-    * check if suvey is finished
+    * c#379 check if suvey is finished
     * @returns {boolean}
     */
-    isClosed() {
-        return this.closed;
+    isFinished() {
+        const { length } = this.questions;
+        if (!length) {
+            return false;
+        }
+        return !this.questions[length - 1].length;
     }
 
     /**
@@ -127,7 +125,7 @@ class SurveyManager {
         // this endpoint and cache endpoint match
 
         // surveyIDs match
-        // !closed
+        // !isFinished
 
         // keeping code readable
         if (!this.surveyID || this.surveyID !== cachedSurveyID){
@@ -146,7 +144,8 @@ class SurveyManager {
             return false;
         }
 
-        if (this.isClosed()){
+        // #379, remove closed condition, add finished condition
+        if (this.isFinished()){
             return false;
         }
 
@@ -185,14 +184,7 @@ class SurveyManager {
      * @returns {boolean} whether question was added
      */
     add(questions, status, message) {
-        if(this.isClosed()) {
-            return false;
-        }
-
-        if(!questions.length) {
-            this.close();
-            return false;
-        }
+        // #379, removed closed conditions
 
         // deal with cases like browser refresh..
         if (matchQuestionIds(this.current(), questions)) {
@@ -223,14 +215,7 @@ class SurveyManager {
      * @returns {boolean} whether question was areplaced
      */
     replaceCurrent(questions, status, message) {
-        if(this.isClosed()) {
-            return false;
-        }
-
-        if(!questions.length) {
-            this.close();
-            return false;
-        }
+        // #379, removed closed conditions
 
         // #333 add status, message from last response
         this.status = status || 0;
@@ -255,9 +240,7 @@ class SurveyManager {
      * @returns {boolean} whether question was added
      */
     reset() {
-        if (this.isClosed()) {
-            return false;
-        }
+        // #379, removed closed conditions
 
         if (!this.questions.length) {
             return false;
