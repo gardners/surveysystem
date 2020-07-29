@@ -98,6 +98,10 @@ describe('matchQuestionIds', () => {
 
         match = matchQuestionIds([{id: 'A' }, {id: 'B' }], [{id: 'B' }, {id: 'A' }]);
         expect(match).toBe(false);
+
+        // #379
+        match = matchQuestionIds([], []);
+        expect(match).toBe(true);
     });
 
 });
@@ -110,7 +114,6 @@ describe('SurveyManager.merge', () => {
             surveyID: 'test',
             endpoint: 'uri',
             sessionID: '123',
-            closed: true,
             questions: [[{ id: 1 }]]
         })
 
@@ -118,7 +121,6 @@ describe('SurveyManager.merge', () => {
             surveyID: 'test',
             endpoint: 'uri',
             sessionID: '123',
-            closed: true,
         });
 
         const m1 = Q.model();
@@ -235,7 +237,6 @@ describe('SurveyManager', () => {
         expect(that.surveyID).toBe('test');
         expect(that.sessionID).toBe(null);
         expect(that.questions.length).toBe(0);
-        expect(that.closed).toBe(false);
 
         // #332
         expect(that.status).toBe(0);
@@ -243,6 +244,9 @@ describe('SurveyManager', () => {
 
         // array and empty
         expect(JSON.stringify(that.questions)).toBe('[]');
+
+        // #379
+        expect(that.isFinished()).toBe(false);
     });
 
     xtest('requires surveyID param', () => {
@@ -264,11 +268,11 @@ describe('SurveyManager', () => {
         expect(that.message).toBe('');
     });
 
-    test('close', () => {
+    // #379
+    test('fisFinished', () => {
         const that = new SurveyManager('test', 'uri');
         that.init('123');
-        that.close();
-        expect(that.closed).toBe(true);
+        expect(that.isFinished()).toBe(false);
     });
 
     test('add', () => {
@@ -318,28 +322,6 @@ describe('SurveyManager', () => {
 
         expect(that.status).toBe(1);
         expect(that.message).toBe('Hello');
-    });
-
-    test('add has no effect on closed suvey', () => {
-        let did;
-        const that = new SurveyManager('test', 'uri');
-        that.init('123');
-
-        // before close
-        did = that.add([{ id: 1 }]);
-        expect(did).toBe(true);
-        expect(that.questions.length).toBe(1);
-        expect(that.questions[0].length).toBe(1);
-        expect(that.questions[0][0]).toMatchObject({ id: 1 });
-
-        that.close();
-
-        // after close
-        did = that.add([{ id: 2 }]);
-        expect(did).toBe(false);
-        expect(that.questions.length).toBe(1);
-        expect(that.questions[0].length).toBe(1);
-        expect(that.questions[0][0]).toMatchObject({ id: 1 });
     });
 
     test('add has no effect if question ids match (double submission)', () => {
@@ -439,28 +421,6 @@ describe('SurveyManager', () => {
 
         expect(that.status).toBe(0);
         expect(that.message).toBe('');
-    });
-
-    test('reset() has no effect on closed suvey', () => {
-        const that = new SurveyManager('test', 'uri');
-        that.init('123');
-        that.add([{ id: 1 }]);
-        that.add([{ id: 2 }]);
-
-        expect(that.questions.length).toBe(2);
-        expect(that.questions[0].length).toBe(1);
-        expect(that.questions[0][0]).toMatchObject({ id: 1 });
-        expect(that.questions[1].length).toBe(1);
-        expect(that.questions[1][0]).toMatchObject({ id: 2 });
-
-        that.close();
-        that.reset();
-
-        expect(that.questions.length).toBe(2);
-        expect(that.questions[0].length).toBe(1);
-        expect(that.questions[0][0]).toMatchObject({ id: 1 });
-        expect(that.questions[1].length).toBe(1);
-        expect(that.questions[1][0]).toMatchObject({ id: 2 });
     });
 
     test('current', () => {
@@ -650,7 +610,6 @@ describe('SurveyManager.merge', () => {
             surveyID: 'test',
             endpoint: 'uri',
             sessionID: '123',
-            closed: true,
             questions: [[{ id: 1 }]]
         })
 
@@ -658,13 +617,12 @@ describe('SurveyManager.merge', () => {
             surveyID: 'test',
             endpoint: 'uri',
             sessionID: '123',
-            closed: true,
         });
 
         const m1 = Q.model();
         m1.id = 1;
 
-        expect(that.closed).toBe(true);
+        expect(that.isFinished()).toBe(false);
         expect(JSON.stringify(that.questions)).toBe(JSON.stringify([[m1]]));
     });
 
@@ -677,7 +635,7 @@ describe('SurveyManager.merge', () => {
             endpoint: 'uri',
             sessionID: '123'
         });
-        expect(that.closed).toBe(false);
+        expect(that.isFinished()).toBe(false);
     });
 
     test('merge - dont include properties unkown to the instance', () => {
@@ -745,17 +703,8 @@ describe('SurveyManager.merge', () => {
 describe('SurveyManager.replaceCurrent', () => {
     let res;
 
-    test('replaceCurrent - do not replace when closed', () => {
-        const that = new SurveyManager('test', 'uri');
-        that.init('123');
-        that.close();
-        expect(that.closed).toBe(true);
-
-        res = that.replaceCurrent([{ id: 1 }]);
-        expect(res).toBe(false);
-    });
-
-    test('replaceCurrent - close session on receiving and empty question set and do not replace', () => {
+    // #379
+    test('replaceCurrent - mark session as finished on receiving and empty question set', () => {
         const that = new SurveyManager('test', 'uri');
         that.init('123');
         that.add([{ id: 1 }]);
@@ -763,10 +712,10 @@ describe('SurveyManager.replaceCurrent', () => {
         res = that.replaceCurrent([]);
 
         expect(that.questions.length).toBe(1);
-        expect(that.questions[0].length).toBe(1);
-        expect(that.questions[0][0]).toMatchObject({ id: 1 });
+        expect(that.isFinished()).toBe(true);
+        expect(that.questions[0].length).toBe(0);
 
-        expect(res).toBe(false);
+        expect(res).toBe(true);
     });
 
     test('replaceCurrent - replace (empty session)', () => {

@@ -494,7 +494,7 @@ static void fcgi_newsession(struct kreq *req) {
     if (status >= KHTTP_400) {
       free_session_meta(meta);
       quick_error(req, status, "Invalid idendity provider check app configuration");
-      LOG_ERRORV("fcgirequest_validate_request() returned status %status %d >= KHTTP_400 (%d)", KHTTP_400, status);
+      LOG_ERRORV("fcgirequest_validate_request() returned status %d >= KHTTP_400 (%d)", KHTTP_400, status);
       break;
     }
 
@@ -570,7 +570,7 @@ static void fcgi_addanswer(struct kreq *req) {
     enum khttp status = fcgirequest_validate_session_request(req, s);
     if (status != KHTTP_200) {
       quick_error(req, status, "Invalid idendity provider, check app configuration");
-      LOG_ERRORV("validate_session_meta_kreq() returned status %status %d != (%d)", KHTTP_200, status);
+      LOG_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
       break;
     }
 
@@ -684,7 +684,7 @@ static void fcgi_updateanswer(struct kreq *req) {
     enum khttp status = fcgirequest_validate_session_request(req, s);
     if (status != KHTTP_200) {
       quick_error(req, status, "Invalid idendity provider, check app configuration");
-      LOG_ERRORV("validate_session_meta_kreq() returned status %status %d != (%d)", KHTTP_200, status);
+      LOG_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
       break;
     }
 
@@ -812,7 +812,7 @@ static void fcgi_delanswer(struct kreq *req) {
     enum khttp status = fcgirequest_validate_session_request(req, s);
     if (status != KHTTP_200) {
       quick_error(req, status, "Invalid idendity provider, check app configuration");
-      LOG_ERRORV("validate_session_meta_kreq() returned status %status %d != (%d)", KHTTP_200, status);
+      LOG_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
       break;
     }
 
@@ -972,7 +972,7 @@ static void fcgi_delanswerandfollowing(struct kreq *req) {
     enum khttp status = fcgirequest_validate_session_request(req, s);
     if (status != KHTTP_200) {
       quick_error(req, status, "Invalid idendity provider, check app configuration");
-      LOG_ERRORV("validate_session_meta_kreq() returned status %status %d != (%d)", KHTTP_200, status);
+      LOG_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
       break;
     }
 
@@ -1131,7 +1131,7 @@ static void fcgi_delsession(struct kreq *req) {
     enum khttp status = fcgirequest_validate_session_request(req, s);
     if (status != KHTTP_200) {
       quick_error(req, status, "Invalid idendity provider, check app configuration");
-      LOG_ERRORV("validate_session_meta_kreq() returned status %status %d != (%d)", KHTTP_200, status);
+      LOG_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
       break;
     }
 
@@ -1200,7 +1200,7 @@ static void fcgi_nextquestion(struct kreq *req) {
     enum khttp status = fcgirequest_validate_session_request(req, ses);
     if (status != KHTTP_200) {
       quick_error(req, status, "Invalid idendity provider, check app configuration");
-      LOG_ERRORV("validate_session_meta_kreq() returned status %status %d != (%d)", KHTTP_200, status);
+      LOG_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
       break;
     }
 

@@ -1,7 +1,5 @@
 import React, { Component } from 'react';
 
-import { Link } from 'react-router-dom';
-
 // data
 import Api, { BaseUri } from '../Api';
 import  { mapQuestionGroups } from '../Question';
@@ -21,6 +19,7 @@ import QuestionGroup from './survey/QuestionGroup';
 import FeedbackItem from './survey/FeedbackItem';
 import SurveyButtons from './survey/SurveyButtons';
 import SurveyMessage from './survey/SurveyMessage';
+import FinishSurvey from './survey/FinishSurvey';
 
 // misc components
 import Preloader from './Preloader';
@@ -301,10 +300,7 @@ class Survey extends Component {
         e && e.preventDefault();
 
         const { survey } = this.state;
-        if(survey.isClosed()) {
-            this.alert('Trying to delete answer on a finished survey', 'error');
-            return;
-        }
+        // #379 removed isClosed condition for session
 
         // 1. set survey to last step a, this sets survey.current() to the question set received before
         // 2. request deletion of all answers until, and including the foiirst question of the last step
@@ -351,7 +347,7 @@ class Survey extends Component {
         const hasAnswers = answersCount > 0 ;
         const hasAllAnswers = (answersCount === questions.length);
         const didAnswerBefore = survey.questions.length > 1;
-        const isClosed = survey.isClosed();
+        const isFinished = survey.isFinished();
 
         return (
             <React.Fragment>
@@ -370,18 +366,12 @@ class Survey extends Component {
                     }
 
                     {
-                        /* show if survey is finished but not closed yet */
-                        (isClosed) ?
-                            <div className="card">
-                                <div className="card-header">
-                                    <h2 className="card-title"> <i className="fas fa-check-circle"></i> Survey completed.</h2>
-                                </div>
-                                <div className="card-body">
-
-                                    <p className="card-text">Thank you for your time!</p>
-                                    <Link className="btn btn-default btn-primary" to={ `/analyse/${survey.surveyID}/${survey.sessionID}` }>Finish Survey</Link>
-                                </div>
-                            </div>
+                        /* #379 show if survey is finished but not closed yet */
+                        (isFinished) ?
+                            <FinishSurvey
+                                session = { survey }
+                                handleDelAnswer = { this.handleDelAnswer.bind(this) }
+                            />
                         : null
                     }
 
@@ -392,7 +382,7 @@ class Survey extends Component {
                         <SurveyMessage session={ survey } />
 
                         <SurveyForm
-                            show={ !isClosed && questions.length > 0 && !this.state.loading }
+                            show={ !isFinished && questions.length > 0 && !this.state.loading }
                             className="list-group"
                         >
                             {

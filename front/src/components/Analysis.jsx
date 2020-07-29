@@ -19,7 +19,7 @@ class Analysis extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            analysis: [],
+            analysis: null,
             loading: '',
             alerts: [],
         }
@@ -66,7 +66,7 @@ class Analysis extends Component {
         const surveyID = this.props.match.params.id;
         const sessionID = this.props.match.params.sessionID;
         const { analysis, loading, alerts } = this.state;
-        const { evaluations } = analysis;
+        const evaluations = (analysis) ? analysis.evaluations : [];
 
         if(alerts.length) {
             return (
