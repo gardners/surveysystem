@@ -7,6 +7,7 @@ Silly test survey updated
 without python
 question1:Question 1::TEXT:0::-1:-1:0:0::
 question2:Question 2::TEXT:0::-1:-1:0:0::
+question3:Question 3::TEXT:0::-1:-1:0:0::
 endofsurvey
 
 # simultating existing session with different @authority ip address
@@ -15,7 +16,7 @@ changed_ip/current
 @user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
 @group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
 @authority:META:127.0.0.99(8099):<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
-@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
 question1:TEXT:ANSWER 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
@@ -36,31 +37,32 @@ endofsession
 #! ...n/a, skipping
 
 #!-------
-#!- endpoint /addanswer [block]
+#!- endpoint /addanswer [pass]
 #!-------
 request 200 addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0:
 
 #!-------
-#!- endpoint /updateanswer [block]
+#!- endpoint /updateanswer [pass]
 #!-------
-request 200 updateanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0:
+request 200 updateanswer?sessionid=$SESSION&answer=question3:Answer+2:0:0:0:0:0:0:0:
+
 #!-------
-#!- endpoint /nextquestion [block]
+#!- endpoint /nextquestion [pass]
 #!-------
 request 200 nextquestion?sessionid=$SESSION
 
 #!-------
-#!- endpoint /delanswer [block]
+#!- endpoint /delanswer [pass]
 #!-------
-request 200 delanswer?sessionid=$SESSION&questionid=question1
+request 200 delanswer?sessionid=$SESSION&questionid=question3
 
 #!-------
-#!- endpoint /delanswerandfollowing [block]
+#!- endpoint /delanswerandfollowing [pass]
 #!-------
 request 200 delanswerandfollowing?sessionid=$SESSION&questionid=question1
 
 #!-------
-#!- endpoint /delsession [block]
+#!- endpoint /delsession [pass]
 #!-------
 request 200 delsession?sessionid=$SESSION
 
@@ -73,5 +75,23 @@ request proxy 200 accesstest
 #!- endpoint /fastcgitest [pass]
 #!-------
 request proxy 200 fastcgitest
+
+#!-------
+#!- endpoint /analyse [pass]
+#!-------
+
+# simultating existing session with different @authority ip address
+definesession 70334e86-0000-0000-7871-cfd1312d4b2c
+changed_ip/current
+@user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
+@group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:127.0.0.99(8099):<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_CLOSED>:0:0:<UTIME>:<UTIME>:0:0::0:<UTIME>
+question1:TEXT:ANSWER 1:0:0:0:0:0:0:0::0:<UTIME>
+question2:TEXT:ANSWER 2:0:0:0:0:0:0:0::0:<UTIME>
+question3:TEXT:ANSWER 3:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+request proxy 200 analyse?sessionid=$SESSION
 
 

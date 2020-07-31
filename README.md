@@ -107,3 +107,7 @@ Note that the following section reflects the *current state* of development and 
 | `fastcgitest`           | check survey access (fastcgi)                                           | GET    | application/text | -                       | - |
 
 The survey model is sequential. `/surveyapi/addanswer`, `/surveyapi/updateanswer` are required to submit the answers for question ids in the exact same order as they were recieved. Similar with `delanswer` requests, where question ids have to be submitted in the exact reverse order.
+
+## Documentation
+
+Documentation files live in [docs](docs/). The most important docs are about the [backend data serialisation model](docs/data-serialisation.md) and the [backend session life cycle](docs/sessions.md)

@@ -34,7 +34,6 @@ request 500 addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0
 # Make sure answer ends up in file
 verify_session(skip_headers)
 without_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
-question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #!---------------------

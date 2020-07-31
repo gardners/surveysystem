@@ -17,7 +17,7 @@ qtype_meta/current
 @user:META::0:0:0:0:0:0:0::0:<UTIME>
 @group:META::0:0:0:0:0:0:0::0:<UTIME>
 @authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
-@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 QMETA:META:Meta Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
@@ -78,7 +78,7 @@ qtype_meta/current
 @user:META::0:0:0:0:0:0:0::0:<UTIME>
 @group:META::0:0:0:0:0:0:0::0:<UTIME>
 @authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
-@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_FINISHED>:0:0:<UTIME>:0:0:0::0:<UTIME>
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 QMETA:META:Meta Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 question2:TEXT:Answer 2:0:0:0:0:0:0:0::1:<UTIME>
@@ -109,7 +109,7 @@ qtype_meta/current
 @user:META::0:0:0:0:0:0:0::0:<UTIME>
 @group:META::0:0:0:0:0:0:0::0:<UTIME>
 @authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
-@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 QMETA:META:Meta Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession

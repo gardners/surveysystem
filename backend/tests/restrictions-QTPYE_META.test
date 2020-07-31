@@ -24,7 +24,7 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 @user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
 @group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
 @authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_TRUSTED>:0:0:0:0:0:0::0:<UTIME>
-@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
 META_1:META:Meta 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
@@ -41,7 +41,7 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 @user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
 @group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
 @authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_TRUSTED>:0:0:0:0:0:0::0:<UTIME>
-@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
 META_1:META:Meta 1:0:0:0:0:0:0:0::0:<UTIME>
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
@@ -62,7 +62,7 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 @user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
 @group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
 @authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_TRUSTED>:0:0:0:0:0:0::0:<UTIME>
-@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_FINISHED>:0:0:<UTIME>:0:0:0::0:<UTIME>
 META_1:META:Meta 1:0:0:0:0:0:0:0::0:<UTIME>
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 META_2:META:Meta 2:0:0:0:0:0:0:0::0:<UTIME>
@@ -78,7 +78,7 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 @user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
 @group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
 @authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_TRUSTED>:0:0:0:0:0:0::0:<UTIME>
-@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_FINISHED>:0:0:<UTIME>:0:0:0::0:<UTIME>
 META_1:META:Meta 1:0:0:0:0:0:0:0::0:<UTIME>
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 META_2:META:Meta 2:0:0:0:0:0:0:0::0:<UTIME>
@@ -96,7 +96,7 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 @user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
 @group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
 @authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_TRUSTED>:0:0:0:0:0:0::0:<UTIME>
-@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_FINISHED>:0:0:<UTIME>:0:0:0::0:<UTIME>
 META_1:META:Meta 1:0:0:0:0:0:0:0::0:<UTIME>
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 META_2:META:Meta 2:0:0:0:0:0:0:0::0:<UTIME>
@@ -116,7 +116,7 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 @user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
 @group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
 @authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_TRUSTED>:0:0:0:0:0:0::0:<UTIME>
-@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
 META_1:META:Meta 1:0:0:0:0:0:0:0::0:<UTIME>
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::1:<UTIME>
 META_2:META:Meta 2:0:0:0:0:0:0:0::0:<UTIME>
@@ -136,7 +136,7 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 @user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
 @group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
 @authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_TRUSTED>:0:0:0:0:0:0::0:<UTIME>
-@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_FINISHED>:0:0:<UTIME>:0:0:0::0:<UTIME>
 META_1:META:Meta 1:0:0:0:0:0:0:0::0:<UTIME>
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 META_2:META:Meta 2:0:0:0:0:0:0:0::0:<UTIME>
@@ -154,7 +154,7 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 @user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
 @group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
 @authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_TRUSTED>:0:0:0:0:0:0::0:<UTIME>
-@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_FINISHED>:0:0:<UTIME>:0:0:0::0:<UTIME>
 META_1:META:Meta 1:0:0:0:0:0:0:0::0:<UTIME>
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 META_2:META:Meta 2:0:0:0:0:0:0:0::0:<UTIME>
@@ -171,7 +171,7 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 @user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
 @group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
 @authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_TRUSTED>:0:0:0:0:0:0::0:<UTIME>
-@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
 META_1:META:Meta 1:0:0:0:0:0:0:0::0:<UTIME>
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::1:<UTIME>
 META_2:META:Meta 2:0:0:0:0:0:0:0::0:<UTIME>

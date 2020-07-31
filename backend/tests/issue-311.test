@@ -86,6 +86,5 @@ question2:TEXT:Answer 2:0:0:0:0:0:0:0::1:<UTIME>
 question3:TEXT:Answer 3:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
-#! ------- analyse -------
-request 200 analyse?sessionid=$SESSION
-match_string ["question1", "question3"]
+#! ------- analyse fails (session not finished) -------
+request 400 analyse?sessionid=$SESSION

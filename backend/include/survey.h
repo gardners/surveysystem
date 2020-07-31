@@ -190,6 +190,15 @@ struct session_meta {
   } provider;
 };
 
+// #379 session live cycle
+enum session_state {
+  SESSION_NULL, // init state, overwritten by load_session
+  SESSION_NEW,
+  SESSION_OPEN,
+  SESSION_FINISHED,
+  SESSION_CLOSED,
+};
+
 struct session {
   char *survey_id; // <survey name>/<hash>
   char *survey_description;
@@ -208,6 +217,20 @@ struct session {
   int answer_offset;
   int answer_count;
   int question_count;
+
+  // #379 session state, set on loading, updated during session actions, saved to session file if changed
+  enum session_state state;
+};
+
+// #379 request actions (validated against session state)
+enum actions {
+  ACTION_TEST_ACCESS,
+  ACTION_SESSION_NEW,
+  ACTION_SESSION_DELETE,
+  ACTION_SESSION_NEXTQUESTIONS,
+  ACTION_SESSION_ADDANSWER,
+  ACTION_SESSION_DELETEANSWER,
+  ACTION_SESSION_ANALYSIS,
 };
 
 int generate_path(char *path_in, char *path_out, int max_len);
@@ -217,7 +240,7 @@ int generate_python_path(char *path_out, int max_len);
 int is_given_answer(struct answer *a);
 int is_system_answer(struct answer *a);
 
-int get_next_questions(struct session *s, struct nextquestions *nq);
+struct nextquestions *get_next_questions(struct session *s);
 int get_analysis(struct session *s, const char **output);
 
 int create_session(char *survey_id, char *session_id_out, struct session_meta *meta);
@@ -238,9 +261,8 @@ struct answer *copy_answer(struct answer *aa);
 struct question *copy_question(struct question *qq);
 
 int validate_session_id(char *session_id);
-int session_add_userlog_message(char *session_id, char *message);
-int session_add_datafile(char *session_id, char *filename_suffix,
-                         const char *data);
+int validate_session_action(enum actions action, struct session *ses, char *msg, size_t sz); // #379
+int session_add_datafile(char *session_id, char *filename_suffix, const char *data);
 int lock_session(char *session_id);
 int release_my_session_locks(void);
 

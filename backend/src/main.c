@@ -103,6 +103,12 @@ int main(int argc, char **argv) {
       if (!s)
         LOG_ERRORV("load_session('%s') failed", session_id);
 
+      // validate requested action against session current state (#379)
+      char reason[1024];
+      if (validate_session_action(ACTION_SESSION_ADDANSWER, s, reason, 1024)) {
+        LOG_ERROR(reason);
+      }
+
       struct answer a;
       bzero(&a, sizeof(struct answer));
       if (deserialise_answer(serialised_answer, ANSWER_FIELDS_PUBLIC, &a))
@@ -129,9 +135,15 @@ int main(int argc, char **argv) {
       char *session_id = argv[2];
       struct session *s = load_session(session_id);
 
+      // validate requested action against session current state (#379)
+      char reason[1024];
+      if (validate_session_action(ACTION_SESSION_NEXTQUESTIONS, s, reason, 1024)) {
+        LOG_ERROR(reason);
+      }
+
       // #332 nextquestions data struct
-      struct nextquestions *nq = init_next_questions();
-      if (get_next_questions(s, nq)) {
+      struct nextquestions *nq = get_next_questions(s);
+      if (!nq) {
         free_next_questions(nq);
         LOG_ERRORV("get_next_questions('%s') failed", session_id);
       }
@@ -157,6 +169,12 @@ int main(int argc, char **argv) {
       struct session *s = load_session(session_id);
       if (!s)
         LOG_ERRORV("load_session('%s') failed", session_id);
+
+      // validate requested action against session current state (#379)
+      char reason[1024];
+      if (validate_session_action(ACTION_SESSION_DELETEANSWER, s, reason, 1024)) {
+        LOG_ERROR(reason);
+      }
 
       if (strstr(serialised_answer, ":")) {
         struct answer a;
@@ -189,6 +207,12 @@ int main(int argc, char **argv) {
       if (!s)
         LOG_ERRORV("load_session('%s') failed", session_id);
       free_session(s);
+
+      // validate requested action against session current state (#379)
+      char reason[1024];
+      if (validate_session_action(ACTION_SESSION_DELETE, s, reason, 1024)) {
+        LOG_ERROR(reason);
+      }
 
       if (delete_session(session_id))
         LOG_ERRORV("delete_session('%s') failed", session_id);
