@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
 
       // validate requested action against session current state (#379)
       char reason[1024];
-      if (validate_session_action(ACTION_SESSION_DELETEANSWER, s, reason, 1024)) {
+      if (validate_session_action(ACTION_SESSION_ADDANSWER, s, reason, 1024)) {
         LOG_ERROR(reason);
       }
 
@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
 
       // validate requested action against session current state (#379)
       char reason[1024];
-      if (validate_session_action(ACTION_SESSION_DELETEANSWER, s, reason, 1024)) {
+      if (validate_session_action(ACTION_SESSION_NEXTQUESTIONS, s, reason, 1024)) {
         LOG_ERROR(reason);
       }
 
@@ -210,7 +210,7 @@ int main(int argc, char **argv) {
 
       // validate requested action against session current state (#379)
       char reason[1024];
-      if (validate_session_action(ACTION_SESSION_DELETEANSWER, s, reason, 1024)) {
+      if (validate_session_action(ACTION_SESSION_DELETE, s, reason, 1024)) {
         LOG_ERROR(reason);
       }
 
