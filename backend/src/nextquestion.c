@@ -764,7 +764,6 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
 
 
   if (is_error) {
-    free_next_questions(nq);
     retVal = -99;
   }
   return retVal;
@@ -839,47 +838,79 @@ int get_next_questions_generic(struct session *s, struct nextquestions *nq) {
   return retVal;
 }
 
-// #332 nextquestions data struct
-int get_next_questions(struct session *s, struct nextquestions *nq) {
+/**
+ * Get next questions
+ * dispatcher function (generic or python)
+ * #332 nextquestions data struct
+ * #379 refactor
+ */
+struct nextquestions *get_next_questions(struct session *s) {
   // Call the function to get the next question(s) to ask.
   // First see if we have a python function to do the job.
   // If not, then return the list of all not-yet-answered questions
   int retVal = 0;
+  int fail = 0;
+  struct nextquestions *nq = NULL;
+
   do {
-    if (!s)
+    if (!s) {
       LOG_ERROR("session structure is NULL");
-    if (!nq)
-      LOG_ERROR("next_questions structure is null");
+    }
+
+    nq = init_next_questions();
+    if (!nq) {
+      LOG_ERROR("init_next_questions() failed");
+    }
 
     if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_PYTHON) {
+
       LOG_INFO("NEXTQUESTIONS_FLAG_PYTHON set, calling call_python_nextquestion())");
-      int r = call_python_nextquestion(s, nq);
+      fail = call_python_nextquestion(s, nq);
 
-      if (r == -99) {
-        free_next_questions(nq);
-        retVal = -1;
-        break;
+      if (fail) {
+        LOG_ERRORV("call_python_nextquestion() failed with return code %d", fail);
       }
 
-      if (!r) {
-        retVal = 0;
-        break;
-      }
-    }
+    } else if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_GENERIC) {
 
-    // PGS: Disabled generic implementation of nextquestion, since if you have a python version and it can't be loaded
-    // for some reason we should NOT fall back, because it may expose questions and IP in a survey that should not be revealed.
-    if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_GENERIC) {
-      LOG_INFO("NEXTQUESTIONS_FLAG_GENERIC set, calling "
-               "get_next_questions_generic())");
-      retVal = get_next_questions_generic(s, nq);
+      // PGS: Disabled generic implementation of nextquestion, since if you have a python version and it can't be loaded
+      // for some reason we should NOT fall back, because it may expose questions and IP in a survey that should not be revealed.
+      LOG_INFO("NEXTQUESTIONS_FLAG_GENERIC set, calling get_next_questions_generic())");
+      fail = get_next_questions_generic(s, nq);
+
+      if (fail) {
+        LOG_ERRORV("get_next_questions_generic() failed with return code %d", fail);
+      }
+
     } else {
-      free_next_questions(nq);
-      LOG_ERROR("Could not call python nextquestion function.");
+      LOG_ERRORV("Could not identify nextquestion mode, Unknown next_questions_flag. %d", s->nextquestions_flag);
     }
+
+    // #379 update state (finished)
+    if (nq->question_count == 0) {
+      s->state = SESSION_FINISHED;
+      LOG_INFO("Set session state to SESSION_FINISHED");
+    }
+
+    // #379 update state (re-open finished session)
+    if (nq->question_count > 0) {
+      if (s->state == SESSION_FINISHED) {
+        s->state = SESSION_OPEN;
+        LOG_INFO("Set session state from SESSION_FINISHED to SESSION_OPEN");
+      }
+    }
+
   } while (0);
 
-  return retVal;
+  if (retVal) {
+    free_next_questions(nq);
+    LOG_WARNV("get_next_questions() failed.", 0);
+    return NULL;
+  }
+
+
+
+  return nq;
 }
 
 /*
@@ -1074,44 +1105,59 @@ int call_python_analysis(struct session *s, const char **output) {
   return retVal;
 }
 
+/**
+ * Get analysis
+ * dispatcher function (generic or python)
+ * #379 refactor
+ */
 int get_analysis(struct session *s, const char **output) {
   // Call the function to get the next question(s) to ask.
   // First see if we have a python function to do the job.
   // If not, then return the list of all not-yet-answered questions
   int retVal = 0;
+  int fail = 0;
   do {
     if (!s) {
       LOG_ERROR("session structure is NULL");
     }
-    if (!output) {
-      LOG_ERROR("output is NULL");
-    }
 
     if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_PYTHON) {
+
       LOG_INFO("NEXTQUESTIONS_FLAG_PYTHON set, calling call_python_analysis())");
-      int r = call_python_analysis(s, output);
+      fail = call_python_analysis(s, output);
 
-      if (r == -99) {
-        retVal = -1;
-        break;
+      if (fail) {
+        LOG_ERRORV("call_python_analysis() failed with return code %d", fail);
       }
 
-      if (!r) {
-        retVal = 0;
-        break;
-      }
-    }
+    } else if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_GENERIC) {
 
-    // PGS: Disabled generic implementation of nextquestion, since if you have a python version and it can't be loaded
-    // for some reason we should NOT fall back, because it may expose questions and IP in a survey that should not be revealed.
-    if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_GENERIC) {
-      LOG_INFO("NEXTQUESTIONS_FLAG_GENERIC set, calling "
-               "get_next_qanalysis_generic())");
-      retVal = get_analysis_generic(s, output);
+      // PGS: Disabled generic implementation of nextquestion, since if you have a python version and it can't be loaded
+      // for some reason we should NOT fall back, because it may expose questions and IP in a survey that should not be revealed.
+      LOG_INFO("NEXTQUESTIONS_FLAG_GENERIC set, calling get_analysis_generic())");
+      fail = get_analysis_generic(s, output);
+
+      if (fail) {
+        LOG_ERRORV("get_analysis_generic() failed with return code %d", fail);
+      }
+
     } else {
-      LOG_ERROR("Could not call python analysis function.");
+      LOG_ERRORV("Could not identify nextquestion mode, Unknown next_questions_flag. %d", s->nextquestions_flag);
     }
+
+    // #379 update state (if not closed already) and save session
+    if (s->state < SESSION_CLOSED) {
+      s->state = SESSION_CLOSED;
+      if (save_session(s)) {
+        LOG_ERROR("save_session( on SESSION_CLOSED failed");
+      }
+    }
+
   } while (0);
+
+  if (retVal) {
+    LOG_WARNV("get_analysis() failed.", 0)
+  }
 
   return retVal;
 }
