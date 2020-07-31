@@ -125,6 +125,80 @@ int validate_survey_id(char *survey_id) {
   return retVal;
 }
 
+/**
+ * #379 validate requested action against current session
+ */
+int validate_session_action(enum actions action, struct session *ses, char *msg, size_t sz) {
+  int is_error = 0;
+  msg[0] = 0;
+
+  if (!ses) {
+    LOG_WARNV("validate_session_action(): session is NULL", 0);
+    return -1;
+  }
+
+  switch (action) {
+
+    case ACTION_SESSION_DELETE:
+      // TODO implement regime for allowing session deletion
+      is_error = -1;
+      strncpy(msg, "(DELETE SESSION) Session cannot be deleted!", sz);
+      break;
+
+    case ACTION_SESSION_NEXTQUESTIONS:
+      if (ses->state >= SESSION_CLOSED) {
+        is_error = -1;
+        strncpy(msg, "(NEXT QUESTIONS) Session is closed!", sz);
+        break;
+      }
+      break;
+
+    case ACTION_SESSION_ADDANSWER:
+      if (ses->state == SESSION_FINISHED) {
+        is_error = -1;
+        strncpy(msg, "(ADD ANSWER) Session is finished!", sz);
+        break;
+      }
+      if (ses->state >= SESSION_CLOSED) {
+        is_error = -1;
+        strncpy(msg, "(ADD ANSWER) Session is closed!", sz);
+        break;
+      }
+      break;
+
+    case ACTION_SESSION_DELETEANSWER:
+      if (ses->state <= SESSION_NEW) {
+        is_error = -1;
+        strncpy(msg, "(DELETE ANSWER) Session is empty!", sz);
+        break;
+      }
+      if (ses->state >= SESSION_CLOSED) {
+        is_error = -1;
+        strncpy(msg, "(DELETE ANSWER) Session is closed!", sz);
+        break;
+      }
+      break;
+
+    case ACTION_SESSION_ANALYSIS:
+      if (ses->state < SESSION_FINISHED) {
+        is_error = -1;
+        strncpy(msg, "(ANALYSE) Session is closed!", sz);
+        break;
+      }
+      break;
+
+    default:
+      // pass
+      break;
+  }
+
+  if (is_error) {
+    LOG_WARNV("validate_session_action(): %s (action %d, state %d)",msg, action, ses->state);
+  }
+
+  return is_error;
+}
+
 /*
   Get len bytes from the cryptographically secure randomness source.
  */
@@ -240,7 +314,7 @@ int random_session_id(char *session_id_out) {
  * #363 save session meta data
  * This function leaves the file pointer open, regardless of success or fail
  */
-int save_session_meta(FILE *fp, struct session_meta *meta, int closed_flag) {
+int save_session_meta(FILE *fp, struct session_meta *meta, enum session_state state) {
   // LOG_INFOV(
   //   "session_meta\n"
   //   "  |_ user: %s\n"
@@ -303,11 +377,14 @@ int save_session_meta(FILE *fp, struct session_meta *meta, int closed_flag) {
     a.value = 0; // reset second field
     fprintf(fp, "%s\n", line);
 
-    strncpy(a.uid, "@closed", 1024);
+    strncpy(a.uid, "@state", 1024);
     text[0] = 0; // clear string, but leave pointer ref
-    a.value = closed_flag;
+    a.value = state;
+    if (state == SESSION_NEW) {
+      a.time_begin = (long long) now;
+    }
     if (serialise_answer(&a, line, 65536)) {
-      LOG_ERRORV("meta: serialise_answer() failed for field '%s'", "@closed");
+      LOG_ERRORV("meta: serialise_answer() failed for field '%s'", "@state");
     }
     fprintf(fp, "%s\n", line);
 
@@ -532,8 +609,9 @@ int create_session(char *survey_id, char *session_id_out, struct session_meta *m
     // This must take the form <survey id>/<sha1 hash of current version of survey>
     fprintf(f, "%s/%s\n", survey_id, survey_sha1);
 
-    // #363 save session meta, with closed flag set to zero
-    if (save_session_meta(f, meta, 0)) {
+    // #363 save session meta
+    // #379 set session state to SESSION_NEW
+    if (save_session_meta(f, meta, SESSION_NEW)) {
       fclose(f);
       LOG_ERRORV("Cannot write session meta '%s'", session_path);
     }
@@ -643,6 +721,7 @@ void free_session(struct session *s) {
 
   s->answer_count = 0;
   s->question_count = 0;
+  s->state = SESSION_NULL; // #379 reset state
 
   free(s);
   return;
@@ -1019,6 +1098,14 @@ struct session *load_session(char *session_id) {
 
     } while (line[0]);
 
+    // #379 record current state of loaded sesion
+    struct answer *current_state = session_get_header("@state", ses);
+    if (!current_state) {
+      retVal = -1;
+      LOG_WARNV("Could not find state header for session!", 0); // don't break here fall through
+    }
+    ses->state = current_state->value;
+
     if (retVal) {
       fclose(s);
       if (ses) {
@@ -1056,6 +1143,25 @@ int save_session(struct session *s) {
     if (validate_session_id(s->session_id)) {
       LOG_ERRORV("validate_session_id('%s') failed", s->session_id);
     }
+
+    // update header with current state of loaded and processed session (#379)
+
+    struct answer *header = session_get_header("@state", s);
+    if (!header) {
+      retVal = -1;
+      LOG_ERROR("Could not find state header for session!"); // don't break here fall through
+    }
+
+    if (s->state != header->value) {
+      int old = header->value;
+      header->value = s->state;
+      // record time of session closure, note: create_session (SESSION_NEW) writes timestamp into `time_begin` field
+      header->time_end = (s->state == SESSION_CLOSED) ? (long long)time(NULL) : 0;
+      header->stored = (long long)time(NULL);
+      LOG_INFOV("pre-save: Updated state header, old state: %d, new state: %d", old, s->state);
+    }
+
+    // write session
 
     char session_path[1024];
     char session_path_final[1024];
@@ -1320,8 +1426,10 @@ int session_add_answer(struct session *ses, struct answer *a) {
 
     char serialised_answer[65536] = "(could not serialise)";
     serialise_answer(a, serialised_answer, 65536);
-    LOG_INFOV("Added to session '%s' answer '%s'.", ses->session_id,
-              serialised_answer);
+    LOG_INFOV("Added to session '%s' answer '%s'.", ses->session_id,serialised_answer);
+
+    // #379 set session state to 'open' get_next_questions might later progrress this to 'finished'
+    ses->state = SESSION_OPEN;
 
   } while (0);
   return retVal;
