@@ -516,6 +516,52 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
 }
 
 /**
+ * copies current session to another location in test directory
+ */
+int copy_session_to(char *session_id, char *targ, struct Test *test) {
+  char path[1024];
+
+  // open target file
+  trim_crlf(targ);
+  if (!strlen(targ)) {
+    fprintf(stderr, "No target file specified\n");
+    return -1;
+  }
+
+  snprintf(path, 1024, "%s/%s", test->dir, targ);
+  FILE *out = fopen(path, "w");
+  if (!out) {
+    fprintf(stderr, "Cannot open target ffile '%s'\n", path);
+    return -1;
+  }
+
+  //  open session file
+  snprintf(path, 1024, "%s/sessions/%c%c%c%c/%s", test->dir,
+            session_id[0], session_id[1], session_id[2],
+            session_id[3], session_id);
+
+  FILE *in = fopen(path, "r");
+  if (!in) {
+    fclose(out);
+    fprintf(stderr, "Cannot open session file '%s'\n", path);
+    return -1;
+  }
+
+  // copy
+  char c;
+  c = fgetc(in);
+  while(c != EOF) {
+    fputc(c, out);
+    c = fgetc(in);
+  }
+
+  fclose(in);
+  fclose(out);
+
+  return 0;
+}
+
+/**
  * creates a copy of a given session and opens it for inspection
  */
 FILE *open_session_file_copy(char *session_id, struct Test *test) {
@@ -622,6 +668,12 @@ int define_session(FILE *in, char *session_id, struct Test *test) {
     replace_int(line, "<IDENDITY_HTTP_DIGEST>", IDENDITY_HTTP_DIGEST, MAX_LINE);
     replace_int(line, "<IDENDITY_HTTP_TRUSTED>", IDENDITY_HTTP_TRUSTED, MAX_LINE);
     replace_int(line, "<IDENDITY_UNKOWN>", IDENDITY_UNKOWN, MAX_LINE);
+
+    // #379 session states
+    replace_int(line, "<SESSION_NEW>", SESSION_NEW, MAX_LINE);
+    replace_int(line, "<SESSION_OPEN>", SESSION_OPEN, MAX_LINE);
+    replace_int(line, "<SESSION_FINISHED>", SESSION_FINISHED, MAX_LINE);
+    replace_int(line, "<SESSION_CLOSED>", SESSION_CLOSED, MAX_LINE);
 
     if (!strcmp(line, "endofsession")) {
       break;
@@ -767,6 +819,48 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
       pass++;
     }
 
+    /* #379 session states */
+
+    // validate <SESSION_NEW>
+    if (!strcmp(right, "<SESSION_NEW>")) {
+      int val = atoi(left);
+
+      if (val != SESSION_NEW) {
+        return DIFF_MISMATCH_TOKEN;
+      }
+      pass++;
+    }
+
+    // validate <SESSION_OPEN>
+    if (!strcmp(right, "<SESSION_OPEN>")) {
+      int val = atoi(left);
+
+      if (val != SESSION_OPEN) {
+        return DIFF_MISMATCH_TOKEN;
+      }
+      pass++;
+    }
+
+    // validate <SESSION_FINISHED>
+    if (!strcmp(right, "<SESSION_FINISHED>")) {
+      int val = atoi(left);
+
+      if (val != SESSION_FINISHED) {
+        return DIFF_MISMATCH_TOKEN;
+      }
+      pass++;
+    }
+
+    // validate <SESSION_CLOSED>
+    if (!strcmp(right, "<SESSION_CLOSED>")) {
+      int val = atoi(left);
+
+      if (val != SESSION_CLOSED) {
+        return DIFF_MISMATCH_TOKEN;
+      }
+      pass++;
+    }
+
     // compare column text
     if(!pass) {
       if (strcmp(left, right)) {
@@ -890,7 +984,7 @@ int compare_session(FILE *sess, int skip_s, FILE *comp, int skip_c, struct Test 
 
       case DIFF_MISMATCH_TOKEN:
         fprintf(log,
-          "  [DIFF_MISMATCH_TOKEN] compare_session_line() <TOKEN> ivalidation failed (session line %d row %d, comparsion line %d, code %d)\n", s_count, row_count, c_count, diff);
+          "  [DIFF_MISMATCH_TOKEN] compare_session_line() <TOKEN> validation failed (session line %d row %d, comparsion line %d, code %d)\n", s_count, row_count, c_count, diff);
         break;
 
       default:
@@ -1231,9 +1325,7 @@ int run_test(struct Test *test) {
           goto error;
         }
 
-      } else if (sscanf(line, "definesession %[^\r\n]", custom_sessionid) == 1) {
-
-      }else if (!strcmp(line, "python")) {
+      } else if (!strcmp(line, "python")) {
 
         ////
         // keyword: "python"
@@ -1564,11 +1656,26 @@ int run_test(struct Test *test) {
           tdelta = gettime_us() - start_time;
           tdelta /= 1000;
           fprintf(log,
-                  "T+%4.3fms : FAIL: There is a match to the regular "
-                  "expression.\n",
-                  tdelta);
+            "T+%4.3fms : FAIL: There is a match to the regular expression.\n",
+            tdelta);
           goto fail;
         }
+      } else if (sscanf(line, "copy_session_to %[^\r\n]", arg) == 1) {
+
+        ////
+        // keyword: "copy_session_to"
+        ////
+
+        if (copy_session_to(last_sessionid, arg, test)) {
+          tdelta = gettime_us() - start_time;
+          tdelta /= 1000;
+          fprintf(log,
+            "T+%4.3fms : FAIL: Copy session file failed.\n",
+            tdelta);
+          goto fail;
+        }
+
+        arg[0] = 0;
 
       } else if (strncmp("request", line, strlen("request")) == 0) {
 
