@@ -23,7 +23,7 @@ authnoauth/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 @user:META::0:0:0:0:0:0:0::0:<UTIME>
 @group:META::0:0:0:0:0:0:0::0:<UTIME>
 @authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
-@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
 endofsession
 
 #!---------------------
@@ -38,5 +38,5 @@ authnoauth/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 @user:META::0:0:0:0:0:0:0::0:<UTIME>
 @group:META::0:0:0:0:0:0:0::0:<UTIME>
 @authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
-@closed:META::0:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
 endofsession
