@@ -334,8 +334,8 @@ int save_session_meta(FILE *fp, struct session_meta *meta, enum session_state st
     char line[65536];
     time_t now = time(NULL);
 
-    char uid[1024];
-    char text[1024];
+    char uid[1024] = { 0 };
+    char text[1024] = { 0 };
 
     struct answer a = {
       .uid = uid,
@@ -1364,7 +1364,7 @@ int session_add_answer(struct session *ses, struct answer *a) {
   do {
     // Add answer to list of answers
     if (!ses || !ses->session_id) {
-      LOG_ERRORV("Add answer: Session structure or ses->session_id is NULL %s", ses->session_id);
+      LOG_ERROR("Add answer: Session structure or ses->session_id is NULL.");
     }
     if (!a || !a->uid) {
       LOG_ERRORV("Add answer: Answer structure or a->uid is null, session '%s'", ses->session_id);
