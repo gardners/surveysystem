@@ -760,6 +760,7 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
     } // endfor
 
     Py_DECREF(result);
+    LOG_INFO("call python next question(s) finished.");
   } while (0);
 
 
@@ -997,7 +998,7 @@ int call_python_analysis(struct session *s, const char **output) {
       LOG_ERRORV("Python function '%s' is not callable", function_name);
     }
 
-    LOG_INFOV("Preparing to call python function '%s' to get next question(s)",
+    LOG_INFOV("Preparing to call python function '%s' to get analysis",
               function_name);
 
     // TODO see get_analysis() - move answers and questions py list generation in separate unit
@@ -1097,6 +1098,7 @@ int call_python_analysis(struct session *s, const char **output) {
     }
 
     Py_DECREF(result);
+    LOG_INFO("call python next question(s) finished.");
   } while (0);
 
   if (is_error) {
