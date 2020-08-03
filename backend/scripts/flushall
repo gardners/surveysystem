@@ -42,8 +42,9 @@ if [ "$DO_LOGS" == "y" ]; then
     echo "-- done"
 fi
 
+#-------
 
-# stat & queryfile testlogs
+# stat & query testlogs
 SIZE_T=$(du -sh "$TESTLOG_DIR" | awk '{print $1}')
 COUNT_T=$(ls -l "$TESTLOG_DIR" | grep ^- | wc -l)
 echo "$(BOLD "$COUNT_T test logs found"): $SIZE_T"
@@ -56,8 +57,9 @@ if [ "$DO_TESTLOGS" == "y" ]; then
     echo "-- done"
 fi
 
+#-------
 
-# stat & queryfile locks
+# stat & query session locks
 SIZE_F=$(du -sh "$LOCKS_DIR" | awk '{print $1}')
 COUNT_F=$(ls -l "$LOCKS_DIR" | grep ^d | wc -l)
 echo "$(BOLD "$COUNT_F lock files found"): $SIZE_F"
@@ -70,6 +72,8 @@ if [ "$DO_LOCKS" == "y" ]; then
     echo "-- done"
 fi
 
+#-------
+
 # stat & query sessions
 SIZE_S=$(du -sh "$SESSION_DIR" | awk '{print $1}')
 COUNT_S=$(ls -l "$SESSION_DIR" | grep ^d | wc -l)
@@ -77,9 +81,23 @@ echo "$(BOLD "$COUNT_S sessions found"): $SIZE_S"
 read -p " - Flush all $(RED "sessions") $(BOLD "(y/n) $(BLINK "?")") "  -n 1 -r DO_SESSIONS
 echo
 
-# flush lock files
+# flush sessions
 if [ "$DO_SESSIONS" == "y" ]; then
     find "${SESSION_DIR:?}" -mindepth 1 ! -name '.git*' ! -name '*.md' -delete
+    echo "-- done"
+fi
+#-------
+
+# stat & query survey hashs
+SIZE_S=$(du -sh "$SURVEY_DIR" | awk '{print $1}')
+COUNT_S=$(ls -l "$SURVEY_DIR" | grep ^d | wc -l)
+echo "$(BOLD "$COUNT_S hashed survey copies found"): $SIZE_S"
+read -p " - Flush all $(RED "survey copies") $(BOLD "(y/n) $(BLINK "?")") "  -n 1 -r DO_SURVEYS
+echo
+
+# flush survey hashs
+if [ "$DO_SURVEYS" == "y" ]; then
+    find "${SURVEY_DIR:?}" -mindepth 1 ! -name 'current' ! -name '.git*' ! -name '*.md' -delete
     echo "-- done"
 fi
 
