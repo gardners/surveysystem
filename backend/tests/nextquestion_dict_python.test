@@ -48,12 +48,6 @@ def nextquestion(questions, answers):
           'next_questions': [ 'question99' ]
     }
 
-  if len(answers) == 4:
-    """
-    At the current state of development the backend should pass unkown states on
-    """
-    return []
-
   return {
         'status': 1,
         'message': 'END OF SURVEY',

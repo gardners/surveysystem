@@ -259,6 +259,7 @@ void free_answer(struct answer *a);
 
 struct answer *copy_answer(struct answer *aa);
 struct question *copy_question(struct question *qq);
+int answer_get_value_raw(struct answer *a, char *out, size_t sz);
 
 int validate_session_id(char *session_id);
 int validate_session_action(enum actions action, struct session *ses, char *msg, size_t sz); // #379
@@ -266,6 +267,7 @@ int session_add_datafile(char *session_id, char *filename_suffix, const char *da
 int lock_session(char *session_id);
 int release_my_session_locks(void);
 
+struct answer *session_get_answer(char *uid, struct session *ses);
 struct answer *session_get_header(char *uid, struct session *ses);
 
 // #332 next_question struct

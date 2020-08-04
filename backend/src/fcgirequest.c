@@ -87,6 +87,7 @@ struct session_meta *fcgirequest_parse_session_meta(struct kreq *req) {
   int l = snprintf(authority, 1024, "%s(%hu)", req->remote, req->port);
   if (l < 1) {
     LOG_WARNV("idendity provider snprintf() for authority failed", 0);
+    free(meta);
     return NULL;
   }
   meta->authority = strndup(authority, 1024);
