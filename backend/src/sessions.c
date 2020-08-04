@@ -1222,6 +1222,23 @@ int save_session(struct session *s) {
 }
 
 /**
+ * query an answer (excluding header answers)
+ */
+struct answer *session_get_answer(char *uid, struct session *ses) {
+  if (!ses) {
+    LOG_WARNV("session_get_answer(): session is null", 0);
+    return NULL;
+  }
+
+  for (int i = ses->answer_offset; i < ses->answer_count; i++) {
+    if (!strcmp(ses->answers[i]->uid, uid)) {
+      return ses->answers[i];
+    }
+  }
+  return NULL;
+}
+
+/**
  * #363, query a header answer
  */
 struct answer *session_get_header(char *uid, struct session *ses) {
@@ -1236,6 +1253,73 @@ struct answer *session_get_header(char *uid, struct session *ses) {
     }
   }
   return NULL;
+}
+
+/**
+ * get a string value of the current answer based on it's type
+ * #384
+ */
+int answer_get_value_raw(struct answer *a, char *out, size_t sz) {
+  int retVal = 0;
+
+  do {
+      if(!a) {
+        LOG_ERROR("Answer is null!");
+      }
+
+      switch (a->type) {
+        // value
+        case QTYPE_INT:
+        case QTYPE_FIXEDPOINT:
+        case QTYPE_DURATION24:
+          snprintf(out, 8192, "%lld", a->value);
+          break;
+
+        // text
+        case QTYPE_TEXT:
+        case QTYPE_CHECKBOX:
+        case QTYPE_HIDDEN:
+        case QTYPE_TEXTAREA:
+        case QTYPE_EMAIL:
+        case QTYPE_PASSWORD:
+        case QTYPE_SINGLECHOICE:
+        case QTYPE_SINGLESELECT:
+        case QTYPE_DIALOG_DATA_CRAWLER:
+        case QTYPE_UUID:
+
+        // text (comma separated)
+        case QTYPE_MULTICHOICE:
+        case QTYPE_MULTISELECT:
+        case QTYPE_FIXEDPOINT_SEQUENCE:
+        case QTYPE_DAYTIME_SEQUENCE:
+        case QTYPE_DATETIME_SEQUENCE:
+          snprintf(out, 8192, "%s", a->text);
+          break;
+
+        // [lat,lon]
+        case QTYPE_LATLON:
+          snprintf(out, 8192, "%lld,%lld", a->lat, a->lon);
+          break;
+
+        // time_begin
+        case QTYPE_DATETIME:
+        case QTYPE_DAYTIME:
+          snprintf(out, 8192, "%lld", a->time_begin);
+          break;
+
+        // [time_begin,time_end]
+        case QTYPE_TIMERANGE:
+          snprintf(out, 8192, "%lld,%lld", a->time_begin, a->time_end);
+          break;
+
+        default:
+          out[0] = 0;
+          LOG_ERRORV("Unknown question type '%d' for answer '%s'", a->type, a->uid);
+          break;
+      }// switch
+    } while (0);
+
+    return retVal;
 }
 
 struct answer *copy_answer(struct answer *aa) {
