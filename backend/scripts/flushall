@@ -90,14 +90,14 @@ fi
 
 # stat & query survey hashs
 SIZE_S=$(du -sh "$SURVEY_DIR" | awk '{print $1}')
-COUNT_S=$(ls -l "$SURVEY_DIR" | grep ^d | wc -l)
+COUNT_S=$(find "${SURVEY_DIR:?}" -mindepth 1 -type f ! -name 'current' ! -name '.git*' ! -name '*.md' | wc -l)
 echo "$(BOLD "$COUNT_S hashed survey copies found"): $SIZE_S"
 read -p " - Flush all $(RED "survey copies") $(BOLD "(y/n) $(BLINK "?")") "  -n 1 -r DO_SURVEYS
 echo
 
 # flush survey hashs
 if [ "$DO_SURVEYS" == "y" ]; then
-    find "${SURVEY_DIR:?}" -mindepth 1 ! -name 'current' ! -name '.git*' ! -name '*.md' -delete
+    find "${SURVEY_DIR:?}" -mindepth 1 -type f ! -name 'current' ! -name '.git*' ! -name '*.md' -delete
     echo "-- done"
 fi
 
