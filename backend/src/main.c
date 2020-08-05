@@ -54,8 +54,6 @@ int main(int argc, char **argv) {
         LOG_ERROR("create_session() failed");
       }
 
-      free_session_meta(&meta);
-
       if (!retVal) {
         printf("%s\n", session_id);
       } else {
