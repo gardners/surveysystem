@@ -482,7 +482,6 @@ static void fcgi_newsession(struct kreq *req) {
       // No survey ID, so return 400
       quick_error(req, KHTTP_400, "Surveyid missing.");
       LOG_ERROR("surveyid missing from query string");
-      break;
     }
 
     // #363 parse session meta
@@ -490,7 +489,6 @@ static void fcgi_newsession(struct kreq *req) {
     if (!meta) {
       quick_error(req, KHTTP_500, "Session could not be created (1).");
       LOG_ERROR("fcgirequest_parse_session_meta() failed");
-      break;
     }
 
     // #363 validate session meta
@@ -500,7 +498,6 @@ static void fcgi_newsession(struct kreq *req) {
       meta = NULL;
       quick_error(req, status, "Invalid idendity provider check app configuration");
       LOG_ERRORV("fcgirequest_validate_request() returned status %d >= KHTTP_400 (%d)", KHTTP_400, status);
-      break;
     }
 
     // #363 save session meta
@@ -510,7 +507,6 @@ static void fcgi_newsession(struct kreq *req) {
       meta = NULL;
       quick_error(req, KHTTP_500, "Session could not be created (2).");
       LOG_ERROR("create_session() failed");
-      break;
     }
 
     // reply, #363 free session_meta
@@ -546,7 +542,6 @@ static void fcgi_addanswer(struct kreq *req) {
     if (!ses) {
       quick_error(req, KHTTP_400, "Could not load specified session. Does it exist?");
       LOG_ERROR("Could not load session");
-      break;
     }
 
     /*
@@ -578,7 +573,6 @@ static void fcgi_addanswer(struct kreq *req) {
       ses = NULL;
       quick_error(req, KHTTP_400, "Could not load answer");
       LOG_ERROR("Could not load answer");
-      break;
     }
 
     if (session_add_answer(ses, ans)) {
@@ -633,7 +627,6 @@ static void fcgi_addanswer(struct kreq *req) {
   (void)retVal;
   return;
 }
-
 
 struct session *request_load_session(struct kreq *req) {
     struct kpair *arg = req->fieldmap[KEY_SESSIONID];
@@ -710,7 +703,6 @@ static void fcgi_updateanswer(struct kreq *req) {
     if (!ses) {
       quick_error(req, KHTTP_400, "Could not load specified session. Does it exist?");
       LOG_ERROR("Could not load session");
-      break;
     }
 
     // validate request against session meta (#363)
@@ -737,7 +729,6 @@ static void fcgi_updateanswer(struct kreq *req) {
       ses = NULL;
       quick_error(req, KHTTP_400, "Could not load answer");
       LOG_ERROR("Could not load answer");
-      break;
     }
 
     if (session_delete_answers_by_question_uid(ses, ans->uid, 0) < 0) {
@@ -748,7 +739,6 @@ static void fcgi_updateanswer(struct kreq *req) {
       // TODO could be both 400 or 500 (storage, serialization, not in session)
       quick_error(req, KHTTP_400, "Answer does not match existing session records.");
       LOG_ERROR("session_delete_answers_by_question_uid() failed");
-      break;
     }
 
     if (session_add_answer(ses, ans)) {
@@ -758,7 +748,6 @@ static void fcgi_updateanswer(struct kreq *req) {
       ans = NULL;
       quick_error(req, KHTTP_400, "Invalid answer, could not add to session.");
       LOG_ERROR("session_add_answer() failed.");
-      break;
     }
 
     free_answer(ans);
@@ -952,7 +941,6 @@ static void fcgi_delanswerandfollowing(struct kreq *req) {
       // TODO could be both 400 or 500 (storage, serialization, not in session)
       quick_error(req, KHTTP_400, "Answer does not match existing session records.");
       LOG_ERROR("session_delete_answers_by_question_uid() failed");
-      break;
     }
 
     // #332 next_questions data struct
@@ -1039,8 +1027,9 @@ static void fcgi_delsession(struct kreq *req) {
     // reply
     begin_200(req);
     enum kcgi_err er = khttp_puts(req, "Session deleted");
-    if (er != KCGI_OK)
+    if (er != KCGI_OK) {
       LOG_ERROR("khttp_puts() failed");
+    }
     LOG_INFO("Leaving page handler");
 
   } while (0);
@@ -1065,7 +1054,6 @@ static void fcgi_nextquestion(struct kreq *req) {
     if (!ses) {
       quick_error(req, KHTTP_400, "Could not load specified session. Does it exist?");
       LOG_ERROR("Could not load session");
-      break;
     }
 
     // validate request against session meta (#363)
@@ -1317,7 +1305,7 @@ static void fcgi_analyse(struct kreq *req) {
       continue;
     } else if (KCGI_OK != er) {
       if (analysis) {
-        free((char *)analysis);
+        free((char *) analysis);
       }
       fprintf(stderr, "khttp_head: error: %d\n", er);
       break;
@@ -1438,11 +1426,9 @@ int response_nextquestion(struct kreq *req, struct session *ses, struct nextques
     }
     if (!ses) {
       LOG_ERROR("response_nextquestion(): session required (null)");
-      break;
     }
     if (!nq) {
       LOG_ERROR("response_nextquestion(): nextquestions required (null)");
-      break;
     }
 
     // json response
