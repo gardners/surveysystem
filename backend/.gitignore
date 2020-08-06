@@ -19,7 +19,13 @@ queue/*
 # linters
 compile_commands.*
 cppcheck-log.*
+
+# valgrind
+valgrind.log
 valgrind-*
+!valgrind-surveycli
+*.supp
+!valgrind.supp
 
 # dev env specific sripts
 propTests.*
