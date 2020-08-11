@@ -5,7 +5,7 @@
 This is an example of a session with the id `381544dc-0000-0000-0d04-01123f06e306`.
 
 It contains one answer out of two defined questions.
-The session file is located in `<project_ root>/backend/sessions/3815/381544dc-0000-0000-0d04-01123f06e306`.
+The session file is located in `<project_root>/backend/sessions/3815/381544dc-0000-0000-0d04-01123f06e306`.
 Our session id stored as the file name.
 
 ```
@@ -19,7 +19,7 @@ question1:TEXT:Hello World 1:0:0:0:0:0:0:0::0:1595559999
 
 ### Linked survey definition
 
-The matching survey definition for our session is located in: `<project_ root>/backend/surveys/foo/current`
+The matching survey definition for our session is located in: `<project_root>/backend/surveys/foo/current`
 
 ```
 version 2
@@ -32,15 +32,15 @@ question2:Question 2::TEXT:0::-1:-1:0:0::
 When a session is created the backend saves a *snapshot copy* of the "current" `current` file, using the file's SHA1 hash as file name (if not alredy exists).
 
 ```bash
-cp <project_ root>/backend/surveys/foo/current <project_ root>/backend/surveys/foo/b884bcb19954b245d8be53db2b266c4798dc742d
+cp <project_root>/backend/surveys/foo/current <project_root>/backend/surveys/foo/b884bcb19954b245d8be53db2b266c4798dc742d
 ```
 
-For the remainder of the session *that copy* is being loaded and matched against the session answers.
+For the remainder of the session this copy is being loaded and matched against the session answers.
 
 ## Session structure
 
 ```bash
-                       ------
+                       ------<survey_name>
 survey definition copy | foo/b884bcb19954b245d8be53db2b266c4798dc742d
                        ------
                        | @user:META::0:0:0:0:0:0:0::0:1595557084
@@ -55,9 +55,9 @@ session body           | question1:TEXT:Hello World 1:0:0:0:0:0:0:0::0:159555808
 
 Sections:
 
-1) survey definition: Identifies the linked survey defintion cpy in format `<survey name>/<survey_sha>`.
-2) session header: meta data set by backend: see below
-3) session body: contains the *user* answers given to the questions defined inside our example survey definition (copy)
+1) survey definition: survey defintion copy, format `<survey_name>/<survey_sha>`.
+2) session header: sessioin meta data (set by backend): see below
+3) session body: contains the *user* answers given to the questions defined for our example survey
 
 ## Session header
 
