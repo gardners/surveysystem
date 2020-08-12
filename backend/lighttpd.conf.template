@@ -1,65 +1,60 @@
-var.BACKEND_DIR    = "${BACKEND_DIR}"
-var.WWW_DIR    = "${WWW_DIR}"
-var.FASTCGI_DIR = "${FASTCGI_DIR}"
-var.VHOST_DIR   = "${VHOST_DIR}"
-var.LOG_DIR     = "${LOG_DIR}"
-var.PORT        = ${PORT}
+# default ligtthpd config for tests
+
+## variables
+
+var.base_path="{BASE_PATH}"
+var.server_user="{SERVER_USER}"
+var.server_group="{SERVER_GROUP}"
+var.server_port="{SERVER_PORT}"
+var.fastcgi_port="{FASTCGI_PORT}"
+
+## config
 
 server.modules = (
-    "mod_access",
-    "mod_accesslog",
-    "mod_alias",
-    "mod_compress",
-    "mod_redirect",
-    "mod_fastcgi",
-    "mod_setenv",
+     "mod_access",
+     "mod_alias",
+
+     "mod_fastcgi",
+     "mod_compress",
+     "mod_redirect",
+     "mod_accesslog",
 )
 
-server.document-root        = VHOST_DIR
-server.upload-dirs          = ( "/var/cache/lighttpd/uploads" )
-server.errorlog             = LOG_DIR + "/error.log"
-server.pid-file             = "/var/run/lighttpd.pid"
-server.username             = "www-data"
-server.groupname            = "www-data"
-server.port                 = PORT
+server.breakagelog          = base_path + "/logs/breakage.log"
+server.upload-dirs          = ("/var/cache/lighttpd/uploads")
+server.errorlog             = base_path + "/logs/lighttpd-error.log"
+server.pid-file             = base_path + "/lighttpd.pid"
+server.document-root        = base_path + "www"
+server.username             = server_user
+server.groupname            = server_group
+server.port                 = server_port
 
-accesslog.filename          = LOG_DIR + "/access.log"
+accesslog.filename          = base_path + "/logs/lighttpd-access.log"
+
 index-file.names            = ( "index.php", "index.html", "index.lighttpd.html" )
 url.access-deny             = ( "~", ".inc" )
 static-file.exclude-extensions = ( ".php", ".pl", ".fcgi" )
-server.error-handler-404    = "/index.html"
+server.error-handler-404   = "/index.html"
 
 compress.cache-dir          = "/var/cache/lighttpd/compress/"
 compress.filetype           = ( "application/javascript", "text/css", "text/html", "text/plain" )
 
-fastcgi.debug = 1
+$SERVER["socket"] == ":" + server_port {
+     fastcgi.debug = 1
 
-fastcgi.server = (
-  "/surveyapi" =>
-  (( "host" => "127.0.0.1",
-     "port" => 9000,
-     "bin-path" => FASTCGI_DIR + "/surveyfcgi",
-     "bin-environment" => (
-        "SURVEY_HOME" => BACKEND_DIR,
-        "SURVEY_PYTHONDIR" => BACKEND_DIR + "/python",
-    ),
-     "check-local" => "disable",
-     "docroot" => WWW_DIR + "/front/build" # remote server may use
-                      # its own docroot
-  ))
-)
-
-# default listening port for IPv6 falls back to the IPv4 port
-## Use ipv6 if available
-#include_shell "/usr/share/lighttpd/use-ipv6.pl " + server.port
-include_shell "/usr/share/lighttpd/create-mime.assign.pl"
-include_shell "/usr/share/lighttpd/include-conf-enabled.pl"
-
-setenv.add-response-header = (
-    "Access-Control-Allow-Origin" => "*",
-    "Access-Control-Allow-Methods" => "HEAD, GET, OPTIONS",
-    "Access-Control-Expose-Headers" => "Content-Range, Date, Etag, Cache-Control, Last-Modified",
-    "Access-Control-Allow-Headers" => "Content-Type, Origin, Accept, Range, Cache-Control",
-    "Access-Control-Max-Age" => "600",
-    "Timing-Allow-Origin" => "*"
-)
+     fastcgi.server = (
+          "/surveyapi" => ((
+               "host" => "127.0.0.1",
+               "port" => fastcgi_port,
+               "max-procs" => 1,
+               "bin-path" => base_path + "/surveyfcgi",
+               "bin-environment" => (
+                    "SURVEY_HOME" => base_path,
+                    "SURVEY_PYTHONDIR" => base_path + "/python",
+               ),
+               "check-local" => "disable",
+               # remote server may use its own docroot
+               "docroot" => base_path
+          ))
+     )
+}
