@@ -32,3 +32,6 @@ propTests.*
 
 # dev docs
 TODO.*
+
+# sandbox
+sandbox/*
