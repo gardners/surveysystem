@@ -179,6 +179,7 @@ static const struct kvalid keys[KEY__MAX] = {
 };
 
 enum page {
+  PAGE_INDEX, // #389 add root page
   PAGE_NEWSESSION,
   PAGE_ADDANSWER,
   PAGE_UPDATEANSWER,
@@ -194,6 +195,7 @@ enum page {
 
 typedef void (*disp)(struct kreq *);
 
+static void fcgi_index(struct kreq *);
 static void fcgi_newsession(struct kreq *);
 static void fcgi_addanswer(struct kreq *);
 static void fcgi_updateanswer(struct kreq *);
@@ -206,12 +208,21 @@ static void fcgi_fastcgitest(struct kreq *);
 static void fcgi_analyse(struct kreq *);
 
 static const disp disps[PAGE__MAX] = {
-    fcgi_newsession,   fcgi_addanswer,  fcgi_updateanswer,
-    fcgi_nextquestion, fcgi_delanswer,  fcgi_delanswerandfollowing,
-    fcgi_delsession,   fcgi_accesstest, fcgi_fastcgitest,
-    fcgi_analyse};
+    fcgi_index,
+    fcgi_newsession,
+    fcgi_addanswer,
+    fcgi_updateanswer,
+    fcgi_nextquestion,
+    fcgi_delanswer,
+    fcgi_delanswerandfollowing,
+    fcgi_delsession,
+    fcgi_accesstest,
+    fcgi_fastcgitest,
+    fcgi_analyse
+};
 
 static const char *const pages[PAGE__MAX] = {
+    "index",
     "newsession",
     "addanswer",
     "updateanswer",
@@ -257,7 +268,7 @@ int main(int argc, char **argv) {
     if (KCGI_OK != khttp_fcgi_init(&fcgi, keys,
                                    KEY__MAX, // CGI variable parse definitions
                                    pages, PAGE__MAX, // Pages for parsing
-                                   PAGE_NEWSESSION)) {
+                                   PAGE_INDEX)) {
       LOG_ERROR("khttp_fcgi_init() failed.");
     }
 
@@ -292,6 +303,16 @@ int main(int argc, char **argv) {
                 "req.mime=%d, KMIME=%d)",
                 (int)req.page, (int)PAGE__MAX, (int)KMIME_TEXT_HTML,
                 (int)req.mime);
+      LOG_WARNV("req.fullpath='%s'\n"
+                "req.pagename='%s'\n"
+                "req.path='%s'\n"
+                "req.pname='%s'\n"
+                ,
+                req.fullpath,
+                req.pagename,
+                req.path,
+                req.pname
+                );
 
       if (PAGE__MAX == req.page || KMIME_TEXT_HTML != req.mime) {
 
@@ -465,6 +486,17 @@ void begin_500(struct kreq *req) {
     }
 
   } while (0);
+}
+
+static void fcgi_index(struct kreq *req) {
+  int retVal = 0;
+  do {
+    // #398 add root page
+    quick_error(req, KHTTP_405, "Not implemented");
+  } while (0);
+
+  (void)retVal;
+  return;
 }
 
 static void fcgi_newsession(struct kreq *req) {
