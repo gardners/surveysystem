@@ -12,8 +12,8 @@
  * <questions in normal question format>
  * endofsurvey
  *
- * request <expected response code> <url path and query>
- * request proxy <expected response code> <url path and query> curlargs(`man curl`)
+ * request <expected response code> /<url path and query>
+ * request proxy <expected response code> /<url path and query> curlargs(`man curl`)
  *
  * extract_sessionid
  *
@@ -499,7 +499,7 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
         snprintf(
           out, MAX_BUFFER,
           "curl%s%s%s -s -w \"HTTPRESULT=%%{http_code}\" -o "
-          "%s/request.out \"http://localhost:%d/%s/%s\" > "
+          "%s/request.out \"http://localhost:%d/%s%s\" > "
           "%s/request.code",
           curl_args,
           method,
