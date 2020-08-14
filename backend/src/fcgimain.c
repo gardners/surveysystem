@@ -303,16 +303,6 @@ int main(int argc, char **argv) {
                 "req.mime=%d, KMIME=%d)",
                 (int)req.page, (int)PAGE__MAX, (int)KMIME_TEXT_HTML,
                 (int)req.mime);
-      LOG_WARNV("req.fullpath='%s'\n"
-                "req.pagename='%s'\n"
-                "req.path='%s'\n"
-                "req.pname='%s'\n"
-                ,
-                req.fullpath,
-                req.pagename,
-                req.path,
-                req.pname
-                );
 
       if (PAGE__MAX == req.page || KMIME_TEXT_HTML != req.mime) {
 
