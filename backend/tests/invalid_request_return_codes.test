@@ -2,25 +2,25 @@
 @skip!
 
 request 400 newsession
-request 500 newsession?surveyid=
-request 500 newsession?surveyid=invalid
+request 500 /newsession?surveyid=
+request 500 /newsession?surveyid=invalid
 
 request 400 nextquestion
-request 500 nextquestion?sessionid=
-request 500 nextquestion?sessionid=invalid
+request 500 /nextquestion?sessionid=
+request 500 /nextquestion?sessionid=invalid
 
 request 400 updateanswer
-request 500 updateanswer?sessionid=
-request 500 updateanswer?sessionid=invalid
+request 500 /updateanswer?sessionid=
+request 500 /updateanswer?sessionid=invalid
 
 request 400 delanswer
-request 500 delanswer?sessionid=
-request 500 delanswer?sessionid=invalid
+request 500 /delanswer?sessionid=
+request 500 /delanswer?sessionid=invalid
 
 request 400 analyse
-request 500 analyse?sessionid=
-request 500 analyse?sessionid=invalid
+request 500 /analyse?sessionid=
+request 500 /analyse?sessionid=invalid
 
 request 400 delsession
-request 500 delsession?sessionid=
-request 500 delsession?sessionid=invalid
+request 500 /delsession?sessionid=
+request 500 /delsession?sessionid=invalid

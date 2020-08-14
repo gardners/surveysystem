@@ -54,7 +54,7 @@ def analyse(questions, answers):
 
 endofpython
 
-request proxy 200 newsession?surveyid=foo curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 200 /newsession?surveyid=foo curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
 extract_sessionid
 
 # ... internal check if prev directive worked
@@ -67,11 +67,11 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 endofsession
 
 #!------- nextquestion  does not care about headers and returns first question
-request proxy 200 nextquestion?sessionid=$SESSION curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 200 /nextquestion?sessionid=$SESSION curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
 match_string {"status": 0, "message": "python invoked", "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #!------- addanswer adds answer to first question and leaves headers untouched
-request proxy 200 addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0: curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 200 /addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0: curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
 match_string {"status": 0, "message": "python invoked", "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 verify_session
@@ -100,11 +100,11 @@ metaquestion:META:@answer:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #!------- nextquestion python is not aware of meta and @fields
-request proxy 200 nextquestion?sessionid=$SESSION curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 200 /nextquestion?sessionid=$SESSION curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
 match_string {"status": 0, "message": "python invoked", "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #!------- addanswer adds answer to second question and leaves header, meta and @fields untouched
-request proxy 200 addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0: curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 200 /addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0: curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
 match_string {"status": 0, "message": "python invoked", "next_questions": []}
 
 verify_session
@@ -120,5 +120,5 @@ question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #!------- python analyse header, meta and @fields untouched
-request proxy 200 analyse?sessionid=$SESSION curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 200 /analyse?sessionid=$SESSION curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
 match_string OK

@@ -26,7 +26,7 @@ def nextquestion(questions, answers):
 endofpython
 
 # Request creation of a  new session
-request 200 newsession?surveyid=invalid_next_question_python
+request 200 /newsession?surveyid=invalid_next_question_python
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -37,7 +37,7 @@ invalid_next_question_python/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 
 # Ask for next question
-request 500 nextquestion?sessionid=$SESSION
+request 500 /nextquestion?sessionid=$SESSION
 
 # Check that we have not changed the session file
 verify_session(skip_headers)

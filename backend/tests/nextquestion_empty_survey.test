@@ -8,7 +8,7 @@ Silly test survey updated
 endofsurvey
 
 # Request creation of a  new session
-request 200 newsession?surveyid=nextquestion_empty_survey
+request 200 /newsession?surveyid=nextquestion_empty_survey
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -18,5 +18,5 @@ verify_session(skip_headers)
 nextquestion_empty_survey/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 
-request 400 nextquestion?sessionid=$SESSION
+request 400 /nextquestion?sessionid=$SESSION
 

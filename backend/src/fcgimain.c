@@ -179,6 +179,7 @@ static const struct kvalid keys[KEY__MAX] = {
 };
 
 enum page {
+  PAGE_INDEX, // #389 add root page
   PAGE_NEWSESSION,
   PAGE_ADDANSWER,
   PAGE_UPDATEANSWER,
@@ -194,6 +195,7 @@ enum page {
 
 typedef void (*disp)(struct kreq *);
 
+static void fcgi_index(struct kreq *);
 static void fcgi_newsession(struct kreq *);
 static void fcgi_addanswer(struct kreq *);
 static void fcgi_updateanswer(struct kreq *);
@@ -206,12 +208,21 @@ static void fcgi_fastcgitest(struct kreq *);
 static void fcgi_analyse(struct kreq *);
 
 static const disp disps[PAGE__MAX] = {
-    fcgi_newsession,   fcgi_addanswer,  fcgi_updateanswer,
-    fcgi_nextquestion, fcgi_delanswer,  fcgi_delanswerandfollowing,
-    fcgi_delsession,   fcgi_accesstest, fcgi_fastcgitest,
-    fcgi_analyse};
+    fcgi_index,
+    fcgi_newsession,
+    fcgi_addanswer,
+    fcgi_updateanswer,
+    fcgi_nextquestion,
+    fcgi_delanswer,
+    fcgi_delanswerandfollowing,
+    fcgi_delsession,
+    fcgi_accesstest,
+    fcgi_fastcgitest,
+    fcgi_analyse
+};
 
 static const char *const pages[PAGE__MAX] = {
+    "index",
     "newsession",
     "addanswer",
     "updateanswer",
@@ -257,7 +268,7 @@ int main(int argc, char **argv) {
     if (KCGI_OK != khttp_fcgi_init(&fcgi, keys,
                                    KEY__MAX, // CGI variable parse definitions
                                    pages, PAGE__MAX, // Pages for parsing
-                                   PAGE_NEWSESSION)) {
+                                   PAGE_INDEX)) {
       LOG_ERROR("khttp_fcgi_init() failed.");
     }
 
@@ -467,6 +478,17 @@ void begin_500(struct kreq *req) {
   } while (0);
 }
 
+static void fcgi_index(struct kreq *req) {
+  int retVal = 0;
+  do {
+    // #398 add root page
+    quick_error(req, KHTTP_405, "Not implemented");
+  } while (0);
+
+  (void)retVal;
+  return;
+}
+
 static void fcgi_newsession(struct kreq *req) {
   int retVal = 0;
 
@@ -475,7 +497,7 @@ static void fcgi_newsession(struct kreq *req) {
 
   do {
 
-    LOG_INFO("Page handler entered.");
+    LOG_INFO("Entering page handler /newsession");
 
     struct kpair *survey = req->fieldmap[KEY_SURVEYID];
     if (!survey) {
@@ -536,7 +558,7 @@ static void fcgi_addanswer(struct kreq *req) {
 
   do {
 
-    LOG_INFO("Entering page handler for addanswer.");
+    LOG_INFO("Entering page handler /addanswer");
 
     ses = request_load_session(req);
     if (!ses) {
@@ -697,7 +719,7 @@ static void fcgi_updateanswer(struct kreq *req) {
 
   do {
 
-    LOG_INFO("Entering page handler.");
+    LOG_INFO("Entering page handler /addanswer");
 
     ses = request_load_session(req);
     if (!ses) {
@@ -800,7 +822,7 @@ static void fcgi_delanswer(struct kreq *req) {
 
   do {
 
-    LOG_INFO("Entering page handler.");
+    LOG_INFO("Entering page handler /delanswer");
 
     struct kpair *arg = req->fieldmap[KEY_QUESTIONID];
 
@@ -895,7 +917,7 @@ static void fcgi_delanswerandfollowing(struct kreq *req) {
 
   do {
 
-    LOG_INFO("Entering page handler.");
+    LOG_INFO("Entering page handler /delanswerandfollowing");
 
     struct kpair *arg = req->fieldmap[KEY_QUESTIONID];
 
@@ -989,7 +1011,7 @@ static void fcgi_delsession(struct kreq *req) {
 
   do {
 
-    LOG_INFO("Entering page handler.");
+    LOG_INFO("Entering page handler /delsession");
 
     ses = request_load_session(req);
     if (!ses) {
@@ -1048,7 +1070,7 @@ static void fcgi_nextquestion(struct kreq *req) {
 
   do {
 
-    LOG_INFO("Entering page handler.");
+    LOG_INFO("Entering page handler /nextquestion");
 
     ses = request_load_session(req);
     if (!ses) {
@@ -1177,7 +1199,7 @@ static void fcgi_accesstest(struct kreq *req) {
 
   do {
 
-    LOG_INFO("Entering page handler.");
+    LOG_INFO("Entering page handler /accesstest");
 
     char test_path[8192];
     char failmsg[16384];
@@ -1218,7 +1240,7 @@ static void fcgi_accesstest(struct kreq *req) {
 
 static void fcgi_fastcgitest(struct kreq *req) {
   do {
-    LOG_INFO("Entering page handler.");
+    LOG_INFO("Entering page handler /fastcgitest");
     quick_error(req, KHTTP_200, "All okay.");
     LOG_INFO("Leaving page handler.");
   } while (0);
@@ -1238,7 +1260,7 @@ static void fcgi_analyse(struct kreq *req) {
 
   do {
 
-    LOG_INFO("Entering page handler.");
+    LOG_INFO("Entering page handler /analyse");
 
     ses = request_load_session(req);
     if (!ses) {

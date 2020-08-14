@@ -10,7 +10,7 @@ characterencoding:Select one from the ‘following’:Description for ‘followi
 endofsurvey
 
 # Request creation of a  new session
-request 200 newsession?surveyid=characterencoding
+request 200 /newsession?surveyid=characterencoding
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -21,10 +21,10 @@ characterencoding/ee0a452e61f1a1a6f11084f9af7cbf2ac69cb728
 endofsession
 
 # Ask for next question
-request 200 nextquestion?sessionid=$SESSION
+request 200 /nextquestion?sessionid=$SESSION
 match_string {"status": 0, "message": "", "next_questions": [{"id": "characterencoding", "name": "characterencoding", "title": "Select one from the ‘following’", "description": "Description for ‘following’", "type": "SINGLECHOICE", "default_value": "", "min_value": -1, "max_value": -1, "choices": ["`31`", "`42ö`", "ümlaut"], "unit": ""}]}
 
-request 200 addanswer?sessionid=$SESSION&answer=characterencoding:96ö:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=characterencoding:96ö:0:0:0:0:0:0:0:
 # Make sure answer ends up in file
 verify_session(skip_headers)
 field_unit/ee0a452e61f1a1a6f11084f9af7cbf2ac69cb728

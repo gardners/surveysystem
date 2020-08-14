@@ -1,0 +1,7 @@
+@description index page returns 405 (issue #389)
+
+request 405 /
+request 405 /index
+
+#! -- everyting else works
+request 200 /accesstest

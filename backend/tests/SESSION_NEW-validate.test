@@ -14,7 +14,7 @@ endofsurvey
 #! ------
 
 # Request creation of a  new session
-request 200 newsession?surveyid=sessionlifetime
+request 200 /newsession?surveyid=sessionlifetime
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -27,14 +27,14 @@ sessionlifetime/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 @state:META::<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
 endofsession
 
-request 400 analyse?sessionid=$SESSION
+request 400 /analyse?sessionid=$SESSION
 
 #! ------
 #! - SESSION_NEW: deleting answer fails (400)
 #! ------
 
-request 400 delanswer?sessionid=$SESSION&questionid=question2
-request 400 delanswerandfollowing?sessionid=$SESSION&questionid=question2
+request 400 /delanswer?sessionid=$SESSION&questionid=question2
+request 400 /delanswerandfollowing?sessionid=$SESSION&questionid=question2
 
 verify_session
 sessionlifetime/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
@@ -48,7 +48,7 @@ endofsession
 #! - SESSION_NEW: Analysing fails (400)
 #! ------
 
-request 400 analyse?sessionid=$SESSION
+request 400 /analyse?sessionid=$SESSION
 
 verify_session
 sessionlifetime/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
@@ -62,7 +62,7 @@ endofsession
 #! - SESSION_NEW: Deleting session fails (400)
 #! ------
 
-request 400 delsession?sessionid=$SESSION
+request 400 /delsession?sessionid=$SESSION
 
 verify_session
 sessionlifetime/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
@@ -76,7 +76,7 @@ endofsession
 #! - SESSION_NEW: Next question passes
 #! ------
 
-request 200 nextquestion?sessionid=$SESSION
+request 200 /nextquestion?sessionid=$SESSION
 match_string {"status": 0, "message": "", "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 verify_session
@@ -91,7 +91,7 @@ endofsession
 #! - SESSION_NEW: Add answer passes
 #! ------
 
-request 200 nextquestion?sessionid=$SESSION
+request 200 /nextquestion?sessionid=$SESSION
 match_string {"status": 0, "message": "", "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 verify_session
@@ -102,5 +102,5 @@ sessionlifetime/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 @state:META::<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
 endofsession
 
-request 200 addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0:
 match_string {"status": 0, "message": "", "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
