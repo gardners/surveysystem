@@ -34,7 +34,7 @@ def nextquestion(questions, answers):
 endofpython
 
 # Request creation of a  new session
-request 200 newsession?surveyid=runanalysispython
+request 200 /newsession?surveyid=runanalysispython
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -51,13 +51,13 @@ runanalysispython/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 @state:META::<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
 endofsession
 
-request 400 analyse?sessionid=$SESSION
+request 400 /analyse?sessionid=$SESSION
 
 #! -------
 #!- FAIL if SESSION_OPEN
 #! -------
 
-request 200 addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0:
 
 verify_session
 runanalysispython/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
@@ -68,14 +68,14 @@ runanalysispython/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
-request 400 analyse?sessionid=$SESSION
+request 400 /analyse?sessionid=$SESSION
 
 #! -------
 #!- PASS if SESSION_FINISHED
 #!- in progress, currently we expect only a placeholder json string here, see issue 300
 #! -------
 
-request 200 addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0:
 match_string {"status": 0, "message": "", "next_questions": []}
 
 verify_session
@@ -92,7 +92,7 @@ endofsession
 #!- PASS if SESSION_CLOSED
 #! -------
 
-request 200 analyse?sessionid=$SESSION
+request 200 /analyse?sessionid=$SESSION
 
 verify_session
 runanalysispython/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
@@ -108,5 +108,5 @@ endofsession
 #!- Verify analysis response
 #! -------
 
-request 200 analyse?sessionid=$SESSION
+request 200 /analyse?sessionid=$SESSION
 match_string You will live

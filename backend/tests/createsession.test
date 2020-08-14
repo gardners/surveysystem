@@ -8,7 +8,7 @@ question1:What is the answer to question 1?::TEXT:0:I don't know:-1:-1:0:0:
 endofsurvey
 
 # Request creation of a  new session
-request 200 newsession?surveyid=foo
+request 200 /newsession?surveyid=foo
 
 # Get the session ID that newsession should have returned
 extract_sessionid

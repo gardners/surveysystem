@@ -16,7 +16,7 @@ endofsurvey
 #!passes
 #!---------------------
 
-request proxy 200 newsession?surveyid=authmiddleware curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 200 /newsession?surveyid=authmiddleware curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
 
 extract_sessionid
 verify_session
@@ -31,7 +31,7 @@ endofsession
 #!pass: case insensitive headers
 #!---------------------
 
-request proxy 200 newsession?surveyid=authmiddleware curlargs(--user test:1234 -H "x-surveyproxy-auth-user: user2" -H "x-surveyproxy-auth-group: group2")
+request proxy 200 /newsession?surveyid=authmiddleware curlargs(--user test:1234 -H "x-surveyproxy-auth-user: user2" -H "x-surveyproxy-auth-group: group2")
 
 extract_sessionid
 verify_session
@@ -46,17 +46,17 @@ endofsession
 #!fail invalid middleware auth (testing test AUTH setup)
 #!---------------------
 
-request proxy 401 newsession?surveyid=authmiddleware curlargs(-H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
-request proxy 401 newsession?surveyid=authmiddleware curlargs(--user INVALID:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
-request proxy 401 newsession?surveyid=authmiddleware curlargs(--user test:INVALID -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 401 /newsession?surveyid=authmiddleware curlargs(-H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 401 /newsession?surveyid=authmiddleware curlargs(--user INVALID:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 401 /newsession?surveyid=authmiddleware curlargs(--user test:INVALID -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
 
 #!---------------------
 #!fail required middleware headers
 #!---------------------
 
-request proxy 407 newsession?surveyid=authmiddleware curlargs(--user test:1234)
-request proxy 407 newsession?surveyid=authmiddleware curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1")
-request proxy 407 newsession?surveyid=authmiddleware curlargs(--user test:1234 -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 407 /newsession?surveyid=authmiddleware curlargs(--user test:1234)
+request proxy 407 /newsession?surveyid=authmiddleware curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1")
+request proxy 407 /newsession?surveyid=authmiddleware curlargs(--user test:1234 -H "X-SurveyProxy-Auth-Group: group1")
 
-request proxy 407 newsession?surveyid=authmiddleware curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User:" -H "X-SurveyProxy-Auth-Group: group1")
-request proxy 407 newsession?surveyid=authmiddleware curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User:user1" -H "X-SurveyProxy-Auth-Group:")
+request proxy 407 /newsession?surveyid=authmiddleware curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User:" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 407 /newsession?surveyid=authmiddleware curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User:user1" -H "X-SurveyProxy-Auth-Group:")

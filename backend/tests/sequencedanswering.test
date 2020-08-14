@@ -11,7 +11,7 @@ question3:How boring was question 2?::TEXT:0:I don't know:-1:-1:0:0::
 endofsurvey
 
 # Request creation of a  new session
-request 200 newsession?surveyid=foo
+request 200 /newsession?surveyid=foo
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -21,10 +21,10 @@ verify_session(skip_headers)
 foo/d4f5a62de47e9a5ea38f93c304d6c4cdee1e396c
 endofsession
 
-request 200 nextquestion?sessionid=$SESSION
+request 200 /nextquestion?sessionid=$SESSION
 match_string {"status": 0, "message": "", "next_questions": [{"id": "question1", "name": "question1", "title": "Select one of the following", "description": "", "type": "MULTICHOICE", "default_value": "", "min_value": -1, "max_value": -1, "choices": ["Yes", "No", "Maybe"], "unit": ""}]}
 
-request 200 addanswer?sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0:
 match_string {"status": 0, "message": "", "next_questions": [{"id": "question2", "name": "question2", "title": "What is the answer to question 1?", "description": "", "type": "TEXT", "default_value": "I don't know", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 # Make sure answer ends up in file
@@ -33,7 +33,7 @@ foo/d4f5a62de47e9a5ea38f93c304d6c4cdee1e396c
 question1:MULTICHOICE:Hello World:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
-request 200 addanswer?sessionid=$SESSION&answer=question2:Another+answer:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=question2:Another+answer:0:0:0:0:0:0:0:
 match_string {"status": 0, "message": "", "next_questions": [{"id": "question3", "name": "question3", "title": "How boring was question 2?", "description": "", "type": "TEXT", "default_value": "I don't know", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 # Make sure answer ends up in file
@@ -43,7 +43,7 @@ question1:MULTICHOICE:Hello World:0:0:0:0:0:0:0::0:<UTIME>
 question2:TEXT:Another answer:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
-request 200 addanswer?sessionid=$SESSION&answer=question3:Last+answer:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=question3:Last+answer:0:0:0:0:0:0:0:
 
 # Check that we are offered the next question to answer
 match_string {"status": 0, "message": "", "next_questions": []}

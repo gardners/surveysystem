@@ -39,39 +39,39 @@ endofsession
 #!-------
 #!- endpoint /addanswer [block]
 #!-------
-request proxy 502 addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0: curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 502 /addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0: curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
 
 #!-------
 #!- endpoint /updateanswer [block]
 #!-------
-request proxy 502 updateanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0: curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 502 /updateanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0: curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
 
 #!-------
 #!- endpoint /nextquestion [block]
 #!-------
-request proxy 502 nextquestion?sessionid=$SESSION curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 502 /nextquestion?sessionid=$SESSION curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
 
 #!-------
 #!- endpoint /delanswer [block]
 #!-------
-request proxy 502 delanswer?sessionid=$SESSION&questionid=question1 curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 502 /delanswer?sessionid=$SESSION&questionid=question1 curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
 
 #!-------
 #!- endpoint /delanswerandfollowing [block]
 #!-------
-request proxy 502 delanswerandfollowing?sessionid=$SESSION&questionid=question1 curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 502 /delanswerandfollowing?sessionid=$SESSION&questionid=question1 curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
 
 #!-------
 #!- endpoint /delsession [block]
 #!-------
-request proxy 502 delsession?sessionid=$SESSION curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 502 /delsession?sessionid=$SESSION curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
 
 #!-------
 #!- endpoint /accesstest [pass]
 #!-------
-request proxy 200 accesstest curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 200 /accesstest curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
 
 #!-------
 #!- endpoint /fastcgitest [pass]
 #!-------
-request proxy 200 fastcgitest curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 200 /fastcgitest curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
