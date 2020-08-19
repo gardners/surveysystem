@@ -16,7 +16,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "build:staging": "sh -ac '. ./.env.staging; react-scripts build'",
+    "build:staging": "env-cmd -f .env.staging npm run build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "dev": "xterm -hold -e \"cd ../backend & sudo ./testrun --skip-npm-build\" && react-scripts start",
@@ -40,6 +40,7 @@
   },
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^5.13.0",
+    "env-cmd": "^10.1.0",
     "jest-localstorage-mock": "^2.4.0",
     "node-sass": "^4.14.0",
     "react-test-renderer": "^16.13.1"
