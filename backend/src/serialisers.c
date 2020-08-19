@@ -203,9 +203,9 @@ int deserialise_int(char *field, int *s) {
   int retVal = 0;
   do {
     if (!field)
-      LOG_ERROR("field is NULL");
+      LOG_ERROR("int field '%s' is NULL");
     if (!strlen(field))
-      LOG_ERROR("field is empty string");
+      LOG_ERROR("int field '%s' is empty string");
 
     int offset = 0;
     if (field[offset] == '-') {
@@ -214,7 +214,7 @@ int deserialise_int(char *field, int *s) {
 
     for (int i = offset; field[i]; i++) {
       if (field[i] < '0' || field[i] > '9') {
-        LOG_ERRORV("integer field '%s' contains non-digit", field);
+        LOG_ERRORV("int field '%s' contains non-digit", field);
       }
     }
 
@@ -233,9 +233,9 @@ int deserialise_longlong(char *field, long long *s) {
   int retVal = 0;
   do {
     if (!field)
-      LOG_ERROR("field is NULL");
+      LOG_ERROR("long long field '%s' is NULL");
     if (!strlen(field))
-      LOG_ERROR("field is empty string");
+      LOG_ERROR("long long field '%s' is empty string");
 
     int offset = 0;
     if (field[offset] == '-') {
@@ -268,13 +268,13 @@ int deserialise_string(char *field, char **s) {
   do {
     *s = NULL;
     if (!field) {
-      LOG_ERROR("field is NULL");
+      LOG_ERROR("string field is NULL");
     } else {
       *s = strdup(field);
     }
 
     if (!*s) {
-      LOG_ERROR("field is empty string");
+      LOG_ERROR("string field is empty string");
     }
   } while (0);
   return retVal;
@@ -454,30 +454,36 @@ int serialise_question(struct question *q, char *out, int max_len) {
   For debugging it can be helpful to dump a question structure to
   stdout or a file.
 */
-int dump_question(FILE *f, char *msg, struct question *q) {
+int dump_question(FILE *f, struct question *q) {
   int retVal = 0;
   do {
-    char temp[8192];
-    fprintf(f, "%s:\n", msg);
-    escape_string(q->uid, temp, 8192);
-    fprintf(f, "  uid='%s'\n", temp);
-    escape_string(q->question_text, temp, 8192);
-    fprintf(f, "  question_text='%s'\n", temp);
-    escape_string(q->question_html, temp, 8192);
-    fprintf(f, "  question_html='%s'\n", temp);
-    fprintf(f, "  question type=%s\n",
-            ((q->type >= 1) && (q->type <= NUM_QUESTION_TYPES))
-                ? question_type_names[q->type]
-                : "<unknown>");
-    fprintf(f, "  flags=0x%08X\n", q->flags);
-    escape_string(q->default_value, temp, 8192);
-    fprintf(f, "  default_value='%s'\n", temp);
-    fprintf(f, "  min_value=%lld\n", q->min_value);
-    fprintf(f, "  max_value=%lld\n", q->max_value);
-    fprintf(f, "  decimal_places=%d\n", q->decimal_places);
-    fprintf(f, "  num_choices=%d\n", q->num_choices);
-    // #72 unit field
-    fprintf(f, "  unit=%s\n", q->unit);
+    fprintf(f,
+      "{\n"
+      "  uid: \"%s\"\n"
+      "  question_text: \"%s\"\n"
+      "  question_html: \"%s\"\n"
+      "  question type: \"%s\"\n"
+      "  flags: 0x%08X\n"
+      "  default_value: \"%s\"\n"
+      "  min_value: %lld\n"
+      "  max_value: %lld\n"
+      "  decimal_places: %d\n"
+      "  num_choices: %d\n"
+      "  unit: \"%s\"\n"
+      "}\n",
+
+      (q->uid) ? q->uid : "(null)",
+      (q->question_text) ? q->question_text : "(null)",
+      (q->question_html) ? q->question_html : "(null)",
+      (q->type >= 1 && q->type <= NUM_QUESTION_TYPES) ? question_type_names[q->type] : "<unknown>",
+      q->flags,
+      (q->default_value) ? q->default_value : "(null)",
+      q->min_value,
+      q->max_value,
+      q->decimal_places,
+      q->num_choices,
+      (q->unit) ? q->unit : "(null)"
+    );
   } while (0);
 
   return retVal;
@@ -487,26 +493,40 @@ int dump_question(FILE *f, char *msg, struct question *q) {
   For debugging it can be helpful to dump an answer structure to
   stdout or a file.
 */
-int dump_answer(FILE *f, char *msg, struct answer *a) {
+int dump_answer(FILE *f, struct answer *a) {
   int retVal = 0;
   do {
-    char temp[8192];
-    fprintf(f, "%s:\n", msg);
-    escape_string(a->uid, temp, 8192);
-    fprintf(f, "  uid='%s'\n", temp);
-    escape_string(a->text, temp, 8192);
-    fprintf(f, "  text='%s'\n", temp);
-    fprintf(f, "  value=%lld\n", a->value);
-    fprintf(f, "  lat=%lld\n", a->lat);
-    fprintf(f, "  lon=%lld\n", a->lon);
-    fprintf(f, "  time_begin=%lld\n", a->time_begin);
-    fprintf(f, "  time_end=%lld\n", a->time_end);
-    fprintf(f, "  time_zone_delta=%d\n", a->time_zone_delta);
-    fprintf(f, "  dst_delta=%d\n", a->dst_delta);
-    escape_string(a->unit, temp, 8192);
-    fprintf(f, "  unit='%s'\n", temp);
-    fprintf(f, "  flags=%d\n", a->flags);
-    fprintf(f, "  stored=%lld\n", a->stored);
+    fprintf(f,
+      "{\n"
+      "  uid: \"%s\"\n"
+      "  type: \"%s\"\n"
+      "  text: \"%s\"\n"
+      "  value: %lld\n"
+      "  lat: %lld\n"
+      "  lon: %lld\n"
+      "  time_begin: %lld\n"
+      "  time_end: %lld\n"
+      "  time_zone_delta: %d\n"
+      "  dst_delta: %d\n"
+      "  unit: \"%s\"\n"
+      "  flags: %d\n"
+      "  stored=: %lld\n"
+      "}\n",
+
+      (a->uid) ? a->uid : "(null)",
+      (a->type >= 1 && a->type <= NUM_QUESTION_TYPES) ? question_type_names[a->type] : "<unknown>",
+      (a->text) ? a->text : "(null)",
+      a->value,
+      a->lat,
+      a->lon,
+      a->time_begin,
+      a->time_end,
+      a->time_zone_delta,
+      a->dst_delta,
+      (a->unit) ? a->unit : "(null)",
+      a->flags,
+      a->stored
+    );
   } while (0);
 
   return retVal;

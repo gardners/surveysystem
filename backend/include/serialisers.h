@@ -12,11 +12,11 @@ int compare_answers(struct answer *a1, struct answer *a2, int mismatchIsError);
 int serialise_question(struct question *q, char *out, int max_len);
 int serialise_answer(struct answer *a, char *out, int max_len);
 int deserialise_question(char *in, struct question *q);
-int deserialise_answer(char *in, enum answer_visibility visibility,
-                       struct answer *a);
+int deserialise_answer(char *in, enum answer_visibility visibility, struct answer *a);
 int serialise_question_type(int qt, char *out, int out_max_len); // #358
+int escape_string(char *in, char *out, int max_len);
 
-int dump_question(FILE *f, char *msg, struct question *q);
-int dump_answer(FILE *f, char *msg, struct answer *a);
+int dump_question(FILE *f, struct question *q);
+int dump_answer(FILE *f, struct answer *a);
 
 #endif

@@ -759,9 +759,9 @@ int dump_session(FILE *f, struct session *ses) {
       f,
 
       "session {\n"
-      "  survey_id: %s\n"
-      "  survey_description: %s\n"
-      "  session_id: %s\n"
+      "  survey_id: \"%s\"\n"
+      "  survey_description: \"%s\"\n"
+      "  session_id: \"%s\"\n"
       "  nextquestions_flag: %d\n"
       "  answer_offset: %d\n"
       "  answer_count: %d\n"
@@ -779,13 +779,13 @@ int dump_session(FILE *f, struct session *ses) {
 
     fprintf(f , "  questions: [\n");
     for (i = 0; i < ses->question_count; i++) {
-      fprintf(f, "    %s%s\n", ses->questions[i]->uid, (i < ses->question_count - 1) ? ",": "");
+      fprintf(f, "    \"%s\"%s\n", ses->questions[i]->uid, (i < ses->question_count - 1) ? ",": "");
     }
     fprintf(f , "  ]\n");
 
     fprintf(f , "  answers: [\n");
     for (i = 0; i < ses->answer_count; i++) {
-      fprintf(f, "    %s%s\n", ses->answers[i]->uid, (i < ses->answer_count - 1) ? ",": "");
+      fprintf(f, "    \"%s\"%s\n", ses->answers[i]->uid, (i < ses->answer_count - 1) ? ",": "");
     }
     fprintf(f , "  ]\n");
 
