@@ -147,28 +147,28 @@ int deserialise_parse_field(char *in, int *in_offset, char *out) {
       if (in[offset] == '\\') {
         if (!in[offset + 1])
           LOG_ERRORV("String '%s' ends in \\\n", in);
-        switch (in[offset + 1]) {
-        case ':':
-        case '\\':
-          out[olen++] = in[offset + 1];
-          break;
-        case 'r':
-          out[olen++] = '\r';
-          break;
-        case 'n':
-          out[olen++] = '\n';
-          break;
-        case 't':
-          out[olen++] = '\t';
-          break;
-        case 'b':
-          out[olen++] = '\b';
-          break;
-        default:
-          LOG_ERRORV("Illegal escape character 0x%02x at offset %d of '%s'\n",
-                     in[offset + 1], offset + 1, in);
-          break;
-        }
+          switch (in[offset + 1]) {
+            case ':':
+            case '\\':
+              out[olen++] = in[offset + 1];
+              break;
+            case 'r':
+              out[olen++] = '\r';
+              break;
+            case 'n':
+              out[olen++] = '\n';
+              break;
+            case 't':
+              out[olen++] = '\t';
+              break;
+            case 'b':
+              out[olen++] = '\b';
+              break;
+            default:
+              LOG_ERRORV("Illegal escape character 0x%02x at offset %d of '%s'\n",
+                        in[offset + 1], offset + 1, in);
+              break;
+          }
         offset++;
         out[olen] = 0;
       } else {
