@@ -2,11 +2,60 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
+#include <string.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include "errorlog.h"
 #include "serialisers.h"
 #include "survey.h"
+
+void assert_string_eq(char *left, char *right) {
+  if (strcmp(left, right) == 0) {
+     fprintf(stderr, "[PASS ] '%s'\n", left);
+     return;
+  }
+  fprintf(stderr, "[ERROR] '%s' != '%s'!\n", left, right);
+  exit(1);
+}
+
+void assert_answers_compare(struct answer *in, struct answer *out) {
+  if(compare_answers(in, out, MISMATCH_IS_AN_ERROR)) {
+     fprintf(stderr, "[ERROR] '%s' != '%s'!\n", in->uid, out->uid);
+     fprintf(stderr, ">> in: \n");
+     dump_answer(stderr, in);
+     fprintf(stderr, "<< out: \n");
+     dump_answer(stderr, out);
+
+     free_answer(in);
+     free_answer(out);
+     exit(1);
+  }
+
+  fprintf(stderr, "[PASS ] answers match: '%s' == '%s'\n", in->uid, out->uid);
+  free_answer(in);
+  free_answer(out);
+}
+
+struct answer *create_answer(char *uid, int type, char*text, char *unit) {
+  struct answer *ans = calloc(sizeof(struct answer), 1);
+  if (!ans) {
+       return NULL;
+  }
+
+  ans->uid = strdup(uid);
+  ans->type = type;
+
+  if (text) {
+    ans->text = strdup(text);
+  }
+  if (unit) {
+    ans->unit = strdup(unit);
+  }
+
+  return ans;
+}
+
 
 struct question_serialiser_test {
   char *name;
@@ -237,8 +286,10 @@ int main(int argc, char **argv) {
                 stderr,
                 "\r[FAIL \n  FAIL: Original and serialised-then-deserialised "
                 "question structures differ\n");
-            dump_question(stderr, "Deserialised result", &d);
-            dump_question(stderr, "Expected result", &qst[i].question);
+            fprintf(stderr, "Deserialised result");
+            dump_question(stderr, &d);
+            fprintf(stderr, "Expected result");
+            dump_question(stderr, &qst[i].question);
             fprintf(stderr, "Internal error log:\n");
             dump_errors(stderr);
             fail++;
@@ -263,6 +314,42 @@ int main(int argc, char **argv) {
             "Summary: %d tests passed, %d failed and %d encountered internal "
             "errors.\n",
             pass, fail, errors);
+
+     /* tests for #392 */
+     fprintf(stderr, "\n --- escape_string() tests, #392 ---\n\n");
+
+     {
+       char str[1024];
+
+       escape_string("hello", str, 1024);
+       assert_string_eq(str, "hello");
+
+       escape_string("::1(9000)", str, 1024);
+       assert_string_eq(str, "\\:\\:1(9000)");
+
+       escape_string("\\r\\n\\t:(9000)", str, 1024);
+       assert_string_eq(str, "\\r\\n\\t\\:(9000)");
+
+       escape_string("\t\r\n:(9000)", str, 1024);
+       assert_string_eq(str, "\\t\\r\\n\\:(9000)");
+     }
+
+     fprintf(stderr, "\n --- answer serialisation tests, #392 ---\n\n");
+
+     {
+       char str[1024];
+       int ret;
+
+       struct answer *in = create_answer("uid", QTYPE_META, ":\n\r\b\tutext", "unit");
+       ret = serialise_answer(in, str, 1024);
+       assert(ret == 0);
+
+       struct answer *out =  calloc(sizeof(struct answer), 1);
+       ret = deserialise_answer(str, ANSWER_FIELDS_PROTECTED, out);
+       assert(ret == 0);
+
+       assert_answers_compare(in, out); // answers are freed inside
+     }
 
   } while (0);
 

@@ -22,61 +22,46 @@
   Escape a string so that it can be safely embedded in a CSV file, that uses colons as delimeters
 */
 int escape_string(char *in, char *out, int max_len) {
-  int retVal = 0;
   int out_len = 0;
   for (int i = 0; in[i]; i++) {
 
+    if ((out_len + 1) >= max_len) {
+      LOG_WARNV("escaped version of string '%s' is too long", out);
+      out[out_len] = 0;
+      return 0;
+    }
+
     switch (in[i]) {
 
-    case '\r':
-    case '\n':
-    case '\t':
-    case '\b':
-      if (out_len >= max_len) {
-        LOG_ERRORV("escaped version of string '%s' is too long", out);
-      } else {
+      case '\r':
         out[out_len++] = '\\';
-      }
-
-      if (out_len >= max_len) {
-        LOG_ERRORV("escaped version of string '%s' is too long", out);
-      } else {
-        out[out_len++] = in[i];
-      }
+        out[out_len++] = 'r';
+        break;
+      case '\n':
+        out[out_len++] = '\\';
+        out[out_len++] = 'n';
+        break;
+      case '\t':
+        out[out_len++] = '\\';
+        out[out_len++] = 't';
+        break;
+      case '\b':
+        out[out_len++] = '\\';
+        out[out_len++] = 'b';
       break;
-
-    case ':':
-    case '\\':
-      if (out_len >= max_len) {
-        LOG_ERRORV("escaped version of string '%s' is too long", out);
-      } else {
+      case ':':
+        out[out_len++] = '\\';
         out[out_len++] = ':';
-      }
-
-      if (out_len >= max_len) {
-        LOG_ERRORV("escaped version of string '%s' is too long", out);
-      } else {
-        out[out_len++] = in[i];
-      }
       break;
-
-    default:
-      if (out_len >= max_len) {
-        LOG_ERRORV("escaped version of string '%s' is too long", out);
-      } else {
+      default:
         out[out_len++] = in[i];
-      }
-      break;
 
-    } // endswitch
+    }
+
   }   // endfor
 
   out[out_len] = 0;
-
-  if (retVal == 0) {
-    retVal = out_len;
-  }
-  return retVal;
+  return out_len;
 }
 
 /*
@@ -162,25 +147,28 @@ int deserialise_parse_field(char *in, int *in_offset, char *out) {
       if (in[offset] == '\\') {
         if (!in[offset + 1])
           LOG_ERRORV("String '%s' ends in \\\n", in);
-        switch (in[offset + 1]) {
-        case ':':
-        case '\\':
-          out[olen++] = in[offset + 1];
-          break;
-        case 'r':
-          out[olen++] = '\r';
-          break;
-        case 'n':
-          out[olen++] = '\n';
-          break;
-        case 'b':
-          out[olen++] = '\b';
-          break;
-        default:
-          LOG_ERRORV("Illegal escape character 0x%02x at offset %d of '%s'\n",
-                     in[offset + 1], offset + 1, in);
-          break;
-        }
+          switch (in[offset + 1]) {
+            case ':':
+            case '\\':
+              out[olen++] = in[offset + 1];
+              break;
+            case 'r':
+              out[olen++] = '\r';
+              break;
+            case 'n':
+              out[olen++] = '\n';
+              break;
+            case 't':
+              out[olen++] = '\t';
+              break;
+            case 'b':
+              out[olen++] = '\b';
+              break;
+            default:
+              LOG_ERRORV("Illegal escape character 0x%02x at offset %d of '%s'\n",
+                        in[offset + 1], offset + 1, in);
+              break;
+          }
         offset++;
         out[olen] = 0;
       } else {
