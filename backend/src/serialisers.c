@@ -158,6 +158,9 @@ int deserialise_parse_field(char *in, int *in_offset, char *out) {
         case 'n':
           out[olen++] = '\n';
           break;
+        case 't':
+          out[olen++] = '\t';
+          break;
         case 'b':
           out[olen++] = '\b';
           break;
