@@ -201,4 +201,4 @@ const Api = {
 
 Api.getAnalysis = Api.finishSurvey; //TODO tmp
 
-export { Api as default, ApiError, BaseUri };
+export { Api as default, ApiError, BaseUri,responseError };
