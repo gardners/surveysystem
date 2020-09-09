@@ -9,3 +9,8 @@ export const SurveyContext = React.createContext({
     sessionID: '',
     surveyID: '',
 });
+
+export const AuthContext = React.createContext({
+    protected: () => {},
+    user: '',
+});

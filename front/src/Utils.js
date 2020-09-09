@@ -229,6 +229,13 @@ const setDaytimeDate = function(hours12, minutes, ampm) {
     return new Date(`${YYYY}-${MM}-${DD}T${HH}:${mm}:${ss}.${sss}Z`);
 };
 
+const serializeParams = function(params) {
+    return Object.keys(params).map((key) => {
+        return encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
+
+    }).join('&');
+};
+
 export {
     isScalar,
     DirtyJson,
@@ -242,4 +249,5 @@ export {
     formatDayTime,
     formatDayTimeDiff,
     setDaytimeDate,
+    serializeParams,
 };

@@ -1,8 +1,10 @@
 //Basic HeaderNav made with bootstrap
-import React from 'react';
+import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 
+import { AuthContext } from '../Context';
 import { DropdownMenu, MenuLink } from './bootstrap/DropdownMenu';
+import OAuth2 from '../OAuth2';
 
 import logo from '../assets/logo.png';
 
@@ -26,6 +28,23 @@ const {
 
 const surveyProvider = REACT_APP_SURVEY_PROVIDER.trim();
 const siteName = REACT_APP_SITE_NAME.trim();
+
+
+const LoginLink = function() {
+    const auth = useContext(AuthContext);
+
+    if (auth.user) {
+        return (
+            <Link className="btn btn-success" to="/login"><i className="fas fa-user"></i> { auth.user.replace(/(.{9})..+/, "$1...") }</Link>
+        );
+    }
+
+    return(
+        <a className="btn btn-danger" href={ OAuth2.loginUrl() }>Login</a>
+    );
+};
+
+LoginLink.propTypes = {};
 
 const HeaderNav = function({ location }) {
 
@@ -65,11 +84,16 @@ const HeaderNav = function({ location }) {
                                 </li>
                             : null
                         }
+                        <li className="nav-item ml-3">
+                            <LoginLink />
+                        </li>
                     </ul>
                 </div>
             </nav>
         </header>
     );
 };
+
+HeaderNav.propTypes = {};
 
 export default HeaderNav;
