@@ -1417,7 +1417,7 @@ int run_test(struct Test *test) {
 
         // Compile the python
         char cmd[1024];
-        snprintf(cmd, 1024, "python3.7 -m compileall %s 2>&1 >>%s",
+        snprintf(cmd, 1024, "python3 -m compileall %s 2>&1 >>%s",
                  python_module, test->log);
         int compile_result = system(cmd);
 
@@ -2097,7 +2097,7 @@ void init_lighttpd(struct Test *test) {
     }
   }
 
-  snprintf(cmd, 16384,
+  snprintf(cmd, 2048,
     // vars
     "sed -i                              \\"
     "-e 's|{BASE_DIR}|%s|g'              \\"

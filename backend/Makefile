@@ -1,9 +1,9 @@
 SRCDIR=	src
 INCDIR= include
 
-# NOTE: This program REQUIRES Python >=3.7, as 3.6 has a bug with some of the C
+# gh#396, @see https://docs.python.org/3.8/whatsnew/3.8.html#debug-build-uses-the-same-abi-as-release-build
 # API stuff
-PYTHONVERSION=	3.7
+PYTHONVERSION=	3.8
 PYCONFIG=/usr/bin/python$(PYTHONVERSION)-config
 ifeq ("$(wildcard $(PYCONFIG))","")
 PYCONFIG=/opt/local/Library/Frameworks/Python.framework/Versions/$(PYTHONVERSION)/bin/python$(PYTHONVERSION)-config
@@ -65,8 +65,8 @@ FCGIOBJS=	$(COREOBJS) \
 HEADERS=	$(STATICHEADERS) $(GENERATEDHEADERS) $(FCGIHEADERS)
 
 CC=	clang
-COPT=	-Wall -O3 -g -Iinclude `$(PYCONFIG) --includes` -Ikcgi
-LOPT=	`$(PYCONFIG) --libs --ldflags`
+COPT=	-Wall -O3 -g -Iinclude `$(PYCONFIG) --embed --includes` -Ikcgi
+LOPT=	`$(PYCONFIG) --libs --embed --ldflags`
 
 
 all:	test_serialisers surveycli surveyfcgi test_runner
