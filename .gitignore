@@ -87,6 +87,7 @@ backend/test_serialisers
 # temp files and local files
 backend/*.conf.local
 backend/lighttpd.conf.tmp
+backend/*.bak
 
 # lighthttpd document root, both symlink or folder
 www
