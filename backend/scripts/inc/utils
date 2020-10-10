@@ -47,13 +47,13 @@ function REQUIRE_SUDO {
 ## files system
 
 function REQUIRE_DIR {
-    if [ ! -d "$1" ]; then
-        EXIT_ERROR "Directory $1 does not exist"
+    if [ ! -d "${1}" ]; then
+        EXIT_ERROR "Directory '${1}' does not exist"
     fi
 }
 
 function REQUIRE_FILE {
-    if [ ! -f "$1" ]; then
-        EXIT_ERROR "File $1 does not exist"
+    if [ ! -f "${1}" ]; then
+        EXIT_ERROR "File '${1}' does not exist"
     fi
 }
