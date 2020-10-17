@@ -440,44 +440,6 @@ void begin_200(struct kreq *req) {
   } while (0);
 }
 
-void begin_500(struct kreq *req) {
-  enum kcgi_err er;
-
-  do {
-    // Emit 500 response
-    er = khttp_head(req, kresps[KRESP_STATUS], "%s", khttps[KHTTP_500]);
-    if (KCGI_HUP == er) {
-      fprintf(stderr, "khttp_head: interrupt\n");
-      continue;
-    } else if (KCGI_OK != er) {
-      fprintf(stderr, "khttp_head: error: %d\n", er);
-      break;
-    }
-
-    // Emit mime-type
-    er = khttp_head(req, kresps[KRESP_CONTENT_TYPE], "%s",
-                    kmimetypes[req->mime]);
-    if (KCGI_HUP == er) {
-      fprintf(stderr, "khttp_head: interrupt\n");
-      continue;
-    } else if (KCGI_OK != er) {
-      fprintf(stderr, "khttp_head: error: %d\n", er);
-      break;
-    }
-
-    // Begin sending body
-    er = khttp_body(req);
-    if (KCGI_HUP == er) {
-      fprintf(stderr, "khttp_body: interrupt\n");
-      continue;
-    } else if (KCGI_OK != er) {
-      fprintf(stderr, "khttp_body: error: %d\n", er);
-      break;
-    }
-
-  } while (0);
-}
-
 static void fcgi_index(struct kreq *req) {
   int retVal = 0;
   do {
