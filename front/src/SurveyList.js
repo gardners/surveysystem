@@ -6,21 +6,37 @@ const {
 } = process.env;
 
 const coerce = function(id, data) {
-     return {
+
+    let name = data.name || '';
+    if (data instanceof Error) {
+         name = id;
+    }
+
+    return {
         id,
-        name: data.name,
+        name,
         title: data.title || '',
         description: data.description || '',
         organisation: data.organisation || '',
         email: data.email || '',
         phone: data.phone || '',
         pages: data.pages || [],
+        // reponse error
+        error: (data instanceof Error) ? data : null,
     };
 };
 
 const getById = function(id) {
-    return fetch(`${PUBLIC_URL}/surveys/${id}/survey.json`)
-    .then(response => response.json())
+    const uri = `${PUBLIC_URL}/surveys/${id}/survey.json`;
+    return fetch(uri)
+    .then(response => response.text())
+    .then((body) => {
+        try {
+            return JSON.parse(body);
+        } catch (e) {
+            return new Error(`Survey ${id} does not exist or is invalid!`);
+        }
+    })
     .then(data => coerce(id, data));
 };
 

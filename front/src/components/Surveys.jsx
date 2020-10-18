@@ -55,6 +55,15 @@ SurveyItemButtons.propTypes = {
 
 const SurveyItem = function({ survey, session, isCurrent, withButtons }) {
 
+    if (survey.error) {
+        return (
+            <React.Fragment>
+                <h3>{ (survey.name) ?  survey.name : survey.id }</h3>
+                <div className="alert alert-danger" role="alert">{ survey.error.toString() }</div>
+            </React.Fragment>
+        );
+    }
+
     const created = (session && typeof session.created !== 'undefined') ? session.created : 0;
     const modified = (session && typeof session.modified !== 'undefined') ? session.modified : 0;
     const sessionID = (session && typeof session.sessionID !== 'undefined') ? session.sessionID : '';
