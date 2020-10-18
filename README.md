@@ -45,10 +45,12 @@ Register a trusted authentication middleware source. For details see [authorisat
 
 # Installation (backend)
 
-This system requires Python 3.8 and clang. Additionally, bmake is required for compiling [kcgi](https://kristaps.bsd.lv/kcgi/index.html). To install on Ubuntu:
+This system requires Python >= 3.8 and clang. Additionally, `zlib and bmake` is required for compiling [kcgi](https://kristaps.bsd.lv/kcgi/index.html). To install on Ubuntu:
 
 ```bash
-sudo apt-get install python3.8-dev python3.8 clang
+sudo apt-get install clang make
+sudo apt-get install python3.8 python3.8-dev
+sudo apt-get install zlib1g-dev bmake
 ```
 
 Tests require Lighttpd and Curl
