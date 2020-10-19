@@ -234,16 +234,20 @@ enum actions {
 };
 
 int generate_path(char *path_in, char *path_out, int max_len);
+int generate_session_path(char *session_id, char *filename, char *path_out, int max_len);
 int generate_python_path(char *path_out, int max_len);
+int generate_survey_path(char *survey_id, char *filename, char *path_out, int max_len);
 
-//#363
+// #363
 int is_given_answer(struct answer *a);
 int is_system_answer(struct answer *a);
 
 struct nextquestions *get_next_questions(struct session *s);
 int get_analysis(struct session *s, const char **output);
 
-int create_session(char *survey_id, char *session_id_out, struct session_meta *meta);
+// #239
+int create_session_id(char *session_id_out, int max_len);
+int create_session(char *survey_id, char *session_id, struct session_meta *meta);
 int delete_session(char *session_id);
 struct session *load_session(char *session_id);
 int save_session(struct session *s);
