@@ -41,11 +41,3 @@ endofsession
 
 verify_sessionfiles_count 2
 
-#! ------
-#! delete session 2
-#! ------
-
-# Request creation of a  new session
-request 200 /delsession?sessionid=$SESSION
-
-verify_sessionfiles_count 1
