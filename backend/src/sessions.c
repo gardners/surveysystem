@@ -331,6 +331,10 @@ int save_session_meta(FILE *fp, struct session_meta *meta, enum session_state st
   int retVal = 0;
 
   do {
+    if (!meta) {
+        LOG_ERROR("cannot create session: session meta is NULL");
+    }
+
     char line[65536];
     time_t now = time(NULL);
 
@@ -393,233 +397,250 @@ int save_session_meta(FILE *fp, struct session_meta *meta, enum session_state st
   return retVal;
 }
 
-/*
-  Create a new session for a given form, and return the new session ID
-  via session_id_out.  This creates the session record file, as well as
-  making sure that the survey exists, and if the exact version of the survey
-  has not yet been recorded persistently, it makes a copy of it named as the
-  SHA1 hash of the survey definition.  This allows the survey definition in
-  surveys/survey_id/current to be freely modified, and any existing sessions
-  will continue to use the version of the survey that they were created under,
-  unless you modify the session record file to point to the new session.
-
-  (If you have added or deleted questions, that might cause complicated problems,
-  so we don't do that automatically. As time allows, we can create a session
-  upgrade function, that checks if the current version of the form is logically
-  equivalent (same set of question UIDs and question types for all questions that
-  have been answered), and if so, updates the session to use the latest version.
-  This could even be implemented in load_session().)
+/**
+ * #239
+ * Make sure that the survey exists, and if the exact version of the survey
+ * has not yet been recorded persistently, it makes a copy of it named as the
+ * SHA1 hash of the survey definition.  This allows the survey definition in
+ * surveys/survey_id/current to be freely modified, and any existing sessions
+ * will continue to use the version of the survey that they were created under,
+ * unless you modify the session record file to point to the new session.
+ *
+ * (If you have added or deleted questions, that might cause complicated problems,
+ * so we don't do that automatically. As time allows, we can create a session
+ * upgrade function, that checks if the current version of the form is logically
+ * equivalent (same set of question UIDs and question types for all questions that
+ * have been answered), and if so, updates the session to use the latest version.
+ * This could even be implemented in load_session().)
  */
-int create_session(char *survey_id, char *session_id_out, struct session_meta *meta) {
+int create_survey_snapshot(char *survey_id, char *sha1, int sha1_len) {
   int retVal = 0;
 
   do {
-    char session_id[256] = {0};
-    char session_prefix[5];
-    char session_path_suffix[1024];
-    char session_path[1024];
+    char survey_path[1024];
+    char snapshot_path[1024];
+    char temp_path[1024];
+    int hash_len = HASH_LENGTH * 2 + 1; // @see sha1_file()
 
     if (!survey_id) {
       LOG_ERROR("survey_id is NULL");
     }
-    if (!session_id_out) {
-      LOG_ERROR("session_id_out is NULL");
+    if (!sha1) {
+      LOG_ERROR("out is NULL");
+    }
+    if (sha1_len < hash_len) {
+      LOG_ERROR("assigned length to sha1 too small");
     }
     if (validate_survey_id(survey_id)) {
-      LOG_ERROR("Invalid survey ID");
+      LOG_ERROR("Invalid survey id");
     }
 
-    snprintf(session_path_suffix, 1024, "surveys/%s/current", survey_id);
-    if (generate_path(session_path_suffix, session_path, 1024)) {
-      LOG_ERRORV("generate_path('%s') failed to build path for new session for "
-                 "survey '%s'",
-                 session_path_suffix, survey_id);
+    // get path to survey manifest
+    if (generate_survey_path(survey_id, "current", survey_path, 1024)) {
+      LOG_ERRORV("generate_survey_path() failed to build path for survey '%s'", survey_id);
     }
-    if (access(session_path, F_OK) == -1) {
+    if (access(survey_path, F_OK) == -1) {
       LOG_ERRORV("Survey '%s' does not exist", survey_id);
     }
 
     // Get sha1 hash of survey file
-    char survey_sha1[1024];
-    if (sha1_file(session_path, survey_sha1)) {
-      LOG_ERRORV("Could not hash survey specification file '%s'", session_path);
+    if (sha1_file(survey_path, sha1)) {
+      LOG_ERRORV("Could not hash survey specification file '%s'", survey_path);
+    }
+    if (generate_survey_path(survey_id, sha1, snapshot_path, 1024)) {
+      LOG_ERRORV("generate_survey_path() failed to build path for snapshot '%s'", sha1);
     }
 
-    snprintf(session_path_suffix, 1024, "surveys/%s/%s", survey_id, survey_sha1);
-    if (generate_path(session_path_suffix, session_path, 1024)) {
-      LOG_ERRORV("generate_path('%s') failed to build path for new session for "
-                 "survey '%s'",
-                 session_path_suffix, survey_id);
+    if (access(snapshot_path, F_OK) != -1) {
+        // a snapshot exists already, return
+        break;
     }
 
-    if (access(session_path, F_OK) == -1) {
-      // No copy of the survey exists with the hash, so make one.
-      // To avoid a race condition where the current survey form could be modified,
-      // we copy it, and hash it as we go, and rename the copy based on the hash value
-      // of what we read.
+    // No copy of the survey exists with the hash, so make one.
+    // To avoid a race condition where the current survey form could be modified,
+    // we copy it, and hash it as we go, and rename the copy based on the hash value
+    // of what we read.
 
-      // Open input file
-      snprintf(session_path_suffix, 1024, "surveys/%s/current", survey_id);
-      if (generate_path(session_path_suffix, session_path, 1024)) {
-        LOG_ERRORV("generate_path('%s') failed to build path for new session "
-                   "for survey '%s'",
-                   session_path_suffix, survey_id);
-      }
+    // open input file (manifest)
+    FILE *in = fopen(survey_path, "r");
+    if (!in) {
+        LOG_ERRORV("Could not read from survey manifest '%s'", survey_path);
+    }
 
-      FILE *in = fopen(session_path, "r");
-      if (!in) {
-        LOG_ERRORV("Could not read from survey specification file '%s' for "
-                   "survey '%s'",
-                   session_path, survey_id);
-      }
+    // make a hopefully unique name for the temporary file
+    char temp_name[1024];
+    snprintf(temp_name, 1024, "temp.%lld.%d.%s", (long long)time(0), getpid(), sha1);
 
-      // So make a hopefully unique name for the temporary file
-      char temp_path[1024];
-      snprintf(session_path_suffix, 1024, "surveys/%s/temp.%lld.%d.%s",
-               survey_id, (long long)time(0), getpid(), survey_sha1);
-      if (generate_path(session_path_suffix, temp_path, 1024)) {
+    if (generate_survey_path(survey_id, temp_name, temp_path, 1024)) {
         fclose(in);
-        LOG_ERRORV("generate_path('%s') failed to build path for new session "
-                   "for survey '%s'",
-                   session_path_suffix, survey_id);
-      }
+        LOG_ERRORV("generate_path() failed to build temporary path for survey '%s'", temp_name);
+    }
 
-      FILE *c = fopen(temp_path, "w");
-      if (!c) {
+    FILE *c = fopen(temp_path, "w");
+    if (!c) {
         fclose(in);
         LOG_ERRORV("Could not create temporary file '%s'", temp_path);
-      }
+    }
 
-      char buffer[8192];
-      int count;
-      sha1nfo s;
-      sha1_init(&s);
+    char buffer[8192];
+    int count;
+    sha1nfo s;
+    sha1_init(&s);
 
-      do {
+    do {
         count = fread(buffer, 1, 8192, in);
         if (count < 0) {
-          LOG_ERRORV("Error hashing file '%s'", session_path);
+            LOG_ERRORV("Error copying file '%s' to snapshot", survey_path);
         }
 
         if (count > 0) {
-          sha1_write(&s, buffer, count);
-          int wrote = fwrite(buffer, count, 1, c);
-          if (wrote != 1) {
-            fclose(in);
-            fclose(c);
-            unlink(temp_path);
-            LOG_ERRORV("Failed to write all bytes during survey specification "
-                       "copy into '%s'",
-                       temp_path);
-          }
+            sha1_write(&s, buffer, count);
+            int wrote = fwrite(buffer, count, 1, c);
+            if (wrote != 1) {
+                fclose(in);
+                fclose(c);
+                unlink(temp_path);
+                LOG_ERRORV("Failed to write all bytes during survey specification copy into '%s'", temp_path);
+            }
         }
 
         if (retVal) {
-          break;
+            break;
         }
-      } while (count > 0);
+    } while (count > 0);
 
-      fclose(in);
-      fclose(c);
+    fclose(in);
+    fclose(c);
 
-      // Rename temporary file
-      snprintf(session_path_suffix, 1024, "surveys/%s/%s", survey_id,
-               survey_sha1);
-      if (generate_path(session_path_suffix, session_path, 1024)) {
-        LOG_ERRORV("generate_path('%s') failed to build path for new session "
-                   "for survey '%s'",
-                   session_path_suffix, survey_id);
-      }
+    // Rename temporary file
+    if (rename(temp_path, snapshot_path)) {
+    LOG_ERRORV("Could not rename survey specification copy to name of hash from '%s' to '%s'", temp_path, snapshot_path);
+    }
 
-      if (rename(temp_path, session_path)) {
-        LOG_ERRORV("Could not rename survey specification copy to name of hash "
-                   "from '%s' to '%s'",
-                   temp_path, session_path);
-      }
+    LOG_INFOV("Created new hashed survey specification file '%s' for survey '%s'", snapshot_path, survey_id);
 
-      LOG_INFOV(
-          "Created new hashed survey specification file '%s' for survey '%s'",
-          session_path, survey_id);
-    } //endif access
+  } while (0);
+
+  return retVal;
+}
+
+
+/**
+ * #239
+ * creates a random session id and checks if session already exists in files.
+ * In that (rare) case the generation is repeated.
+ */
+int create_session_id(char *session_id_out, int max_len) {
+  int retVal = 0;
+
+  do {
+    if (!session_id_out) {
+      LOG_ERROR("session_id is NULL");
+    }
+
+    char path[1024];
 
     // Generate new unique session ID
     int tries = 0;
     for (tries = 0; tries < 5; tries++) {
-      if (random_session_id(session_id)) {
+      if (random_session_id(session_id_out)) {
         LOG_ERROR("random_session_id() failed to generate new session_id");
       }
 
-      for (int i = 0; i < 4; i++) {
-        session_prefix[i] = session_id[i];
-      }
-      session_prefix[4] = 0;
-
-      snprintf(session_path_suffix, 1024, "sessions/%s/%s", session_prefix,
-               session_id);
-      if (generate_path(session_path_suffix, session_path, 1024)) {
-        LOG_ERRORV("generate_path('%s') failed to build path for new session "
-                   "for survey '%s'",
-                   session_path_suffix, survey_id);
+      if (generate_session_path(session_id_out, session_id_out, path, 1024)) {
+        LOG_ERRORV("generate_path('%s') failed to build path for new session for session '%s'", session_id_out);
       }
 
       // Try again if session ID already exists
-      if (access(session_path, F_OK) != -1) {
-        session_id[0] = 0;
+      if (access(path, F_OK) != -1) {
+        session_id_out[0] = 0;
         continue;
       } else {
         break;
       }
     } // endfor
 
-    if (!session_id[0]) {
+    if (!session_id_out[0]) {
       LOG_ERROR("Failed to generate unique session ID after several tries");
     }
 
+  } while (0);
+
+  return retVal;
+}
+
+/**
+ * #239
+ * Create a new session for a given session id.
+ *  This creates the session record file, as well as
+ * making sure that the survey exists, and if the exact version of the survey
+ * has not yet been recorded persistently, it makes a copy of it named as the
+ * SHA1 hash of the survey definition.  This allows the survey definition in
+ * surveys/survey_id/current to be freely modified, and any existing sessions
+ * will continue to use the version of the survey that they were created under,
+ * unless you modify the session record file to point to the new session.
+ * (If you have added or deleted questions, that might cause complicated problems,
+ * so we don't do that automatically. As time allows, we can create a session
+ * upgrade function, that checks if the current version of the form is logically
+ * equivalent (same set of question UIDs and question types for all questions that
+ * have been answered), and if so, updates the session to use the latest version.
+ * This could even be implemented in load_session().)
+ */
+int create_session(char *survey_id, char *session_id, struct session_meta *meta) {
+  int retVal = 0;
+
+  do {
+    if (!session_id) {
+        LOG_ERROR("cannot create session: session id is NULL");
+    }
+    if (validate_session_id(session_id)) {
+        LOG_ERROR("cannot create session: session id invalid");
+    }
+    if (!meta) {
+        LOG_ERROR("cannot create session: session meta is NULL");
+    }
+
+    char survey_sha1[256];
+    if(create_survey_snapshot(survey_id, survey_sha1, 256)) {
+        LOG_ERRORV("cannot create session: failed to create sha1 snapshot of survey '%s'", survey_id);
+    }
+
     // Make directories if they don't already exist
+    char session_path[1024];
+
+    // /<survey_home>/sessions/
     if (generate_path("sessions", session_path, 1024)) {
-      LOG_ERRORV("generate_path('%s') failed to build path for new session in "
-                 "survey '%s'",
-                 "sessions", survey_id);
+      LOG_ERROR("generate_path() failed to build path for <survey_home>/sessions");
     }
     mkdir(session_path, 0750);
 
-    snprintf(session_path_suffix, 1024, "sessions/%s", session_prefix);
-    if (generate_path(session_path_suffix, session_path, 1024)) {
-      LOG_ERRORV("generate_path('%s') failed to build path for new session in "
-                 "survey '%s'",
-                 session_path_suffix, survey_id);
+    // <survey_home>/sessions/<suffix>/
+    if (generate_session_path(session_id, NULL, session_path, 1024)) {
+      LOG_ERRORV("generate_session_path('%s') failed to build path for <survey_home>/sessions/<suffix>", session_id);
     }
     mkdir(session_path, 0750);
 
-    // Get full filename of session file again
-    snprintf(session_path_suffix, 1024, "sessions/%s/%s", session_prefix,
-             session_id);
-    if (generate_path(session_path_suffix, session_path, 1024)) {
-      LOG_ERRORV("generate_path('%s') failed to build path for new session of "
-                 "survey '%s'",
-                 session_path_suffix, survey_id);
-    }
-
-    FILE *f = fopen(session_path, "w");
-    if (!f) {
-      LOG_ERRORV("Cannot create new session file '%s'", session_path);
+    // <survey_home>/sessions/<suffix>/<session_id>
+    if (generate_session_path(session_id, session_id, session_path, 1024)) {
+      LOG_ERRORV("generate_path('%s') failed to build path for new session of <survey_home>/sessions/<suffix>/<session_id>", session_id);
     }
 
     // Write survey_id to new empty session.
     // This must take the form <survey id>/<sha1 hash of current version of survey>
-    fprintf(f, "%s/%s\n", survey_id, survey_sha1);
+    FILE *fp = fopen(session_path, "w");
+    if (!fp) {
+      LOG_ERRORV("Cannot create new session file '%s'", session_path);
+    }
+    fprintf(fp, "%s/%s\n", survey_id, survey_sha1);
 
     // #363 save session meta
     // #379 set session state to SESSION_NEW
-    if (save_session_meta(f, meta, SESSION_NEW)) {
-      fclose(f);
+    if (save_session_meta(fp, meta, SESSION_NEW)) {
+      fclose(fp);
       LOG_ERRORV("Cannot write session meta '%s'", session_path);
     }
 
-    fclose(f);
-
-    // Export new session ID
-    strncpy(session_id_out, session_id, 36 + 1);
+    fclose(fp);
     LOG_INFOV("Created new session file '%s' for survey '%s'", session_path, survey_id);
   } while (0);
 
