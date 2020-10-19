@@ -387,7 +387,7 @@ void http_json_error(struct kreq *req, enum khttp status, const char *msg) {
 
   do {
     http_open(req, status, KMIME_APP_JSON);
-    
+
     struct kjsonreq jsonreq;
     kjson_open(&jsonreq, req);
     kcgi_writer_disable(req);
@@ -445,7 +445,7 @@ static void fcgi_newsession(struct kreq *req) {
     // #363 parse session meta
     meta = fcgirequest_parse_session_meta(req);
     if (!meta) {
-      http_json_error(req, KHTTP_500, "Session could not be created (1).");
+      http_json_error(req, KHTTP_500, "Session could not be created (parse request meta).");
       LOG_ERROR("fcgirequest_parse_session_meta() failed");
     }
 
@@ -458,13 +458,21 @@ static void fcgi_newsession(struct kreq *req) {
       LOG_ERRORV("fcgirequest_validate_request() returned status %d >= KHTTP_400 (%d)", KHTTP_400, status);
     }
 
+    // #239, create new session id (separated out)
+    char session_id[256];
+    if(create_session_id(session_id, 256)) {
+      free_session_meta(meta);
+      meta = NULL;
+      http_json_error(req, KHTTP_500, "Session could not be created (create session id).");
+      LOG_ERROR("create session id failed");
+    }
+
     // #363 save session meta
-    char session_id[1024];
     if (create_session(survey->val, session_id, meta)) {
       free_session_meta(meta);
       meta = NULL;
-      http_json_error(req, KHTTP_500, "Session could not be created (2).");
-      LOG_ERROR("create_session() failed");
+      http_json_error(req, KHTTP_500, "Session could not be created (create session).");
+      LOG_ERROR("create_session( failed");
     }
 
     // reply, #363 free session_meta
@@ -966,7 +974,7 @@ static void fcgi_delsession(struct kreq *req) {
 
     // validate requested action against session current state (#379)
     char reason[1024];
-    if (validate_session_action(ACTION_SESSION_DELETEANSWER, ses, reason, 1024)) {
+    if (validate_session_action(ACTION_SESSION_DELETE, ses, reason, 1024)) {
       free_session(ses);
       ses = NULL;
       http_json_error(req, KHTTP_400, reason);
