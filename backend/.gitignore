@@ -29,6 +29,7 @@ valgrind-*
 
 # dev env specific sripts
 propTests.*
+tmux*
 
 # dev docs
 TODO.*
@@ -38,3 +39,4 @@ sandbox/*
 
 # deploy
 deploy
+deploy.*
