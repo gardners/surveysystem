@@ -434,6 +434,7 @@ static void fcgi_newsession(struct kreq *req) {
   do {
 
     LOG_INFO("Entering page handler /newsession");
+    char session_id[256] = { 0 };
 
     struct kpair *survey = req->fieldmap[KEY_SURVEYID];
     if (!survey) {
@@ -458,14 +459,52 @@ static void fcgi_newsession(struct kreq *req) {
       LOG_ERRORV("fcgirequest_validate_request() returned status %d >= KHTTP_400 (%d)", KHTTP_400, status);
     }
 
-    // #239, create new session id (separated out)
-    char session_id[256];
-    if(create_session_id(session_id, 256)) {
-      free_session_meta(meta);
-      meta = NULL;
-      http_json_error(req, KHTTP_500, "Session could not be created (create session id).");
-      LOG_ERROR("create session id failed");
-    }
+    if (KMETHOD_POST == req->method) {
+
+      if (meta->provider != IDENDITY_HTTP_TRUSTED) {
+        // only allowed for trusted middleware, so return 400
+        http_json_error(req, KHTTP_400, "POST session_id only allowed in a managed system.");
+        LOG_ERRORV("POST /newsession with invalid provider %d", meta->provider);
+      }
+
+      struct kpair *sess = req->fieldmap[KEY_SESSIONID];
+      if (!sess) {
+        // No sess ID param, so return 400
+        http_json_error(req, KHTTP_400, "session_id missing.");
+        LOG_ERROR("session_id missing from post body");
+      }
+
+      if (validate_session_id(sess->val)) {
+        // valid uid or return 400
+        http_json_error(req, KHTTP_400, "Invalid session_id");
+        LOG_ERROR("Invalid session_id");
+      }
+
+      char sess_path[1024];
+      if(generate_session_path(sess->val, sess->val, sess_path, 1024)) {
+        http_json_error(req, KHTTP_500, "Failed to create session path");
+        LOG_ERROR("Failed to create session path");
+      }
+
+      if(!access(sess_path, F_OK)) {
+        // valid uid or return 400
+        http_json_error(req, KHTTP_400, "Session exists already");
+        LOG_ERRORV("Session '%s' exists already", sess->val);
+      }
+
+      strncpy(session_id, sess->val, 256);
+
+    } else {
+
+      // #239, create new session id (separated out)
+      if(create_session_id(session_id, 256)) {
+        free_session_meta(meta);
+        meta = NULL;
+        http_json_error(req, KHTTP_500, "Session could not be created (create session id).");
+        LOG_ERROR("create session id failed");
+      }
+
+    } // if POST
 
     // #363 save session meta
     if (create_session(survey->val, session_id, meta)) {
