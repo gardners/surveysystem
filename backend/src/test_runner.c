@@ -1373,6 +1373,23 @@ int run_test(struct Test *test) {
           fprintf(stderr, "\nERROR: define_session() failed for custom sessionid %s", custom_sessionid);
           goto error;
         }
+      } else if (sscanf(line, "verify_session_id %[^\r\n]", tmp) == 1) {
+
+        ////
+        // keyword: "verify_session_id"
+        ////
+
+        char path[1024];
+        snprintf(path, 1024, "%s/sessions/%c%c%c%c/%s", test->dir,
+            tmp[0], tmp[1], tmp[2],
+            tmp[3], tmp);
+
+        if (access(path, F_OK)) {
+          tdelta = gettime_us() - start_time;
+          tdelta /= 1000;
+          fprintf(log, "T+%4.3fms : ERROR : session '%s'. file does not exist, path: '%s'\n", tdelta, tmp, path);
+          goto error;
+        }
 
       } else if (sscanf(line, "verify_sessionfiles_count %[^\r\n]", tmp) == 1) {
 
