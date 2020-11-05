@@ -70,8 +70,6 @@ void init(int argc, char **argv) {
 int do_newsession(char *survey_id) {
   int retVal = 0;
 
-  char session_id[1024];
-
   do {
     LOG_INFO("Entering newsession handler.");
     struct session_meta meta = {
@@ -80,6 +78,12 @@ int do_newsession(char *survey_id) {
       .authority = NULL,
       .provider = IDENDITY_CLI,
     };
+
+    // #239, create new session id (separated out)
+    char session_id[256];
+    if(create_session_id(session_id, 256)) {
+      LOG_ERROR("Create session id failed.");
+    }
 
     if (create_session(survey_id, session_id, &meta)) {
       fprintf(stderr, "failed to create session.\n");

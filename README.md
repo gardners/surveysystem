@@ -45,10 +45,12 @@ Register a trusted authentication middleware source. For details see [authorisat
 
 # Installation (backend)
 
-This system requires Python 3.8 and clang. Additionally, bmake is required for compiling [kcgi](https://kristaps.bsd.lv/kcgi/index.html). To install on Ubuntu:
+This system requires Python >= 3.8 and clang. Additionally, `zlib and bmake` is required for compiling [kcgi](https://kristaps.bsd.lv/kcgi/index.html). To install on Ubuntu:
 
 ```bash
-sudo apt-get install python3.8-dev python3.8 clang
+sudo apt-get install clang make
+sudo apt-get install python3.8 python3.8-dev
+sudo apt-get install zlib1g-dev bmake
 ```
 
 Tests require Lighttpd and Curl
@@ -90,21 +92,22 @@ Note that the following section reflects the *current state* of development and 
 
 ### Paths and queries
 
-| Path                    | Action                                                                  | Method | Format           | Query params            | Returns |
-| ---                     | ---                                                                     | ---    | ---              | ---                     |  ---       |
-| **Session**             |                                                                         |        |                  |                         |         |
-| `newsession`            | create a new survey session                                             | GET    | application/text | `?surveyid`             | session id |
-| `delsession`            | delete current session                                                  | GET    | application/text | `?sessionid`            | -       |
-| **Survey**              |                                                                         |        |                  |                         |         |
-| `nextquestion`          | get next questions                                                      | GET    | application/json | `?sessionid`            | `{ status, message, next_questions[] }`<br> [next_questions response](docs/next-questions-response.md) |
-| `addanswer`             | provide a single answer and get next questions                          | GET(!) | application/json | `?sessionid&answer`     | `{ status, message, next_questions[] }`<br> [next_questions response](docs/next-questions-response.md) |
-| `updateanswer`          | alias for addanswer                                                     | GET(!) | application/json | `?sessionid&answer`     | `{ status, message, next_questions[] }`<br> [next_questions response](docs/next-questions-response.md) |
-| `delanswer`             | remove a specific answer and get next questions                         | GET    | application/json | `?sessionid&questionid` | `{ status, message, next_questions[] }`<br> [*updated* next_questions response](docs/next-questions-response.md) |
-| `delanswerandfollowing` | remove all answers up to a specified question id and get next questions | GET    | application/json | `?sessionid&questionid` | `{ status, message, next_questions[] }`<br> [*updated* next_questions response](docs/next-questions-response.md) |
-| `analyse`               | fetch analysis of a completed survey                                    | GET    | application/json | `?sessionid`            | `{ feedback, report}`<br> survey analysis |
-| **System**              |                                                                         |        |                  |                         |         |
-| `accesstest`            | check system (filesystem)                                               | GET    | application/text | -                       | - |
-| `fastcgitest`           | check survey access (fastcgi)                                           | GET    | application/text | -                       | - |
+| Path                    | Action                                                                              | Method | Format           | Params                  | Return |
+| ---                     | ---                                                                                 | ---    | ---              | ---                     |  ---       |
+| **Session**             |                                                                                     |        |                  |                         |         |
+| `newsession`            | create a new survey session                                                         | GET    | application/text | `?surveyid`             | session id |
+| `newsession`            | (Authorized MW only) managed session, create a new survey session with a given uid  | POST   | application/text | `?surveyid&sessionid`   | session id |
+| `delsession`            | delete current session                                                              | GET    | application/text | `?sessionid`            | -       |
+| **Survey**              |                                                                                     |        |                  |                         |         |
+| `nextquestion`          | get next questions                                                                  | GET    | application/json | `?sessionid`            | `{ status, message, next_questions[] }`<br> [next_questions response](docs/next-questions-response.md) |
+| `addanswer`             | provide a single answer and get next questions                                      | GET(!) | application/json | `?sessionid&answer`     | `{ status, message, next_questions[] }`<br> [next_questions response](docs/next-questions-response.md) |
+| `updateanswer`          | alias for addanswer                                                                 | GET(!) | application/json | `?sessionid&answer`     | `{ status, message, next_questions[] }`<br> [next_questions response](docs/next-questions-response.md) |
+| `delanswer`             | remove a specific answer and get next questions                                     | GET    | application/json | `?sessionid&questionid` | `{ status, message, next_questions[] }`<br> [*updated* next_questions response](docs/next-questions-response.md) |
+| `delanswerandfollowing` | remove all answers up to a specified question id and get next questions             | GET    | application/json | `?sessionid&questionid` | `{ status, message, next_questions[] }`<br> [*updated* next_questions response](docs/next-questions-response.md) |
+| `analyse`               | fetch analysis of a completed survey                                                | GET    | application/json | `?sessionid`            | `{ feedback, report}`<br> survey analysis |
+| **System**              |                                                                                     |        |                  |                         |         |
+| `accesstest`            | check system (filesystem)                                                           | GET    | application/text | -                       | - |
+| `fastcgitest`           | check survey access (fastcgi)                                                       | GET    | application/text | -                       | - |
 
 The survey model is sequential. `/surveyapi/addanswer`, `/surveyapi/updateanswer` are required to submit the answers for question ids in the exact same order as they were recieved. Similar with `delanswer` requests, where question ids have to be submitted in the exact reverse order.
 

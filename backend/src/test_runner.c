@@ -27,6 +27,8 @@
  *
  * session_add_answer <serialised answer>
  *
+ * verify_sessionfiles_count <expected_number>
+ *
  * These commands can be used more than once, so that more complex activities can be scripted.
  *
  * Apart from running these scripts, all that it has to do to is to setup and cleanup the
@@ -47,6 +49,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <libgen.h>
+#include <dirent.h>
 
 #include "errorlog.h"
 #include "survey.h"
@@ -76,7 +79,7 @@ struct Test {
     char description[MAX_LINE];    // (required) first line @description directive
 
     char file[1024];               // local test file path (./tests/%s)
-    char dir[1024];                // test roor dir (/tmp/%s)
+    char dir[1024];                // test root dir (/tmp/%s)
     char log[1024];                // local testlog path (./testlogs/%s)
 
     char lighty_template[1024];    // (required) lighttpd.conf template
@@ -233,6 +236,51 @@ finish:
   }
 
   return ret;
+}
+
+/**
+ * recusively scan files in directory and count file names who represent a valid session id
+ */
+int count_sessions(char *path) {
+  int count = 0;
+  DIR *dir;
+  struct dirent *entry;
+
+  if (!(dir = opendir(path))){
+    fprintf(stderr, "count_sessions(): opendir failed for '%s'", path);
+    return -1;
+  }
+
+  errno = 0;
+  while ((entry = readdir(dir)) != NULL) {
+      if (entry->d_type == DT_DIR) {
+          if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+              continue;
+          }
+
+          char sub_path[1024];
+          snprintf(sub_path, 1024, "%s/%s", path, entry->d_name);
+
+          int r = count_sessions(sub_path);
+          if (r < 0) {
+            closedir(dir);
+            return -1;
+          }
+          count += r;
+      } else {
+          if (!validate_session_id(entry->d_name)) {
+            count ++;
+          }
+      }
+  }
+
+  closedir(dir);
+  if (errno) {
+    fprintf(stderr, "count_sessions(): readdir '%s' failed with error %d (%s)", path, errno, strerror(errno));
+    return -1;
+  }
+
+  return count;
 }
 
 long long gettime_us() {
@@ -1179,6 +1227,7 @@ int run_test(struct Test *test) {
   FILE *log = NULL;
   char line[MAX_LINE];
   char log_dir[1024];
+  char tmp[1024];
 
   int response_line_count = 0;
   char response_lines[100][MAX_LINE];
@@ -1322,6 +1371,49 @@ int run_test(struct Test *test) {
 
         if(define_session(in, custom_sessionid, test)) {
           fprintf(stderr, "\nERROR: define_session() failed for custom sessionid %s", custom_sessionid);
+          goto error;
+        }
+      } else if (sscanf(line, "verify_session_id %[^\r\n]", tmp) == 1) {
+
+        ////
+        // keyword: "verify_session_id"
+        ////
+
+        char path[1024];
+        snprintf(path, 1024, "%s/sessions/%c%c%c%c/%s", test->dir,
+            tmp[0], tmp[1], tmp[2],
+            tmp[3], tmp);
+
+        if (access(path, F_OK)) {
+          tdelta = gettime_us() - start_time;
+          tdelta /= 1000;
+          fprintf(log, "T+%4.3fms : ERROR : session '%s'. file does not exist, path: '%s'\n", tdelta, tmp, path);
+          goto error;
+        }
+
+      } else if (sscanf(line, "verify_sessionfiles_count %[^\r\n]", tmp) == 1) {
+
+        ////
+        // keyword: "verify_sessions_count"
+        ////
+
+        int left = atoi(tmp);
+        tmp[0] = 0;
+
+        char sess_path[1024];
+        snprintf(sess_path, 1024, "%s/%s", test->dir, "sessions");
+
+        int right = count_sessions(sess_path);
+
+        tdelta = gettime_us() - start_time;
+        tdelta /= 1000;
+
+        if(right < 0) {
+          fprintf(log, "T+%4.3fms : ERROR : verify_sessions_count failed: count_sessions() returned an error\n", tdelta);
+          goto error;
+        }
+        if(left != right) {
+          fprintf(log, "T+%4.3fms : ERROR : verify_sessions_count failed: %d sessions expected, %d found\n", tdelta, left, right);
           goto error;
         }
 

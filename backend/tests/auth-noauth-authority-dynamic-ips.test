@@ -62,9 +62,9 @@ request 200 /delanswer?sessionid=$SESSION&questionid=question3
 request 200 /delanswerandfollowing?sessionid=$SESSION&questionid=question1
 
 #!-------
-#!- endpoint /delsession [pass]
+#!- endpoint /delsession [pass](400 - currently blocked by default)
 #!-------
-request 200 /delsession?sessionid=$SESSION
+request 400 /delsession?sessionid=$SESSION
 
 #!-------
 #!- endpoint /accesstest [pass]
