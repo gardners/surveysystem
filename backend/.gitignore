@@ -36,5 +36,6 @@ TODO.*
 # sandbox
 sandbox/*
 
-# deploy
+# deploy scripts and configs
 deploy
+deploy.*
