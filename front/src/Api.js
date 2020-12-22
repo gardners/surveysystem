@@ -2,8 +2,22 @@
  * @module APIhttp request API to surveysystem/backend
  */
 
-// config
-const BaseUri = process.env.REACT_APP_SURVEYAPI_ENDPOINT;
+import { serializeParams } from './Utils';
+import { request_headers } from './OAuth2';
+
+const BaseUri = process.env.REACT_APP_SURVEYAPI_ENDPOINT.replace(/\/$/, "");
+
+const url = function(path, params) {
+  path = path || '';
+  params = params || null;
+
+  let q = '';
+  if (params) {
+    q = '?' + serializeParams(params);
+  }
+
+  return (!path) ? `${BaseUri}${q}` : `${BaseUri}${path}${q}`;
+};
 
 class ApiError extends Error {
     constructor(message, response = {}) {
@@ -36,10 +50,16 @@ const Api = {
      * Request a new session
      * @returns {Promise}
      */
-    createNewSession: function(surveyID) {
-        const url = BaseUri + '/newsession';
+    createNewSession: function(surveyid) {
+        const uri = url('/newsession', {
+            surveyid
+        });
 
-        return fetch(`${url}?surveyid=${surveyID}`)
+        const opts =  {
+            headers: request_headers(),
+        };
+
+        return fetch(uri, opts)
             .then((response) => {
                 if (!response.ok) {
                     return responseError(response);
@@ -54,10 +74,16 @@ const Api = {
      *
      * @returns {Promise} deserialized json including next questions
      */
-    nextQuestion: function(sessionID) {
-        const url = BaseUri + '/nextquestion';
+    nextQuestion: function(sessionid) {
+        const uri = url('/nextquestion', {
+            sessionid,
+        });
 
-        return fetch(`${url}?sessionid=${sessionID}`)
+        const opts =  {
+            headers: request_headers(),
+        };
+
+        return fetch(uri, opts)
             .then((response) => {
                 if (!response.ok) {
                     return responseError(response);
@@ -72,10 +98,17 @@ const Api = {
      * @param {string} serialized answer
      * @returns {Promise} deserialized json including next questions
      */
-    updateAnswer: function(sessionID, answer) {
-        const url = BaseUri + '/updateanswer';
+    updateAnswer: function(sessionid, answer) {
+        const uri = url('/updateanswer', {
+            sessionid,
+            answer,
+        });
 
-        return fetch(`${url}?sessionid=${sessionID}&answer=${answer}`)
+        const opts =  {
+            headers: request_headers(),
+        };
+
+        return fetch(uri, opts)
             .then((response) => {
                 if (!response.ok) {
                     return responseError(response);
@@ -89,10 +122,17 @@ const Api = {
      * @param {string} surveyID
      * @returns {Promise} deserialized json including next questions
      */
-    deleteAnswer: function(sessionID, questionID) {
-        const url = BaseUri + '/delanswer';
+    deleteAnswer: function(sessionid, questionid) {
+        const uri = url('/delanswer', {
+            sessionid,
+            questionid,
+        });
 
-        return fetch(`${url}?sessionid=${sessionID}&questionid=${questionID}`)
+        const opts =  {
+            headers: request_headers(),
+        };
+
+        return fetch(uri, opts)
             .then((response) => {
                 if (!response.ok) {
                     return responseError(response);
@@ -106,10 +146,17 @@ const Api = {
      * @param {string} surveyID
      * @returns {Promise} deserialized json including next questions
      */
-    deleteAnswerAndFollowing: function(sessionID, questionID) {
-        const url = BaseUri + '/delanswerandfollowing';
+    deleteAnswerAndFollowing: function(sessionid, questionid) {
+        const uri = url('/delanswer', {
+            sessionid,
+            questionid,
+        });
 
-        return fetch(`${url}?sessionid=${sessionID}&questionid=${questionID}`)
+        const opts =  {
+            headers: request_headers(),
+        };
+
+        return fetch(uri, opts)
             .then((response) => {
                 if (!response.ok) {
                     return responseError(response);
@@ -125,10 +172,16 @@ const Api = {
      * @param {string} surveyID
      * @returns {Promise} deserialized json with evaluationdata
      */
-    finishSurvey: function(sessionID) {
-        const url = BaseUri + '/analyse';
+    finishSurvey: function(sessionid) {
+        const uri = url('/analyse', {
+            sessionid,
+        });
 
-        return fetch(`${url}?sessionid=${sessionID}`)
+        const opts =  {
+            headers: request_headers(),
+        };
+
+        return fetch(uri, opts)
         .then((response) => {
             if (!response.ok) {
                 return responseError(response);
