@@ -87,7 +87,7 @@ class Duration24Input extends Component {
                             value={ hours }
                             onChange={ this.handleChange.bind(this, 'hours')}
                         >
-                        { hourOpts.map(val => <option key={ val } value={ val }>{ val }</option>) }
+                        { hourOpts.map(v => <option key={ v } value={ v }>{ v }</option>) }
                         </select>
                         <div className="input-group-append">
                             <label className="input-group-text" htmlFor={ `${question.id}--hours`}>hours</label>
@@ -105,10 +105,10 @@ class Duration24Input extends Component {
                             onChange={ this.handleChange.bind(this, 'minutes')}
                             disabled={ hours >= 24 }
                         >
-                        { minuteOpts.map(val => <option key={ val } value={ val }>{ val }</option>) }
+                        { minuteOpts.map(v => <option key={ v } value={ v }>{ v }</option>) }
                         </select>
                         <div className="input-group-append">
-                            <label className="input-group-text" htmlFor={ `${question.id}--minutes`}>mins</label>
+                            <label className="input-group-text" htmlFor={ `${question.id}--minutes`}>minutes</label>
                         </div>
                     </div>
                 </div>
