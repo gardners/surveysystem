@@ -1,15 +1,14 @@
 //Basic HeaderNav made with bootstrap
 import React, { useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 import { AuthContext } from '../Context';
 import { DropdownMenu, MenuLink } from './bootstrap/DropdownMenu';
-import OAuth2 from '../OAuth2';
 
 import logo from '../assets/logo.png';
 
 // toggles navbar collapse
-// element.classList support is ie > 10, we ned this to work always!
+// element.classList support is ie > 10, we need this to work always!
 const toggle = function(el){
     if (!el) {
         return;
@@ -29,29 +28,36 @@ const {
 const surveyProvider = REACT_APP_SURVEY_PROVIDER.trim();
 const siteName = REACT_APP_SITE_NAME.trim();
 
-
-const LoginLink = function() {
+const User = function() {
     const auth = useContext(AuthContext);
 
+    let name = 'Login';
+    let cls = 'btn btn-danger';
+
+    if (!auth.protected) {
+        return(null);
+    }
+
     if (auth.user) {
-        return (
-            <Link className="btn btn-success" to="/login"><i className="fas fa-user"></i> { auth.user.replace(/(.{9})..+/, "$1...") }</Link>
-        );
+        name = (auth.user.name) ? auth.user.name : auth.user.email;
+        cls = 'btn btn-success';
     }
 
     return(
-        <a className="btn btn-danger" href={ OAuth2.loginUrl() }>Login</a>
+        <NavLink className={ cls } activeClassName="btn-light" to="/login">
+            { name }
+        </NavLink>
     );
 };
 
-LoginLink.propTypes = {};
+User.propTypes = {};
 
 const HeaderNav = function({ location }) {
 
     return (
         <header>
             <nav className="navbar navbar-expand-md navbar-dark fixed-top bg-dark shadow-sm">
-                <Link to="/" className="navbar-brand align-items-center"><img src={ logo } className="mr-3" title={ surveyProvider } alt="logo" height="30" />{ siteName }</Link>
+                <NavLink to="/" className="navbar-brand align-items-center"><img src={ logo } className="mr-3" title={ surveyProvider } alt="logo" height="30" />{ siteName }</NavLink>
 
                 <button
                     className="navbar-toggler"
@@ -65,18 +71,16 @@ const HeaderNav = function({ location }) {
                 </button>
 
                 <div className="collapse navbar-collapse" id="header-nav--collapse">
-                    <ul className="navbar-nav mr-auto">
-
-                    </ul>
+                    <ul className="navbar-nav mr-auto" />
 
                     <ul className="navbar-nav mt-2 mt-md-0">
                         <li className="nav-item">
-                            <Link className={ (/^\/surveys/.test(location.pathname)) ? 'btn btn-light' : 'btn btn-secondary' } to="/surveys">Surveys</Link>
+                            <NavLink className="btn btn-secondary" activeClassName="btn-light" to="/surveys">Surveys</NavLink>
                         </li>
                         {
                             (process.env.NODE_ENV !== 'production') ?
                                 <li className="nav-item ml-3">
-                                    <DropdownMenu title="Demos">
+                                    <DropdownMenu title="Demos" buttonClassName={ (/^\/demo/.test(location.pathname)) ? 'btn btn-light' : 'btn btn-secondary' }>
                                         <MenuLink to="/demo/form">Form Elements</MenuLink>
                                         <MenuLink to="/demo/analyse">Analysis</MenuLink>
                                         <MenuLink to="/demo/manifest">Manifest</MenuLink>
@@ -85,7 +89,7 @@ const HeaderNav = function({ location }) {
                             : null
                         }
                         <li className="nav-item ml-3">
-                            <LoginLink />
+                            <User/>
                         </li>
                     </ul>
                 </div>
