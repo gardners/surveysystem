@@ -192,7 +192,7 @@ enum khttp fcgirequest_validate_request(struct kreq *req, struct session_meta *m
 
     // trusted mw needs to authenticate on server level
     if (!req->auth) {
-      LOG_WARNV("Middleware request is not authendicated.", 0);
+      LOG_WARNV("Middleware request is not authenticated.", 0);
       return KHTTP_407;
     }
 
