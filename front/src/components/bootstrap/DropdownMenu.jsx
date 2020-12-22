@@ -1,15 +1,12 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 import { Fade } from '../Transitions';
 
 const MenuLink = function({ to, children }) {
-    const regex = new RegExp(to);
-    const active = regex.test(window.location.pathname);
     return (
-        <Link className={ `dropdown-item ${(active) ? ' active' : ''}` } to={ to }>{ children }</Link>
+        <NavLink exact className="dropdown-item" to={ to }>{ children }</NavLink>
     );
 };
 
@@ -45,9 +42,10 @@ class DropdownMenu extends Component {
 
     render() {
         const cls = (this.state.show) ? 'show' : '';
+
         return (
             <div className={ `dropdown ${cls}` }>
-                <button className="btn btn-secondary dropdown-toggle" type="button" aria-haspopup="true" aria-expanded="false"
+                <button className={ `${this.props.buttonClassName}  dropdown-toggle` } type="button" aria-haspopup="true" aria-expanded="false"
                     onClick={ this.show }>
                     { this.props.title }
                 </button>
@@ -64,8 +62,13 @@ class DropdownMenu extends Component {
     }
 }
 
+DropdownMenu.defaultProps = {
+    buttonClassName: 'btn btn-secondary',
+};
+
 DropdownMenu.propTypes = {
     title: PropTypes.string.isRequired,
+    buttonClassName: PropTypes.string,
 };
 
 export {
