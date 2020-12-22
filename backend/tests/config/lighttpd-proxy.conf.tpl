@@ -83,7 +83,7 @@ $SERVER["socket"] == ":" + server_port {
                     ## --- DO NOT USE ON PRODUCTION: set below var only for test envs ---
                     "SURVEY_FORCE_PYINIT" => "1",
                     ## --- register proxy auth middleware: {ip\:port} ---
-                    "SS_TRUSTED_MIDDLEWARE" => fcgienv_middleware,
+                    "SS_TRUSTED_MIDDLEWARE" => "" + fcgienv_middleware,
                ),
                "check-local" => "disable",
                # remote server may use its own docroot
