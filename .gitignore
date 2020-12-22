@@ -85,7 +85,7 @@ backend/test_runner
 backend/test_serialisers
 
 # temp files and local files
-backend/*.conf.local
+backend/*.local
 backend/lighttpd.conf.tmp
 backend/*.bak
 
