@@ -1,60 +1,15 @@
-import cryptoBrowserify from 'crypto-browserify';
-
 import { serializeParams } from './Utils';
+import { responseError } from './Api';
+import LocalStorage from './storage/LocalStorage';
 
-const SCOPE = 'read write';
-const clientId = process.env.REACT_APP_AUTH_CLIENT_ID;
-const redirectUri = process.env.REACT_APP_AUTH_REDIRECT_URI;
+const {
+    REACT_APP_OAUTH2_PROVIDER_URI,
+    REACT_APP_OAUTH2_CLIENT_ID,
+    REACT_APP_OAUTH2_REDIRECT_URI,
+    REACT_APP_OAUTH2_PROVIDER_PROFILE_URI,
+} = process.env;
 
-const responseError = function(res) {
-
-  return res.text()
-  .then((raw) => {
-
-    let message = raw;
-    try {
-      const json = JSON.parse(raw);
-      message = json.error;
-    } catch (e) {
-      // nothing
-    }
-
-    const e = {
-      message,
-      status: res.status || null,
-      statusText: res.statusText || null,
-      url: res.url || null,
-    };
-
-    throw e;
-  });
-}
-
-const idToken = function() {
-    return  window.localStorage.getItem('ss_id_token');
-};
-
-const refreshToken = function() {
-    return  window.localStorage.getItem('ss_access_token');
-};
-
-const accessToken = function() {
-    return  window.localStorage.getItem('ss_access_token');
-};
-
-const verifier = function() {
-  let res = window.localStorage.getItem('verifier');
-  if (!res) {
-    res = base64URLEncode(cryptoBrowserify.randomBytes(32));
-    window.localStorage.setItem('verifier', res);
-  }
-  return res;
-
-};
-
-const challenge = function() {
-  return base64URLEncode(sha256(verifier()));
-};
+const RESPONSE_TYPE = 'token';
 
 const url = function(path, params) {
   path = path || '';
@@ -65,169 +20,214 @@ const url = function(path, params) {
     q = '?' + serializeParams(params);
   }
 
-  const base = process.env.REACT_APP_AUTH_BASE_URL;
-  return (!path) ? `${base}/${q}` : `${base}/${path}/${q}`;
-}
-
-const base64URLEncode = function(str) {
-  return str.toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
+  const base = REACT_APP_OAUTH2_PROVIDER_URI.replace(/\/$/, "");
+  return (!path) ? `${base}${q}` : `${base}${path}${q}`;
 };
 
-const sha256 = function (buffer) {
-  return cryptoBrowserify.createHash('sha256').update(buffer).digest();
-}
-
-const loginUrl = function() {
-  return url('authorize', {
-    scope: SCOPE,
-    response_type: 'code',
-    client_id: clientId,
-    code_challenge: challenge(),
-    code_challenge_method: 'S256',
-    redirect_uri: redirectUri
-  });
-}
-
-const refresh = function(refresh_token) {
-
-  const body = serializeParams({
-     grant_type: 'authorization_code',
-     client_id: clientId,
-     refresh_token,
-  });
-
-  return fetch(url('token'), {
-      method: 'POST',
-      headers: {
-        'Content-Type':
-        'application/x-www-form-urlencoded'
-      },
-      body,
-  })
-  .then((res) => {
-    if (!res.ok) {
-      return responseError(res); // login?
-    }
-    return res.json()
-  })
-  .then((result) => {
-    const { access_token, id_token } = result; // TODO refreshtoken updated here?
-    window.localStorage.setItem('ss_access_token', access_token);
-    window.localStorage.setItem('ss_id_token', id_token);
-    window.localStorage.setItem('ss_refresh_token', refresh_token);
-  });
+/**
+ * generates a random state token
+ *
+ * @returns {string}
+ */
+const generate_state = function() {
+    return '_' + Math.random().toString(36).substr(2, 9);
 };
 
-const login = function(code) {
+/**
+ * Check if the application is protected by this module
+ *
+ * @returns {Boolean}
+ */
+const is_protected = function() {
+    return !! REACT_APP_OAUTH2_CLIENT_ID;
+}
 
-  const body = serializeParams({
-    grant_type: 'authorization_code',
-    client_id: clientId,
-    code_verifier: verifier(),
-    code,
-    redirect_uri: redirectUri,
-  });
 
-  return fetch(url('token'), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    body,
-  })
-  .then((res) => {
-    if (!res.ok) {
-      return responseError(res);
+/**
+ * Check if the application is protected by OAthis module
+ * @returns {string} access_token
+ */
+const callback_authorize = function() {
+
+    if (!window.location.hash) {
+        return '';
     }
-    return res.json();
-  })
-  .then((result) => {
-    const { access_token, id_token, refresh_token } = result;
-    window.localStorage.setItem('ss_access_token', access_token);
-    window.localStorage.setItem('ss_id_token', id_token);
-    window.localStorage.setItem('ss_refresh_token', refresh_token);
-  });
+
+    const hash = window.location.hash.substr(1);
+    const urlParams = new URLSearchParams('?' + hash);
+    const access_token = urlParams.get('access_token');
+    const state = urlParams.get('state');
+
+    let expires_in = urlParams.get('expires_in');
+
+    // validate local token
+    const stored_state = LocalStorage.get('ss_state', state);
+    if (!stored_state) {
+        console.error('Oauth2 redirect callback: no local state stored:');
+        return '';
+    }
+
+    if (state !== stored_state) {
+        console.error('Oauth2 redirect callback: state mismatch:', state, stored_state, state);
+        return '';
+    }
+
+    // expiry date
+    expires_in = parseInt(expires_in, 10);
+    if(isNaN(expires_in) || !expires_in) {
+        expires_in = 3600;
+    }
+
+    let expires_at = new Date().getTime() / 1000;
+    expires_at += expires_in - 60;
+
+    LocalStorage.delete('ss_state');
+    LocalStorage.set('ss_access_token', access_token);
+    LocalStorage.set('ss_expires_at', new Date(expires_at * 1000).toISOString());
+
+    return access_token;
 };
 
-const logout = function() {
-  const token = accessToken();
-
-  window.localStorage.removeItem('ss_access_token');
-  window.localStorage.removeItem('ss_id_token');
-  window.localStorage.removeItem('ss_refresh_token');
-
-  return fetch(url('revoke_token'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: serializeParams({
-        token,
-        client_id: clientId,
-      }),
-  })
-  .then((res) => {
-    if (!res.ok) {
-      return responseError(res); // login?
+/**
+ * Verifies a local token
+ * @returns {Boolean}
+ */
+const verify_token = function() {
+    if (!is_protected()) {
+        return true;
     }
+
+    if (!LocalStorage.get('ss_access_token')) {
+        console.log('auth:token:none');
+        return false;
+    }
+
+    let ms = Date.parse(LocalStorage.get('ss_expires_at'));
+    ms = (isNaN(ms)) ? 0 : ms;
+    ms -= 6000;
+
+    if(ms <= Date.now()) {
+        return false;
+    }
+
     return true;
-  })
 };
 
-const introspect = function(token) {
-  return fetch(url('introspect'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: serializeParams({
-        token,
-      }),
-  })
-  .then((res) => {
-    if (!res.ok) {
-      return responseError(res); // login?
+/**
+ * construct authorization provider url and optiona lredirect
+ */
+const exit_authorize = function() {
+
+    // set a local state and store it for authorize_callback
+    const state = generate_state();
+    LocalStorage.set('ss_state', state);
+
+    const params = {
+      client_id: REACT_APP_OAUTH2_CLIENT_ID,
+      redirect_uri: REACT_APP_OAUTH2_REDIRECT_URI,
+      response_type: RESPONSE_TYPE,
+      state: state,
+    };
+
+    const uri = url('/authorize', params);
+    window.location.href = uri;
+
+};
+
+/**
+ * provides authorization headers for fetch api
+ * Should the access token verification fail the function will trigger authorization workflow and exits
+ * @returns {object}
+ */
+const request_headers = function(headers) {
+    headers = headers || {};
+
+    if(!is_protected()) {
+        return headers;
     }
-    return res.json();
-  })
 
-}
-
-const getUser = function (access_token) {
-    if (!access_token) {
-      return refresh()
-      .then(() => getUser());
+    if(!verify_token()) {
+        exit_authorize();
+        return {}; // should never be called
     }
 
-    return fetch(
-      url('user'), {
-        headers: {
-          'Authorization': 'Bearer ' + access_token,
-          'Content-Type': 'application/json',
-        }
-    })
-    .then((res) => {
-      if (!res.ok) {
-        return responseError(res); // login?
-      }
-      return res.json();
+    const access_token = LocalStorage.get('ss_access_token');
+    Object.assign(headers, {
+        Authorization: `Bearer ${access_token}`,
     });
+
+    return headers;
+};
+
+/**
+ * Fetches user info from provider
+ * Returns user object (authenticated) or null
+ * @returns {Promise}
+ */
+const get_user = function() {
+
+    const init =  {
+        headers: request_headers(),
+    };
+
+    return fetch(REACT_APP_OAUTH2_PROVIDER_PROFILE_URI, init)
+        .then((res) => {
+            if (!res.ok) {
+                if (res.status === 401) {
+                    return null;
+                }
+                return responseError(res);
+            }
+            return res.json();
+        })
+        .then(res => Object.assign({
+            name: '',
+            email: '',
+        }, res));
+};
+
+/**
+ * initialise auth
+ * fetch local acces token
+ * if it exists, refresh it
+ *  TODO: expire use refreshtoken
+ * @returns {Promise} string username
+ */
+const init = function () {
+
+    if (!is_protected()) {
+        return Promise.resolve(null);
+    }
+
+    // check if local access_token has expired
+    if (!verify_token()) {
+        return Promise.resolve(null);
+    }
+
+    // fetch user object using the local access_token
+    // Should the token (surprisingly) be rejected (401) then redirect to authorization endpoint
+    return get_user()
+        .then((user) => {
+            if (!user) {
+                exit_authorize();
+            }
+            return user;
+        });
+};
+
+const remove_token = function() {
+    LocalStorage.delete('ss_access_token');
+    LocalStorage.delete('ss_expires_at');
+    LocalStorage.delete('ss_state');
 }
 
-export default {
-  idToken,
-  refreshToken,
-  accessToken,
-  url,
-  loginUrl,
-
-  refresh,
-  login,
-  logout,
-  introspect,
-
-  getUser,
-}
+export {
+    is_protected,
+    init,
+    verify_token,
+    remove_token ,
+    exit_authorize,
+    request_headers,
+    callback_authorize,
+    get_user
+};
