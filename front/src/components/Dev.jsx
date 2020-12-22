@@ -2,7 +2,6 @@ import React, { Component, useContext } from 'react';
 import PropTypes from 'prop-types';
 
 import { AuthContext } from '../Context';
-import OAuth2 from '../OAuth2';
 
 import RestartSurveyButton from './survey/RestartSurveyButton';
 
@@ -122,13 +121,14 @@ Question.propTypes = {
 
 const Auth = function(props) {
     const auth = useContext(AuthContext);
+
+    if (NODE_ENV === 'production') {
+        return (null);
+    }
+
     return(
         <pre className={ props.className }>
-            context.protected: { auth.protected().toString() }
-            <br />context.user: { auth.user }
-            <br />oauth2.url: { OAuth2.url() }
-            <br />oauth2.access_token: { OAuth2.accessToken() }
-            <br />oauth2.refresh_token: { OAuth2.refreshToken() }
+            { JSON.stringify(auth) }
         </pre>
     );
 };
