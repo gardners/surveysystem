@@ -1,25 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const HasErrors = function({ hasErrors, hasAllAnswers, hasAnswers }) {
-    if (!hasAnswers) {
-        return null;
-    }
-
-    return (
-        <ul className="list-group mb-1">
-            { hasErrors && <li className="list-group-item list-group-item-danger">Please fix errors above</li> }
-            { !hasAllAnswers && <li className="list-group-item list-group-item-warning">Please answer all questions</li> }
-        </ul>
-    );
-};
-
-HasErrors.propTypes = {
-    hasErrors: PropTypes.bool.isRequired,
-    hasAllAnswers: PropTypes.bool.isRequired,
-    hasAnswers: PropTypes.bool.isRequired,
-};
-
 const canNext = function ({ hasErrors, hasAnswers, hasAllAnswers }) {
     return (!hasErrors && hasAnswers && hasAllAnswers);
 };
