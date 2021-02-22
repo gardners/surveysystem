@@ -1246,6 +1246,10 @@ int save_session(struct session *s) {
  * query an answer (excluding header answers)
  */
 struct answer *session_get_answer(char *uid, struct session *ses) {
+  if (!uid) {
+    LOG_WARNV("session_get_answer(): search uid is null", 0);
+    return NULL;
+  }
   if (!ses) {
     LOG_WARNV("session_get_answer(): session is null", 0);
     return NULL;
@@ -1263,6 +1267,10 @@ struct answer *session_get_answer(char *uid, struct session *ses) {
  * #363, query a header answer
  */
 struct answer *session_get_header(char *uid, struct session *ses) {
+  if (!uid) {
+    LOG_WARNV("session_get_header(): search uid is null", 0);
+    return NULL;
+  }
   if (!ses) {
     LOG_WARNV("session_get_header(): session is null", 0);
     return NULL;
