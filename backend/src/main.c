@@ -40,29 +40,29 @@ void init(int argc, char **argv) {
     env = getenv("SURVEY_HOME");
     snprintf(test, 1024 ,"%s/logs", (env) ? env: "");
     if (access(test, W_OK)) {
-      fprintf(stderr, "Cannot access '%s' (W_OK). Does it exist?\n", test);
+      fprintf(stderr, "Cannot access log dir '%s' (W_OK). Does it exist?\n", test);
       exit(-1);
     }
 
     // test sessions dir
     snprintf(test, 1024 ,"%s/sessions", (env) ? env: "");
     if (access(test, W_OK)) {
-      fprintf(stderr, "Cannot access '%s' (W_OK). Does it exist?\n", test);
+      fprintf(stderr, "Cannot access session dir '%s' (W_OK). Does it exist?\n", test);
       exit(-1);
     }
 
     // test surveys dir
     snprintf(test, 1024 ,"%s/surveys", (env) ? env: "");
     if (access(test, W_OK)) {
-      fprintf(stderr, "Cannot access '%s' (W_OK). Does it exist?\n", test);
+      fprintf(stderr, "Cannot access survey dir '%s' (W_OK). Does it exist?\n", test);
       exit(-1);
     }
 
     // test python dir
     env = getenv("SURVEY_PYTHONDIR");
-    snprintf(test, 1024 ,"%s/nextquestion.py", (env) ? env: "");
+    snprintf(test, 1024 ,"%s", (env) ? env: "");
     if (access(test, R_OK)) {
-      fprintf(stderr, "Cannot access '%s' (R_OK). Does it exist?\n", test);
+      fprintf(stderr, "Cannot access python dir '%s' (R_OK). Does it exist?\n", test);
       exit(-1);
     }
 }
