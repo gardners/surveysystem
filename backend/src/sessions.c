@@ -742,6 +742,7 @@ void free_session(struct session *s) {
 
   s->answer_count = 0;
   s->question_count = 0;
+  s->given_answer_count = 0; // #13 count given answers
   s->state = SESSION_NULL; // #379 reset state
 
   free(s);
@@ -786,7 +787,9 @@ int dump_session(FILE *f, struct session *ses) {
       "  nextquestions_flag: %d\n"
       "  answer_offset: %d\n"
       "  answer_count: %d\n"
-      "  question_count: %d\n",
+      "  question_count: %d\n"
+      "  given_answer_count: %d\n"
+      "  state: %d\n",
 
       ses->survey_id,
       ses->survey_description,
@@ -795,7 +798,9 @@ int dump_session(FILE *f, struct session *ses) {
 
       ses->answer_offset,
       ses->answer_count,
-      ses->question_count
+      ses->question_count,
+      ses->given_answer_count,
+      ses->state
     );
 
     fprintf(f , "  questions: [\n");
@@ -1108,6 +1113,11 @@ struct session *load_session(char *session_id) {
         if (ses->answers[ses->answer_count]->uid[0] != '@') {
           is_header = 0;
         }
+      }
+
+      // #13 count given answers
+      if (is_given_answer(ses->answers[ses->answer_count])) {
+        ses->given_answer_count++;
       }
 
       ses->answer_count++;
@@ -1537,6 +1547,9 @@ int session_add_answer(struct session *ses, struct answer *a) {
       ses->answer_count++;
     }
 
+    // #13 update count given answers, system answers are already excluded
+    ses->given_answer_count++;
+
     char serialised_answer[65536] = "(could not serialise)";
     serialise_answer(a, serialised_answer, 65536);
     LOG_INFOV("Added to session '%s' answer '%s'.", ses->session_id,serialised_answer);
@@ -1609,6 +1622,8 @@ int session_delete_answers_by_question_uid(struct session *ses, char *uid, int d
     }
 
     if (!retVal) {
+      LOG_WARNV("==========> %d", deletions);
+      ses->given_answer_count -= deletions; // #13 update count given answers
       retVal = deletions;
     }
   } while (0);
@@ -1673,6 +1688,7 @@ int session_delete_answer(struct session *ses, struct answer *a, int deleteFollo
     }
 
     if (!retVal) {
+      ses->given_answer_count -= deletions; // #13 update count given answers
       retVal = deletions;
     }
   } while (0);
