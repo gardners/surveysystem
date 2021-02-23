@@ -1,0 +1,98 @@
+@description Python nextquestion with next_questions[progress] - negative cases
+
+#!---------------------
+#!Python survey progress no support or invalid, see #13
+#!---------------------
+
+definesurvey nextquestions_python_negative
+version 2
+Silly test survey updated
+with python
+question0:Question 0::TEXT:0::-1:-1:0:0::
+question1:Question 1::TEXT:0::-1:-1:0:0::
+question2:Question 2::TEXT:0::-1:-1:0:0::
+question3:Question 3::TEXT:0::-1:-1:0:0::
+question4:Question 4::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+# Create python module
+python
+import json
+
+def nextquestion(questions, answers):
+
+  if len(answers) == 0:
+    return {
+        'status': 0,
+        'message': '',
+        'progress': [len(answers), len(questions)],
+        'next_questions': [
+            questions[len(answers)]
+        ],
+    }
+
+  if len(answers) == len(questions):
+    return {
+        'status': 0,
+        'message': '',
+        'progress': [len(answers), len(questions)],
+        'next_questions': [],
+    }
+
+  val = answers[len(answers) - 1]['text']
+  # debug: raise ValueError(val)
+  return {
+      'status': 0,
+      'message': '',
+      'progress': json.loads(val),
+      'next_questions': [
+          questions[len(answers)]
+      ],
+  }
+endofpython
+
+# Request creation of a  new session
+request 200 /newsession?surveyid=nextquestions_python_negative
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session(skip_headers)
+nextquestions_python/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+endofsession
+
+#! -------
+#!- answering all questions
+#! -------
+
+# Ask for next question
+request 200 /nextquestion?sessionid=$SESSION
+match_string {"status": 0, "message": "", "progress": [0, 5], "next_questions": [{"id": "question0", "name": "question0", "title": "Question 0", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+#! -- note: the progress values to test are passed on to def nextquestions() via the answer text (json array)
+
+#! ------- Flag as UNSUPPORTED: [-1, -1] -------
+request 200 /addanswer?sessionid=$SESSION&answer=question0:[-1,-1]:0:0:0:0:0:0:0: curlargs(--globoff)
+match_string {"status": 0, "message": "", "progress": [-1, -1], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+#! ------- Flag as UNSUPPORTED: [-1, 1] -------
+request 200 /addanswer?sessionid=$SESSION&answer=question1:[-1,1]:0:0:0:0:0:0:0: curlargs(--globoff)
+match_string {"status": 0, "message": "", "progress": [-1, 1], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+#! ------- Flag as UNSUPPORTED: [1, -1] -------
+request 200 /addanswer?sessionid=$SESSION&answer=question2:[1,-1]:0:0:0:0:0:0:0: curlargs(--globoff)
+match_string {"status": 0, "message": "", "progress": [1, -1], "next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+#! ------- INVALID: [] -------
+request 500 /addanswer?sessionid=$SESSION&answer=question3:[]:0:0:0:0:0:0:0: curlargs(--globoff)
+
+#! ------- INVALID: [1] -------
+request 500 /addanswer?sessionid=$SESSION&answer=question3:[1]:0:0:0:0:0:0:0: curlargs(--globoff)
+
+#! ------- INVALID: [1,2,3] -------
+request 500 /addanswer?sessionid=$SESSION&answer=question3:[1,2,3]:0:0:0:0:0:0:0: curlargs(--globoff)
+
+#! ------- INVALID: "invalid" -------
+request 500 /addanswer?sessionid=$SESSION&answer=question3:"invalid":0:0:0:0:0:0:0: curlargs(--globoff)
+

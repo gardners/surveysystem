@@ -1,4 +1,4 @@
-@description Generic nextquestion with struct next_questions and progress
+@description Generic nextquestion with next_questions[progress]
 
 #!---------------------
 #!Survey WITHOUT python, see #13
