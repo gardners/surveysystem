@@ -439,6 +439,56 @@ PyObject *py_create_answer(struct answer *a) {
   return dict;
 }
 
+/**
+ * handler function for processing python nextquestions progress values
+ * on error, PyObject result remains open and has to be destroyed by callee
+ * #13
+ */
+int py_nextquestions_handle_progress(PyObject *result, struct nextquestions *nq) {
+  int retVal = 0;
+
+  do {
+
+    if (!result || !PyDict_Check(result)) {
+      LOG_ERROR("progress: PyObject *result is NULL or not a PyDict");
+    }
+
+    if (!nq) {
+      LOG_ERROR("progress: struct *nq is NULL");
+    }
+
+    PyObject *list = PyDict_GetItemString(result, "progress");
+    if (!list) {
+      LOG_ERROR("progress PyObject *result has no member 'next_questions'");
+    }
+
+    if(!PyList_Check(list)) {
+      LOG_ERROR("progress PyObject *result['next_questions'] is not a PyList");
+    }
+
+    int len = PyList_Size(list);
+    if(len != 2) {
+      LOG_ERRORV("progress PyObject *result['next_questions'] list length must be exact 2, %d given", len);
+    }
+
+    PyObject *item;
+    long int count;
+
+    // note: PyLong_AsLong() returns '-1' on error, docs recommend to use PyErr_Occurred() to disambiguate.
+    // We are skipping this here and pass -1 on to the frontends
+    item = PyList_GetItem(list, 0);
+    count = PyLong_AsLong(item);
+    nq->progress[0] = (int) count;
+
+    item = PyList_GetItem(list, 1);
+    count = PyLong_AsLong(item);
+    nq->progress[1] = (int) count;
+
+  } while (0);
+
+  return retVal;
+}
+
 int dump_next_questions(FILE *f, struct nextquestions *nq) {
   int retVal = 0;
   int i;
@@ -459,10 +509,14 @@ int dump_next_questions(FILE *f, struct nextquestions *nq) {
       "  status: %d\n"
       "  message: %s\n"
       "  question_count: %d\n"
+      "  progress: [%d, %d]\n"
       "  questions: [\n",
       nq->status,
       nq->message,
-      nq->question_count
+      nq->question_count,
+      // #13 add suport for progress indicator
+      nq->progress[0],
+      nq->progress[1]
     );
 
     for (i = 0; i < nq->question_count; i++) {
@@ -488,6 +542,9 @@ struct nextquestions *init_next_questions() {
     nq->status = 0;
     nq->message = NULL;
     nq->question_count = 0;
+    // #13 add suport for progress indicator
+    nq->progress[0] = 0;
+    nq->progress[1] = 0;
   } while (0);
 
   if (retVal) {
@@ -506,7 +563,9 @@ void free_next_questions(struct nextquestions *nq) {
     free_question(nq->next_questions[i]);
   }
   nq->question_count = 0;
-
+  // #13 add suport for progress indicator
+  nq->progress[0] = 0;
+  nq->progress[1] = 0;
   free(nq);
   return;
 }
@@ -708,7 +767,15 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
     // 4. assign message
     nq->message = strdup(message);
 
-    // 5. extract nextquestions
+    // 5. progress values
+    if (py_nextquestions_handle_progress(result, nq)) {
+      is_error = 1;
+      Py_DECREF(result);
+      LOG_ERRORV("Reply from Python function '%s': progess handler failed",
+                   function_name);
+    }
+
+    // 6. extract nextquestions
     PyObject *py_next_questions = PyDict_GetItemString(result, "next_questions");
     if (!py_next_questions) {
       is_error = 1;
@@ -797,6 +864,10 @@ int get_next_questions_generic(struct session *s, struct nextquestions *nq) {
     }
 
     LOG_INFOV("Calling get_next_questions_generic()", 0);
+
+    // #13 add suport for progress indicator, in generic (linear) mode we just copy the session counters
+    nq->progress[0] = s->given_answer_count;
+    nq->progress[1] = s->question_count;
 
     // Check each question to see if it has been answered already
     // #363, answer offset, exclude session header
