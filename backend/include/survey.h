@@ -170,7 +170,11 @@ enum answer_visibility {
 #define MAX_NEXTQUESTIONS 1024
 struct nextquestions {
     enum { STATUS_INFO, STATUS_WARN, STATUS_ERROR } status; // status flag, indcatiing how front end should handle message
-    char *message;                                          // ad-hoc notifications, needs to be de-allocated
+    char *message;                                         // ad-hoc notifications, needs to be de-allocated
+    // #13 add suport for progress indicator,
+    //   progress[0]: number of given answers, excluding meta and system answers
+    //   progress[1]: number of questions
+    int progress[2];
     struct question *next_questions[MAX_NEXTQUESTIONS];
     int question_count;
 };
@@ -216,6 +220,7 @@ struct session {
   // #363, add offset for header answers
   int answer_offset;
   int answer_count;
+  int given_answer_count; // #13 count given answers
   int question_count;
 
   // #379 session state, set on loading, updated during session actions, saved to session file if changed
