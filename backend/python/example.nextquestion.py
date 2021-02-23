@@ -43,10 +43,13 @@ def nextquestion(questions, answers, logFilename=None):
 
     logging.info('nextquestion hook invoked: {}'.format(os.getcwd()))
 
+    progress = [len(answers), len(questions)]
+
     if len(answers) < len(questions):
         return {
             'status': CONST_STATUS_INFO,
             'message': '',
+            'progress': progress,
             'next_questions': [
                 questions[len(answers)]
             ],
@@ -55,6 +58,7 @@ def nextquestion(questions, answers, logFilename=None):
     return {
         'status': CONST_STATUS_INFO,
         'message': 'Survey finished!',
+        'progress': progress,
         'next_questions': [],
     }
 
