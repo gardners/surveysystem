@@ -1447,13 +1447,20 @@ int response_nextquestion(struct kreq *req, struct session *ses, struct nextques
                kmimetypes[KMIME_APP_JSON]);
     khttp_body(req);
 
+    // open nq object
     kjson_obj_open(&resp);
     // #332 add status, message
     kjson_putintp(&resp, "status", nq->status);
     kjson_putstringp(&resp, "message", (nq->message != NULL) ? nq->message : "");
 
-    kjson_arrayp_open(&resp, "next_questions");
+    // #13 count given answers
+    kjson_arrayp_open(&resp, "progress");
+    kjson_putint(&resp, nq->progress[0]);
+    kjson_putint(&resp, nq->progress[1]);
+    kjson_array_close(&resp);
 
+    // next questions
+    kjson_arrayp_open(&resp, "next_questions");
     for (int i = 0; i < nq->question_count; i++) {
       // Output each question
       kjson_obj_open(&resp);
