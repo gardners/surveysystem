@@ -88,13 +88,13 @@ extract_sessionid
 
 #! ------- answer 3 questions -------
 request 200 /addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0:
-match_string {"status": 0, "message": "", "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+match_string {"status": 0, "message": "", "progress": [1, 3], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 request 200 /addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0:
-match_string {"status": 0, "message": "", "next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+match_string {"status": 0, "message": "", "progress": [2, 3], "next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 request 200 /addanswer?sessionid=$SESSION&answer=question3:Answer+3:0:0:0:0:0:0:0:
-match_string {"status": 0, "message": "", "next_questions": []}
+match_string {"status": 0, "message": "", "progress": [3, 3], "next_questions": []}
 
 verify_session(skip_headers)
 delanswerandfollowingpython/0b39e0c93f1b338433b8a8773d57f738dd405e17
@@ -105,7 +105,7 @@ endofsession
 
 #! ------- delanswer question 1 -------
 request 200 /delanswerandfollowing?sessionid=$SESSION&questionid=question1
-match_string {"status": 0, "message": "", "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "Answer 1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+match_string {"status": 0, "message": "", "progress": [0, 3], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "Answer 1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 verify_session(skip_headers)
 delanswerandfollowingpython/0b39e0c93f1b338433b8a8773d57f738dd405e17
