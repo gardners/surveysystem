@@ -1609,7 +1609,7 @@ int session_add_answer(struct session *ses, struct answer *a) {
  * It is not an error if there were no matching answers to delete
  * #407, #13, improve counting (only answers where deletion flag changed), make use of helper functions
  *
- * returns number of deleted answers or -1 on (arg validation) error. If there is no exactly matching answer, it will return an error.
+ * returns number of deleted answers or -1 on (arg validation) error. It is not an error if there were no matching answers to delete
 */
 int session_delete_answers_by_question_uid(struct session *ses, char *uid, int deleteFollowingP) {
   int retVal = 0;
@@ -1622,10 +1622,15 @@ int session_delete_answers_by_question_uid(struct session *ses, char *uid, int d
     if (!uid) {
       LOG_ERRORV("Delete Answer (by uid): Asked to remove answers to null question UID from session '%s'", ses->session_id);
     }
+    // #363, system answers (QTYPE_META or @uid) answers cannot be deleted, validate uid even before checking if the answer exists and flag error to callee
+    if (uid[0] == '@') {
+      LOG_ERRORV("Delete Answer (by uid): Invalid uid '%s' provided (session '%s')", uid, ses->session_id);
+    }
 
     int index = session_get_answer_index(uid, ses);
     if (index < 0) {
-      LOG_ERRORV("Delete Answer (by uid): answer '%s' not found in (session '%s')", uid, ses->session_id);
+      LOG_WARNV("Delete Answer (by uid): answer '%s' not found in (session '%s')", uid, ses->session_id);
+      break; // leave with 0
     }
 
     // #363, system answers (QTYPE_META or @uid) answers cannot be deleted
