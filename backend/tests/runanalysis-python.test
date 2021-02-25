@@ -21,6 +21,7 @@ def nextquestion(questions, answers):
         return {
             'status': 0,
             'message': '',
+            'progress': [len(answers), len(questions)],
             'next_questions': [
                 questions[len(answers)]
             ],
@@ -29,6 +30,7 @@ def nextquestion(questions, answers):
     return {
         'status': 0,
         'message': '',
+        'progress': [len(answers), len(questions)],
         'next_questions': [],
     }
 endofpython
@@ -76,7 +78,7 @@ request 400 /analyse?sessionid=$SESSION
 #! -------
 
 request 200 /addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0:
-match_string {"status": 0, "message": "", "next_questions": []}
+match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": []}
 
 verify_session
 runanalysispython/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
