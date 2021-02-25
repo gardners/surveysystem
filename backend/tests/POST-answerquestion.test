@@ -22,7 +22,7 @@ postrequests/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 
 request 200 addanswer POST "sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0:"
-match_string {"status": 0, "message": "", "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 # Make sure answer ends up in file
 verify_session(skip_headers)

@@ -1,0 +1,78 @@
+@description Generic nextquestion with next_questions[progress] (consistency)
+
+#!---------------------
+#!Survey WITHOUT python, see #13
+#!---------------------
+
+definesurvey nextquestions_generic
+version 2
+Silly test survey updated
+without python
+question0:Question 0::TEXT:0::-1:-1:0:0::
+question1:Question 1::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+# Request creation of a  new session
+request 200 /newsession?surveyid=nextquestions_generic
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session(skip_headers)
+nextquestions_generic/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+endofsession
+
+#! -------
+#! ------- run 10 x /nextquestion on empty session
+#! -------
+
+for i = 1 to 10
+request 200 /nextquestion?sessionid=$SESSION
+match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "question0", "name": "question0", "title": "Question 0", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+next
+
+#! -------
+#! ------- run 10 x /nextquestion on un-empty session
+#! -------
+
+request 200 /addanswer?sessionid=$SESSION&answer=question0:Answer+0:0:0:0:0:0:0:0:
+match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+for i = 1 to 10
+request 200 /nextquestion?sessionid=$SESSION
+match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+next
+
+#! -------
+#! ------- run 10 x /nextquestion on finished session
+#! -------
+
+request 200 /addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0:
+match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": []}
+
+for i = 1 to 10
+request 200 /nextquestion?sessionid=$SESSION
+match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": []}
+next
+
+#! -------
+#! ------- run 10 x /delanswer
+#! -------
+for i = 1 to 10
+request 200 /delanswer?sessionid=$SESSION&questionid=question1
+match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "Answer 1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+next
+
+#! -------
+#! ------- run 10 x /delanswerandfollowing
+#! -------
+
+# finsh survey again
+request 200 /addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0:
+match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": []}
+
+for i = 1 to 10
+request 200 /delanswerandfollowing?sessionid=$SESSION&questionid=question0
+match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "question0", "name": "question0", "title": "Question 0", "description": "", "type": "TEXT", "default_value": "Answer 0", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+next

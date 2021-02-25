@@ -742,6 +742,7 @@ void free_session(struct session *s) {
 
   s->answer_count = 0;
   s->question_count = 0;
+  s->given_answer_count = 0; // #13 count given answers
   s->state = SESSION_NULL; // #379 reset state
 
   free(s);
@@ -786,7 +787,9 @@ int dump_session(FILE *f, struct session *ses) {
       "  nextquestions_flag: %d\n"
       "  answer_offset: %d\n"
       "  answer_count: %d\n"
-      "  question_count: %d\n",
+      "  question_count: %d\n"
+      "  given_answer_count: %d\n"
+      "  state: %d\n",
 
       ses->survey_id,
       ses->survey_description,
@@ -795,7 +798,9 @@ int dump_session(FILE *f, struct session *ses) {
 
       ses->answer_offset,
       ses->answer_count,
-      ses->question_count
+      ses->question_count,
+      ses->given_answer_count,
+      ses->state
     );
 
     fprintf(f , "  questions: [\n");
@@ -1110,6 +1115,11 @@ struct session *load_session(char *session_id) {
         }
       }
 
+      // #13 count given answers
+      if (is_given_answer(ses->answers[ses->answer_count])) {
+        ses->given_answer_count++;
+      }
+
       ses->answer_count++;
 
       // #363 set header offset
@@ -1243,9 +1253,13 @@ int save_session(struct session *s) {
 }
 
 /**
- * query an answer (excluding header answers)
+ * query a session for an answer uid (excluding header answers)
  */
 struct answer *session_get_answer(char *uid, struct session *ses) {
+  if (!uid) {
+    LOG_WARNV("session_get_answer(): search uid is null", 0);
+    return NULL;
+  }
   if (!ses) {
     LOG_WARNV("session_get_answer(): session is null", 0);
     return NULL;
@@ -1260,9 +1274,35 @@ struct answer *session_get_answer(char *uid, struct session *ses) {
 }
 
 /**
+ * query a session for an answer uid (excluding header answers)
+ * returns index position in session or -1 if answer was not found
+ */
+int session_get_answer_index(char *uid, struct session *ses) {
+  if (!uid) {
+    LOG_WARNV("session_get_answer(): search uid is null", 0);
+    return -1;
+  }
+  if (!ses) {
+    LOG_WARNV("session_get_answer(): session is null", 0);
+    return -1;
+  }
+
+  for (int i = ses->answer_offset; i < ses->answer_count; i++) {
+    if (!strcmp(ses->answers[i]->uid, uid)) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+/**
  * #363, query a header answer
  */
 struct answer *session_get_header(char *uid, struct session *ses) {
+  if (!uid) {
+    LOG_WARNV("session_get_header(): search uid is null", 0);
+    return NULL;
+  }
   if (!ses) {
     LOG_WARNV("session_get_header(): session is null", 0);
     return NULL;
@@ -1341,6 +1381,27 @@ int answer_get_value_raw(struct answer *a, char *out, size_t sz) {
     } while (0);
 
     return retVal;
+}
+
+/**
+ * Marks an answer as deleted, skips when answer was already flagged as deleted (#407, #13)
+ * This function also mark system answers!
+ * returns 1 if delete flag was set and 0 if deletion was skipped
+ */
+int answer_mark_as_deleted(struct answer *a) {
+    if(!a) {
+      LOG_WARNV("answer_mark_as_deleted(): answer is null", 0);
+      return 0;
+    }
+
+    if (a->flags & ANSWER_DELETED) {
+      return 0;
+    }
+
+    a->flags |= ANSWER_DELETED;
+    a->stored = (long long)time(NULL);
+    LOG_INFOV("Deleted from session answer '%s'.", a->uid);
+    return 1;
 }
 
 struct answer *copy_answer(struct answer *aa) {
@@ -1529,6 +1590,9 @@ int session_add_answer(struct session *ses, struct answer *a) {
       ses->answer_count++;
     }
 
+    // #13 update count given answers, system answers are already excluded
+    ses->given_answer_count++;
+
     char serialised_answer[65536] = "(could not serialise)";
     serialise_answer(a, serialised_answer, 65536);
     LOG_INFOV("Added to session '%s' answer '%s'.", ses->session_id,serialised_answer);
@@ -1540,9 +1604,12 @@ int session_add_answer(struct session *ses, struct answer *a) {
   return retVal;
 }
 
-/*
-  Delete any and all answers to a given question from the provided session structure.
-  It is not an error if there were no matching answers to delete
+/**
+ * Delete any and all answers to a given question from the provided session structure.
+ * It is not an error if there were no matching answers to delete
+ * #407, #13, improve counting (only answers where deletion flag changed), make use of helper functions
+ *
+ * returns number of deleted answers or -1 on (arg validation) error. It is not an error if there were no matching answers to delete
 */
 int session_delete_answers_by_question_uid(struct session *ses, char *uid, int deleteFollowingP) {
   int retVal = 0;
@@ -1555,66 +1622,56 @@ int session_delete_answers_by_question_uid(struct session *ses, char *uid, int d
     if (!uid) {
       LOG_ERRORV("Delete Answer (by uid): Asked to remove answers to null question UID from session '%s'", ses->session_id);
     }
-    // #363, system answers (QTYPE_META or @uid) answers cannot be deleted
+    // #363, system answers (QTYPE_META or @uid) answers cannot be deleted, validate uid even before checking if the answer exists and flag error to callee
     if (uid[0] == '@') {
       LOG_ERRORV("Delete Answer (by uid): Invalid uid '%s' provided (session '%s')", uid, ses->session_id);
     }
 
-    // #363, answer offset, exclude session header
-    for (int i = ses->answer_offset; i < ses->answer_count; i++) {
-      if (!strcmp(ses->answers[i]->uid, uid)) {
+    int index = session_get_answer_index(uid, ses);
+    if (index < 0) {
+      LOG_WARNV("Delete Answer (by uid): answer '%s' not found in (session '%s')", uid, ses->session_id);
+      break; // leave with 0
+    }
 
+    // #363, system answers (QTYPE_META or @uid) answers cannot be deleted
+    if (is_system_answer(ses->answers[index])) {
+      LOG_ERRORV("Delete Answer (by uid): Invalid request to remove private SYSTEM answer '%s' from session '%s'", uid, ses->session_id);
+    }
+
+    deletions += answer_mark_as_deleted(ses->answers[index]);
+
+    // Mark all following answers deleted, if required
+    if (deleteFollowingP) {
+      for (int j = index + 1; j < ses->answer_count; j++) {
         // #363, system answers (QTYPE_META or @uid) answers cannot be deleted
-        if (is_system_answer(ses->answers[i])) {
-          LOG_ERRORV("Delete Answer (by uid): Invalid request to remove private SYSTEM answer '%s' from session '%s'", uid, ses->session_id);
+        if (is_system_answer(ses->answers[j])) {
+          continue;
         }
-
-        // Delete matching questions
-        // #186 - Deletion now just sets the ANSWER_DELETED flag in the flags field for the answer.
-        // If deleteFollowingP is non-zero, then this is applied to all later answers in the session also.
-
-        char serialised_answer[65536] = "(could not serialise)";
-        serialise_answer(ses->answers[i], serialised_answer, 65536);
-        LOG_INFOV("Deleted from session '%s' answer '%s'.", ses->session_id, serialised_answer);
-
-        ses->answers[i]->flags |= ANSWER_DELETED;
-        ses->answers[i]->stored = (long long)time(NULL);
-
-        deletions++;
-
-        // Mark all following answers deleted, if required
-        if (deleteFollowingP) {
-          for (int j = i + 1; j < ses->answer_count; j++) {
-            // #363, system answers (QTYPE_META or @uid) answers cannot be deleted
-            if (is_system_answer(ses->answers[j])) {
-              continue;
-            }
-            ses->answers[j]->flags |= ANSWER_DELETED;
-            deletions++;
-          }
-        }
-      } // endif
-    }   // endfor
+        deletions += answer_mark_as_deleted(ses->answers[j]);
+      }
+    }
 
     if (retVal) {
       break;
     }
 
     if (!retVal) {
+      ses->given_answer_count -= deletions;
       retVal = deletions;
     }
   } while (0);
   return retVal;
 }
 
-/*
-  Delete exactly the provided answer from the provided session,
-  and return the number of answers deleted.
-  If there is no exactly matching answer, it will return 0.
+/**
+ * Delete exactly the provided answer from the provided session,
+ * #407, #13 deletion logic becomes too complex, so pipe this function to session_delete_answers_by_question_uid();
+ * TODO: this function is currently not used, remove?
+ *
+ * return the number of answers deleted. If there is no exactly matching answer, it will return 0.
  */
 int session_delete_answer(struct session *ses, struct answer *a, int deleteFollowingP) {
   int retVal = 0;
-  int deletions = 0;
 
   do {
 
@@ -1629,44 +1686,7 @@ int session_delete_answer(struct session *ses, struct answer *a, int deleteFollo
       LOG_ERRORV("Delete Answer: Invalid request to remove private SYSTEM answer '%s' from session '%s'", a->uid, ses->session_id);
     }
 
-    // #162 add/update stored timestamp
-    a->stored = (long long)time(NULL);
-
-    // #363, answer offset, exclude session header
-    for (int i = ses->answer_offset; i < ses->answer_count; i++) {
-      // XXX - Doesn't actually check the value of the answer, but deletes first instance of an answer to the
-      // same question.
-      if ((!strcmp(ses->answers[i]->uid, a->uid)) && (1)) {
-        // Delete matching questions
-        // (Actually just mark them deleted. #186)
-
-        char serialised_answer[65536] = "(could not serialise)";
-        serialise_answer(ses->answers[i], serialised_answer, 65536);
-        LOG_INFOV("Deleted from session '%s' answer '%s'.", ses->session_id,
-                  serialised_answer);
-
-        ses->answers[i]->flags |= ANSWER_DELETED;
-        deletions++;
-
-        // Mark all following answers deleted, if required
-        if (deleteFollowingP) {
-          for (int j = i + 1; j < ses->answer_count; j++) {
-            ses->answers[j]->flags |= ANSWER_DELETED;
-            deletions++;
-          }
-        }
-
-        break;
-      } // endif
-    }   // endfor
-
-    if (retVal) {
-      break;
-    }
-
-    if (!retVal) {
-      retVal = deletions;
-    }
+    retVal = session_delete_answers_by_question_uid(ses, a->uid, deleteFollowingP);
   } while (0);
 
   return retVal;

@@ -1105,7 +1105,6 @@ void init_parse_test_config(int test_count, int test_index, char *test_file, str
     FILE *fp = fopen(test_file, "r");
     if (!fp) {
       fprintf(stderr, "\nCould not open test file '%s' for reading\n", test_file);
-      fclose(fp);
       exit(-3);
     }
 
@@ -1132,6 +1131,7 @@ void init_parse_test_config(int test_count, int test_index, char *test_file, str
     fgets(line, MAX_LINE, fp);
     if (sscanf(line, "@description %[^\r\n]", test->description) != 1) {
       fprintf(stderr, "\nCould not parse description line of test->\n");
+      fclose(fp);
       exit(-3);
     }
 

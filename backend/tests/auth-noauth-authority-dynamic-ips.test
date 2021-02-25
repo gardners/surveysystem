@@ -44,7 +44,7 @@ request 200 /addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:
 #!-------
 #!- endpoint /updateanswer [pass]
 #!-------
-request 200 /updateanswer?sessionid=$SESSION&answer=question3:Answer+2:0:0:0:0:0:0:0:
+request 200 /updateanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0:
 
 #!-------
 #!- endpoint /nextquestion [pass]
@@ -54,7 +54,7 @@ request 200 /nextquestion?sessionid=$SESSION
 #!-------
 #!- endpoint /delanswer [pass]
 #!-------
-request 200 /delanswer?sessionid=$SESSION&questionid=question3
+request 200 /delanswer?sessionid=$SESSION&questionid=question2
 
 #!-------
 #!- endpoint /delanswerandfollowing [pass]

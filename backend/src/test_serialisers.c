@@ -351,6 +351,36 @@ int main(int argc, char **argv) {
        assert_answers_compare(in, out); // answers are freed inside
      }
 
+     {
+       char str[1024];
+       int ret;
+
+       struct answer *in = create_answer("text-is-json-array", QTYPE_TEXT, "[42, -42]", "unit");
+       ret = serialise_answer(in, str, 1024);
+       assert(ret == 0);
+
+       struct answer *out =  calloc(sizeof(struct answer), 1);
+       ret = deserialise_answer(str, ANSWER_FIELDS_PROTECTED, out);
+       assert(ret == 0);
+
+       assert_answers_compare(in, out); // answers are freed inside
+     }
+
+     {
+       char str[1024];
+       int ret;
+
+       struct answer *in = create_answer("text-is-json-object", QTYPE_TEXT, "{ \"answer\": 42 }", "unit");
+       ret = serialise_answer(in, str, 1024);
+       assert(ret == 0);
+
+       struct answer *out =  calloc(sizeof(struct answer), 1);
+       ret = deserialise_answer(str, ANSWER_FIELDS_PROTECTED, out);
+       assert(ret == 0);
+
+       assert_answers_compare(in, out); // answers are freed inside
+     }
+
   } while (0);
 
   return retVal;
