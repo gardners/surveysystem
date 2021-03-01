@@ -19,6 +19,7 @@ import QuestionGroup from './survey/QuestionGroup';
 import FeedbackItem from './survey/FeedbackItem';
 import SurveyButtons from './survey/SurveyButtons';
 import SurveyMessage from './survey/SurveyMessage';
+import SurveyProgress from './survey/SurveyProgress';
 import FinishSurvey from './survey/FinishSurvey';
 
 // misc components
@@ -193,8 +194,8 @@ class Survey extends Component {
         .then(sessID => survey.init(sessID))
         .then(() => Api.nextQuestion(survey.sessionID))
         .then((response) => {
-            const { status, message, next_questions } = response;
-            return survey.add(next_questions, status, message)
+            const { status, message, progress, next_questions } = response;
+            return survey.add(next_questions, status, message, progress)
         })
         .then(() => this.setState({
             loading: '',
@@ -224,8 +225,8 @@ class Survey extends Component {
 
         Api.nextQuestion(survey.sessionID)
         .then((response) => {
-            const { status, message, next_questions } = response;
-            return survey.add(next_questions, status, message)
+            const { status, message, progress, next_questions } = response;
+            return survey.add(next_questions, status, message, progress)
         })
         .then(() => this.setState({
             loading: '',
@@ -276,8 +277,8 @@ class Survey extends Component {
         Api.updateAnswers_SEQUENTIAL(survey.sessionID, csvFragments)
         .then(responses => responses.pop()) // last
         .then((response) => {
-            const { status, message, next_questions } = response;
-            return survey.add(next_questions, status, message)
+            const { status, message, progress, next_questions } = response;
+            return survey.add(next_questions, status, message, progress)
         })
         .then(() => this.setState({
             loading: '',
@@ -317,8 +318,8 @@ class Survey extends Component {
 
         Api.deleteAnswerAndFollowing(survey.sessionID, questionId)
         .then((response) => {
-            const { status, message, next_questions } = response;
-            return survey.replaceCurrent(next_questions, status, message)
+            const { status, message, progress, next_questions } = response;
+            return survey.replaceCurrent(next_questions, status, message, progress)
         })
         .then(() => this.setState({
             loading: '',
@@ -352,9 +353,7 @@ class Survey extends Component {
         return (
             <React.Fragment>
                 <Dev.SurveyBar survey={ survey } />
-
                 <SurveySection session={ survey }>
-
                     <Preloader loading={ this.state.loading } message={ this.state.loading }/>
 
                     {
@@ -380,6 +379,7 @@ class Survey extends Component {
                         sessionID: survey.sessionID,
                     } }>
                         <SurveyMessage session={ survey } />
+                        <SurveyProgress className="mb-2" session={ survey }/>
 
                         <SurveyForm
                             show={ !isFinished && questions.length > 0 && !this.state.loading }
