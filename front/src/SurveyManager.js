@@ -1,4 +1,5 @@
 import { normalizeQuestions } from './Question';
+import { isArray } from './Utils';
 
 /**
  * @module The survey manager keeps track and manipulates of the question history. The module is designed to be used by LocalStorage.
@@ -29,6 +30,37 @@ const matchQuestionIds = function(first, second) {
     }
     return true;
 };
+
+/**
+ * Verify if a progress value is valid and flagged as supported
+ * @param {number[]} progress
+ * @returns {boolean}
+ */
+const validateProgress = function(progress) {
+    if (!isArray(progress)) {
+        return false;
+    }
+
+    if (progress.length !== 2) {
+        return false;
+    }
+
+    if (isNaN(progress[0]) || isNaN(progress[1])) {
+        return false;
+    }
+
+    if (progress[0] > progress[1]) {
+        return false;
+    }
+
+    // flagged by backend as unsupported
+    if (progress[0] < 0 || progress[1] < 0) {
+        return false;
+    }
+
+    return true;
+};
+
 
 // /**
 //  * create an array of question objects with the minimal required properties from an api response.
@@ -61,9 +93,10 @@ class SurveyManager {
         this.sessionID = null;
         this.endpoint = endpoint;
         // #379, remove Surveymanager.closed property
-        // #332
+        // #332, #406
         this.status = 0;
         this.message = '';
+        this.progress = [-1, -1];
 
         this.created = Date.now();
         this.modified = 0;
@@ -183,23 +216,19 @@ class SurveyManager {
      * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
      * @returns {boolean} whether question was added
      */
-    add(questions, status, message) {
+    add(questions, status, message, progress) {
         // #379, removed closed conditions
-
         // deal with cases like browser refresh..
         if (matchQuestionIds(this.current(), questions)) {
             return false;
         }
 
-        // #333 add status, message from last response
+        // #332 add status, message from last response
         this.status = status || 0;
         this.message = message || '';
+        this.progress = progress || [-1, -1];
 
         this.questions.push(normalizeQuestions(questions));
-
-        // #332
-        this.status = status || 0;
-        this.message = message || '';
 
         this.modified = Date.now();
         return true;
@@ -214,22 +243,18 @@ class SurveyManager {
      * @param {[object]} questions array of QuestionItems, extracted from the backend response { next_questions: [ question1, question2 ...] }
      * @returns {boolean} whether question was areplaced
      */
-    replaceCurrent(questions, status, message) {
+    replaceCurrent(questions, status, message, progress) {
         // #379, removed closed conditions
-
-        // #333 add status, message from last response
+        // #332 add status, message from last response
         this.status = status || 0;
         this.message = message || '';
+        this.progress = progress || [-1, -1];
 
         if (!this.questions.length) {
             this.questions.push(normalizeQuestions(questions));
         } else {
             this.questions[this.questions.length - 1] = normalizeQuestions(questions);
         }
-
-        // #332
-        this.status = status || 0;
-        this.message = message || '';
 
         this.modified = Date.now();
         return true;
@@ -249,6 +274,7 @@ class SurveyManager {
         // #333 add status, message
         this.status =  0;
         this.message = '';
+        this.progress = [-1, -1];
 
         this.questions.pop();
 
@@ -270,4 +296,4 @@ class SurveyManager {
 
 }
 
-export { SurveyManager as default, questionIDs, matchQuestionIds };
+export { SurveyManager as default, questionIDs, matchQuestionIds, validateProgress };
