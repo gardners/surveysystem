@@ -168,8 +168,8 @@ describe('SurveyManager.merge', () => {
         expect(undef).toBe(undefined);
     });
 
-    // #332
-    test('merge - default status and message', () => {
+    // #332, #406
+    test('merge - default status, message and progress', () => {
         const that = new SurveyManager('test', 'uri');
         that.merge({
             surveyID: 'test',
@@ -182,11 +182,12 @@ describe('SurveyManager.merge', () => {
             sessionID: '123',
             status: 0,
             message: '',
+            progress: [-1, -1],
         });
     });
 
-    // #332
-    test('merge - custom status and message', () => {
+    // #332, #406
+    test('merge - custom  status, message and progress', () => {
         const that = new SurveyManager('test', 'uri');
         that.merge({
             surveyID: 'test',
@@ -194,7 +195,8 @@ describe('SurveyManager.merge', () => {
             sessionID: '123',
 
             status: 1,
-            message: 'Hello'
+            message: 'Hello',
+            progress: [1, 2],
         })
         expect(that).toMatchObject({
             surveyID: 'test',
@@ -202,7 +204,8 @@ describe('SurveyManager.merge', () => {
             sessionID: '123',
 
             status: 1,
-            message: 'Hello'
+            message: 'Hello',
+            progress: [1, 2],
         });
     });
 
@@ -238,9 +241,10 @@ describe('SurveyManager', () => {
         expect(that.sessionID).toBe(null);
         expect(that.questions.length).toBe(0);
 
-        // #332
+        // #332, 3406
         expect(that.status).toBe(0);
         expect(that.message).toBe('');
+        expect(that.progress.toString()).toBe('-1,-1');
 
         // array and empty
         expect(JSON.stringify(that.questions)).toBe('[]');
@@ -263,9 +267,10 @@ describe('SurveyManager', () => {
         const that = new SurveyManager('test', 'uri');
         that.init('123');
         expect(that.sessionID).toBe('123');
-        // #332
+        // #332, #306
         expect(that.status).toBe(0);
         expect(that.message).toBe('');
+        expect(that.progress.toString()).toBe('-1,-1');
     });
 
     // #379
@@ -291,18 +296,19 @@ describe('SurveyManager', () => {
         expect(that.questions[1][0]).toMatchObject({ id: 2});
     });
 
-    // #332
+    // #332, #406
     test('add with status and message', () => {
         const that = new SurveyManager('test', 'uri');
         that.init('123');
 
-        // no status and messages
+        // no status, messages, progress
         that.add([{ id: 1 }]);
         expect(that.questions.length).toBe(1);
         expect(that.questions[0][0]).toMatchObject({ id: 1 });
 
         expect(that.status).toBe(0);
         expect(that.message).toBe('');
+        expect(that.progress.toString()).toBe('-1,-1');
 
         // with status
         that.add([{ id: 2 }], 1);
@@ -312,6 +318,7 @@ describe('SurveyManager', () => {
 
         expect(that.status).toBe(1);
         expect(that.message).toBe('');
+        expect(that.progress.toString()).toBe('-1,-1');
 
         // with status and message
         that.add([{ id: 3 }], 1, 'Hello');
@@ -322,6 +329,19 @@ describe('SurveyManager', () => {
 
         expect(that.status).toBe(1);
         expect(that.message).toBe('Hello');
+        expect(that.progress.toString()).toBe('-1,-1');
+
+        // with status, message and progress
+        that.add([{ id: 4 }], 1, 'Hello', [1, 2]);
+        expect(that.questions.length).toBe(4);
+        expect(that.questions[0][0]).toMatchObject({ id: 1 });
+        expect(that.questions[1][0]).toMatchObject({ id: 2});
+        expect(that.questions[2][0]).toMatchObject({ id: 3});
+        expect(that.questions[3][0]).toMatchObject({ id: 4});
+
+        expect(that.status).toBe(1);
+        expect(that.message).toBe('Hello');
+        expect(that.progress.toString()).toBe('1,2');
     });
 
     test('add has no effect if question ids match (double submission)', () => {
@@ -399,12 +419,12 @@ describe('SurveyManager', () => {
         expect(that.questions[0][0]).toMatchObject({ id: 1 });
     });
 
-    // #332
-    test('reset() - reset status and message to defaults', () => {
+    // #332, #406
+    test('reset() - reset status, message and progress to defaults', () => {
         const that = new SurveyManager('test', 'uri');
         that.init('123');
         that.add([{ id: 1 }]);
-        that.add([{ id: 2 }], 1, 'Hello');
+        that.add([{ id: 2 }], 1, 'Hello', [1, 2]);
 
         expect(that.questions.length).toBe(2);;
         expect(that.questions[0][0]).toMatchObject({ id: 1 });
@@ -412,6 +432,7 @@ describe('SurveyManager', () => {
 
         expect(that.status).toBe(1);
         expect(that.message).toBe('Hello');
+        expect(that.progress.toString()).toBe('1,2');
 
         that.reset();
 
@@ -421,6 +442,7 @@ describe('SurveyManager', () => {
 
         expect(that.status).toBe(0);
         expect(that.message).toBe('');
+        expect(that.progress.toString()).toBe('-1,-1');
     });
 
     test('current', () => {
@@ -583,18 +605,21 @@ describe('SurveyManager.canMerge', () => {
         expect(res).toBe(false);
     });
 
-    // #332
-    test('different status and message values have no impact', () => {
+    // #332, #406
+    test('different status, message and progress values have no impact', () => {
         const that = new SurveyManager('test', 'uri');
         // defaults
         expect(that.status).toBe(0);
         expect(that.message).toBe('');
+        expect(that.progress.toString()).toBe('-1,-1');
+
         const res = that.canMerge({
             surveyID: 'test',
             endpoint: 'uri',
             sessionID: 'another',
             status: '1',
             message: 'hello',
+            prongress: [1, 2],
         })
 
         expect(res).toBe(true);
@@ -677,12 +702,13 @@ describe('SurveyManager.merge', () => {
         expect(undef).toBe(undefined);
     });
 
-    // #332
-    test('merge - status and message are merged in', () => {
+    // #332, 406
+    test('merge - status, message  and progress are merged in', () => {
         const that = new SurveyManager('test', 'uri');
         // defaults
         expect(that.status).toBe(0);
         expect(that.message).toBe('');
+        expect(that.progress.toString()).toBe('-1,-1');
 
         that.merge({
             surveyID: 'test',
@@ -690,12 +716,14 @@ describe('SurveyManager.merge', () => {
             sessionID: '123',
             status: 1,
             message: 'Hello',
+            progress: [1, 2],
         })
-        const undef = that.init('123');
+        that.init('123');
 
         expect(that.sessionID).toBe('123');
         expect(that.status).toBe(1);
         expect(that.message).toBe('Hello');
+        expect(that.progress.toString()).toBe('1,2');
     });
 
 });
@@ -762,7 +790,7 @@ describe('SurveyManager.replaceCurrent', () => {
         expect(res).toBe(true);
     });
 
-    // #332
+    // #332, #406
     test('replaceCurrent - status', () => {
         const that = new SurveyManager('test', 'uri');
         that.init('123');
@@ -775,6 +803,7 @@ describe('SurveyManager.replaceCurrent', () => {
 
         expect(that.status).toBe(1);
         expect(that.message).toBe('');
+        expect(that.progress.toString()).toBe('-1,-1');
 
         expect(res).toBe(true);
     });
@@ -791,6 +820,24 @@ describe('SurveyManager.replaceCurrent', () => {
 
         expect(that.status).toBe(1);
         expect(that.message).toBe('Hello');
+        expect(that.progress.toString()).toBe('-1,-1');
+
+        expect(res).toBe(true);
+    });
+
+    test('replaceCurrent - status, message and progress', () => {
+        const that = new SurveyManager('test', 'uri');
+        that.init('123');
+
+        res = that.replaceCurrent([{ id: 1 }], 1, 'Hello', [1, 2]);
+
+        expect(that.questions.length).toBe(1);
+        expect(that.questions[0].length).toBe(1);
+        expect(that.questions[0][0]).toMatchObject({ id: 1 });
+
+        expect(that.status).toBe(1);
+        expect(that.message).toBe('Hello');
+        expect(that.progress.toString()).toBe('1,2');
 
         expect(res).toBe(true);
     });
