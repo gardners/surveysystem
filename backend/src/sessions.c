@@ -1405,6 +1405,42 @@ int answer_get_value_raw(struct answer *a, char *out, size_t sz) {
 }
 
 /**
+ * Applies certain transformations to incoming answers of a special type before they are saved into a session
+ * #237
+ */
+int pre_add_answer_special_transformations(struct answer *an) {
+  int retVal = 0;
+  do {
+    if (!an || !an->uid) {
+      LOG_ERROR("Answer is null");
+    }
+
+    if (is_system_answer(an)) {
+      LOG_ERRORV("No special transformation allowed for system answer '%s'", an->uid);
+    }
+
+    // QTYPE_SHA1_HASH: replace answer->text with a hash of that value
+    if (an->type == QTYPE_SHA1_HASH) {
+
+      char hash[HASHSTRING_LENGTH];
+      if(sha1_string(an->text, hash)) {
+        LOG_ERRORV("sha1_string(answer->text) failed for answer '%s'", an->uid);
+      }
+
+      freez(an->text);
+      an->text = strdup(hash);
+
+      if (!an->text) {
+        LOG_ERRORV("strdup(hash) failed for answer '%s' (out of memory)", an->uid);
+      }
+
+    }
+
+  } while (0);
+  return retVal;
+}
+
+/**
  * Marks an answer as deleted, skips when answer was already flagged as deleted (#407, #13)
  * This function also mark system answers!
  * returns 1 if delete flag was set and 0 if deletion was skipped
@@ -1570,6 +1606,9 @@ int session_add_answer(struct session *ses, struct answer *a) {
     // #162 add/update stored timestamp,#358 set question type (for both, adding and deleting)
     a->stored = (long long)time(NULL);
     a->type = qn->type;
+    if (pre_add_answer_special_transformations(a)) {
+      LOG_ERRORV("pre-addanswer hook failed for answer '%s', session '%s'", a->uid, ses->session_id);
+    }
 
     // by default, append answer
     int index = ses->answer_count;
@@ -1585,7 +1624,7 @@ int session_add_answer(struct session *ses, struct answer *a) {
           undeleted = 1;
           LOG_INFOV("Question '%s' has been deleted in session '%s'.", a->uid, ses->session_id);
         } else {
-          LOG_ERRORV("Question '%s' has already been answered in session '%s'.  Delete old answer before adding a new one", a->uid, ses->session_id);
+          LOG_ERRORV("Question '%s' has already been answered in session '%s'. Delete old answer before adding a new one", a->uid, ses->session_id);
         }
     }
 
