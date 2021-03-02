@@ -82,7 +82,7 @@ backend/kcgi/*
 backend/surveycli
 backend/surveyfcgi
 backend/test_runner
-backend/test_serialisers
+backend/test_units
 
 # temp files and local files
 backend/*.local
