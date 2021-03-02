@@ -23,7 +23,7 @@ struct question {
   // the position of the answer data is flexible and depenends on the uid, multiple fields may be used
   // answers of this type might be overwritten multiple times
   // use in session header: uids start with '@' (i.e. '@user')
-#define QTYPE_META                1
+#define QTYPE_META                1 // internal sytem answer
   // Answer is an integer, bounded by min_value and max_value
 #define QTYPE_INT                 2
   // Answer is a fixed point value encoded as a 64-bit integer
@@ -51,7 +51,8 @@ struct question {
 #define QTYPE_DATETIME_SEQUENCE   21 // answer->text (comma separated): instruction an ascending sequence of DATETIME values (comma separated), labels are defined in q.choices (unit: seconds)
 #define QTYPE_DURATION24          22 // answer->value: instruction time period in seconds maximum 24 hours (86400 seconds), TODO enable min_value and max_value support, which would make this type redundant in favour of a more generic QTYPE_DURATION type.
 #define QTYPE_DIALOG_DATA_CRAWLER 23 // answer->text: instruction for a dialog to give consent to accessing external data requires two defined choices in the following order: [DENIED, GRANTED], (unit: id of the data crawler module)
-#define QTYPE_UUID                24
+#define QTYPE_SHA1_HASH           24 // submitted answer->text is converted and stored as sha1 hash
+#define QTYPE_UUID                25
   // Formatting and other flags
   int flags;
   // Format integer input as times for questions like
@@ -257,10 +258,8 @@ int delete_session(char *session_id);
 struct session *load_session(char *session_id);
 int save_session(struct session *s);
 int session_add_answer(struct session *s, struct answer *a);
-int session_delete_answer(struct session *s, struct answer *a,
-                          int deleteFollowingP);
-int session_delete_answers_by_question_uid(struct session *ses, char *uid,
-                                           int deleteFollowingP);
+int session_delete_answer(struct session *s, struct answer *a, int deleteFollowingP);
+int session_delete_answers_by_question_uid(struct session *ses, char *uid, int deleteFollowingP);
 int delete_session(char *session_id);
 void free_session(struct session *s);
 void free_question(struct question *q);
@@ -278,6 +277,9 @@ int release_my_session_locks(void);
 
 struct answer *session_get_answer(char *uid, struct session *ses);
 struct answer *session_get_header(char *uid, struct session *ses);
+int session_get_answer_index(char *uid, struct session *ses);
+
+struct question *session_get_question(char *uid, struct session *ses);
 
 // #332 next_question struct
 struct nextquestions *init_next_questions();
