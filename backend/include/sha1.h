@@ -45,4 +45,10 @@ int sha1_file(const char *filename, char *hash);
  */
 int sha1_string(char *src, char *hash);
 
+/**
+ * checks a given string against a given hash
+ * #268, #237
+ */
+int validate_string_sha1(char *src, char *hash);
+
 #endif

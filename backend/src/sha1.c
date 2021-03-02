@@ -442,6 +442,46 @@ int sha1_string(char *src, char *hash) {
   return retVal;
 }
 
+/**
+ * validate a string against a given sha1 hash
+ * #268, #237
+ */
+int validate_string_sha1(char *src, char *hash) {
+  int retVal = 0;
+
+  do {
+    if (!src) {
+      LOG_ERROR("input string src is NULL");
+      retVal = -1;
+      break;
+    }
+    if (!hash) {
+      LOG_ERROR("input hash string is NULL");
+      retVal = -1;
+      break;
+    }
+    if (strlen(hash) != HASHSTRING_LENGTH) {
+      LOG_ERROR("input hash string is invlaid (length)");
+      retVal = -1;
+      break;
+    }
+
+    char new_hash[HASHSTRING_LENGTH];
+    if (sha1_string(src, new_hash)) {
+      LOG_ERROR("generating sha1 hash from input string src failed");
+      retVal = -1;
+      break;
+    }
+
+    if (strncmp(hash, new_hash, HASHSTRING_LENGTH)) {
+      retVal = -1;
+      break;
+    }
+  } while (0);
+
+  return retVal;
+}
+
 /* self-test */
 
 #if SHA1TEST
