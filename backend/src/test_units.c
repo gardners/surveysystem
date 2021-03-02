@@ -467,7 +467,7 @@ int main(int argc, char **argv) {
       assert_answers_compare(in, out);  // answers are freed in func
     }
 
-    SECTION("sha1 tests, #268, #237");
+    SECTION("sha1 tests: sha1_string(), #268, #237");
 
     {
       char hash[HASHSTRING_LENGTH];
@@ -480,6 +480,12 @@ int main(int argc, char **argv) {
       ret = strcmp(hash, "a9993e364706816aba3e25717850c26c9cd0d89d");
       ASSERT(ret == 0, "sha1_string('abc'): '%s' == '%s'", hash, "a9993e364706816aba3e25717850c26c9cd0d89d");
 
+      //stolen from sha1.c:main()
+      ret = sha1_string("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", hash);
+      ASSERT(ret == 0, "sha1_string('abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq') passes", "");
+      ret = strcmp(hash, "84983e441c3bd26ebaae4aa1f95129e5e54670f1");
+      ASSERT(ret == 0, "sha1_string('abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq'): '%s' == '%s'", hash, "84983e441c3bd26ebaae4aa1f95129e5e54670f1");
+
       ret = sha1_string("", hash);
       ASSERT(ret != 0, "sha1_string('', hash) returns error", "");
 
@@ -488,6 +494,37 @@ int main(int argc, char **argv) {
 
       ret = sha1_string("abc", NULL);
       ASSERT(ret != 0, "sha1_string('abc', NULL) returns error", "");
+
+      LOG_UNMUTE();
+    }
+
+    SECTION("sha1 tests: validate_string_sha1(), #237");
+
+    {
+      /* note: following tests rely on thest sha1_string('abc') */
+      int ret;
+      LOG_MUTE(); // supress error printing in sha1.c
+
+      ret = validate_string_sha1("abc", "a9993e364706816aba3e25717850c26c9cd0d89d");
+      ASSERT(ret == 0, "sha1_string('%s', '%s') is valid", "abc", "a9993e364706816aba3e25717850c26c9cd0d89d");
+
+      ret = validate_string_sha1("abcd", "a9993e364706816aba3e25717850c26c9cd0d89d");
+      ASSERT(ret != 0, "sha1_string('%s', '%s') is invalid (wrong src)", "abcd", "a9993e364706816aba3e25717850c26c9cd0d89d");
+
+      ret = validate_string_sha1("abc", "99993e364706816aba3e25717850c26c9cd0d89d");
+      ASSERT(ret != 0, "sha1_string('%s', '%s') is invalid (wrong shash)", "abcd", "99993e364706816aba3e25717850c26c9cd0d89d");
+
+      ret = validate_string_sha1("abc", "99993e364706816aba3");
+      ASSERT(ret != 0, "sha1_string('%s', '%s') is invalid (invalid hash)", "abcd", "d9");
+
+      ret = validate_string_sha1(NULL, "a9993e364706816aba3e25717850c26c9cd0d89d");
+      ASSERT(ret != 0, "sha1_string(NULL, '%s') is invalid", "a9993e364706816aba3e25717850c26c9cd0d89d");
+
+      ret = validate_string_sha1("abc", NULL);
+      ASSERT(ret != 0, "sha1_string('%s', NULL) is invalid", "abc");
+
+      ret = validate_string_sha1("", "");
+      ASSERT(ret != 0, "sha1_string('', '') is invalid", "");
 
       LOG_UNMUTE();
     }
