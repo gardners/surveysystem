@@ -5,6 +5,7 @@
 
 #define HASH_LENGTH 20
 #define BLOCK_LENGTH 64
+#define HASHSTRING_LENGTH 40 // 2 * HASH_LENGTH
 
 typedef struct sha1nfo {
   uint32_t buffer[BLOCK_LENGTH / 4];
@@ -37,5 +38,11 @@ void sha1_initHmac(sha1nfo *s, const uint8_t *key, int keyLength);
 uint8_t *sha1_resultHmac(sha1nfo *s);
 
 int sha1_file(const char *filename, char *hash);
+
+/**
+ * generates sha1 hash string from src, returns an error if char *src is empty or NULL
+ * #268, #237
+ */
+int sha1_string(char *src, char *hash);
 
 #endif
