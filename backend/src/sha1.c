@@ -3,10 +3,10 @@
  */
 // gcc -Wall -DSHA1TEST -o sha1test sha1.c && ./sha1test
 
-#include "code_instrumentation.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include "code_instrumentation.h"
 
 #ifdef __BIG_ENDIAN__
 #define SHA_BIG_ENDIAN
@@ -353,25 +353,31 @@ uint8_t *sha1_resultHmac(sha1nfo *s) {
 
 int sha1_file(const char *filename, char *hash) {
   int retVal = 0;
+
   do {
-    if (!filename)
+    if (!filename) {
       LOG_ERROR("filename is NULL", "");
-    if (!hash)
+    }
+    if (!hash) {
       LOG_ERROR("hash is NULL", "");
+    }
 
     FILE *f = fopen(filename, "r");
-    if (!f)
+    if (!f) {
       LOG_ERROR("Could not open file for hashing", filename);
+    }
     char buffer[8192];
     int count;
     sha1nfo s;
     sha1_init(&s);
     do {
       count = fread(buffer, 1, 8192, f);
-      if (count < 0)
+      if (count < 0) {
         LOG_ERROR("Error hashing file", filename);
-      if (count > 0)
+      }
+      if (count > 0) {
         sha1_write(&s, buffer, count);
+      }
     } while (count > 0);
 
     fclose(f);
@@ -380,7 +386,7 @@ int sha1_file(const char *filename, char *hash) {
       break;
 
     unsigned char *bytes = sha1_result(&s);
-    snprintf(hash, HASH_LENGTH * 2 + 1,
+    snprintf(hash, HASHSTRING_LENGTH + 1,
              "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%"
              "02x%02x%02x%02x",
              bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5],
@@ -389,6 +395,90 @@ int sha1_file(const char *filename, char *hash) {
              bytes[18], bytes[19]);
 
   } while (0);
+
+  return retVal;
+}
+
+/**
+ * generate sha1 hash from string, return
+ * #268, #237
+ */
+int sha1_string(char *src, char *hash) {
+  int retVal = 0;
+
+  do {
+    if (!src) {
+      LOG_ERROR("input string src is NULL");
+      retVal = -1;
+      break;
+    }
+    if (!hash) {
+      LOG_ERROR("output hash string is NULL");
+      retVal = -1;
+      break;
+    }
+
+    size_t src_len = strlen(src);
+    if (!src_len) {
+      LOG_ERROR("input string src is empty");
+      retVal = -1;
+      break;
+    }
+
+    sha1nfo s;
+    sha1_init(&s);
+    sha1_write(&s, src, src_len);
+    unsigned char *bytes = sha1_result(&s);
+
+    snprintf(hash, HASHSTRING_LENGTH + 1,
+             "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%"
+             "02x%02x%02x%02x",
+             bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5],
+             bytes[6], bytes[7], bytes[8], bytes[9], bytes[10], bytes[11],
+             bytes[12], bytes[13], bytes[14], bytes[15], bytes[16], bytes[17],
+             bytes[18], bytes[19]);
+  } while (0);
+
+  return retVal;
+}
+
+/**
+ * validate a string against a given sha1 hash
+ * #268, #237
+ */
+int validate_string_sha1(char *src, char *hash) {
+  int retVal = 0;
+
+  do {
+    if (!src) {
+      LOG_ERROR("input string src is NULL");
+      retVal = -1;
+      break;
+    }
+    if (!hash) {
+      LOG_ERROR("input hash string is NULL");
+      retVal = -1;
+      break;
+    }
+    if (strlen(hash) != HASHSTRING_LENGTH) {
+      LOG_ERROR("input hash string is invlaid (length)");
+      retVal = -1;
+      break;
+    }
+
+    char new_hash[HASHSTRING_LENGTH];
+    if (sha1_string(src, new_hash)) {
+      LOG_ERROR("generating sha1 hash from input string src failed");
+      retVal = -1;
+      break;
+    }
+
+    if (strncmp(hash, new_hash, HASHSTRING_LENGTH)) {
+      retVal = -1;
+      break;
+    }
+  } while (0);
+
   return retVal;
 }
 

@@ -1253,6 +1253,27 @@ int save_session(struct session *s) {
 }
 
 /**
+ * query a session for a question uid
+ */
+struct question *session_get_question(char *uid, struct session *ses) {
+  if (!uid) {
+    LOG_WARNV("session_get_question(): search uid is null", 0);
+    return NULL;
+  }
+  if (!ses) {
+    LOG_WARNV("session_get_question(): session is null", 0);
+    return NULL;
+  }
+
+  for (int i = 0; i < ses->question_count; i++) {
+    if (!strcmp(ses->questions[i]->uid, uid)) {
+      return ses->questions[i];
+    }
+  }
+  return NULL;
+}
+
+/**
  * query a session for an answer uid (excluding header answers)
  */
 struct answer *session_get_answer(char *uid, struct session *ses) {
@@ -1381,6 +1402,42 @@ int answer_get_value_raw(struct answer *a, char *out, size_t sz) {
     } while (0);
 
     return retVal;
+}
+
+/**
+ * Applies certain transformations to incoming answers of a special type before they are saved into a session
+ * #237
+ */
+int pre_add_answer_special_transformations(struct answer *an) {
+  int retVal = 0;
+  do {
+    if (!an || !an->uid) {
+      LOG_ERROR("Answer is null");
+    }
+
+    if (is_system_answer(an)) {
+      LOG_ERRORV("No special transformation allowed for system answer '%s'", an->uid);
+    }
+
+    // QTYPE_SHA1_HASH: replace answer->text with a hash of that value
+    if (an->type == QTYPE_SHA1_HASH) {
+
+      char hash[HASHSTRING_LENGTH];
+      if(sha1_string(an->text, hash)) {
+        LOG_ERRORV("sha1_string(answer->text) failed for answer '%s'", an->uid);
+      }
+
+      freez(an->text);
+      an->text = strdup(hash);
+
+      if (!an->text) {
+        LOG_ERRORV("strdup(hash) failed for answer '%s' (out of memory)", an->uid);
+      }
+
+    }
+
+  } while (0);
+  return retVal;
 }
 
 /**
@@ -1540,62 +1597,51 @@ int session_add_answer(struct session *ses, struct answer *a) {
       LOG_ERRORV("Add answer: Invalid request to remove private SYSTEM answer '%s' from session '%s'", a->uid, ses->session_id);
     }
 
-    // #162 add/update stored timestamp
-    a->stored = (long long)time(NULL);
-
     // Don't allow answers to questions that don't exist
-    int question_number = 0;
-    for (question_number = 0; question_number < ses->question_count; question_number++) {
-      if (!strcmp(ses->questions[question_number]->uid, a->uid)) {
-        break;
-      }
-    }
-
-    if (question_number == ses->question_count) {
+    struct question *qn = session_get_question(a->uid, ses);
+    if (!qn) {
       LOG_ERRORV("There is no such question '%s'", a->uid);
     }
 
-    // #358 set question type (for both, adding and deleting)
-    a->type = ses->questions[question_number]->type;
+    // #162 add/update stored timestamp,#358 set question type (for both, adding and deleting)
+    a->stored = (long long)time(NULL);
+    a->type = qn->type;
+    if (pre_add_answer_special_transformations(a)) {
+      LOG_ERRORV("pre-addanswer hook failed for answer '%s', session '%s'", a->uid, ses->session_id);
+    }
+
+    // by default, append answer
+    int index = ses->answer_count;
 
     // Don't allow multiple answers to the same question
-    for (int i = 0; i < ses->answer_count; i++) {
-      if (!strcmp(ses->answers[i]->uid, a->uid)) {
-
-        if (ses->answers[i]->flags & ANSWER_DELETED) {
-          // Answer exists, but was deleted, so we can just update the values
-          // by replacing the answer structure. #186
-          free(ses->answers[i]);
-          ses->answers[i] = copy_answer(a);
+    // Answer exists, but was deleted, so we can just update the values
+    // by replacing the answer structure. #186
+    int exists = session_get_answer_index(a->uid, ses);
+    if (exists >= 0) {
+        if (ses->answers[exists]->flags & ANSWER_DELETED) {
+          free(ses->answers[exists]);
+          index = exists;
           undeleted = 1;
+          LOG_INFOV("Question '%s' has been deleted in session '%s'.", a->uid, ses->session_id);
         } else {
-          LOG_ERRORV("Question '%s' has already been answered in session '%s'. "
-                     "Delete old answer before adding a new one",
-                     a->uid, ses->session_id);
+          LOG_ERRORV("Question '%s' has already been answered in session '%s'. Delete old answer before adding a new one", a->uid, ses->session_id);
         }
-      }
-    } // endfor
-
-    if (retVal) {
-      break;
     }
 
     if (ses->answer_count >= MAX_ANSWERS) {
       LOG_ERRORV("Too many answers in session '%s' (increase MAX_ANSWERS?)", ses->session_id);
     }
 
+    ses->answers[index] = copy_answer(a);
+
     // #186 Don't append answer if we are undeleting it.
     if (!undeleted) {
-      ses->answers[ses->answer_count] = copy_answer(a);
       ses->answer_count++;
     }
 
     // #13 update count given answers, system answers are already excluded
     ses->given_answer_count++;
-
-    char serialised_answer[65536] = "(could not serialise)";
-    serialise_answer(a, serialised_answer, 65536);
-    LOG_INFOV("Added to session '%s' answer '%s'.", ses->session_id,serialised_answer);
+    LOG_INFOV("Added to session '%s' answer '%s'.", ses->session_id, a->uid);
 
     // #379 set session state to 'open' get_next_questions might later progrress this to 'finished'
     ses->state = SESSION_OPEN;

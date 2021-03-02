@@ -50,7 +50,7 @@ def nextquestion(questions, answers, logFilename=None):
 
 ```
 
-Controllers who don't support progress calculation may use negative values to signal this to the frontend
+Controllers who don't support progress calculation may use negative values `[-1, -1]` to signal this to the frontend.
 
 ## Template tags (Frontend)
 

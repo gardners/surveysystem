@@ -51,7 +51,6 @@ corresponding frontend module:
 
 * `front/src/Answer.js`
 
-
 Format of an answer row:
 
 ```csv
