@@ -53,7 +53,7 @@ COREOBJS=	$(SRCDIR)/errorlog.o \
 		$(SRCDIR)/utils.o
 
 TESTOBJS =	$(COREOBJS) \
-		$(SRCDIR)/test_serialisers.o
+		$(SRCDIR)/test_units.o
 
 CLIOBJS=	$(COREOBJS) \
 		$(SRCDIR)/main.o
@@ -69,7 +69,7 @@ COPT=	-Wall -O3 -g -Iinclude `$(PYCONFIG) --embed --includes` -Ikcgi
 LOPT=	`$(PYCONFIG) --libs --embed --ldflags`
 
 
-all:	test_serialisers surveycli surveyfcgi test_runner
+all:	test_units surveycli surveyfcgi test_runner
 
 test_runner:	Makefile $(SRCDIR)/test_runner.o $(COREOBJS)
 	$(CC) $(COPT) -o test_runner $(SRCDIR)/test_runner.o $(COREOBJS) $(LOPT)
@@ -89,7 +89,7 @@ $(SRCDIR)/question_types.c:	$(INCDIR)/survey.h $(HEADERS)
 	grep '#define QTYPE_' $(INCDIR)/survey.h | cut -f2- -d_ | sort -k2n -t' ' | awk -F' ' '{ printf("  \"%s\",\n",$$1); }' >>$@
 	echo "  \"end of list\"};" >> $@
 
-test_serialisers:	$(TESTOBJS)
+test_units:	$(TESTOBJS)
 	$(CC) $(COPT) -o $@ $^ $(LOPT)
 
 surveycli:	$(CLIOBJS)
