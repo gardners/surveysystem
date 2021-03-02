@@ -1360,6 +1360,33 @@ static void fcgi_analyse(struct kreq *req) {
   return;
 }
 
+/**
+ * Provide default value if question not previously answered,
+ * else provide the most recent deleted answer for this question. #186
+ * #384, refactor, #237 move out in separate unit
+ */
+void response_nextquestion_add_default_value(struct session *ses, struct question *q , struct kjsonreq *resp) {
+
+    //# 237  previously deleted sha answers: don't supply default value based on previous answer
+    if(q->type == QTYPE_SHA1_HASH) {
+      kjson_putstringp(resp, "default_value", q->default_value);
+      return;
+    }
+
+    struct answer *exists = session_get_answer(q->uid, ses);
+    if (exists && (exists->flags & ANSWER_DELETED)) {
+      char default_value[8192] = { 0 };
+      if (answer_get_value_raw(exists, default_value, 8192)) {
+        LOG_WARNV("Failed to fetch default value from previously deleted answer to question '%s'", q->uid);
+        default_value[0] = 0;
+      }
+      kjson_putstringp(resp, "default_value", default_value);
+      return;
+    }
+
+    kjson_putstringp(resp, "default_value", q->default_value);
+}
+
 void response_nextquestion_add_choices(struct question *q , struct kjsonreq *resp) {
   // open "choices"
   kjson_arrayp_open(resp, "choices");
@@ -1472,18 +1499,7 @@ int response_nextquestion(struct kreq *req, struct session *ses, struct nextques
 
       // Provide default value if question not previously answered,
       // else provide the most recent deleted answer for this question. #186
-      // #384, refactor
-      struct answer *exists = session_get_answer(nq->next_questions[i]->uid, ses);
-      if (exists && (exists->flags & ANSWER_DELETED)) {
-        char default_value[8192] = { 0 };
-        if (answer_get_value_raw(exists, default_value, 8192)) {
-          LOG_WARNV("Failed to fetch default value from previously deleted answer to question '%s'", nq->next_questions[i]->uid);
-          default_value[0] = 0;
-        }
-        kjson_putstringp(&resp, "default_value", default_value);
-      } else {
-        kjson_putstringp(&resp, "default_value", nq->next_questions[i]->default_value);
-      }
+      response_nextquestion_add_default_value(ses, nq->next_questions[i], &resp);
 
       // #341 add min/max values, man kjson_putintp
       kjson_putintp(&resp, "min_value", (int64_t) nq->next_questions[i]->min_value);
