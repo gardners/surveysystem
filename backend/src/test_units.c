@@ -7,6 +7,7 @@
 #include "errorlog.h"
 #include "serialisers.h"
 #include "survey.h"
+#include "sha1.h"
 
 struct answer* create_answer(char *uid, int type, char *text, char *unit) {
   struct answer *ans = calloc(sizeof(struct answer), 1);
@@ -464,6 +465,31 @@ int main(int argc, char **argv) {
       ASSERT(ret == 0, "answer '%s' deserialised", uid);
 
       assert_answers_compare(in, out);  // answers are freed in func
+    }
+
+    SECTION("sha1 tests, #268, #237");
+
+    {
+      char hash[HASHSTRING_LENGTH];
+      int ret;
+      LOG_MUTE(); // supress error printing in sha1.c
+
+      // test stolen from sha1.c:main()
+      ret = sha1_string("abc", hash);
+      ASSERT(ret == 0, "sha1_string('abc') passes", "");
+      ret = strcmp(hash, "a9993e364706816aba3e25717850c26c9cd0d89d");
+      ASSERT(ret == 0, "sha1_string('abc'): '%s' == '%s'", hash, "a9993e364706816aba3e25717850c26c9cd0d89d");
+
+      ret = sha1_string("", hash);
+      ASSERT(ret != 0, "sha1_string('', hash) returns error", "");
+
+      ret = sha1_string(NULL, hash);
+      ASSERT(ret != 0, "sha1_string(NULL, hash) returns error", "");
+
+      ret = sha1_string("abc", NULL);
+      ASSERT(ret != 0, "sha1_string('abc', NULL) returns error", "");
+
+      LOG_UNMUTE();
     }
 
   } while (0);
