@@ -480,7 +480,7 @@ int main(int argc, char **argv) {
       ret = strcmp(hash, "a9993e364706816aba3e25717850c26c9cd0d89d");
       ASSERT(ret == 0, "sha1_string('abc'): '%s' == '%s'", hash, "a9993e364706816aba3e25717850c26c9cd0d89d");
 
-      //stolen from sha1.c:main()
+      // stolen from sha1.c:main()
       ret = sha1_string("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", hash);
       ASSERT(ret == 0, "sha1_string('abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq') passes", "");
       ret = strcmp(hash, "84983e441c3bd26ebaae4aa1f95129e5e54670f1");
