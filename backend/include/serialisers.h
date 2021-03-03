@@ -19,4 +19,5 @@ int escape_string(char *in, char *out, int max_len);
 int dump_question(FILE *f, struct question *q);
 int dump_answer(FILE *f, struct answer *a);
 
+int serialiser_count_columns(char *line, size_t max_len);
 #endif

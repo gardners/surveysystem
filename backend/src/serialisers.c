@@ -64,6 +64,40 @@ int escape_string(char *in, char *out, int max_len) {
   return out_len;
 }
 
+int serialiser_count_columns(char *line, size_t max_len) {
+  int retVal = 0;
+  int count = 1;
+
+  do {
+    if (!line) {
+      LOG_ERROR("line is NULL");
+    }
+
+    char prev = ' ';
+    for(int i = 0; line[i] != '\0'; i++) {
+      if (i > max_len) {
+        LOG_ERROR("line max_len exceeded with out a null terminator");
+        break;
+      }
+
+      if(prev != '\\' && line[i] == '\n') {
+        LOG_ERROR("multi line string: not allowed. line break detected");
+        break;
+      }
+
+      if(prev != '\\' && line[i] == ':') {
+          count++;
+      }
+      prev = line[i];
+    }
+  } while (0);
+
+  if (!retVal) {
+    retVal = count;
+  }
+  return retVal;
+}
+
 /*
   Write out an integer in a format that can be embedded in a CSV file
 */
@@ -596,11 +630,19 @@ int serialise_answer(struct answer *a, char *out, int max_len) {
   this function and serialise_answer() must be matched
   in the order and list of fields that they process.
  */
-int deserialise_answer(char *in, enum answer_visibility visibility,
-                       struct answer *a) {
+int deserialise_answer(char *in, enum answer_visibility visibility, struct answer *a) {
   int retVal = 0;
 
   do {
+    // #413, add pre-validation -based on visiblity and columns
+    int cols = serialiser_count_columns(in, 65536);
+    if (cols < 0) {
+      LOG_ERROR("invalid answer line");
+    }
+    if (cols != visibility) {
+      LOG_ERRORV("invalid column count in answer line: %d != %d", cols, visibility);
+    }
+
     int len = 0;
     DESERIALISE_BEGIN(out, len, max_len);
 
