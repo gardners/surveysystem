@@ -61,8 +61,10 @@ do {\
     test_message(FORMAT_PASS, message, __VA_ARGS__);\
   } else {\
     test_message(FORMAT_FAIL, message, __VA_ARGS__);\
+    fprintf(stderr, "\e[37m"); dump_errors(stdout); fprintf(stderr, "\e[0m"); \
   }\
   assert(expr);\
+  clear_errors(); \
 } while (0)
 
 #define ASSERT_STR_EQ(left, right, message)\
@@ -417,6 +419,67 @@ int main(int argc, char **argv) {
       ASSERT_STR_EQ(str, "\\t\\r\\n\\:(9000)", "escape_string()");
     }
 
+    SECTION("serialiser_count_columns(), #413");
+
+    {
+      LOG_UNMUTE();
+      int ret;
+
+      ret = serialiser_count_columns("", 1024);
+      ASSERT(ret == 1, "serialiser_count_columns('%s')", "");
+
+      ret = serialiser_count_columns(NULL, 1024);
+      ASSERT(ret == -1, "error: serialiser_count_columns(NULL)", "");
+
+      ret = serialiser_count_columns("hello", 1024);
+      ASSERT(ret == 1, "serialiser_count_columns('%s')", "hello");
+
+      ret = serialiser_count_columns("hello", 2);
+      ASSERT(ret == -1, "error: serialiser_count_columns('%s') out of bounds", "hello");
+
+      ret = serialiser_count_columns(":", 1024);
+      ASSERT(ret == 2, "serialiser_count_columns('%s')", ":");
+
+      ret = serialiser_count_columns("\\:", 1024);
+      ASSERT(ret == 1, "escape: serialiser_count_columns('%s')", "\\:");
+
+      ret = serialiser_count_columns("\\\\:", 1024);
+      ASSERT(ret == 1, "double escape: serialiser_count_columns('%s')", "\\\\:");
+
+      ret = serialiser_count_columns(":\\:", 1024);
+      ASSERT(ret == 2, "escape inner: serialiser_count_columns('%s')", ":\\:");
+
+      ret = serialiser_count_columns("::1", 1024);
+      ASSERT(ret == 3, "serialiser_count_columns('%s')", "::1");
+
+      ret = serialiser_count_columns("::", 1024);
+      ASSERT(ret == 3, "serialiser_count_columns('%s')", ":::");
+
+      ret = serialiser_count_columns("1:1:1", 1024);
+      ASSERT(ret == 3, "serialiser_count_columns('%s')", "1:1:1");
+
+      ret = serialiser_count_columns("1:1:1", 2);
+      ASSERT(ret == -1, "error serialiser_count_columns('%s') out of bounds", "1:1:1");
+
+      ret = serialiser_count_columns("\n:1:1:1", 1024);
+      ASSERT(ret == -1, "error starting endline serialiser_count_columns('%s') %d", "\\n:1:1:1", ret);
+
+      ret = serialiser_count_columns(":1:1:1\n", 1024);
+      ASSERT(ret == -1, "error ending endline serialiser_count_columns('%s') %d", ":1:1:1\\n", ret);
+
+      ret = serialiser_count_columns("1:1:1\n1:1:1", 1024);
+      ASSERT(ret == -1, "error inner endline serialiser_count_columns('%s') %d", "1:1:1\\n1:1:1", ret);
+
+      ret = serialiser_count_columns("1:1:1\\n1:1:1", 1024);
+      ASSERT(ret == 5, "escaped inner endline serialiser_count_columns('%s') %d", "1:1:1\\\\n1:1:1", ret);
+
+      ret = serialiser_count_columns("uid:META:\\:\\n\r\b\tutext:0:0:0:0:0:0:0:unit:0:0", 1024);
+      ASSERT(ret == ANSWER_FIELDS_PROTECTED, "anwswer ANSWER_FIELDS_PROTECTED with escapes passing serialiser_count_columns('%s') %d", "uid:META:\\:\\n\\r\\b\\tutext:0:0:0:0:0:0:0:unit:0:0", ret);
+
+      ret = serialiser_count_columns("uid:\\:\\n\r\b\tutext:0:0:0:0:0:0:0:", 1024);
+      ASSERT(ret == ANSWER_FIELDS_PUBLIC, "anwswer ANSWER_FIELDS_PUBLIC with escapes passing serialiser_count_columns('%s') %d", "uid:META:\\:\\n\\r\\b\\tutext:0:0:0:0:0:0:0:unit:0:0", ret);
+    }
+
     SECTION("answer serialisation tests, #392");
 
     {
@@ -531,5 +594,6 @@ int main(int argc, char **argv) {
 
   } while (0);
 
+  DEBUG("\n-------------\nTESTS FINISHED\n-------------\n", "");
   return retVal;
 }
