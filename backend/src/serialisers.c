@@ -532,7 +532,7 @@ int dump_answer(FILE *f, struct answer *a) {
       "  dst_delta: %d\n"
       "  unit: \"%s\"\n"
       "  flags: %d\n"
-      "  stored=: %lld\n"
+      "  stored: %lld\n"
       "}\n",
 
       (a->uid) ? a->uid : "(null)",
@@ -587,92 +587,159 @@ int deserialise_question(char *in, struct question *q) {
   return retVal;
 }
 
-/*
-  Similar to serialise_question(), but for answer structures.
+/**
+* Top-level function for serialising a answer that has been passed in
+* in a struct answer.  It uses the various macros defined above to
+* make a very clear and succinct description of what is required.
+*
+* #72, add unit field
+* #162, add storage timestamp
+* #186, add "answer deleted" flag
+* #274, add visibilit scope
+* #358, add question type
+* #413, add pre-validation (column count)
  */
-int serialise_answer(struct answer *a, char *out, int max_len) {
+int serialise_answer(struct answer *a, enum answer_scope scope, char *out, int max_len) {
   int retVal = 0;
   do {
 
     int len = 0;
-    SERIALISE_BEGIN(out, len, max_len);
 
-    SERIALISE_STRING(a->uid);
-    // #358, add question type
+    switch (scope) {
+      case ANSWER_SCOPE_PUBLIC:
+        SERIALISE_BEGIN(out, len, max_len);
+        SERIALISE_STRING(a->uid);
+        SERIALISE_STRING(a->text);
+        SERIALISE_LONGLONG(a->value);
+        SERIALISE_LONGLONG(a->lat);
+        SERIALISE_LONGLONG(a->lon);
+        SERIALISE_LONGLONG(a->time_begin);
+        SERIALISE_LONGLONG(a->time_end);
+        SERIALISE_INT(a->time_zone_delta);
+        SERIALISE_INT(a->dst_delta);
+        SERIALISE_STRING(a->unit);
+        SERIALISE_COMPLETE(out, len, max_len);
+        break;
 
-    SERIALISE_THING(a->type, serialise_question_type);
-    SERIALISE_STRING(a->text);
-    SERIALISE_LONGLONG(a->value);
-    SERIALISE_LONGLONG(a->lat);
-    SERIALISE_LONGLONG(a->lon);
-    SERIALISE_LONGLONG(a->time_begin);
-    SERIALISE_LONGLONG(a->time_end);
-    SERIALISE_INT(a->time_zone_delta);
-    SERIALISE_INT(a->dst_delta);
-    // #72 unit field
-    SERIALISE_STRING(a->unit);
-    // #186 - Add "answer deleted" flag
-    SERIALISE_INT(a->flags);
-    // #162 storage timestamp
-    SERIALISE_LONGLONG(a->stored);
+      case ANSWER_SCOPE_CHECKSUM:
+        SERIALISE_BEGIN(out, len, max_len);
+        SERIALISE_STRING(a->uid);
+        SERIALISE_THING(a->type, serialise_question_type);
+        SERIALISE_STRING(a->text);
+        SERIALISE_LONGLONG(a->value);
+        SERIALISE_LONGLONG(a->lat);
+        SERIALISE_LONGLONG(a->lon);
+        SERIALISE_LONGLONG(a->time_begin);
+        SERIALISE_LONGLONG(a->time_end);
+        SERIALISE_INT(a->time_zone_delta);
+        SERIALISE_INT(a->dst_delta);
+        SERIALISE_STRING(a->unit);
+        SERIALISE_INT(a->flags);
+        SERIALISE_COMPLETE(out, len, max_len);
+      break;
 
-    // Trim terminal separator character
-    SERIALISE_COMPLETE(out, len, max_len);
+      default:
+        SERIALISE_BEGIN(out, len, max_len);
+        SERIALISE_STRING(a->uid);
+        SERIALISE_THING(a->type, serialise_question_type);
+        SERIALISE_STRING(a->text);
+        SERIALISE_LONGLONG(a->value);
+        SERIALISE_LONGLONG(a->lat);
+        SERIALISE_LONGLONG(a->lon);
+        SERIALISE_LONGLONG(a->time_begin);
+        SERIALISE_LONGLONG(a->time_end);
+        SERIALISE_INT(a->time_zone_delta);
+        SERIALISE_INT(a->dst_delta);
+        SERIALISE_STRING(a->unit);
+        SERIALISE_INT(a->flags);
+        SERIALISE_LONGLONG(a->stored);
+        SERIALISE_COMPLETE(out, len, max_len);
+    }
+
   } while (0);
 
   return retVal;
 }
 
-/*
-  The top-level function for converting a CSV string
-  representation of an answer structure back into a live
-  structure.  As with {de,}serialise_question(),
-  this function and serialise_answer() must be matched
-  in the order and list of fields that they process.
+/**
+* The top-level function for converting a CSV string
+* representation of an answer structure back into a live
+* structure.  As with {de,}serialise_question(),
+* this function and serialise_answer() must be matched
+* in the order and list of fields that they process.
+*
+* #72, add unit field
+* #162, add storage timestamp
+* #186, add "answer deleted" flag
+* #274, add visibilit scope
+* #358, add question type
+* #413, add pre-validation (column count)
  */
-int deserialise_answer(char *in, enum answer_visibility visibility, struct answer *a) {
+int deserialise_answer(char *in, enum answer_scope scope, struct answer *a) {
   int retVal = 0;
 
   do {
-    // #413, add pre-validation -based on visiblity and columns
+    int len = 0;
+
     int cols = serialiser_count_columns(in, 65536);
     if (cols < 0) {
       LOG_ERROR("invalid answer line");
     }
-    if (cols != visibility) {
-      LOG_ERRORV("invalid column count in answer line: %d != %d", cols, visibility);
+    if (cols != scope) {
+      LOG_ERRORV("invalid column count in answer line: %d != %d", cols, scope);
     }
 
-    int len = 0;
-    DESERIALISE_BEGIN(out, len, max_len);
+    switch (scope) {
+      case ANSWER_SCOPE_PUBLIC:
+        DESERIALISE_BEGIN(out, len, max_len);
+        DESERIALISE_STRING(a->uid);
+        DESERIALISE_STRING(a->text);
+        DESERIALISE_LONGLONG(a->value);
+        DESERIALISE_LONGLONG(a->lat);
+        DESERIALISE_LONGLONG(a->lon);
+        DESERIALISE_LONGLONG(a->time_begin);
+        DESERIALISE_LONGLONG(a->time_end);
+        DESERIALISE_INT(a->time_zone_delta);
+        DESERIALISE_INT(a->dst_delta);
+        DESERIALISE_STRING(a->unit);
+        DESERIALISE_COMPLETE(out, len, max_len);
+        break;
 
-    DESERIALISE_STRING(a->uid);
+      case ANSWER_SCOPE_CHECKSUM:
+        DESERIALISE_BEGIN(out, len, max_len);
+        DESERIALISE_STRING(a->uid);
+        DESERIALISE_THING(a->type, deserialise_question_type);
+        DESERIALISE_STRING(a->text);
+        DESERIALISE_LONGLONG(a->value);
+        DESERIALISE_LONGLONG(a->lat);
+        DESERIALISE_LONGLONG(a->lon);
+        DESERIALISE_LONGLONG(a->time_begin);
+        DESERIALISE_LONGLONG(a->time_end);
+        DESERIALISE_INT(a->time_zone_delta);
+        DESERIALISE_INT(a->dst_delta);
+        DESERIALISE_STRING(a->unit);
+        DESERIALISE_INT(a->flags);
+        DESERIALISE_COMPLETE(out, len, max_len);
+        break;
 
-    // #358, add question type
-    if (visibility > ANSWER_FIELDS_PUBLIC) {
-      DESERIALISE_THING(a->type, deserialise_question_type);
+      default:
+        DESERIALISE_BEGIN(out, len, max_len);
+        DESERIALISE_STRING(a->uid);
+        DESERIALISE_THING(a->type, deserialise_question_type);
+        DESERIALISE_STRING(a->text);
+        DESERIALISE_LONGLONG(a->value);
+        DESERIALISE_LONGLONG(a->lat);
+        DESERIALISE_LONGLONG(a->lon);
+        DESERIALISE_LONGLONG(a->time_begin);
+        DESERIALISE_LONGLONG(a->time_end);
+        DESERIALISE_INT(a->time_zone_delta);
+        DESERIALISE_INT(a->dst_delta);
+        DESERIALISE_STRING(a->unit);
+        DESERIALISE_INT(a->flags);
+        DESERIALISE_LONGLONG(a->stored);
+        DESERIALISE_COMPLETE(out, len, max_len);
     }
 
-    DESERIALISE_STRING(a->text);
-    DESERIALISE_LONGLONG(a->value);
-    DESERIALISE_LONGLONG(a->lat);
-    DESERIALISE_LONGLONG(a->lon);
-    DESERIALISE_LONGLONG(a->time_begin);
-    DESERIALISE_LONGLONG(a->time_end);
-    DESERIALISE_INT(a->time_zone_delta);
-    DESERIALISE_INT(a->dst_delta);
-    // #72 unit field
-    DESERIALISE_STRING(a->unit);
-
-    if (visibility > ANSWER_FIELDS_PUBLIC) {
-      // #186 add "answer deleted" flag
-      DESERIALISE_INT(a->flags);
-      // #162 storage timestamp
-      DESERIALISE_LONGLONG(a->stored);
-    }
-
-    // Check that we are at the end of the input string
-    DESERIALISE_COMPLETE(out, len, max_len);
   } while (0);
 
   return retVal;
