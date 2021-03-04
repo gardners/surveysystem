@@ -595,7 +595,7 @@ int deserialise_question(char *in, struct question *q) {
 * #72, add unit field
 * #162, add storage timestamp
 * #186, add "answer deleted" flag
-* #274, add visibilit scope
+* #274, add visibility scope
 * #358, add question type
 * #413, add pre-validation (column count)
  */
@@ -671,7 +671,7 @@ int serialise_answer(struct answer *a, enum answer_scope scope, char *out, int m
 * #72, add unit field
 * #162, add storage timestamp
 * #186, add "answer deleted" flag
-* #274, add visibilit scope
+* #274, add visibility scope
 * #358, add question type
 * #413, add pre-validation (column count)
  */
