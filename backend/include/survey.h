@@ -157,10 +157,20 @@ struct answer {
 };
 /* clang-format on */
 
-enum answer_visibility {
-  ANSWER_FIELDS_PUBLIC,
-  ANSWER_FIELDS_PROTECTED,
-};
+
+/**
+ * Defines the scope for answer serialisation/deserialisation and protects internal answer membersfrom being overwritten by an incoming answer (PUBLIC)
+ * - The values represent the exact number of columns of an serialised answer string, based on it's visibilit scope
+ * - You need to update the values  when adding new members to struct *answer
+ * #274, add visibility scopes, #358 add 'type' to answer and protect it
+ * #413 set values based on column count
+ */
+
+typedef enum answer_scope {
+  ANSWER_SCOPE_PUBLIC = 10,
+  ANSWER_SCOPE_CHECKSUM  = 11,
+  ANSWER_SCOPE_FULL = 13
+} answer_scope;
 
 // question and answer limits
 // #363 introducing meta answers, decouple max values
