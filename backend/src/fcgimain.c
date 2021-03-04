@@ -148,7 +148,7 @@ int kvalid_answer(struct kpair *kp) {
 
     // TODO XXX Remember deserialised answer and keep it in memory to save parsing twice? alternatively just basic validation by counting delimiters
 
-    if (deserialise_answer(kp->val, ANSWER_FIELDS_PUBLIC, a)) {
+    if (deserialise_answer(kp->val, ANSWER_SCOPE_PUBLIC, a)) {
       free_answer(a);
       LOG_ERROR("deserialise_answer() failed");
     } else {
@@ -679,7 +679,7 @@ struct answer *request_load_answer(struct kreq *req) {
       return NULL;
     }
 
-    if (deserialise_answer(arg->val, ANSWER_FIELDS_PUBLIC, ans)) {
+    if (deserialise_answer(arg->val, ANSWER_SCOPE_PUBLIC, ans)) {
       free_answer(ans);
       LOG_WARNV("deserialise_answer() failed.", 0);
       return NULL;

@@ -354,7 +354,7 @@ int save_session_meta(FILE *fp, struct session_meta *meta, enum session_state st
     if (meta->user) {
       strncpy(text, meta->user, 1024);
     }
-    if (serialise_answer(&a, line, 65536)) {
+    if (serialise_answer(&a, ANSWER_SCOPE_FULL, line, 65536)) {
       LOG_ERRORV("meta: serialise_answer() failed for field '%s'", "@user");
     }
     fprintf(fp, "%s\n", line);
@@ -364,7 +364,7 @@ int save_session_meta(FILE *fp, struct session_meta *meta, enum session_state st
     if (meta->group) {
       strncpy(text, meta->group, 1024);
     }
-    if (serialise_answer(&a, line, 65536)) {
+    if (serialise_answer(&a, ANSWER_SCOPE_FULL, line, 65536)) {
       LOG_ERRORV("meta: serialise_answer() failed for field '%s'", "@group");
     }
     fprintf(fp, "%s\n", line);
@@ -375,7 +375,7 @@ int save_session_meta(FILE *fp, struct session_meta *meta, enum session_state st
     if (meta->authority) {
       strncpy(text, meta->authority, 1024);
     }
-    if (serialise_answer(&a, line, 65536)) {
+    if (serialise_answer(&a, ANSWER_SCOPE_FULL, line, 65536)) {
       LOG_ERRORV("meta: serialise_answer() failed for field '%s'", "@authority");
     }
     a.value = 0; // reset second field
@@ -387,7 +387,7 @@ int save_session_meta(FILE *fp, struct session_meta *meta, enum session_state st
     if (state == SESSION_NEW) {
       a.time_begin = (long long) now;
     }
-    if (serialise_answer(&a, line, 65536)) {
+    if (serialise_answer(&a, ANSWER_SCOPE_FULL, line, 65536)) {
       LOG_ERRORV("meta: serialise_answer() failed for field '%s'", "@state");
     }
     fprintf(fp, "%s\n", line);
@@ -1104,7 +1104,7 @@ struct session *load_session(char *session_id) {
       }
 
       // #162 load complete answer, including protected fields
-      if (deserialise_answer(line, ANSWER_FIELDS_PROTECTED, ses->answers[ses->answer_count])) {
+      if (deserialise_answer(line, ANSWER_SCOPE_FULL, ses->answers[ses->answer_count])) {
         LOG_ERRORV("Failed to deserialise answer '%s' from session file '%s'", line, session_path);
       }
 
@@ -1220,7 +1220,7 @@ int save_session(struct session *s) {
 
     for (int i = 0; i < s->answer_count; i++) {
       char line[65536];
-      if (serialise_answer(s->answers[i], line, 65536)) {
+      if (serialise_answer(s->answers[i], ANSWER_SCOPE_FULL, line, 65536)) {
         LOG_ERRORV("Could not serialise answer for question '%s' for session "
                    "'%s'.  Text field too long?",
                    s->answers[i]->uid, s->session_id);
@@ -1244,6 +1244,13 @@ int save_session(struct session *s) {
     }
 
     LOG_INFOV("Updated session file '%s'.", session_path_final);
+
+    char sha1[HASHSTRING_LENGTH];
+    if (sha1_file(session_path_final, sha1)) {
+      LOG_ERRORV("Could not hash ssession file '%s'", session_path_final);
+    }
+
+    session_add_datafile(s->session_id, "etag", sha1);
   } while (0);
 
   if (o) {
@@ -1314,6 +1321,23 @@ int session_get_answer_index(char *uid, struct session *ses) {
     }
   }
   return -1;
+}
+
+/**
+ * find the last given answer (conditions: no system answer && not deleted) within a session
+ */
+struct answer *session_get_last_given_answer(struct session *ses) {
+  if (!ses) {
+    LOG_WARNV("session_get_answer(): session is null", 0);
+    return NULL;
+  }
+
+  for (int i = ses->answer_offset; i < ses->answer_count; i++) {
+    if (is_given_answer(ses->answers[i])) {
+      return ses->answers[i];
+    }
+  }
+  return NULL;
 }
 
 /**
