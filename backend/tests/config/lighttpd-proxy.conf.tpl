@@ -8,7 +8,7 @@ var.lighty_user="{LIGHTY_USER}"
 var.lighty_group="{LIGHTY_GROUP}"
 var.server_port="{SERVER_PORT}"
 var.auth_proxy_port="{AUTH_PROXY_PORT}"
-var.surveyfcgi_port="{SURVEYFCGI_PORT}"
+var.surveyfcgi_port="{FCGI_PORT}"
 var.fcgienv_middleware="{FCGIENV_MIDDLEWARE}"
 var.digest_userfile="{DIGEST_USERFILE}"
 
