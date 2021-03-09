@@ -20,7 +20,8 @@ STATICHEADERS=	Makefile \
 		$(INCDIR)/sha1.h \
 		$(INCDIR)/code_instrumentation.h \
 		$(INCDIR)/serialisers.h \
-		$(INCDIR)/utils.h
+		$(INCDIR)/utils.h \
+		$(INCDIR)/test.h
 
 STATICSRCS=	$(SRCDIR)/serialisers.c \
 		$(SRCDIR)/sha1.c \
@@ -31,7 +32,8 @@ STATICSRCS=	$(SRCDIR)/serialisers.c \
 		$(SRCDIR)/code_instrumentation.c \
 		$(SRCDIR)/filelocks.c \
 		$(SRCDIR)/errorlog.c \
-		$(SRCDIR)/utils.c
+		$(SRCDIR)/utils.c \
+		$(SRCDIR)/test_utils.c
 
 # #363
 FCGIHEADERS=	$(INCDIR)/fcgirequest.h
@@ -50,10 +52,12 @@ COREOBJS=	$(SRCDIR)/errorlog.o \
 		$(SRCDIR)/code_instrumentation.o \
 		$(SRCDIR)/filelocks.o \
 		$(SRCDIR)/question_types.o \
-		$(SRCDIR)/utils.o
+		$(SRCDIR)/utils.o \
+		$(SRCDIR)/test_utils.o
 
 TESTOBJS =	$(COREOBJS) \
-		$(SRCDIR)/test_units.o
+		$(SRCDIR)/test_units.o \
+		$(SRCDIR)/test_utils.o
 
 CLIOBJS=	$(COREOBJS) \
 		$(SRCDIR)/main.o
@@ -71,7 +75,7 @@ LOPT=	`$(PYCONFIG) --libs --embed --ldflags`
 
 all:	test_units surveycli surveyfcgi test_runner
 
-test_runner:	Makefile $(SRCDIR)/test_runner.o $(COREOBJS)
+test_runner:	Makefile $(SRCDIR)/test_runner.o $(TESTOBJS)
 	$(CC) $(COPT) -o test_runner $(SRCDIR)/test_runner.o $(COREOBJS) $(LOPT)
 
 %.o:	%.c $(HEADERS)
