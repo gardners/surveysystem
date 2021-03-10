@@ -7,7 +7,7 @@ var.pid_file="{PID_FILE}"
 var.lighty_user="{LIGHTY_USER}"
 var.lighty_group="{LIGHTY_GROUP}"
 var.server_port="{SERVER_PORT}"
-var.surveyfcgi_port="{SURVEYFCGI_PORT}"
+var.surveyfcgi_port="{FCGI_PORT}"
 
 ## config
 

@@ -179,7 +179,7 @@ int do_addanswer(char *session_id, char *serialised_answer) {
       LOG_ERROR("calloc() of answer structure failed.");
     }
 
-    if (deserialise_answer(serialised_answer, ANSWER_FIELDS_PUBLIC, ans)) {
+    if (deserialise_answer(serialised_answer, ANSWER_SCOPE_PUBLIC, ans)) {
       free_answer(ans);
       fprintf(stderr, "answer format is invalid.\n");
       LOG_ERROR("deserialise_answer() failed.");

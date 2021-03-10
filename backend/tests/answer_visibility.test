@@ -38,12 +38,12 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 question1:TEXT:answer1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
-#! ------- "overambitious" addanswer: ignore the request's including values for protected fields: 'flag' and 'stored' -------
-request 200 /addanswer?sessionid=$SESSION&answer=question2:answer2:0:0:0:0:0:0:0::-1:-1
+# behavioural change since #413 prev ignored -> now an error
+#! ------- "overambitious" addanswer: reject the request's including values for protected fields: 'flag' and 'stored' -------
+request 400 /addanswer?sessionid=$SESSION&answer=question2:answer2:0:0:0:0:0:0:0::-1:-1
 
 # Make sure answer 'flag' and 'stored' are unchanged (not accepting the silly values in request)
 verify_session(skip_headers)
 foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 question1:TEXT:answer1:0:0:0:0:0:0:0::0:<UTIME>
-question2:TEXT:answer2:0:0:0:0:0:0:0::0:<UTIME>
 endofsession

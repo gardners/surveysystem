@@ -61,8 +61,10 @@ do {\
     test_message(FORMAT_PASS, message, __VA_ARGS__);\
   } else {\
     test_message(FORMAT_FAIL, message, __VA_ARGS__);\
+    fprintf(stderr, "\e[37m"); dump_errors(stdout); fprintf(stderr, "\e[0m"); \
   }\
   assert(expr);\
+  clear_errors(); \
 } while (0)
 
 #define ASSERT_STR_EQ(left, right, message)\
@@ -417,6 +419,187 @@ int main(int argc, char **argv) {
       ASSERT_STR_EQ(str, "\\t\\r\\n\\:(9000)", "escape_string()");
     }
 
+    SECTION("serialiser_count_columns(), #413");
+
+    {
+      LOG_UNMUTE();
+      int ret;
+
+      ret = serialiser_count_columns("", 1024);
+      ASSERT(ret == 1, "serialiser_count_columns('%s')", "");
+
+      ret = serialiser_count_columns(NULL, 1024);
+      ASSERT(ret == -1, "error: serialiser_count_columns(NULL)", "");
+
+      ret = serialiser_count_columns("hello", 1024);
+      ASSERT(ret == 1, "serialiser_count_columns('%s')", "hello");
+
+      ret = serialiser_count_columns("hello", 2);
+      ASSERT(ret == -1, "error: serialiser_count_columns('%s') out of bounds", "hello");
+
+      ret = serialiser_count_columns(":", 1024);
+      ASSERT(ret == 2, "serialiser_count_columns('%s')", ":");
+
+      ret = serialiser_count_columns("\\:", 1024);
+      ASSERT(ret == 1, "escape: serialiser_count_columns('%s')", "\\:");
+
+      ret = serialiser_count_columns("\\\\:", 1024);
+      ASSERT(ret == 1, "double escape: serialiser_count_columns('%s')", "\\\\:");
+
+      ret = serialiser_count_columns(":\\:", 1024);
+      ASSERT(ret == 2, "escape inner: serialiser_count_columns('%s')", ":\\:");
+
+      ret = serialiser_count_columns("::1", 1024);
+      ASSERT(ret == 3, "serialiser_count_columns('%s')", "::1");
+
+      ret = serialiser_count_columns("::", 1024);
+      ASSERT(ret == 3, "serialiser_count_columns('%s')", ":::");
+
+      ret = serialiser_count_columns("1:1:1", 1024);
+      ASSERT(ret == 3, "serialiser_count_columns('%s')", "1:1:1");
+
+      ret = serialiser_count_columns("1:1:1", 2);
+      ASSERT(ret == -1, "error serialiser_count_columns('%s') out of bounds", "1:1:1");
+
+      ret = serialiser_count_columns("\n:1:1:1", 1024);
+      ASSERT(ret == -1, "error starting endline serialiser_count_columns('%s') %d", "\\n:1:1:1", ret);
+
+      ret = serialiser_count_columns(":1:1:1\n", 1024);
+      ASSERT(ret == -1, "error ending endline serialiser_count_columns('%s') %d", ":1:1:1\\n", ret);
+
+      ret = serialiser_count_columns("1:1:1\n1:1:1", 1024);
+      ASSERT(ret == -1, "error inner endline serialiser_count_columns('%s') %d", "1:1:1\\n1:1:1", ret);
+
+      ret = serialiser_count_columns("1:1:1\\n1:1:1", 1024);
+      ASSERT(ret == 5, "escaped inner endline serialiser_count_columns('%s') %d", "1:1:1\\\\n1:1:1", ret);
+
+      ret = serialiser_count_columns("uid:META:\\:\\n\r\b\tutext:0:0:0:0:0:0:0:unit:0:0", 1024);
+      ASSERT(ret == ANSWER_SCOPE_FULL, "anwswer ANSWER_FIELDS_PROTECTED with escapes passing serialiser_count_columns('%s') %d", "uid:META:\\:\\n\\r\\b\\tutext:0:0:0:0:0:0:0:unit:0:0", ret);
+
+      ret = serialiser_count_columns("uid:\\:\\n\r\b\tutext:0:0:0:0:0:0:0:", 1024);
+      ASSERT(ret == ANSWER_SCOPE_PUBLIC, "anwswer ANSWER_FIELDS_PUBLIC with escapes passing serialiser_count_columns('%s') %d", "uid:META:\\:\\n\\r\\b\\tutext:0:0:0:0:0:0:0:unit:0:0", ret);
+    }
+
+    ////
+    // answer serialisation - a large number of question type => value related tests are also located in test_runner tests/*
+    ////
+
+    SECTION("answer deserialisation width tests, #413");
+
+    LOG_MUTE();
+
+    {
+      int ret;
+      char str[] = "correct-scope:TEXT:Answer 1:0:0:0:0:0:0:0::0:123";
+
+      struct answer *out = calloc(sizeof(struct answer), 1);
+      ret = deserialise_answer(str, ANSWER_SCOPE_FULL, out);
+      ASSERT(ret == 0, "answer '%s' deserialised %d", "correct-scope", ret);
+      free_answer(out);
+    }
+
+    {
+      int ret;
+      char str[] = "incorrect-scope-public:TEXT:Answer 1:0:0:0:0:0:0:0::0:123";
+
+      struct answer *out = calloc(sizeof(struct answer), 1);
+      ret = deserialise_answer(str, ANSWER_SCOPE_PUBLIC, out); // should be ANSWER_SCOPE_FULL
+      ASSERT(ret == -1, "answer '%s' deserialised %d", "incorrect-scope-public", ret);
+      free_answer(out);
+    }
+
+    {
+      int ret;
+      char str[] = "incorrect-scope-checksum:TEXT:Answer 1:0:0:0:0:0:0:0::0:123";
+
+      struct answer *out = calloc(sizeof(struct answer), 1);
+      ret = deserialise_answer(str, ANSWER_SCOPE_CHECKSUM, out); // should be ANSWER_SCOPE_FULL
+      ASSERT(ret == -1, "answer '%s' deserialised %d", "incorrect-scope-checksum", ret);
+      free_answer(out);
+    }
+
+    {
+      int ret;
+      char str[] = "too-short:TEXT";
+
+      struct answer *out = calloc(sizeof(struct answer), 1);
+      ret = deserialise_answer(str, ANSWER_SCOPE_CHECKSUM, out);
+      ASSERT(ret == -1, "answer '%s' deserialised %d", "too-short", ret);
+      free_answer(out);
+    }
+
+    {
+      int ret;
+      char str[] = "";
+
+      struct answer *out = calloc(sizeof(struct answer), 1);
+      ret = deserialise_answer(str, ANSWER_SCOPE_CHECKSUM, out);
+      ASSERT(ret == -1, "answer '%s' deserialised %d", "empty string", ret);
+      free_answer(out);
+    }
+
+    {
+      int ret;
+      struct answer *out = calloc(sizeof(struct answer), 1);
+      ret = deserialise_answer(NULL, ANSWER_SCOPE_CHECKSUM, out);dump_errors(stderr);
+      ASSERT(ret == -1, "answer '%s' deserialised %d", "*in == NULL", ret);
+      free_answer(out);
+    }
+
+    {
+      int ret;
+      char str[] = "too-long:TEXT:Answer 1:0:0:0:0:0:0:0::0:123:"; // one separator added at end
+      struct answer *out = calloc(sizeof(struct answer), 1);
+      ret = deserialise_answer(str, ANSWER_SCOPE_CHECKSUM, out);dump_errors(stderr);
+      ASSERT(ret == -1, "answer '%s' deserialised %d", "too-long", ret);
+      free_answer(out);
+    }
+
+    LOG_UNMUTE();
+
+    ////
+    // answer serialisation - a large number of question type => value related tests are also located in test_runner tests/*
+    ////
+
+    SECTION("answer serialisation width tests, #413, #268");
+
+    LOG_MUTE();
+
+    {
+      char str[1024];
+      int ret;
+
+      struct answer *in = create_answer("serialise-full", QTYPE_TEXT, "something", "unit");
+      in->stored = 123;
+      ret = serialise_answer(in, ANSWER_SCOPE_FULL, str, 1024);
+      ASSERT(ret == 0, "answer '%s' serialised %d", in->uid, ret);
+      ASSERT_STR_EQ(str, "serialise-full:TEXT:something:0:0:0:0:0:0:0:unit:0:123", "");
+    }
+
+    {
+      char str[1024];
+      int ret;
+
+      struct answer *in = create_answer("serialise-checksum", QTYPE_TEXT, "something", "unit");
+      in->stored = 123;
+      ret = serialise_answer(in, ANSWER_SCOPE_CHECKSUM, str, 1024);
+      ASSERT(ret == 0, "answer '%s' serialised %d", in->uid, ret);
+      ASSERT_STR_EQ(str, "serialise-checksum:TEXT:something:0:0:0:0:0:0:0:unit:0", "");
+    }
+
+    {
+      char str[1024];
+      int ret;
+
+      struct answer *in = create_answer("serialise-public", QTYPE_TEXT, "something", "unit");
+      in->stored = 123;
+      ret = serialise_answer(in, ANSWER_SCOPE_PUBLIC, str, 1024);
+      ASSERT(ret == 0, "answer '%s' serialised %d", in->uid, ret);
+      ASSERT_STR_EQ(str, "serialise-public:something:0:0:0:0:0:0:0:unit", "");
+    }
+
+    LOG_UNMUTE();
+
     SECTION("answer serialisation tests, #392");
 
     {
@@ -425,11 +608,11 @@ int main(int argc, char **argv) {
       int ret;
 
       struct answer *in = create_answer(uid, QTYPE_META, ":\n\r\b\tutext", "unit");
-      ret = serialise_answer(in, str, 1024);
+      ret = serialise_answer(in, ANSWER_SCOPE_FULL,str, 1024);
       ASSERT(ret == 0, "answer '%s' serialised", uid);
 
       struct answer *out = calloc(sizeof(struct answer), 1);
-      ret = deserialise_answer(str, ANSWER_FIELDS_PROTECTED, out);
+      ret = deserialise_answer(str, ANSWER_SCOPE_FULL, out);
       ASSERT(ret == 0, "answer '%s' deserialised", uid);
 
       assert_answers_compare(in, out);  // answers are freed in func
@@ -441,11 +624,11 @@ int main(int argc, char **argv) {
       char uid[] = "text-is-json-array";
 
       struct answer *in = create_answer(uid, QTYPE_TEXT, "[42, -42]", "unit");
-      ret = serialise_answer(in, str, 1024);
+      ret = serialise_answer(in, ANSWER_SCOPE_FULL, str, 1024);
       ASSERT(ret == 0, "answer '%s' serialised", uid);
 
       struct answer *out = calloc(sizeof(struct answer), 1);
-      ret = deserialise_answer(str, ANSWER_FIELDS_PROTECTED, out);
+      ret = deserialise_answer(str, ANSWER_SCOPE_FULL, out);
       ASSERT(ret == 0, "answer '%s' deserialised", uid);
 
       assert_answers_compare(in, out);  // answers are freed in func
@@ -457,11 +640,11 @@ int main(int argc, char **argv) {
       char uid[] = "text-is-json-object";
 
       struct answer *in = create_answer(uid, QTYPE_TEXT, "{ \"answer\": 42 }", "unit");
-      ret = serialise_answer(in, str, 1024);
+      ret = serialise_answer(in, ANSWER_SCOPE_FULL, str, 1024);
       ASSERT(ret == 0, "answer '%s' serialised", uid);
 
       struct answer *out = calloc(sizeof(struct answer), 1);
-      ret = deserialise_answer(str, ANSWER_FIELDS_PROTECTED, out);
+      ret = deserialise_answer(str, ANSWER_SCOPE_FULL, out);
       ASSERT(ret == 0, "answer '%s' deserialised", uid);
 
       assert_answers_compare(in, out);  // answers are freed in func
@@ -531,5 +714,6 @@ int main(int argc, char **argv) {
 
   } while (0);
 
+  DEBUG("\n-------------\nTESTS FINISHED\n-------------\n", "");
   return retVal;
 }
