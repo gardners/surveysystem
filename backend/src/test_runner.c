@@ -181,18 +181,17 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
         // build curl cmd
         snprintf(
           out, MAX_BUFFER,
-          "curl%s%s%s -s -w \"HTTPRESULT=%%{http_code}\" -o "
-          "%s/request.out \"http://localhost:%d/%s%s\" > "
-          "%s/request.code",
-          curl_args,
-          method,
-          data,
+          "curl -s -i"
+          "%s%s%s"
+          " -o %s/request.out"
+          " \"http://localhost:%d/%s%s\"",
+          curl_args, method, data,
           dir,
           SERVER_PORT,
           "surveyapi",
-          url_sub,
-          dir
+          url_sub
         );
+
     } while(0);
 
     return retVal;
