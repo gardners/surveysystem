@@ -1,15 +1,15 @@
 #ifndef __TEST_H__
 #define __TEST_H__
 
-#define MAX_LINE 8192
-#define MAX_BUFFER 65536
+#define TEST_MAX_LINE 8192
+#define TEST_MAX_BUFFER 65536
 
 // test configuration
 struct Test {
     int skip;                      // (optional)skip! header directive
 
     char name[1024];               // test name (derived from test file name)
-    char description[MAX_LINE];    // (required) first line @description directive
+    char description[TEST_MAX_LINE];    // (required) first line @description directive
 
     char file[1024];               // local test file path (./tests/%s)
     char dir[1024];                // test root dir (/tmp/%s)
@@ -28,6 +28,15 @@ enum DiffResult {
   DIFF_MISMATCH,
   DIFF_MISMATCH_LENGTH,
   DIFF_MISMATCH_TOKEN,
+};
+
+// http
+struct HttpResponse {
+    int status;
+    char contentType[1024];
+    char eTag[1024];
+    char body[TEST_MAX_BUFFER];
+    int lines;
 };
 
 ////
@@ -57,7 +66,8 @@ int test_recursive_delete(const char *dir);
 // time
 ////
 
-long long gettime_us();
+long long test_gettime_us();
+double test_time_delta(long long start_time);
 
 ////
 // struct test
@@ -82,5 +92,11 @@ int test_copy_session(char *session_id, char *targ, struct Test *test);
 
 int test_compile_session_definition(FILE *in, char *session_id, struct Test *test);
 int test_compare_session(FILE *sess, int skip_s, FILE *comp, int skip_c, struct Test *test, int server_port, FILE *log, long long start_time);
+
+////
+// http
+////
+
+int test_parse_http_response(FILE *fp, struct HttpResponse *resp);
 
 #endif
