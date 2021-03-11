@@ -290,6 +290,8 @@ int run_test(struct Test *test) {
   // #198 flush errors accumulated by previous tests
   clear_errors();
 
+  struct HttpResponse response;
+
   int retVal = 0;
   FILE *in = NULL;
   FILE *log = NULL;
@@ -297,8 +299,6 @@ int run_test(struct Test *test) {
   char log_dir[1024];
   char tmp[1024];
 
-  int response_line_count = 0;
-  char response_lines[100][TEST_MAX_LINE];
   char last_sessionid[100] = "";
 
   do {
@@ -593,15 +593,15 @@ int run_test(struct Test *test) {
         // keyword: "extract_sessionid"
         ////
 
-        if (response_line_count != 1) {
+        if (response.line_count != 1) {
           fprintf(log,
                   "T+%4.3fms : FAIL : Could not parse session ID: Last "
                   "response contained %d lines, instead of exactly 1.\n",
-                  test_time_delta(start_time), response_line_count);
+                  test_time_delta(start_time), response.line_count);
           goto fail;
         }
 
-        if (validate_session_id(response_lines[0])) {
+        if (validate_session_id(response.lines[0])) {
           fprintf(log,
                   "T+%4.3fms : FAIL : Could not parse session ID: "
                   "validate_session_id() reported failure.\n",
@@ -610,7 +610,7 @@ int run_test(struct Test *test) {
         }
 
         // Remember session ID for other directives
-        strcpy(last_sessionid, response_lines[0]);
+        strcpy(last_sessionid, response.lines[0]);
         fprintf(log, "T+%4.3fms : Session ID is '%s'\n", test_time_delta(start_time), last_sessionid);
 
       } else if (sscanf(line, "match_string %[^\r\n]", glob) == 1) {
@@ -621,15 +621,14 @@ int run_test(struct Test *test) {
 
         // Check that the response contains the supplied pattern
         int matches = 0;
-        for (int i = 0; i < response_line_count; i++) {
-          if (strstr(response_lines[i], glob)) {
+        for (int i = 0; i < response.line_count; i++) {
+          if (strstr(response.lines[i], glob)) {
             matches++;
           }
         }
 
         if (!matches) {
-          fprintf(log, "T+%4.3fms : FAIL : No match for literal string.\n",
-                  test_time_delta(start_time));
+          fprintf(log, "T+%4.3fms : FAIL : No match for literal string.\n", test_time_delta(start_time));
           goto fail;
         }
 
@@ -641,8 +640,8 @@ int run_test(struct Test *test) {
 
         // Check that the response contains the supplied pattern
         int matches = 0;
-        for (int i = 0; i < response_line_count; i++) {
-          if (strstr(response_lines[i], glob)) {
+        for (int i = 0; i < response.line_count; i++) {
+          if (strstr(response.lines[i], glob)) {
             matches++;
           }
         }
@@ -722,8 +721,8 @@ int run_test(struct Test *test) {
           goto fatal;
         }
 
-        for (int i = 0; i < response_line_count; i++) {
-          if (REG_NOMATCH != regexec(&regex, response_lines[i], 0, NULL, 0)) {
+        for (int i = 0; i < response.line_count; i++) {
+          if (REG_NOMATCH != regexec(&regex, response.lines[i], 0, NULL, 0)) {
             matches++;
           }
         }
@@ -753,8 +752,8 @@ int run_test(struct Test *test) {
           goto fatal;
         }
 
-        for (int i = 0; i < response_line_count; i++) {
-          if (REG_NOMATCH != regexec(&regex, response_lines[i], 0, NULL, 0)) {
+        for (int i = 0; i < response.line_count; i++) {
+          if (REG_NOMATCH != regexec(&regex, response.lines[i], 0, NULL, 0)) {
             matches++;
           }
         }
@@ -763,10 +762,10 @@ int run_test(struct Test *test) {
           fprintf(log, "T+%4.3fms : FAIL: There is a match to the regular expression.\n", test_time_delta(start_time));
           goto fail;
         }
-      } else if (sscanf(line, "test_copy_session %[^\r\n]", arg) == 1) {
+      } else if (sscanf(line, "copy_session_to %[^\r\n]", arg) == 1) {
 
         ////
-        // keyword: "test_copy_session"
+        // keyword: "copy_session_to"
         ////
 
         if (test_copy_session(last_sessionid, arg, test)) {
@@ -781,6 +780,9 @@ int run_test(struct Test *test) {
         ////
         // keyword: "request"
         ////
+
+        // clear previous response
+        memset(&response, 0, sizeof(response));
 
         // Exeucte curl call. If it is a newsession command, then remember the session ID
         // We also log the returned data from the request, so that we can look at that
@@ -819,90 +821,40 @@ int run_test(struct Test *test) {
         }
 
         // handle  response
-        int httpcode = -1;
         fprintf(log, "T+%4.3fms : HTTP API request command completed.\n", test_time_delta(start_time));
         FILE *rc;
 
         snprintf(cmd, TEST_MAX_BUFFER, "%s/request.out", test->dir);
         rc = fopen(cmd, "r");
 
+        // load and parse request.out file
         if (!rc) {
+          // not going to fatal, this might be a test case
           fprintf(log,
                   "T+%4.3fms : NOTE : Could not open '%s/request.out'. No "
                   "response from web page?\n",
                   test_time_delta(start_time), test->dir);
 
         } else {
-          fprintf(log, "T+%4.3fms : HTTP request response body:\n", test_time_delta(start_time));
-          response_line_count = 0;
-          line[0] = 0;
-          fgets(line, TEST_MAX_LINE, rc);
-
-          while (line[0]) {
-            int len = strlen(line);
-            // Trim CR/LF from the end of the line
-            while (len && (line[len - 1] < ' ')) {
-              line[--len] = 0;
-            }
-            fprintf(log, "::: %s\n", line);
-
-            // Keep the lines returned from the request in case we want to probe them
-            if (response_line_count < 100) {
-              line[8191] = 0;
-              strcpy(response_lines[response_line_count++], line);
-            }
-
-            line[0] = 0;
-            fgets(line, TEST_MAX_LINE, rc);
+          if (test_parse_http_response(rc, &response)) {
+            fprintf(log, "T+%4.3fms : FATAL: Could not HttpResponse from '%s/request.out'", test_time_delta(start_time), cmd);
+            fclose(rc);
+            goto fatal;
           }
           fclose(rc);
-
         } // endif !rc
 
-        snprintf(cmd, TEST_MAX_BUFFER, "%s/request.code", test->dir);
-        rc = fopen(cmd, "r");
-
-        if (!rc) {
-          fprintf(log,
-                  "T+%4.3fms : FATAL: Could not open '%s/request.code' to "
-                  "retrieve HTTP response code.\n",
-                  test_time_delta(start_time), test->dir);
-          goto fatal;
-
-        } else {
-          fprintf(log, "T+%4.3fms : HTTP request.code response:\n", test_time_delta(start_time));
-          line[0] = 0;
-          fgets(line, 1024, rc);
-          while (line[0]) {
-            int len = strlen(line);
-            // Trim CR/LF from the end of the line
-            while (len && (line[len - 1] < ' '))
-              line[--len] = 0;
-
-            sscanf(line, "HTTPRESULT=%d", &httpcode);
-
-            fprintf(log, "=== %s\n", line);
-            line[0] = 0;
-            fgets(line, 1024, rc);
-          }
-          fclose(rc);
-
-        } // endif !rc
-        fprintf(log, "T+%4.3fms : HTTP response code %d\n", test_time_delta(start_time), httpcode);
-
-        if (httpcode == -1) {
-          fprintf(log,
-                  "T+%4.3fms : FATAL: Could not find HTTP response code in "
-                  "request.code file.\n",
-                  test_time_delta(start_time));
-          goto fatal;
+        // log body
+        fprintf(log, "T+%4.3fms : HTTP response body:\n", test_time_delta(start_time));
+        for (int i = 0; i < response.line_count; i++) {
+          fprintf(log,"::: %s\n", response.lines[i]);
         }
+        fprintf(log, "T+%4.3fms : HTTP response status %d\n", test_time_delta(start_time), response.status);
 
-        if (httpcode != expected_http_status) {
+        if (response.status != expected_http_status) {
           fprintf(log,
-                  "T+%4.3fms : ERROR : Expected HTTP response code %d, but got "
-                  "%d.\n",
-                  test_time_delta(start_time), expected_http_status, httpcode);
+                  "T+%4.3fms : ERROR : Expected HTTP response code %d, but got %d.\n",
+                  test_time_delta(start_time), expected_http_status, response.status);
           goto fail;
         }
 
@@ -1023,6 +975,45 @@ int run_test(struct Test *test) {
           fprintf(log, "T+%4.3fms : compare session failed: '%s'.\n", test_time_delta(start_time), last_sessionid);
           goto fail;
         }
+
+        } else if (strncmp("verify_checksum", line, strlen("verify_session_checksum")) == 0) {
+
+          ////
+          // keyword: "verify_session_checksum"
+          ////
+
+          if (!strlen(response.eTag)) {
+            fprintf(log, "T+%4.3fms : verify_session_checksum failed: response.eTag is empty: '%s'.\n", test_time_delta(start_time), last_sessionid);
+            goto fail;
+          }
+
+          snprintf(tmp, 1024, "%s/sessions/%c%c%c%c/%s.etag", test->dir,
+            last_sessionid[0], last_sessionid[1], last_sessionid[2],
+            last_sessionid[3], last_sessionid);
+
+          FILE *cf = fopen(tmp, "r");
+          if (!cf) {
+            fprintf(log, "T+%4.3fms : verify_session_checksum failed: file does not exist: '%s'.\n", test_time_delta(start_time), tmp);
+            goto fail;
+          }
+
+          char *checksum = NULL;
+          if (!fgets(checksum, 100, cf)) {
+            fclose(cf);
+            fprintf(log, "T+%4.3fms : verify_session_checksum failed: file does not contain checksum content: '%s'.\n", test_time_delta(start_time), tmp);
+            goto fail;
+          }
+
+          fprintf(log, "T+%4.3fms : verify_session_checksum ('%s' == '%s') in file '%s'.\n", test_time_delta(start_time), checksum, response.eTag, tmp);
+
+          if (strncmp(checksum, response.eTag, 100)) {
+            fclose(cf);
+            fprintf(log, "T+%4.3fms : verify_session_checksum failed: file does not contain checksum content: '%s'.\n", test_time_delta(start_time), tmp);
+            goto fail;
+          }
+
+          fclose(cf);
+        ///TODO
 
         ////
         // keywords: End

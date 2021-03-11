@@ -3,6 +3,7 @@
 
 #define TEST_MAX_LINE 8192
 #define TEST_MAX_BUFFER 65536
+#define TEST_MAX_LINE_COUNT 100
 
 // test configuration
 struct Test {
@@ -35,8 +36,8 @@ struct HttpResponse {
     int status;
     char contentType[1024];
     char eTag[1024];
-    char body[TEST_MAX_BUFFER];
-    int lines;
+    char lines[TEST_MAX_LINE_COUNT][TEST_MAX_LINE];
+    int line_count;
 };
 
 ////

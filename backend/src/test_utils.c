@@ -775,7 +775,7 @@ int test_copy_session(char *session_id, char *targ, struct Test *test) {
   snprintf(path, 1024, "%s/%s", test->dir, targ);
   FILE *out = fopen(path, "w");
   if (!out) {
-    fprintf(stderr, "Cannot open target ffile '%s'\n", path);
+    fprintf(stderr, "Cannot open target file '%s'\n", path);
     return -1;
   }
 
@@ -1221,7 +1221,6 @@ int parse_http_headers(FILE *fp, struct HttpResponse *resp) {
 
     while (fgets(buffer, TEST_MAX_LINE, fp) != 0) {
         trim_crlf(buffer);
-        printf("%s\n", buffer);
         if(buffer[0] == 0) {
             return 0;
         }
@@ -1242,24 +1241,25 @@ int parse_http_headers(FILE *fp, struct HttpResponse *resp) {
 }
 
 int parse_http_body(FILE *fp, struct HttpResponse *resp) {
-    char c;
-    int i = 0;
-    resp->lines = 0;
+    char buffer[TEST_MAX_LINE];
+    resp->line_count = 0;
 
-    while (i < TEST_MAX_BUFFER) {
-      c = fgetc(fp);
-      if(feof(fp)) {
-          resp->body[i] = 0; // trailing line break
-          break ;
+    while (fgets(buffer, TEST_MAX_LINE, fp) != 0) {
+      trim_crlf(buffer);
+      // trailing newline
+      if(buffer[0] == 0) {
+          return 0;
       }
-      resp->body[i] = c;
-      if (c == '\n') {
-          resp->lines++;
+      strncpy(resp->lines[resp->line_count], buffer, TEST_MAX_LINE);
+      resp->lines[resp->line_count][TEST_MAX_LINE - 1] = 0;
+
+      resp->line_count++;
+
+      if (resp->line_count >= TEST_MAX_LINE_COUNT) {
+        fprintf(stderr, "parse_http_body(), max line count %d exceeded, content truncated!\n", TEST_MAX_LINE_COUNT);
+        return -1;
       }
-      i++;
     }
-
-    trim_crlf(resp->body);
     return 0;
 }
 
@@ -1268,7 +1268,7 @@ int parse_http_body(FILE *fp, struct HttpResponse *resp) {
  */
 int test_parse_http_response(FILE *fp, struct HttpResponse *resp) {
     if (!fp) {
-        fprintf(stderr, "Failed to parse requuest: file pointer is NULL\n");
+        fprintf(stderr, "Failed to parse response: file pointer is NULL\n");
         return -1;
     }
     int ret = 0;
@@ -1288,7 +1288,7 @@ int test_parse_http_response(FILE *fp, struct HttpResponse *resp) {
 
     ret = parse_http_body(fp, resp);
     if (ret) {
-        fprintf(stderr, "Failed to parse headers\n");
+        fprintf(stderr, "Failed to parse body\n");
         return -1;
     }
 
