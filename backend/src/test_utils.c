@@ -18,7 +18,7 @@
 // local helpers
 ////
 
-long long gettime_us() {
+long long test_gettime_us() {
   long long retVal = -1;
 
   do {
@@ -38,6 +38,12 @@ long long gettime_us() {
   } while (0);
 
   return retVal;
+}
+
+double test_time_delta(long long start_time) {
+    double tdelta = test_gettime_us() - start_time;
+    tdelta /= 1000;
+    return tdelta;
 }
 
 /**
@@ -153,14 +159,14 @@ int test_dump_logs(char *dir, FILE *log) {
                   curr->fts_accpath);
         } else {
           fprintf(log, "--------- %s ----------\n", curr->fts_accpath);
-          char line[MAX_LINE];
+          char line[TEST_MAX_LINE];
           line[0] = 0;
-          fgets(line, MAX_LINE, in);
+          fgets(line, TEST_MAX_LINE, in);
 
           while (line[0]) {
             fprintf(log, "%s", line);
             line[0] = 0;
-            fgets(line, MAX_LINE, in);
+            fgets(line, TEST_MAX_LINE, in);
           }
           fclose(in);
         }
@@ -425,8 +431,8 @@ int test_get_current_path(int argc, char **argv, char *path_out, size_t max_len)
 int test_set_ownership(char *dir, char *user, char *group) {
   int retVal = 0;
   do {
-    char cmd[MAX_LINE];
-    snprintf(cmd, MAX_LINE, "sudo chown -R %s:%s %s\n", user, group, dir);
+    char cmd[TEST_MAX_LINE];
+    snprintf(cmd, TEST_MAX_LINE, "sudo chown -R %s:%s %s\n", user, group, dir);
     system(cmd);
   } while (0);
   return retVal;
@@ -607,15 +613,15 @@ FILE *test_load_test_file_header(char *test_file, struct Test *test) {
     strncpy(test->name, name, sizeof(test->name));
 
     // fist line is description
-    char line[MAX_LINE];
-    fgets(line, MAX_LINE, fp);
+    char line[TEST_MAX_LINE];
+    fgets(line, TEST_MAX_LINE, fp);
     if (sscanf(line, "description %[^\r\n]", test->description) != 1) {
       fprintf(stderr, "\nCould not parse description line of test.\n");
       fclose(fp);
       return NULL;
     }
 
-    while(fgets(line, MAX_LINE, fp) != NULL) {
+    while(fgets(line, TEST_MAX_LINE, fp) != NULL) {
         // end of config header
         if (line[0] == '\n') {
           break;
@@ -662,15 +668,15 @@ void test_load_test_file(int test_count, int test_index, char *test_file, struct
     snprintf(test->log, 1024, "testlog/%s.log", name);
 
     // fist line is description
-    char line[MAX_LINE];
-    fgets(line, MAX_LINE, fp);
+    char line[TEST_MAX_LINE];
+    fgets(line, TEST_MAX_LINE, fp);
     if (sscanf(line, "@description %[^\r\n]", test->description) != 1) {
       fprintf(stderr, "\nCould not parse description line of test->\n");
       fclose(fp);
       exit(-3);
     }
 
-    while(fgets(line, MAX_LINE, fp) != NULL) {
+    while(fgets(line, TEST_MAX_LINE, fp) != NULL) {
 
       if (line[0] != '@') {
         break; // end of config header
@@ -769,7 +775,7 @@ int test_copy_session(char *session_id, char *targ, struct Test *test) {
   snprintf(path, 1024, "%s/%s", test->dir, targ);
   FILE *out = fopen(path, "w");
   if (!out) {
-    fprintf(stderr, "Cannot open target ffile '%s'\n", path);
+    fprintf(stderr, "Cannot open target file '%s'\n", path);
     return -1;
   }
 
@@ -809,7 +815,7 @@ int test_copy_session(char *session_id, char *targ, struct Test *test) {
 int test_compile_session_definition(FILE *in, char *session_id, struct Test *test) {
   char session_dir[1024];
   char session_file[1024];
-  char line[MAX_LINE];
+  char line[TEST_MAX_LINE];
 
   // copen session file
   snprintf(session_dir, 1024, "%s/sessions/%c%c%c%c", test->dir,
@@ -836,25 +842,25 @@ int test_compile_session_definition(FILE *in, char *session_id, struct Test *tes
 
   // now read definition into session
   line[0] = 0;
-  fgets(line, MAX_LINE, in);
+  fgets(line, TEST_MAX_LINE, in);
 
   while (line[0]) {
     trim_crlf(line);
 
-    replace_int(line, "<UTIME>", (int)time(0), MAX_LINE);
-    replace_str(line, "<FCGIENV_MIDDLEWARE>", test->fcgienv_middleware, MAX_LINE);
-    replace_int(line, "<IDENDITY_CLI>", IDENDITY_CLI, MAX_LINE);
-    replace_int(line, "<IDENDITY_HTTP_PUBLIC>", IDENDITY_HTTP_PUBLIC, MAX_LINE);
-    replace_int(line, "<IDENDITY_HTTP_BASIC>", IDENDITY_HTTP_BASIC, MAX_LINE);
-    replace_int(line, "<IDENDITY_HTTP_DIGEST>", IDENDITY_HTTP_DIGEST, MAX_LINE);
-    replace_int(line, "<IDENDITY_HTTP_TRUSTED>", IDENDITY_HTTP_TRUSTED, MAX_LINE);
-    replace_int(line, "<IDENDITY_UNKOWN>", IDENDITY_UNKOWN, MAX_LINE);
+    replace_int(line, "<UTIME>", (int)time(0), TEST_MAX_LINE);
+    replace_str(line, "<FCGIENV_MIDDLEWARE>", test->fcgienv_middleware, TEST_MAX_LINE);
+    replace_int(line, "<IDENDITY_CLI>", IDENDITY_CLI, TEST_MAX_LINE);
+    replace_int(line, "<IDENDITY_HTTP_PUBLIC>", IDENDITY_HTTP_PUBLIC, TEST_MAX_LINE);
+    replace_int(line, "<IDENDITY_HTTP_BASIC>", IDENDITY_HTTP_BASIC, TEST_MAX_LINE);
+    replace_int(line, "<IDENDITY_HTTP_DIGEST>", IDENDITY_HTTP_DIGEST, TEST_MAX_LINE);
+    replace_int(line, "<IDENDITY_HTTP_TRUSTED>", IDENDITY_HTTP_TRUSTED, TEST_MAX_LINE);
+    replace_int(line, "<IDENDITY_UNKOWN>", IDENDITY_UNKOWN, TEST_MAX_LINE);
 
     // #379 session states
-    replace_int(line, "<SESSION_NEW>", SESSION_NEW, MAX_LINE);
-    replace_int(line, "<SESSION_OPEN>", SESSION_OPEN, MAX_LINE);
-    replace_int(line, "<SESSION_FINISHED>", SESSION_FINISHED, MAX_LINE);
-    replace_int(line, "<SESSION_CLOSED>", SESSION_CLOSED, MAX_LINE);
+    replace_int(line, "<SESSION_NEW>", SESSION_NEW, TEST_MAX_LINE);
+    replace_int(line, "<SESSION_OPEN>", SESSION_OPEN, TEST_MAX_LINE);
+    replace_int(line, "<SESSION_FINISHED>", SESSION_FINISHED, TEST_MAX_LINE);
+    replace_int(line, "<SESSION_CLOSED>", SESSION_CLOSED, TEST_MAX_LINE);
 
     if (!strcmp(line, "endofsession")) {
       break;
@@ -862,7 +868,7 @@ int test_compile_session_definition(FILE *in, char *session_id, struct Test *tes
 
     fprintf(s, "%s\n", line);
     line[0] = 0;
-    fgets(line, MAX_LINE, in);
+    fgets(line, TEST_MAX_LINE, in);
   }
 
   fclose(s);
@@ -885,8 +891,8 @@ int test_compile_session_definition(FILE *in, char *session_id, struct Test *tes
  */
 enum DiffResult compare_session_line(char *session_line, char *comparison_line, struct Test *test, int server_port, int *row_count) {
 
-  char left_line[MAX_LINE];
-  char right_line[MAX_LINE];
+  char left_line[TEST_MAX_LINE];
+  char right_line[TEST_MAX_LINE];
 
   char *left;
   char *right;
@@ -897,8 +903,8 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
   int pass;
 
   // do not mutate arg *strings
-  strncpy(left_line, session_line, MAX_LINE);
-  strncpy(right_line, comparison_line, MAX_LINE);
+  strncpy(left_line, session_line, TEST_MAX_LINE);
+  strncpy(right_line, comparison_line, TEST_MAX_LINE);
 
   left = strtok_r(left_line, ":", &left_ptr);
   right = strtok_r(right_line, ":", &right_ptr);
@@ -1068,11 +1074,10 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
  */
 int test_compare_session(FILE *sess, int skip_s, FILE *comp, int skip_c, struct Test *test, int server_port, FILE *log, long long start_time) {
   int retVal = 0;
-  double tdelta;
 
   // Now go through reading lines from here and from the session file
-  char session_line[MAX_LINE];
-  char comparison_line[MAX_LINE];
+  char session_line[TEST_MAX_LINE];
+  char comparison_line[TEST_MAX_LINE];
 
   int c_count = 0; // comparsion line count
   int s_count = 0; // session line count
@@ -1083,12 +1088,12 @@ int test_compare_session(FILE *sess, int skip_s, FILE *comp, int skip_c, struct 
 
   // wind both files forward
   while (c_count < skip_c) {
-    c = fgets(comparison_line, MAX_LINE, comp);
+    c = fgets(comparison_line, TEST_MAX_LINE, comp);
     c_count++;
   }
 
   while (s_count < skip_s) {
-    s = fgets(session_line, MAX_LINE, sess);
+    s = fgets(session_line, TEST_MAX_LINE, sess);
     s_count++;
   }
 
@@ -1097,12 +1102,9 @@ int test_compare_session(FILE *sess, int skip_s, FILE *comp, int skip_c, struct 
     session_line[0] = 0;
     comparison_line[0] = 0;
 
-    tdelta = gettime_us() - start_time;
-    tdelta /= 1000;
-
     // read left and right
-    s = fgets(session_line, MAX_LINE, sess);
-    c = fgets(comparison_line, MAX_LINE, comp);
+    s = fgets(session_line, TEST_MAX_LINE, sess);
+    c = fgets(comparison_line, TEST_MAX_LINE, comp);
 
     s_count++;
     c_count++;
@@ -1180,14 +1182,116 @@ int test_compare_session(FILE *sess, int skip_s, FILE *comp, int skip_c, struct 
     }
   } // end while 1
 
-  tdelta = gettime_us() - start_time;
-  tdelta /= 1000;
-
   if (retVal) {
-    fprintf(log, "T+%4.3fms : FAIL : verifysession with %d errors.\n", tdelta, retVal);
+    fprintf(log, "T+%4.3fms : FAIL : verifysession with %d errors.\n", test_time_delta(start_time), retVal);
     return -1;
   }
 
-  fprintf(log, "T+%4.3fms : OK : session file matches comparsion: %d session lines read, %d lines compared.\n", tdelta, s_count, c_count);
+  fprintf(log, "T+%4.3fms : OK : session file matches comparsion: %d session lines read, %d lines compared.\n", test_time_delta(start_time), s_count, c_count);
   return 0;
 }
+
+////
+// http
+////
+
+int parse_http_status(FILE *fp, struct HttpResponse *resp) {
+    char buffer[TEST_MAX_LINE];
+    char *token = NULL;
+
+    char *line = fgets(buffer, TEST_MAX_LINE, fp);
+    token = strtok(line, " ");
+    if(!token) {
+        return -1;
+    }
+    if (strncmp("HTTP", token, 4)) {
+        return -1;
+    }
+    token = strtok(NULL, " ");
+    if(!token) {
+        return -1;
+    }
+    resp->status = atoi(token);
+    return (resp->status) ? 0 : -1;
+}
+
+int parse_http_headers(FILE *fp, struct HttpResponse *resp) {
+    char buffer[TEST_MAX_LINE];
+    char *val;
+
+    while (fgets(buffer, TEST_MAX_LINE, fp) != 0) {
+        trim_crlf(buffer);
+        if(buffer[0] == 0) {
+            return 0;
+        }
+        if (resp->contentType[0] == 0 && strncmp(buffer, "Content-Type: ", 14) == 0) {
+            val = buffer;
+            val += 14;
+            strncpy(resp->contentType, val, 1024);
+            continue;
+        }
+        if (resp->eTag[0] == 0 && strncmp(buffer, "ETAG: ", 6) == 0) {
+            val = buffer;
+            val += 6;
+            strncpy(resp->contentType, val, 1024);
+            continue;
+        }
+    }
+    return 0;
+}
+
+int parse_http_body(FILE *fp, struct HttpResponse *resp) {
+    char buffer[TEST_MAX_LINE];
+    resp->line_count = 0;
+
+    while (fgets(buffer, TEST_MAX_LINE, fp) != 0) {
+      trim_crlf(buffer);
+      // trailing newline
+      if(buffer[0] == 0) {
+          return 0;
+      }
+      strncpy(resp->lines[resp->line_count], buffer, TEST_MAX_LINE);
+      resp->lines[resp->line_count][TEST_MAX_LINE - 1] = 0;
+
+      resp->line_count++;
+
+      if (resp->line_count >= TEST_MAX_LINE_COUNT) {
+        fprintf(stderr, "parse_http_body(), max line count %d exceeded, content truncated!\n", TEST_MAX_LINE_COUNT);
+        return -1;
+      }
+    }
+    return 0;
+}
+
+/**
+ * parses a saved curl request, contaning headers and body: `curl --silent --include --output /tmp/response.out www.example.com`
+ */
+int test_parse_http_response(FILE *fp, struct HttpResponse *resp) {
+    if (!fp) {
+        fprintf(stderr, "Failed to parse response: file pointer is NULL\n");
+        return -1;
+    }
+    int ret = 0;
+
+    // http status
+    ret = parse_http_status(fp, resp);
+    if (ret) {
+        fprintf(stderr, "Failed to parse http status\n");
+        return -1;
+    }
+
+    ret = parse_http_headers(fp, resp);
+    if (ret) {
+        fprintf(stderr, "Failed to parse headers\n");
+        return -1;
+    }
+
+    ret = parse_http_body(fp, resp);
+    if (ret) {
+        fprintf(stderr, "Failed to parse body\n");
+        return -1;
+    }
+
+    return 0;
+}
+

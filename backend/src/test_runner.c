@@ -76,7 +76,6 @@ char *py_traceback_func =
     "   return output\n"
     "\n";
 
-
 /**
  * parses a 'request' directive line for defined patterns and creates a curl command
  */
@@ -84,14 +83,14 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
     int retVal = 0;
 
     do {
-        char tmp[MAX_BUFFER];
+        char tmp[TEST_MAX_BUFFER];
 
-        char args[MAX_BUFFER];
-        char url[MAX_BUFFER];
-        char data[MAX_BUFFER] = {'\0'};
-        char method[MAX_BUFFER] = {'\0'};
-        char curl_args[MAX_BUFFER]= {'\0'};
-        char url_sub[MAX_BUFFER];
+        char args[TEST_MAX_BUFFER];
+        char url[TEST_MAX_BUFFER];
+        char data[TEST_MAX_BUFFER] = {'\0'};
+        char method[TEST_MAX_BUFFER] = {'\0'};
+        char curl_args[TEST_MAX_BUFFER]= {'\0'};
+        char url_sub[TEST_MAX_BUFFER];
 
         // flags
         int done = 0;
@@ -108,7 +107,7 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
         // example: request proxy 200 addanswer curlargs(--user name:password) POST "sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0:"
         if (sscanf(args, "proxy %[^\r\n]", tmp) == 1) {
             proxy = 1;
-            strncpy(args, tmp, MAX_BUFFER);
+            strncpy(args, tmp, TEST_MAX_BUFFER);
             tmp[0] = 0;
         }
 
@@ -145,7 +144,7 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
             } else if (url[i + 1] == '$') {
               url_sub[o++] = '$';
             } else if (!strncmp("$SESSION", &url[i], 8)) {
-              snprintf(&url_sub[o], MAX_BUFFER - o, "%s", last_sessionid);
+              snprintf(&url_sub[o], TEST_MAX_BUFFER - o, "%s", last_sessionid);
               o = strlen(url_sub);
               i += 7;
             } else {
@@ -164,35 +163,34 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
         url_sub[o] = 0;
 
         if (strlen(data)) {
-          strncpy(tmp, data, MAX_BUFFER);
-          snprintf(data, MAX_BUFFER, " -d %s", tmp);
+          strncpy(tmp, data, TEST_MAX_BUFFER);
+          snprintf(data, TEST_MAX_BUFFER, " -d %s", tmp);
         }
 
         if (strlen(method)) {
-          strncpy(tmp, method, MAX_BUFFER);
-          snprintf(method, MAX_BUFFER, " -X %s", tmp);
+          strncpy(tmp, method, TEST_MAX_BUFFER);
+          snprintf(method, TEST_MAX_BUFFER, " -X %s", tmp);
         }
 
         if (strlen(curl_args)) {
-          strncpy(tmp, curl_args, MAX_BUFFER);
-          snprintf(curl_args, MAX_BUFFER, " %s", tmp);
+          strncpy(tmp, curl_args, TEST_MAX_BUFFER);
+          snprintf(curl_args, TEST_MAX_BUFFER, " %s", tmp);
         }
 
         // build curl cmd
         snprintf(
-          out, MAX_BUFFER,
-          "curl%s%s%s -s -w \"HTTPRESULT=%%{http_code}\" -o "
-          "%s/request.out \"http://localhost:%d/%s%s\" > "
-          "%s/request.code",
-          curl_args,
-          method,
-          data,
+          out, TEST_MAX_BUFFER,
+          "curl -s -i"
+          "%s%s%s"
+          " -o %s/request.out"
+          " \"http://localhost:%d/%s%s\"",
+          curl_args, method, data,
           dir,
           SERVER_PORT,
           "surveyapi",
-          url_sub,
-          dir
+          url_sub
         );
+
     } while(0);
 
     return retVal;
@@ -210,18 +208,18 @@ FILE *open_session_file_copy(char *session_id, struct Test *test) {
             session_id[0], session_id[1], session_id[2],
             session_id[3], session_id);
 
-  char tmp[MAX_LINE];
-  snprintf(tmp, MAX_LINE, "%s/session.cpy", test->dir);
+  char tmp[TEST_MAX_LINE];
+  snprintf(tmp, TEST_MAX_LINE, "%s/session.cpy", test->dir);
   unlink(tmp);
 
-  snprintf(tmp, MAX_LINE, "sudo cp %s %s/session.cpy", session_file, test->dir);
+  snprintf(tmp, TEST_MAX_LINE, "sudo cp %s %s/session.cpy", session_file, test->dir);
   if(system(tmp)) {
     fprintf(stderr, "Command failed: '%s'\n", tmp);
     return NULL;
   }
 
   // Check that the file exists
-  snprintf(tmp, MAX_LINE, "%s/session.cpy", test->dir);
+  snprintf(tmp, TEST_MAX_LINE, "%s/session.cpy", test->dir);
   FILE *copy = fopen(tmp, "r");
   if (!copy) {
     fprintf(stderr, "Could not open session file '%s': %s\n", tmp, strerror(errno));
@@ -292,15 +290,15 @@ int run_test(struct Test *test) {
   // #198 flush errors accumulated by previous tests
   clear_errors();
 
+  struct HttpResponse response;
+
   int retVal = 0;
   FILE *in = NULL;
   FILE *log = NULL;
-  char line[MAX_LINE];
+  char line[TEST_MAX_LINE];
   char log_dir[1024];
   char tmp[1024];
 
-  int response_line_count = 0;
-  char response_lines[100][MAX_LINE];
   char last_sessionid[100] = "";
 
   do {
@@ -337,12 +335,11 @@ int run_test(struct Test *test) {
     time_t now = time(0);
     char *ctime_str = ctime(&now);
     fprintf(log, "Started running test at %s", ctime_str);
-    long long start_time = gettime_us();
+    long long start_time = test_gettime_us();
 
     char surveyname[1024] = "";
     char custom_sessionid[1024] = "";
-    char glob[MAX_BUFFER];
-    double tdelta;
+    char glob[TEST_MAX_BUFFER];
 
     // Variables for FOR NEXT loops
     char var[1024];
@@ -357,7 +354,7 @@ int run_test(struct Test *test) {
 
     // Now iterate through test script
     line[0] = 0;
-    fgets(line, MAX_LINE, in);
+    fgets(line, TEST_MAX_LINE, in);
 
     while (line[0]) {
 
@@ -367,10 +364,8 @@ int run_test(struct Test *test) {
         line[--len] = 0;
       }
 
-      tdelta = gettime_us() - start_time;
-      tdelta /= 1000;
       if (line[0] && line[0] != '@' && line[0] != '#') {
-        fprintf(log, "T+%4.3fms : Executing directive '%s'\n", tdelta, line);
+        fprintf(log, "T+%4.3fms : Executing directive '%s'\n", test_time_delta(start_time), line);
       }
 
       ////
@@ -411,7 +406,7 @@ int run_test(struct Test *test) {
         }
 
         line[0] = 0;
-        fgets(line, MAX_LINE, in);
+        fgets(line, TEST_MAX_LINE, in);
 
         while (line[0]) {
           int len = strlen(line);
@@ -425,7 +420,7 @@ int run_test(struct Test *test) {
           }
           fprintf(s, "%s\n", line);
           line[0] = 0;
-          fgets(line, MAX_LINE, in);
+          fgets(line, TEST_MAX_LINE, in);
         }
 
         fclose(s);
@@ -455,9 +450,7 @@ int run_test(struct Test *test) {
             tmp[3], tmp);
 
         if (access(path, F_OK)) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
-          fprintf(log, "T+%4.3fms : ERROR : session '%s'. file does not exist, path: '%s'\n", tdelta, tmp, path);
+          fprintf(log, "T+%4.3fms : ERROR : session '%s'. file does not exist, path: '%s'\n", test_time_delta(start_time), tmp, path);
           goto error;
         }
 
@@ -475,15 +468,12 @@ int run_test(struct Test *test) {
 
         int right = test_count_sessions(sess_path);
 
-        tdelta = gettime_us() - start_time;
-        tdelta /= 1000;
-
         if(right < 0) {
-          fprintf(log, "T+%4.3fms : ERROR : verify_sessions_count failed: test_count_sessions() returned an error\n", tdelta);
+          fprintf(log, "T+%4.3fms : ERROR : verify_sessions_count failed: test_count_sessions() returned an error\n", test_time_delta(start_time));
           goto error;
         }
         if(left != right) {
-          fprintf(log, "T+%4.3fms : ERROR : verify_sessions_count failed: %d sessions expected, %d found\n", tdelta, left, right);
+          fprintf(log, "T+%4.3fms : ERROR : verify_sessions_count failed: %d sessions expected, %d found\n", test_time_delta(start_time), left, right);
           goto error;
         }
 
@@ -500,12 +490,10 @@ int run_test(struct Test *test) {
 
         if (chmod(python_dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP |
                                   S_IROTH | S_IXOTH)) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
           fprintf(log,
                   "T+%4.3fms : ERROR : Could not set permissions on python "
                   "directory '%s'\n",
-                  tdelta, python_dir);
+                  test_time_delta(start_time), python_dir);
           goto error;
         }
 
@@ -517,19 +505,17 @@ int run_test(struct Test *test) {
         if (!s) {
           fprintf(log,
                   "T+%4.3fms : ERROR : Could not create python file '%s'\n",
-                  tdelta, python_ini);
+                  test_time_delta(start_time), python_ini);
           goto error;
         }
         fclose(s);
 
-        if (chmod(python_ini, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP |
-                                  S_IROTH | S_IXOTH)) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
+        if (chmod(python_ini, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH)) {
+
           fprintf(log,
                   "T+%4.3fms : ERROR : Could not set permissions on python "
                   "file '%s'\n",
-                  tdelta, python_ini);
+                  test_time_delta(start_time), python_ini);
           goto error;
         }
 
@@ -540,7 +526,7 @@ int run_test(struct Test *test) {
         if (!s) {
           fprintf(log,
                   "T+%4.3fms : ERROR : Could not create python file '%s'\n",
-                  tdelta, python_module);
+                  test_time_delta(start_time), python_module);
           goto error;
         }
 
@@ -548,7 +534,7 @@ int run_test(struct Test *test) {
 
         // write python content from testfile
         line[0] = 0;
-        fgets(line, MAX_LINE, in);
+        fgets(line, TEST_MAX_LINE, in);
         while (line[0]) {
           int len = strlen(line);
           // Trim CR/LF from the end of the line
@@ -562,18 +548,16 @@ int run_test(struct Test *test) {
           fprintf(s, "%s\n", line);
 
           line[0] = 0;
-          fgets(line, MAX_LINE, in);
+          fgets(line, TEST_MAX_LINE, in);
         } // endwhile
         fclose(s);
 
-        if (chmod(python_module, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP |
-                                     S_IXGRP | S_IROTH | S_IXOTH)) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
+        if (chmod(python_module, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH)) {
+
           fprintf(log,
                   "T+%4.3fms : ERROR : Could not set permissions on python "
                   "file '%s'\n",
-                  tdelta, python_module);
+                  test_time_delta(start_time), python_module);
           goto error;
         }
 
@@ -584,31 +568,24 @@ int run_test(struct Test *test) {
         int compile_result = system(cmd);
 
         if (compile_result) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
           fprintf(log,
                   "T+%4.3fms : FATAL: Failed to compile python module. Does "
                   "the python have errors?\n",
-                  tdelta);
+                  test_time_delta(start_time));
           goto fatal;
         }
 
         // Then restart, to clear out any old python code we had loaded before
-        tdelta = gettime_us() - start_time;
-        tdelta /= 1000;
         fprintf(log,
                 "T+%4.3fms : INFO : Restarting backend to clear loaded python "
                 "code\n",
-                tdelta);
+                test_time_delta(start_time));
 
         // #361, removed extra call to configure_and_start_lighttpd()
         //  give filesystem and python fs time to cope with newly created python file,
         //  we had random ModuleNotFoundErrors on tests with both no python and python
         sleep(1);
-
-        tdelta = gettime_us() - start_time;
-        tdelta /= 1000;
-        fprintf(log, "T+%4.3fms : INFO : Backend restart complete\n", tdelta);
+        fprintf(log, "T+%4.3fms : INFO : Backend restart complete\n", test_time_delta(start_time));
 
       } else if (!strcmp(line, "extract_sessionid")) {
 
@@ -616,32 +593,25 @@ int run_test(struct Test *test) {
         // keyword: "extract_sessionid"
         ////
 
-        if (response_line_count != 1) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
+        if (response.line_count != 1) {
           fprintf(log,
                   "T+%4.3fms : FAIL : Could not parse session ID: Last "
                   "response contained %d lines, instead of exactly 1.\n",
-                  tdelta, response_line_count);
+                  test_time_delta(start_time), response.line_count);
           goto fail;
         }
 
-        if (validate_session_id(response_lines[0])) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
+        if (validate_session_id(response.lines[0])) {
           fprintf(log,
                   "T+%4.3fms : FAIL : Could not parse session ID: "
                   "validate_session_id() reported failure.\n",
-                  tdelta);
+                  test_time_delta(start_time));
           goto fail;
         }
 
         // Remember session ID for other directives
-        strcpy(last_sessionid, response_lines[0]);
-        tdelta = gettime_us() - start_time;
-        tdelta /= 1000;
-        fprintf(log, "T+%4.3fms : Session ID is '%s'\n", tdelta,
-                last_sessionid);
+        strcpy(last_sessionid, response.lines[0]);
+        fprintf(log, "T+%4.3fms : Session ID is '%s'\n", test_time_delta(start_time), last_sessionid);
 
       } else if (sscanf(line, "match_string %[^\r\n]", glob) == 1) {
 
@@ -651,17 +621,14 @@ int run_test(struct Test *test) {
 
         // Check that the response contains the supplied pattern
         int matches = 0;
-        for (int i = 0; i < response_line_count; i++) {
-          if (strstr(response_lines[i], glob)) {
+        for (int i = 0; i < response.line_count; i++) {
+          if (strstr(response.lines[i], glob)) {
             matches++;
           }
         }
 
         if (!matches) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
-          fprintf(log, "T+%4.3fms : FAIL : No match for literal string.\n",
-                  tdelta);
+          fprintf(log, "T+%4.3fms : FAIL : No match for literal string.\n", test_time_delta(start_time));
           goto fail;
         }
 
@@ -673,18 +640,14 @@ int run_test(struct Test *test) {
 
         // Check that the response contains the supplied pattern
         int matches = 0;
-        for (int i = 0; i < response_line_count; i++) {
-          if (strstr(response_lines[i], glob)) {
+        for (int i = 0; i < response.line_count; i++) {
+          if (strstr(response.lines[i], glob)) {
             matches++;
           }
         }
 
         if (matches) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
-          fprintf(log,
-                  "T+%4.3fms : FAIL : There are matches for literal string.\n",
-                  tdelta);
+          fprintf(log, "T+%4.3fms : FAIL : There are matches for literal string.\n", test_time_delta(start_time));
           goto fail;
         }
 
@@ -695,19 +658,12 @@ int run_test(struct Test *test) {
         ////
 
         if (for_count > 10) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
-          fprintf(log, "T+%4.3fms : FATAL: Too many FOR statements\n", tdelta);
+          fprintf(log, "T+%4.3fms : FATAL: Too many FOR statements\n", test_time_delta(start_time));
           goto fatal;
         }
 
         if (strlen(var) > 15) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
-          fprintf(
-              log,
-              "T+%4.3fms : FATAL: Variable name too long in FOR statement\n",
-              tdelta);
+          fprintf( log, "T+%4.3fms : FATAL: Variable name too long in FOR statement\n",  test_time_delta(start_time));
           goto fatal;
         }
 
@@ -724,9 +680,7 @@ int run_test(struct Test *test) {
         ////
 
         if (!for_count) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
-          fprintf(log, "T+%4.3fms : FATAL: NEXT without FOR\n", tdelta);
+          fprintf(log, "T+%4.3fms : FATAL: NEXT without FOR\n", test_time_delta(start_time));
           goto fatal;
         }
 
@@ -737,12 +691,10 @@ int run_test(struct Test *test) {
           for_prevval[for_count - 1] += for_step[for_count - 1];
 
           if (fseeko(in, for_seek_pos[for_count - 1], SEEK_SET)) {
-            tdelta = gettime_us() - start_time;
-            tdelta /= 1000;
             fprintf(log,
                     "T+%4.3fms : ERROR : Could not seek to top of FOR %s loop "
                     "at offset %lld\n",
-                    tdelta, for_var[for_count - 1],
+                    test_time_delta(start_time), for_var[for_count - 1],
                     (long long)for_seek_pos[for_count - 1]);
             goto error;
           }
@@ -760,28 +712,23 @@ int run_test(struct Test *test) {
         int error_code = regcomp(&regex, glob, REG_EXTENDED | REG_NOSUB);
 
         if (error_code) {
-          char err[MAX_LINE] = "";
-          regerror(error_code, &regex, err, MAX_LINE);
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
+          char err[TEST_MAX_LINE] = "";
+          regerror(error_code, &regex, err, TEST_MAX_LINE);
           fprintf(
               log,
               "T+%4.3fms : FATAL: Could not compile regular expression: %s\n",
-              tdelta, err);
+              test_time_delta(start_time), err);
           goto fatal;
         }
 
-        for (int i = 0; i < response_line_count; i++) {
-          if (REG_NOMATCH != regexec(&regex, response_lines[i], 0, NULL, 0)) {
+        for (int i = 0; i < response.line_count; i++) {
+          if (REG_NOMATCH != regexec(&regex, response.lines[i], 0, NULL, 0)) {
             matches++;
           }
         }
 
         if (!matches) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
-          fprintf(log, "T+%4.3fms : FAIL: No match for regular expression.\n",
-                  tdelta);
+          fprintf(log, "T+%4.3fms : FAIL: No match for regular expression.\n", test_time_delta(start_time));
           goto fail;
         }
 
@@ -797,43 +744,32 @@ int run_test(struct Test *test) {
         int error_code = regcomp(&regex, glob, REG_EXTENDED | REG_NOSUB);
 
         if (error_code) {
-          char err[MAX_LINE] = "";
-          regerror(error_code, &regex, err, MAX_LINE);
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
+          char err[TEST_MAX_LINE] = "";
+          regerror(error_code, &regex, err, TEST_MAX_LINE);
           fprintf(
               log,
-              "T+%4.3fms : FATAL: Could not compile regular expression: %s\n",
-              tdelta, err);
+              "T+%4.3fms : FATAL: Could not compile regular expression: %s\n", test_time_delta(start_time), err);
           goto fatal;
         }
 
-        for (int i = 0; i < response_line_count; i++) {
-          if (REG_NOMATCH != regexec(&regex, response_lines[i], 0, NULL, 0)) {
+        for (int i = 0; i < response.line_count; i++) {
+          if (REG_NOMATCH != regexec(&regex, response.lines[i], 0, NULL, 0)) {
             matches++;
           }
         }
 
         if (matches) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
-          fprintf(log,
-            "T+%4.3fms : FAIL: There is a match to the regular expression.\n",
-            tdelta);
+          fprintf(log, "T+%4.3fms : FAIL: There is a match to the regular expression.\n", test_time_delta(start_time));
           goto fail;
         }
-      } else if (sscanf(line, "test_copy_session %[^\r\n]", arg) == 1) {
+      } else if (sscanf(line, "copy_session_to %[^\r\n]", arg) == 1) {
 
         ////
-        // keyword: "test_copy_session"
+        // keyword: "copy_session_to"
         ////
 
         if (test_copy_session(last_sessionid, arg, test)) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
-          fprintf(log,
-            "T+%4.3fms : FAIL: Copy session file failed.\n",
-            tdelta);
+          fprintf(log, "T+%4.3fms : FAIL: Copy session file failed.\n", test_time_delta(start_time));
           goto fail;
         }
 
@@ -845,158 +781,80 @@ int run_test(struct Test *test) {
         // keyword: "request"
         ////
 
+        // clear previous response
+        memset(&response, 0, sizeof(response));
+
         // Exeucte curl call. If it is a newsession command, then remember the session ID
         // We also log the returned data from the request, so that we can look at that
         // as well, if required.
-        char cmd[MAX_BUFFER];
-        char tmp[MAX_BUFFER];
+        char cmd[TEST_MAX_BUFFER];
+        char tmp[TEST_MAX_BUFFER];
         int expected_http_status = 0;
 
-        tdelta = gettime_us() - start_time;
-        tdelta /= 1000;
-
         // Delete any old version of files laying around
-        snprintf(tmp, MAX_BUFFER, "%s/request.out", test->dir);
+        snprintf(tmp, TEST_MAX_BUFFER, "%s/request.out", test->dir);
         unlink(tmp);
         if (!access(tmp, F_OK)) {
-          fprintf(log, "T+%4.3fms : FATAL: Could not unlink file '%s'", tdelta,
-                  tmp);
+          fprintf(log, "T+%4.3fms : FATAL: Could not unlink file '%s'", test_time_delta(start_time), tmp);
           goto fatal;
         }
 
-        snprintf(tmp, MAX_BUFFER, "%s/request.code", test->dir);
+        snprintf(tmp, TEST_MAX_BUFFER, "%s/request.code", test->dir);
         unlink(tmp);
         if (!access(tmp, F_OK)) {
-          fprintf(log, "T+%4.3fms : FATAL: Could not unlink file '%s'", tdelta,
-                  tmp);
+          fprintf(log, "T+%4.3fms : FATAL: Could not unlink file '%s'", test_time_delta(start_time), tmp);
           goto fatal;
         }
 
         if (parse_request(line, cmd, &expected_http_status, last_sessionid, test->dir, log)) {
-          fprintf(log, "T+%4.3fms : FATAL: Could not parse args in declaration \"%s\"'", tdelta,
-                  line);
+          fprintf(log, "T+%4.3fms : FATAL: Could not parse args in declaration \"%s\"'", test_time_delta(start_time), line);
           goto fatal;
         }
-        fprintf(log, "T+%4.3fms : HTTP API request command: '%s'\n", tdelta,
-                cmd);
+        fprintf(log, "T+%4.3fms : HTTP API request command: '%s'\n", test_time_delta(start_time), cmd);
 
         int shell_result = system(cmd);
         if (shell_result) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
           fprintf(log,
                   "T+%4.3fms : HTTP API request command returned with non-zero "
                   "status %d.\n",
-                  tdelta, shell_result);
+                  test_time_delta(start_time), shell_result);
         }
 
         // handle  response
-        int httpcode = -1;
-        tdelta = gettime_us() - start_time;
-        tdelta /= 1000;
-        fprintf(log, "T+%4.3fms : HTTP API request command completed.\n",
-                tdelta);
+        fprintf(log, "T+%4.3fms : HTTP API request command completed.\n", test_time_delta(start_time));
         FILE *rc;
 
-        snprintf(cmd, MAX_BUFFER, "%s/request.out", test->dir);
+        snprintf(cmd, TEST_MAX_BUFFER, "%s/request.out", test->dir);
         rc = fopen(cmd, "r");
 
+        // load and parse request.out file
         if (!rc) {
-
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
+          // not going to fatal, this might be a test case
           fprintf(log,
                   "T+%4.3fms : NOTE : Could not open '%s/request.out'. No "
                   "response from web page?\n",
-                  tdelta, test->dir);
+                  test_time_delta(start_time), test->dir);
 
         } else {
-
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
-          fprintf(log, "T+%4.3fms : HTTP request response body:\n", tdelta);
-          response_line_count = 0;
-          line[0] = 0;
-          fgets(line, MAX_LINE, rc);
-
-          while (line[0]) {
-            int len = strlen(line);
-            // Trim CR/LF from the end of the line
-            while (len && (line[len - 1] < ' ')) {
-              line[--len] = 0;
-            }
-            fprintf(log, "::: %s\n", line);
-
-            // Keep the lines returned from the request in case we want to probe them
-            if (response_line_count < 100) {
-              line[8191] = 0;
-              strcpy(response_lines[response_line_count++], line);
-            }
-
-            line[0] = 0;
-            fgets(line, MAX_LINE, rc);
+          if (test_parse_http_response(rc, &response)) {
+            fprintf(log, "T+%4.3fms : FATAL: Could not HttpResponse from '%s/request.out'", test_time_delta(start_time), cmd);
+            fclose(rc);
+            goto fatal;
           }
           fclose(rc);
-
         } // endif !rc
 
-        snprintf(cmd, MAX_BUFFER, "%s/request.code", test->dir);
-        rc = fopen(cmd, "r");
-
-        if (!rc) {
-
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
-          fprintf(log,
-                  "T+%4.3fms : FATAL: Could not open '%s/request.code' to "
-                  "retrieve HTTP response code.\n",
-                  tdelta, test->dir);
-          goto fatal;
-
-        } else {
-
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
-          fprintf(log, "T+%4.3fms : HTTP request.code response:\n", tdelta);
-          line[0] = 0;
-          fgets(line, 1024, rc);
-          while (line[0]) {
-            int len = strlen(line);
-            // Trim CR/LF from the end of the line
-            while (len && (line[len - 1] < ' '))
-              line[--len] = 0;
-
-            sscanf(line, "HTTPRESULT=%d", &httpcode);
-
-            fprintf(log, "=== %s\n", line);
-            line[0] = 0;
-            fgets(line, 1024, rc);
-          }
-          fclose(rc);
-
-        } // endif !rc
-
-        tdelta = gettime_us() - start_time;
-        tdelta /= 1000;
-        fprintf(log, "T+%4.3fms : HTTP response code %d\n", tdelta, httpcode);
-
-        if (httpcode == -1) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
-          fprintf(log,
-                  "T+%4.3fms : FATAL: Could not find HTTP response code in "
-                  "request.code file.\n",
-                  tdelta);
-          goto fatal;
+        // log body
+        fprintf(log, "T+%4.3fms : HTTP response body:\n", test_time_delta(start_time));
+        for (int i = 0; i < response.line_count; i++) {
+          fprintf(log,"::: %s\n", response.lines[i]);
         }
+        fprintf(log, "T+%4.3fms : HTTP response status %d\n", test_time_delta(start_time), response.status);
 
-        if (httpcode != expected_http_status) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
+        if (response.status != expected_http_status) {
           fprintf(log,
-                  "T+%4.3fms : ERROR : Expected HTTP response code %d, but got "
-                  "%d.\n",
-                  tdelta, expected_http_status, httpcode);
+                  "T+%4.3fms : ERROR : Expected HTTP response code %d, but got %d.\n",
+                  test_time_delta(start_time), expected_http_status, response.status);
           goto fail;
         }
 
@@ -1007,22 +865,18 @@ int run_test(struct Test *test) {
         ////
 
        if (validate_session_id(last_sessionid)) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
           fprintf(log,
             "T+%4.3fms : FATAL: (session_add_answer) No session ID has been captured. Use "
             "extract_sessionid following request directive.\n",
-            tdelta);
+            test_time_delta(start_time));
           goto fatal;
         }
 
         trim_crlf(arg);
         if (arg[0] == 0) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
           fprintf(log,
             "T+%4.3fms : FATAL: (session_add_answer) no answer defined.\n",
-            tdelta);
+            test_time_delta(start_time));
           goto fatal;
         }
 
@@ -1063,20 +917,16 @@ int run_test(struct Test *test) {
         ////
 
         if (validate_session_id(last_sessionid)) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
           fprintf(log,
             "T+%4.3fms : FATAL: (verify_session) No session ID has been captured. Use "
             "extract_sessionid following request directive.\n",
-            tdelta);
+            test_time_delta(start_time));
           goto fatal;
         }
 
         FILE *s = open_session_file_copy(last_sessionid, test);
         if(!s) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
-          fprintf(log, "T+%4.3fms : Create copy of session file failed: '%s/%s.cpy'.\n", tdelta, test->dir, last_sessionid);
+          fprintf(log, "T+%4.3fms : Create copy of session file failed: '%s/%s.cpy'.\n", test_time_delta(start_time), test->dir, last_sessionid);
           goto fatal;
         }
 
@@ -1096,9 +946,9 @@ int run_test(struct Test *test) {
 
         // skip n first session lines (headers)
         if (skip_headers) {
-          char tmp[MAX_LINE];
+          char tmp[TEST_MAX_LINE];
           int count = 0;
-          while (fgets(tmp, MAX_LINE, s)) {
+          while (fgets(tmp, TEST_MAX_LINE, s)) {
             count++;
             if (count <= skip_s) {
               continue;
@@ -1122,11 +972,48 @@ int run_test(struct Test *test) {
         }
 
         if (ret) {
-          tdelta = gettime_us() - start_time;
-          tdelta /= 1000;
-          fprintf(log, "T+%4.3fms : compare session failed: '%s'.\n", tdelta, last_sessionid);
+          fprintf(log, "T+%4.3fms : compare session failed: '%s'.\n", test_time_delta(start_time), last_sessionid);
           goto fail;
         }
+
+        } else if (strncmp("verify_checksum", line, strlen("verify_session_checksum")) == 0) {
+
+          ////
+          // keyword: "verify_session_checksum"
+          ////
+
+          if (!strlen(response.eTag)) {
+            fprintf(log, "T+%4.3fms : verify_session_checksum failed: response.eTag is empty: '%s'.\n", test_time_delta(start_time), last_sessionid);
+            goto fail;
+          }
+
+          snprintf(tmp, 1024, "%s/sessions/%c%c%c%c/%s.etag", test->dir,
+            last_sessionid[0], last_sessionid[1], last_sessionid[2],
+            last_sessionid[3], last_sessionid);
+
+          FILE *cf = fopen(tmp, "r");
+          if (!cf) {
+            fprintf(log, "T+%4.3fms : verify_session_checksum failed: file does not exist: '%s'.\n", test_time_delta(start_time), tmp);
+            goto fail;
+          }
+
+          char *checksum = NULL;
+          if (!fgets(checksum, 100, cf)) {
+            fclose(cf);
+            fprintf(log, "T+%4.3fms : verify_session_checksum failed: file does not contain checksum content: '%s'.\n", test_time_delta(start_time), tmp);
+            goto fail;
+          }
+
+          fprintf(log, "T+%4.3fms : verify_session_checksum ('%s' == '%s') in file '%s'.\n", test_time_delta(start_time), checksum, response.eTag, tmp);
+
+          if (strncmp(checksum, response.eTag, 100)) {
+            fclose(cf);
+            fprintf(log, "T+%4.3fms : verify_session_checksum failed: file does not contain checksum content: '%s'.\n", test_time_delta(start_time), tmp);
+            goto fail;
+          }
+
+          fclose(cf);
+        ///TODO
 
         ////
         // keywords: End
@@ -1148,7 +1035,7 @@ int run_test(struct Test *test) {
         fprintf(
             log,
             "T+%4.3fms : FATAL: Test script '%s' has unknown directive '%s'\n",
-            tdelta, test->file, line);
+            test_time_delta(start_time), test->file, line);
         goto fatal;
       }
 
