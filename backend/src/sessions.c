@@ -1244,13 +1244,6 @@ int save_session(struct session *s) {
     }
 
     LOG_INFOV("Updated session file '%s'.", session_path_final);
-
-    char sha1[HASHSTRING_LENGTH];
-    if (sha1_file(session_path_final, sha1)) {
-      LOG_ERRORV("Could not hash ssession file '%s'", session_path_final);
-    }
-
-    session_add_datafile(s->session_id, "etag", sha1);
   } while (0);
 
   if (o) {
