@@ -23,6 +23,13 @@
 */
 int escape_string(char *in, char *out, int max_len) {
   int out_len = 0;
+
+  // #421 allow NULL pointers
+  if (in == NULL) {
+    out[0] = 0;
+    return 0;
+  }
+
   for (int i = 0; in[i]; i++) {
 
     if ((out_len + 1) >= max_len) {
