@@ -635,7 +635,7 @@ int run_test(struct Test *test) {
       } else if (sscanf(line, "nomatch_string %[^\r\n]", glob) == 1) {
 
         ////
-        // keyword: "extract_sessionid"
+        // keyword: "nomatch_string %[^\r\n]"
         ////
 
         // Check that the response contains the supplied pattern
@@ -975,45 +975,6 @@ int run_test(struct Test *test) {
           fprintf(log, "T+%4.3fms : compare session failed: '%s'.\n", test_time_delta(start_time), last_sessionid);
           goto fail;
         }
-
-        } else if (strncmp("verify_checksum", line, strlen("verify_session_checksum")) == 0) {
-
-          ////
-          // keyword: "verify_session_checksum"
-          ////
-
-          if (!strlen(response.eTag)) {
-            fprintf(log, "T+%4.3fms : verify_session_checksum failed: response.eTag is empty: '%s'.\n", test_time_delta(start_time), last_sessionid);
-            goto fail;
-          }
-
-          snprintf(tmp, 1024, "%s/sessions/%c%c%c%c/%s.etag", test->dir,
-            last_sessionid[0], last_sessionid[1], last_sessionid[2],
-            last_sessionid[3], last_sessionid);
-
-          FILE *cf = fopen(tmp, "r");
-          if (!cf) {
-            fprintf(log, "T+%4.3fms : verify_session_checksum failed: file does not exist: '%s'.\n", test_time_delta(start_time), tmp);
-            goto fail;
-          }
-
-          char *checksum = NULL;
-          if (!fgets(checksum, 100, cf)) {
-            fclose(cf);
-            fprintf(log, "T+%4.3fms : verify_session_checksum failed: file does not contain checksum content: '%s'.\n", test_time_delta(start_time), tmp);
-            goto fail;
-          }
-
-          fprintf(log, "T+%4.3fms : verify_session_checksum ('%s' == '%s') in file '%s'.\n", test_time_delta(start_time), checksum, response.eTag, tmp);
-
-          if (strncmp(checksum, response.eTag, 100)) {
-            fclose(cf);
-            fprintf(log, "T+%4.3fms : verify_session_checksum failed: file does not contain checksum content: '%s'.\n", test_time_delta(start_time), tmp);
-            goto fail;
-          }
-
-          fclose(cf);
-        ///TODO
 
         ////
         // keywords: End
