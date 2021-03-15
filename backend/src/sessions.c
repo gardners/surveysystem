@@ -314,7 +314,7 @@ int random_session_id(char *session_id_out) {
  * #363 save session meta data
  * This function leaves the file pointer open, regardless of success or fail
  */
-int save_session_meta(FILE *fp, struct session_meta *meta, enum session_state state) {
+int session_new_add_meta(struct session *ses, struct session_meta *meta) {
   // LOG_INFOV(
   //   "session_meta\n"
   //   "  |_ user: %s\n"
@@ -329,69 +329,69 @@ int save_session_meta(FILE *fp, struct session_meta *meta, enum session_state st
   // );
 
   int retVal = 0;
+  struct answer *a = NULL;
 
   do {
+    if (!ses || !ses->session_id) {
+      LOG_ERROR("Add answer: Session structure or ses->session_id is NULL.");
+    }
     if (!meta) {
         LOG_ERROR("cannot create session: session meta is NULL");
     }
+    if (ses->state != SESSION_NEW) {
+        LOG_ERRORV("cannot create session: session state is != SESSION_NEW (%d != %d)", ses->state, SESSION_NEW);
+    }
 
-    char line[65536];
     time_t now = time(NULL);
+    long long stored = (long long) now;
 
-    char uid[1024] = { 0 };
-    char text[1024] = { 0 };
+    enum Headers { HEADER_USER, HEADER_GROUP, HEADER_AUTHORITY, HEADER_STATE, HEADER_MAX };
 
-    struct answer a = {
-      .uid = uid,
-      .type = QTYPE_META,
-      .text = text,
-      .unit = "",
-      .stored = (long long) now,
-    };
+    for (int i = 0; i < HEADER_MAX; i++) {
+      ses->answers[i] = calloc(sizeof(struct answer), 1);
+      if (!ses->answers[i]) {
+        LOG_ERRORV("calloc() of answer structure (header line %d) failed.", i);
+      }
+      ses->answers[i]->type = QTYPE_META;
+      ses->answers[i]->stored = stored;
+    }
 
-    strncpy(a.uid, "@user", 1024);
-    text[0] = 0;
+    if (retVal) {
+      break;
+    }
+
+    ses->answer_offset = HEADER_MAX;
+    ses->answer_count = HEADER_MAX;
+
+    // @user header
+    a = ses->answers[HEADER_USER];
+    a->uid = strdup("@user");
     if (meta->user) {
-      strncpy(text, meta->user, 1024);
+      a->text = strdup(meta->user);
     }
-    if (serialise_answer(&a, ANSWER_SCOPE_FULL, line, 65536)) {
-      LOG_ERRORV("meta: serialise_answer() failed for field '%s'", "@user");
-    }
-    fprintf(fp, "%s\n", line);
 
-    strncpy(a.uid, "@group", 1024);
-    text[0] = 0;
+    // @group header
+    a = ses->answers[HEADER_GROUP];
+    a->uid = strdup("@group");
     if (meta->group) {
-      strncpy(text, meta->group, 1024);
+      a->text = strdup(meta->group);
     }
-    if (serialise_answer(&a, ANSWER_SCOPE_FULL, line, 65536)) {
-      LOG_ERRORV("meta: serialise_answer() failed for field '%s'", "@group");
-    }
-    fprintf(fp, "%s\n", line);
 
-    strncpy(a.uid, "@authority", 1024);
-    text[0] = 0;
-    a.value = meta->provider;
+    // @authority header
+    a = ses->answers[HEADER_AUTHORITY];
+    a->uid = strdup("@authority");
+    a->value = meta->provider;
     if (meta->authority) {
-      strncpy(text, meta->authority, 1024);
+      a->text = strdup(meta->authority);
     }
-    if (serialise_answer(&a, ANSWER_SCOPE_FULL, line, 65536)) {
-      LOG_ERRORV("meta: serialise_answer() failed for field '%s'", "@authority");
-    }
-    a.value = 0; // reset second field
-    fprintf(fp, "%s\n", line);
 
-    strncpy(a.uid, "@state", 1024);
-    text[0] = 0; // clear string, but leave pointer ref
-    a.value = state;
-    if (state == SESSION_NEW) {
-      a.time_begin = (long long) now;
-    }
-    if (serialise_answer(&a, ANSWER_SCOPE_FULL, line, 65536)) {
-      LOG_ERRORV("meta: serialise_answer() failed for field '%s'", "@state");
-    }
-    fprintf(fp, "%s\n", line);
+    // @astate header
+    a = ses->answers[HEADER_STATE];
+    a->uid = strdup("@state");
+    a->value = ses->state;
+    a->time_begin = stored;
 
+    LOG_INFOV("added %d header lines to new session '%s'", HEADER_MAX, ses->session_id);
   } while (0);
 
   return retVal;
@@ -588,6 +588,7 @@ int create_session_id(char *session_id_out, int max_len) {
  */
 int create_session(char *survey_id, char *session_id, struct session_meta *meta) {
   int retVal = 0;
+  struct session *ses = NULL;
 
   do {
     if (!session_id) {
@@ -627,20 +628,31 @@ int create_session(char *survey_id, char *session_id, struct session_meta *meta)
 
     // Write survey_id to new empty session.
     // This must take the form <survey id>/<sha1 hash of current version of survey>
-    FILE *fp = fopen(session_path, "w");
-    if (!fp) {
-      LOG_ERRORV("Cannot create new session file '%s'", session_path);
+    char sid[256];
+    snprintf(sid, 256, "%s/%s", survey_id, survey_sha1);
+
+    ses = calloc(sizeof(struct session), 1);
+    if (!ses) {
+      LOG_ERRORV("calloc(%d,1) failed when loading session '%s'", sizeof(struct session), session_id);
     }
-    fprintf(fp, "%s/%s\n", survey_id, survey_sha1);
 
     // #363 save session meta
     // #379 set session state to SESSION_NEW
-    if (save_session_meta(fp, meta, SESSION_NEW)) {
-      fclose(fp);
+    ses->survey_id = strdup(sid);
+    ses->session_id = strdup(session_id);
+    ses->state = SESSION_NEW;
+
+    if (session_new_add_meta(ses, meta)) {
+      free_session(ses);
       LOG_ERRORV("Cannot write session meta '%s'", session_path);
     }
 
-    fclose(fp);
+    if (save_session(ses)) {
+      free_session(ses);
+      LOG_ERROR("save_session() failed");
+    }
+
+    free_session(ses);
     LOG_INFOV("Created new session file '%s' for survey '%s'", session_path, survey_id);
   } while (0);
 
@@ -731,6 +743,7 @@ void free_session(struct session *s) {
   freez(s->survey_id);
   freez(s->survey_description);
   freez(s->session_id);
+  freez(s->consistency_hash); // #268
 
   for (int i = 0; i < s->question_count; i++) {
     free_question(s->questions[i]);
@@ -784,6 +797,7 @@ int dump_session(FILE *f, struct session *ses) {
       "  survey_id: \"%s\"\n"
       "  survey_description: \"%s\"\n"
       "  session_id: \"%s\"\n"
+      "  consistency_hash: \"<private>\""
       "  nextquestions_flag: %d\n"
       "  answer_offset: %d\n"
       "  answer_count: %d\n"
@@ -1054,9 +1068,11 @@ struct session *load_session(char *session_id) {
     ses->survey_id = strdup(survey_id);
     ses->session_id = strdup(session_id);
     if (!ses->survey_id) {
+      fclose(s);
       LOG_ERRORV("strdup(survey_id='%s') failed when loading session '%s'", survey_id, session_id);
     }
     if (!ses->session_id) {
+      fclose(s);
       LOG_ERRORV("strdup(session_id) failed when loading session '%s'", session_id);
     }
 
@@ -1066,6 +1082,7 @@ struct session *load_session(char *session_id) {
       LOG_ERRORV("Failed to load questions from survey '%s'", survey_id);
     }
     if (!ses->question_count) {
+      fclose(s);
       LOG_ERRORV("Failed to load questions from survey '%s', or survey  contains no questions", survey_id);
     }
 
@@ -1132,10 +1149,16 @@ struct session *load_session(char *session_id) {
     // #379 record current state of loaded sesion
     struct answer *current_state = session_get_header("@state", ses);
     if (!current_state) {
-      retVal = -1;
-      LOG_WARNV("Could not find state header for session!", 0); // don't break here fall through
+      fclose(s);
+      LOG_ERRORV("Could not find state header for sessionfor session '%s'", session_id); // #268, changed to error
     }
     ses->state = current_state->value;
+
+    // #268 finally generate current sha1 checksum
+    if (session_generate_consistency_hash(ses)) {
+      fclose(s);
+      LOG_ERRORV("failed to generate consistency hash for session '%s'", session_id);
+    }
 
     if (retVal) {
       fclose(s);
@@ -1176,7 +1199,6 @@ int save_session(struct session *s) {
     }
 
     // update header with current state of loaded and processed session (#379)
-
     struct answer *header = session_get_header("@state", s);
     if (!header) {
       retVal = -1;
@@ -1241,6 +1263,11 @@ int save_session(struct session *s) {
       LOG_ERRORV("rename('%s','%s') failed when updating file for session '%s' "
                  "(errno=%d)",
                  session_path, session_path_final, s->session_id, errno);
+    }
+
+    // #268 finally update current sha1 checksum
+    if (session_generate_consistency_hash(s)) {
+      LOG_ERRORV("failed to generate consistency hash for session '%s'", s->session_id);
     }
 
     LOG_INFOV("Updated session file '%s'.", session_path_final);
@@ -1798,6 +1825,47 @@ int session_add_datafile(char *session_id, char *filename_suffix,
   if (fp) {
     fclose(fp);
   }
+
+  return retVal;
+}
+
+
+/**
+ * find the last given answer (conditions: no system answer && not deleted) within a session
+ * #268
+ */
+int session_generate_consistency_hash(struct session *ses) {
+  int retVal = 0;
+
+  do {
+    if (!ses || !ses->session_id) {
+      LOG_ERROR("Add answer: Session structure or ses->session_id is NULL.");
+    }
+
+    char line[65536];
+    snprintf(line, 256, "%s%d", ses->session_id, ses->state);
+
+    sha1nfo info;
+    sha1_init(&info);
+    sha1_write(&info, line, 256);
+
+    struct answer *last = session_get_last_given_answer(ses);
+    if (last) {
+      if (serialise_answer(last, ANSWER_SCOPE_CHECKSUM, line, 65536)) {
+        LOG_ERRORV("session_generate_cecksum(): serialise_answer() failed for field '%s'", last->uid);
+      }
+      sha1_write(&info, line, strlen(line));
+    }
+
+    // #268 purge and generate new sha1 checksum
+    freez(ses->consistency_hash);
+    char hash[HASH_LENGTH + 1];
+    if (sha1_hash(&info, hash)) {
+      LOG_ERRORV("session_generate_cecksum(): generating hash failed for session '%s'", ses->session_id);
+    }
+    ses->consistency_hash = strdup(hash);
+
+  } while(0);
 
   return retVal;
 }

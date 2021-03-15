@@ -650,6 +650,25 @@ int main(int argc, char **argv) {
       assert_answers_compare(in, out);  // answers are freed in func
     }
 
+    SECTION("answer serialisation (NULL pointer for text), #421");
+    {
+      char str[1024];
+      int ret;
+
+      struct answer *a = calloc(sizeof(struct answer), 1);
+      a->type = QTYPE_TEXT;
+
+      // precondtions (silent)
+      assert(a->uid == NULL); // !!
+      assert(a->text == NULL);
+      assert(a->unit == NULL);
+
+      ret = serialise_answer(a, ANSWER_SCOPE_FULL, str, 1024);
+      ASSERT(ret == 0, "answer did serialise", "");
+      ASSERT_STR_EQ(str, ":TEXT::0:0:0:0:0:0:0::0:0", "(no uid!)");
+      free_answer(a);
+    }
+
     SECTION("sha1 tests: sha1_string(), #268, #237");
 
     {

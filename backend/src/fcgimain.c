@@ -511,7 +511,7 @@ static void fcgi_newsession(struct kreq *req) {
       free_session_meta(meta);
       meta = NULL;
       http_json_error(req, KHTTP_500, "Session could not be created (create session).");
-      LOG_ERROR("create_session( failed");
+      LOG_ERROR("create_session() failed");
     }
 
     // reply, #363 free session_meta
