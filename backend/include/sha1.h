@@ -40,6 +40,12 @@ uint8_t *sha1_resultHmac(sha1nfo *s);
 int sha1_file(const char *filename, char *hash);
 
 /**
+ * generates sha1 hash string
+ * #268
+ */
+int sha1_hash(sha1nfo *s, char *hash);
+
+/**
  * generates sha1 hash string from src, returns an error if char *src is empty or NULL
  * #268, #237
  */

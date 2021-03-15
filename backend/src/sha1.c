@@ -351,6 +351,27 @@ uint8_t *sha1_resultHmac(sha1nfo *s) {
   return retVal;
 }
 
+int sha1_hash(sha1nfo *s, char *hash) {
+  int retVal = 0;
+
+  do {
+    unsigned char *bytes = sha1_result(s);
+    int len = snprintf(hash, HASHSTRING_LENGTH + 1,
+              "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%"
+              "02x%02x%02x%02x",
+              bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5],
+              bytes[6], bytes[7], bytes[8], bytes[9], bytes[10], bytes[11],
+              bytes[12], bytes[13], bytes[14], bytes[15], bytes[16], bytes[17],
+              bytes[18], bytes[19]);
+
+    if (len < 0) {
+      LOG_ERROR("Failed to generate sha1 hash string");
+    }
+  } while (0);
+
+  return retVal;
+}
+
 int sha1_file(const char *filename, char *hash) {
   int retVal = 0;
 
@@ -382,17 +403,13 @@ int sha1_file(const char *filename, char *hash) {
 
     fclose(f);
 
-    if (retVal)
+    if (retVal) {
       break;
+    }
 
-    unsigned char *bytes = sha1_result(&s);
-    snprintf(hash, HASHSTRING_LENGTH + 1,
-             "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%"
-             "02x%02x%02x%02x",
-             bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5],
-             bytes[6], bytes[7], bytes[8], bytes[9], bytes[10], bytes[11],
-             bytes[12], bytes[13], bytes[14], bytes[15], bytes[16], bytes[17],
-             bytes[18], bytes[19]);
+    if (sha1_hash(&s, hash)) {
+      LOG_ERROR("Failed to generate sha1 hash string for file '%s'");
+    }
 
   } while (0);
 
@@ -428,15 +445,11 @@ int sha1_string(char *src, char *hash) {
     sha1nfo s;
     sha1_init(&s);
     sha1_write(&s, src, src_len);
-    unsigned char *bytes = sha1_result(&s);
 
-    snprintf(hash, HASHSTRING_LENGTH + 1,
-             "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%"
-             "02x%02x%02x%02x",
-             bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5],
-             bytes[6], bytes[7], bytes[8], bytes[9], bytes[10], bytes[11],
-             bytes[12], bytes[13], bytes[14], bytes[15], bytes[16], bytes[17],
-             bytes[18], bytes[19]);
+    if (sha1_hash(&s, hash)) {
+      LOG_ERROR("Failed to generate sha1 hash string for string");
+    }
+
   } while (0);
 
   return retVal;
