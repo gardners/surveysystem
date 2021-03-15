@@ -180,7 +180,7 @@ typedef enum answer_scope {
 // #332 nextquestions data struct
 #define MAX_NEXTQUESTIONS 1024
 struct nextquestions {
-    enum { STATUS_INFO, STATUS_WARN, STATUS_ERROR } status; // status flag, indcatiing how front end should handle message
+    enum { STATUS_INFO, STATUS_WARN, STATUS_ERROR } status; // status flag, indcating how front end should handle message
     char *message;                                         // ad-hoc notifications, needs to be de-allocated
     // #13 add suport for progress indicator,
     //   progress[0]: number of given answers, excluding meta and system answers
@@ -218,6 +218,7 @@ struct session {
   char *survey_id; // <survey name>/<hash>
   char *survey_description;
   char *session_id;
+  char *consistency_hash; // #268 sha1 generated of session id, session state and serialised last given answer
 
   // #184, add nextquestion provider mode flag
   unsigned int nextquestions_flag;
@@ -286,10 +287,13 @@ int lock_session(char *session_id);
 int release_my_session_locks(void);
 
 struct answer *session_get_answer(char *uid, struct session *ses);
+struct answer *session_get_last_given_answer(struct session *ses); // #268
 struct answer *session_get_header(char *uid, struct session *ses);
 int session_get_answer_index(char *uid, struct session *ses);
 
 struct question *session_get_question(char *uid, struct session *ses);
+
+int session_generate_consistency_hash(struct session *ses); //#268
 
 // #332 next_question struct
 struct nextquestions *init_next_questions();
