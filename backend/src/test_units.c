@@ -11,9 +11,7 @@
 
 struct answer* create_answer(char *uid, int type, char *text, char *unit) {
   struct answer *ans = calloc(sizeof(struct answer), 1);
-  if (!ans) {
-    return NULL;
-  }
+  assert(ans != NULL); // exit
 
   ans->uid = strdup(uid);
   ans->type = type;
@@ -30,7 +28,7 @@ struct answer* create_answer(char *uid, int type, char *text, char *unit) {
 #define MAX_TEST_BUFFER 2048
 
 enum {
-  FORMAT_FAIL, FORMAT_PASS, FORMAT_SECTION, FORMAT_NONE
+  FORMAT_FAIL, FORMAT_PASS, FORMAT_SKIP, FORMAT_SECTION, FORMAT_NONE
 } format;
 
 void test_message(int format, const char *message, ...) {
@@ -46,6 +44,9 @@ void test_message(int format, const char *message, ...) {
       break;
     case FORMAT_PASS:
       fprintf(stderr, "\e[32m[PASS]\e[0m %s\n", msg);
+      break;
+    case FORMAT_SKIP:
+      fprintf(stderr, "\e[37m[SKIP]\e[0m %s\n", msg);
       break;
     case FORMAT_SECTION:
       fprintf(stderr, "\n\e[33m --- %s --- \e[0m\n\n", msg);
@@ -75,6 +76,11 @@ do {\
 #define PASS(message, ...)\
 do {\
   test_message(FORMAT_PASS, message, __VA_ARGS__);\
+} while (0)
+
+#define SKIP(message, ...)\
+do {\
+  test_message(FORMAT_SKIP, message, __VA_ARGS__);\
 } while (0)
 
 #define FAIL(message, ...)\
@@ -419,65 +425,65 @@ int main(int argc, char **argv) {
       ASSERT_STR_EQ(str, "\\t\\r\\n\\:(9000)", "escape_string()");
     }
 
-    SECTION("serialiser_count_columns(), #413");
+    SECTION("serialiser_count_columns(':', ), #413");
 
     {
       LOG_UNMUTE();
       int ret;
 
-      ret = serialiser_count_columns("", 1024);
-      ASSERT(ret == 1, "serialiser_count_columns('%s')", "");
+      ret = serialiser_count_columns(':', "", 1024);
+      ASSERT(ret == 1, "serialiser_count_columns(':', '%s')", "");
 
-      ret = serialiser_count_columns(NULL, 1024);
-      ASSERT(ret == -1, "error: serialiser_count_columns(NULL)", "");
+      ret = serialiser_count_columns(':', NULL, 1024);
+      ASSERT(ret == -1, "error: serialiser_count_columns(':', NULL)", "");
 
-      ret = serialiser_count_columns("hello", 1024);
-      ASSERT(ret == 1, "serialiser_count_columns('%s')", "hello");
+      ret = serialiser_count_columns(':', "hello", 1024);
+      ASSERT(ret == 1, "serialiser_count_columns(':', '%s')", "hello");
 
-      ret = serialiser_count_columns("hello", 2);
-      ASSERT(ret == -1, "error: serialiser_count_columns('%s') out of bounds", "hello");
+      ret = serialiser_count_columns(':', "hello", 2);
+      ASSERT(ret == -1, "error: serialiser_count_columns(':', '%s') out of bounds", "hello");
 
-      ret = serialiser_count_columns(":", 1024);
-      ASSERT(ret == 2, "serialiser_count_columns('%s')", ":");
+      ret = serialiser_count_columns(':', ":", 1024);
+      ASSERT(ret == 2, "serialiser_count_columns(':', '%s')", ":");
 
-      ret = serialiser_count_columns("\\:", 1024);
-      ASSERT(ret == 1, "escape: serialiser_count_columns('%s')", "\\:");
+      ret = serialiser_count_columns(':', "\\:", 1024);
+      ASSERT(ret == 1, "escape: serialiser_count_columns(':', '%s')", "\\:");
 
-      ret = serialiser_count_columns("\\\\:", 1024);
-      ASSERT(ret == 1, "double escape: serialiser_count_columns('%s')", "\\\\:");
+      ret = serialiser_count_columns(':', "\\\\:", 1024);
+      ASSERT(ret == 1, "double escape: serialiser_count_columns(':', '%s')", "\\\\:");
 
-      ret = serialiser_count_columns(":\\:", 1024);
-      ASSERT(ret == 2, "escape inner: serialiser_count_columns('%s')", ":\\:");
+      ret = serialiser_count_columns(':', ":\\:", 1024);
+      ASSERT(ret == 2, "escape inner: serialiser_count_columns(':', '%s')", ":\\:");
 
-      ret = serialiser_count_columns("::1", 1024);
-      ASSERT(ret == 3, "serialiser_count_columns('%s')", "::1");
+      ret = serialiser_count_columns(':', "::1", 1024);
+      ASSERT(ret == 3, "serialiser_count_columns(':', '%s')", "::1");
 
-      ret = serialiser_count_columns("::", 1024);
-      ASSERT(ret == 3, "serialiser_count_columns('%s')", ":::");
+      ret = serialiser_count_columns(':', "::", 1024);
+      ASSERT(ret == 3, "serialiser_count_columns(':', '%s')", ":::");
 
-      ret = serialiser_count_columns("1:1:1", 1024);
-      ASSERT(ret == 3, "serialiser_count_columns('%s')", "1:1:1");
+      ret = serialiser_count_columns(':', "1:1:1", 1024);
+      ASSERT(ret == 3, "serialiser_count_columns(':', '%s')", "1:1:1");
 
-      ret = serialiser_count_columns("1:1:1", 2);
-      ASSERT(ret == -1, "error serialiser_count_columns('%s') out of bounds", "1:1:1");
+      ret = serialiser_count_columns(':', "1:1:1", 2);
+      ASSERT(ret == -1, "error serialiser_count_columns(':', '%s') out of bounds", "1:1:1");
 
-      ret = serialiser_count_columns("\n:1:1:1", 1024);
-      ASSERT(ret == -1, "error starting endline serialiser_count_columns('%s') %d", "\\n:1:1:1", ret);
+      ret = serialiser_count_columns(':', "\n:1:1:1", 1024);
+      ASSERT(ret == -1, "error starting endline serialiser_count_columns(':', '%s') %d", "\\n:1:1:1", ret);
 
-      ret = serialiser_count_columns(":1:1:1\n", 1024);
-      ASSERT(ret == -1, "error ending endline serialiser_count_columns('%s') %d", ":1:1:1\\n", ret);
+      ret = serialiser_count_columns(':', ":1:1:1\n", 1024);
+      ASSERT(ret == -1, "error ending endline serialiser_count_columns(':', '%s') %d", ":1:1:1\\n", ret);
 
-      ret = serialiser_count_columns("1:1:1\n1:1:1", 1024);
-      ASSERT(ret == -1, "error inner endline serialiser_count_columns('%s') %d", "1:1:1\\n1:1:1", ret);
+      ret = serialiser_count_columns(':', "1:1:1\n1:1:1", 1024);
+      ASSERT(ret == -1, "error inner endline serialiser_count_columns(':', '%s') %d", "1:1:1\\n1:1:1", ret);
 
-      ret = serialiser_count_columns("1:1:1\\n1:1:1", 1024);
-      ASSERT(ret == 5, "escaped inner endline serialiser_count_columns('%s') %d", "1:1:1\\\\n1:1:1", ret);
+      ret = serialiser_count_columns(':', "1:1:1\\n1:1:1", 1024);
+      ASSERT(ret == 5, "escaped inner endline serialiser_count_columns(':', '%s') %d", "1:1:1\\\\n1:1:1", ret);
 
-      ret = serialiser_count_columns("uid:META:\\:\\n\r\b\tutext:0:0:0:0:0:0:0:unit:0:0", 1024);
-      ASSERT(ret == ANSWER_SCOPE_FULL, "anwswer ANSWER_FIELDS_PROTECTED with escapes passing serialiser_count_columns('%s') %d", "uid:META:\\:\\n\\r\\b\\tutext:0:0:0:0:0:0:0:unit:0:0", ret);
+      ret = serialiser_count_columns(':', "uid:META:\\:\\n\r\b\tutext:0:0:0:0:0:0:0:unit:0:0", 1024);
+      ASSERT(ret == ANSWER_SCOPE_FULL, "anwswer ANSWER_FIELDS_PROTECTED with escapes passing serialiser_count_columns(':', '%s') %d", "uid:META:\\:\\n\\r\\b\\tutext:0:0:0:0:0:0:0:unit:0:0", ret);
 
-      ret = serialiser_count_columns("uid:\\:\\n\r\b\tutext:0:0:0:0:0:0:0:", 1024);
-      ASSERT(ret == ANSWER_SCOPE_PUBLIC, "anwswer ANSWER_FIELDS_PUBLIC with escapes passing serialiser_count_columns('%s') %d", "uid:META:\\:\\n\\r\\b\\tutext:0:0:0:0:0:0:0:unit:0:0", ret);
+      ret = serialiser_count_columns(':', "uid:\\:\\n\r\b\tutext:0:0:0:0:0:0:0:", 1024);
+      ASSERT(ret == ANSWER_SCOPE_PUBLIC, "anwswer ANSWER_FIELDS_PUBLIC with escapes passing serialiser_count_columns(':', '%s') %d", "uid:META:\\:\\n\\r\\b\\tutext:0:0:0:0:0:0:0:unit:0:0", ret);
     }
 
     ////
@@ -729,6 +735,296 @@ int main(int argc, char **argv) {
       ASSERT(ret != 0, "sha1_string('', '') is invalid", "");
 
       LOG_UNMUTE();
+    }
+
+    SECTION("sessions answer_set_value_raw(), #442");
+
+    {
+      int ret;
+      struct answer *a;
+
+      // args
+
+      ret = answer_set_value_raw(NULL, NULL);
+      ASSERT(ret < 0, "%s, FAIL: NULL, NULL", "args");
+
+      a = create_answer("args", QTYPE_TEXT, NULL, NULL);
+      ret = answer_set_value_raw(a, NULL);
+      ASSERT(ret < 0, "%s, FAIL: answer, NULL", "args");
+      free_answer(a);
+
+      a = create_answer("args", -1, NULL, NULL);
+      ret = answer_set_value_raw(a, "overwrite");
+      ASSERT(ret < 0, "%s, FAIL: unknown question type", "args");
+      free_answer(a);
+
+      // QTYPE_META system answers
+
+      a = create_answer("meta", QTYPE_META, NULL, NULL);
+      ret = answer_set_value_raw(a, "something");
+      ASSERT(ret < 0, "%s, FAIL: (system answer)", "QTYPE_META");
+      free_answer(a);
+
+      a = create_answer("@meta", QTYPE_TEXT, NULL, NULL);
+      ret = answer_set_value_raw(a, "something");
+      ASSERT(ret < 0, "%s, FAIL: uid starts with '@' (system answer)", "SYSTEM PREFIX");
+      free_answer(a);
+
+      // QTYPE_INT
+
+      a = create_answer("int", QTYPE_INT, NULL, NULL);
+      ret = answer_set_value_raw(a, "2");
+      ASSERT(ret == 0, "%s, PASS", "QTYPE_INT");
+      ASSERT(a->value == 2, "%s, PASS: value", "QTYPE_INT");
+      free_answer(a);
+
+      a = create_answer("int", QTYPE_INT, NULL, NULL);
+      ret = answer_set_value_raw(a, "invalid");
+      ASSERT(ret < 0, "%s, FAIL: string value", "QTYPE_INT");
+      free_answer(a);
+
+      a = create_answer("int", QTYPE_INT, NULL, NULL);
+      ret = answer_set_value_raw(a, "1.2");
+      ASSERT(ret < 0, "%s, FAIL: invalid value '1.2'", "QTYPE_INT");
+      free_answer(a);
+
+      // QTYPE_FIXEDPOINT
+      SKIP("%s is currently an alias of %s, see #424 for planned changes", "QTYPE_FIXEDPOINT", "QTYPE_INT");
+
+      // QTYPE_MULTICHOICE
+
+      a = create_answer("multichoice", QTYPE_MULTICHOICE, NULL, NULL);
+      ret = answer_set_value_raw(a, "hello");
+      ASSERT(ret == 0, "%s, PASS: single", "QTYPE_MULTICHOICE");
+      ASSERT_STR_EQ(a->text, "hello", "QTYPE_MULTICHOICE, PASS: value");
+      free_answer(a);
+
+      a = create_answer("multichoice", QTYPE_MULTICHOICE, NULL, NULL);
+      ret = answer_set_value_raw(a, "");
+      ASSERT(ret == 0, "%s, PASS: empty", "QTYPE_MULTICHOICE");
+      ASSERT_STR_EQ(a->text, "", "QTYPE_MULTICHOICE, PASS: empty");
+      free_answer(a);
+
+      a = create_answer("multichoice", QTYPE_MULTICHOICE, NULL, NULL);
+      ret = answer_set_value_raw(a, "hello,world");
+      ASSERT(ret == 0, "%s, PASS: multiple", "QTYPE_MULTICHOICE");
+      ASSERT_STR_EQ(a->text, "hello,world", "QTYPE_MULTICHOICE, PASS: multiple values");
+      free_answer(a);
+
+      a = create_answer("multichoice", QTYPE_MULTICHOICE, NULL, NULL);
+      ret = answer_set_value_raw(a, "hello,");
+      ASSERT(ret == 0, "%s, PASS: trailing comma", "QTYPE_MULTICHOICE");
+      ASSERT_STR_EQ(a->text, "hello,", "QTYPE_MULTICHOICE, PASS: trailing comma");
+      free_answer(a);
+
+      a = create_answer("multichoice", QTYPE_MULTICHOICE, NULL, NULL);
+      a->text = strdup("has value");
+      ret = answer_set_value_raw(a, "overwrite");
+      ASSERT(ret < 0, "%s, FAIL: overwrite existing a->text ", "QTYPE_MULTICHOICE");
+      free_answer(a);
+
+      // QTYPE_MULTISELECT
+
+      SKIP("%s is an alias of %s", "QTYPE_MULTISELECT", "QTYPE_MULTICHOICE");
+
+      // QTYPE_LATLON
+
+      a = create_answer("latlon", QTYPE_LATLON, NULL, NULL);
+      ret = answer_set_value_raw(a, "1,2");
+      ASSERT(ret == 0, "%s, PASS: single", "QTYPE_LATLON");
+      ASSERT((a->lat == 1 && a->lon == 2), "hello", "QTYPE_LATLON, PASS: values");
+      free_answer(a);
+
+      a = create_answer("latlon", QTYPE_LATLON, NULL, NULL);
+      ret = answer_set_value_raw(a, "");
+      ASSERT(ret < 0, "%s, FAIL: empty", "QTYPE_LATLON");
+      free_answer(a);
+
+      a = create_answer("latlon", QTYPE_LATLON, NULL, NULL);
+      ret = answer_set_value_raw(a, "1,");
+      ASSERT(ret < 0, "%s, FAIL: incomplete", "QTYPE_LATLON");
+      free_answer(a);
+
+      a = create_answer("latlon", QTYPE_LATLON, NULL, NULL);
+      ret = answer_set_value_raw(a, "1,2,3");
+      ASSERT(ret < 0, "%s, FAIL: value column overflow", "QTYPE_LATLON");
+      free_answer(a);
+
+      a = create_answer("latlon", QTYPE_LATLON, NULL, NULL);
+      ret = answer_set_value_raw(a, "hello,1");
+      ASSERT(ret < 0, "%s, FAIL: invalid column 1", "QTYPE_LATLON");
+      free_answer(a);
+
+      a = create_answer("latlon", QTYPE_LATLON, NULL, NULL);
+      ret = answer_set_value_raw(a, "1,world");
+      ASSERT(ret < 0, "%s, FAIL: invalid column 2", "QTYPE_LATLON");
+      free_answer(a);
+
+      // QTYPE_DATETIME
+
+      a = create_answer("datetime", QTYPE_DATETIME, NULL, NULL);
+      ret = answer_set_value_raw(a, "2");
+      ASSERT(ret == 0, "%s, PASS", "QTYPE_DATETIME");
+      ASSERT(a->time_begin == 2, "%s, PASS: value", "QTYPE_DATETIME");
+      free_answer(a);
+
+      a = create_answer("datetime", QTYPE_DATETIME, NULL, NULL);
+      ret = answer_set_value_raw(a, "-1");
+      ASSERT(ret == 0, "%s, PASS", "QTYPE_DATETIME negative");
+      ASSERT(a->time_begin == -1, "%s, PASS: negative value", "QTYPE_DATETIME");
+      free_answer(a);
+
+      a = create_answer("datetime", QTYPE_DATETIME, NULL, NULL);
+      ret = answer_set_value_raw(a, "invalid");
+      ASSERT(ret < 0, "%s, FAIL: string value", "QTYPE_DATETIME");
+      free_answer(a);
+
+      a = create_answer("datetime", QTYPE_DATETIME, NULL, NULL);
+      ret = answer_set_value_raw(a, "1.2");
+      ASSERT(ret < 0, "%s, FAIL: invalid value '1.2'", "QTYPE_DATETIME");
+      free_answer(a);
+
+      // QTYPE_DATETIME
+
+      a = create_answer("datetime", QTYPE_DATETIME, NULL, NULL);
+      ret = answer_set_value_raw(a, "2");
+      ASSERT(ret == 0, "%s, PASS", "QTYPE_DATETIME");
+      ASSERT(a->time_begin == 2, "%s, PASS: value", "QTYPE_DATETIME");
+      free_answer(a);
+
+      a = create_answer("datetime", QTYPE_DATETIME, NULL, NULL);
+      ret = answer_set_value_raw(a, "-1"); // TODO allow? future validator
+      ASSERT(ret == 0, "%s, PASS", "QTYPE_DATETIME negative");
+      ASSERT(a->time_begin == -1, "%s, PASS: negative value", "QTYPE_DATETIME");
+      free_answer(a);
+
+      a = create_answer("datetime", QTYPE_DATETIME, NULL, NULL);
+      ret = answer_set_value_raw(a, "invalid");
+      ASSERT(ret < 0, "%s, FAIL: string value", "QTYPE_DATETIME");
+      free_answer(a);
+
+      a = create_answer("datetime", QTYPE_DATETIME, NULL, NULL);
+      ret = answer_set_value_raw(a, "1.2");
+      ASSERT(ret < 0, "%s, FAIL: invalid value '1.2'", "QTYPE_DATETIME");
+      free_answer(a);
+
+      // QTYPE_DATETIME
+
+      SKIP("%s is currently an alias of %s, see #414 for planned changes (negative values)", "QTYPE_DATETIME", "QTYPE_DATETIME");
+
+      // QTYPE_TIMERANGE
+
+      a = create_answer("timerange", QTYPE_TIMERANGE, NULL, NULL);
+      ret = answer_set_value_raw(a, "1,2");
+      ASSERT(ret == 0, "%s, PASS: single", "QTYPE_TIMERANGE");
+      ASSERT((a->time_begin == 1 && a->time_end == 2), "hello", "QTYPE_TIMERANGE, PASS: values");
+      free_answer(a);
+
+      a = create_answer("timerange", QTYPE_TIMERANGE, NULL, NULL);
+      ret = answer_set_value_raw(a, "");
+      ASSERT(ret < 0, "%s, FAIL: empty", "QTYPE_TIMERANGE");
+      free_answer(a);
+
+      a = create_answer("timerange", QTYPE_TIMERANGE, NULL, NULL);
+      ret = answer_set_value_raw(a, "1,");
+      ASSERT(ret < 0, "%s, FAIL: incomplete", "QTYPE_TIMERANGE");
+      free_answer(a);
+
+      a = create_answer("timerange", QTYPE_TIMERANGE, NULL, NULL);
+      ret = answer_set_value_raw(a, "1,2,3");
+      ASSERT(ret < 0, "%s, FAIL: value column overflow", "QTYPE_TIMERANGE");
+      free_answer(a);
+
+      a = create_answer("timerange", QTYPE_TIMERANGE, NULL, NULL);
+      ret = answer_set_value_raw(a, "hello,1");
+      ASSERT(ret < 0, "%s, FAIL: invalid column 1", "QTYPE_TIMERANGE");
+      free_answer(a);
+
+      a = create_answer("timerange", QTYPE_TIMERANGE, NULL, NULL);
+      ret = answer_set_value_raw(a, "1,world");
+      ASSERT(ret < 0, "%s, FAIL: invalid column 2", "QTYPE_TIMERANGE");
+      free_answer(a);
+
+      // QTYPE_UPLOAD
+
+      SKIP("%s is currently not implemented", "QTYPE_UPLOAD");
+
+      // QTYPE_TEXT
+
+      a = create_answer("text", QTYPE_TEXT, NULL, NULL);
+      ret = answer_set_value_raw(a, "hello");
+      ASSERT(ret == 0, "%s, PASS", "QTYPE_TEXT");
+      ASSERT_STR_EQ(a->text, "hello", "QTYPE_TEXT, PASS: value");
+      free_answer(a);
+
+      a = create_answer("text", QTYPE_TEXT, NULL, NULL);
+      ret = answer_set_value_raw(a, "");
+      ASSERT(ret == 0, "%s, PASS: empty", "QTYPE_TEXT");
+      ASSERT_STR_EQ(a->text, "", "QTYPE_TEXT, PASS: empty");
+      free_answer(a);
+
+      a = create_answer("text", QTYPE_TEXT, NULL, NULL);
+      a->text = strdup("has value");
+      ret = answer_set_value_raw(a, "overwrite");
+      ASSERT(ret < 0, "%s, FAIL: overwrite existing a->text ", "QTYPE_TEXT");
+      free_answer(a);
+
+      // QTYPE_CHECKBOX
+
+      SKIP("%s is an alias of %s", "QTYPE_CHECKBOX", "QTYPE_TEXT");
+
+      // QTYPE_HIDDEN
+
+      SKIP("%s is an alias of %s", "QTYPE_HIDDEN", "QTYPE_TEXT");
+
+      // QTYPE_TEXTAREA
+
+      SKIP("%s is an alias of %s", "QTYPE_TEXTAREA", "QTYPE_TEXT");
+
+      // QTYPE_EMAIL
+
+      SKIP("%s is an alias of %s", "QTYPE_EMAIL", "QTYPE_TEXT");
+
+      // QTYPE_PASSWORD
+
+      SKIP("%s is deprecated", "QTYPE_PASSWORD");
+
+      //  QTYPE_SINGLECHOICE
+
+      SKIP("%s is an alias of %s", "QTYPE_SINGLECHOICE", "QTYPE_TEXT");
+
+      //  QTYPE_QTYPE_SINGLESELECT
+
+      SKIP("%s is an alias of %s", "QTYPE_SINGLESELECT", "QTYPE_TEXT");
+
+      // QTYPE_FIXEDPOINT_SEQUENCE
+
+      SKIP("%s is currently an alias of %s, see #414 for planned changes (validate type)", "QTYPE_FIXEDPOINT_SEQUENCE", "QTYPE_TEXT");
+
+      // QTYPE_DAYTIME_SEQUENCE
+
+      SKIP("%s is currently an alias of %s, see #414 for planned changes (validate type)", "QTYPE_DAYTIME_SEQUENCE", "QTYPE_TEXT");
+
+      // QTYPE_DATETIME_SEQUENCE
+
+      SKIP("%s is currently an alias of %s, see #414 for planned changes (validate type)", "QTYPE_DATETIME_SEQUENCE", "QTYPE_TEXT");
+
+      // QTYPE_DURATION24
+
+      SKIP("%s is currently an alias of %s, see #414 for planned changes (min,max)", "QTYPE_DURATION24", "QTYPE_INT");
+
+      // QTYPE_DIALOG_DATA_CRAWLER
+
+      SKIP("%s is an alias of %s", "QTYPE_DURATION24", "QTYPE_TEXT");
+
+      // QTYPE_SHA1_HASH
+
+      SKIP("%s is currently an alias of %s, see #414 for planned changes (length)", "QTYPE_SHA1_HASH", "QTYPE_TEXT");
+
+      // QTYPE_UUID
+
+      SKIP("%s is currently an alias of %s, see #414 for planned changes (length)", "QTYPE_UUID", "QTYPE_TEXT");
+
     }
 
   } while (0);
