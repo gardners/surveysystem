@@ -1382,6 +1382,123 @@ struct answer *session_get_header(char *uid, struct session *ses) {
 }
 
 /**
+ * set a string value of the current answer based on it's type
+ * #384, #422
+ */
+int answer_set_value_raw(struct answer *a, char *in) {
+  int retVal = 0;
+
+  do {
+      if(!a) {
+        LOG_ERROR("answer is null!");
+      }
+      if(!in) {
+        LOG_ERROR("input is null!");
+      }
+      if(is_system_answer(a)) {
+        LOG_ERRORV("answer '%s' is a sytem answer", a->uid);
+      }
+
+      long long lat;
+      long long lon;
+      long long time_begin;
+      long long time_end;
+      long long value;
+      int ival;
+
+      switch (a->type) {
+        // value
+        case QTYPE_INT:
+          if(deserialise_int(in, &ival)) {
+            LOG_ERRORV("deserialise_int() for answer '%' failed", a->uid);
+          }
+          a->value = ival;
+        break;
+
+        case QTYPE_FIXEDPOINT:
+        case QTYPE_DURATION24:
+          if(deserialise_longlong(in, &value)) {
+            LOG_ERRORV("deserialise_longlong() for answer '%' failed", a->uid);
+          }
+          a->value = value;
+          break;
+
+        // text
+        case QTYPE_TEXT:
+        case QTYPE_CHECKBOX:
+        case QTYPE_HIDDEN:
+        case QTYPE_TEXTAREA:
+        case QTYPE_EMAIL:
+        case QTYPE_PASSWORD:
+        case QTYPE_SINGLECHOICE:
+        case QTYPE_SINGLESELECT:
+        case QTYPE_DIALOG_DATA_CRAWLER:
+        case QTYPE_UUID:
+        case QTYPE_SHA1_HASH:
+
+        // text (comma separated)
+        case QTYPE_MULTICHOICE:
+        case QTYPE_MULTISELECT:
+        case QTYPE_FIXEDPOINT_SEQUENCE:
+        case QTYPE_DAYTIME_SEQUENCE:
+        case QTYPE_DATETIME_SEQUENCE:
+          // avoid memory conflicts
+          if(a->text != NULL) {
+            LOG_ERRORV("answer->text must be a NULL pointer for answer (answer '%s')", a->uid);
+          }
+          if(deserialise_string(in, &(a->text))) {
+            LOG_ERRORV("deserialise_string() for answer '%' failed", a->uid);
+          }
+          break;
+
+        // [lat,lon]
+        case QTYPE_LATLON:
+          if (serialiser_count_columns(',', in, 65536) != 2) {
+            LOG_ERRORV("(count) input '%s' for LATLON type must be a comma separated string of two floats (answer '%s')", in, a->uid);
+          }
+          if (sscanf(in, "%lld,%lld", &lat, &lon) != 2) {
+            LOG_ERRORV("(scsanf) input '%s' for LATLON type must be a comma separated string of two floats (answer '%s')", in, a->uid);
+          }
+          a->lat = lat;
+          a->lon = lon;
+          break;
+
+        // time_begin
+        case QTYPE_DATETIME:
+        case QTYPE_DAYTIME:
+          if (deserialise_longlong(in, &time_begin)) {
+            LOG_ERRORV("deserialise_longlong() for answer '%' failed", a->uid);
+          }
+          a->time_begin = time_begin;
+          break;
+
+        // [time_begin,time_end]
+        case QTYPE_TIMERANGE:
+          if (serialiser_count_columns(',', in, 65536) != 2) {
+            LOG_ERRORV("(count) input '%s' for TIMERANGE type must be a comma separated string of two floats (answer '%s')", in, a->uid);
+          }
+          if (sscanf(in, "%lld,%lld", &time_begin, &time_end) != 2) {
+            LOG_ERRORV("input '%s' for TIMERANGE type must be a comma separated string of two floats (answer '%s')", in, a->uid);
+          }
+          a->time_begin = time_begin;
+          a->time_end = time_end;
+          break;
+
+        default:
+          LOG_ERRORV("Unknown question type '%d' for answer '%s'", a->type, a->uid);
+          break;
+      }// switch
+
+      if (retVal) {
+        break;
+      }
+
+    } while (0);
+
+    return retVal;
+}
+
+/**
  * get a string value of the current answer based on it's type
  * #384
  */
@@ -1390,7 +1507,10 @@ int answer_get_value_raw(struct answer *a, char *out, size_t sz) {
 
   do {
       if(!a) {
-        LOG_ERROR("Answer is null!");
+        LOG_ERROR("answer is null!");
+      }
+      if(is_system_answer(a)) {
+        LOG_ERRORV("answer '%s' is a sytem answer", a->uid);
       }
 
       switch (a->type) {

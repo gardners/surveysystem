@@ -71,7 +71,7 @@ int escape_string(char *in, char *out, int max_len) {
   return out_len;
 }
 
-int serialiser_count_columns(char *line, size_t max_len) {
+int serialiser_count_columns(char separator, char *line, size_t max_len) {
   int retVal = 0;
   int count = 1;
 
@@ -92,7 +92,7 @@ int serialiser_count_columns(char *line, size_t max_len) {
         break;
       }
 
-      if(prev != '\\' && line[i] == ':') {
+      if(prev != '\\' && line[i] == separator) {
           count++;
       }
       prev = line[i];
@@ -688,7 +688,7 @@ int deserialise_answer(char *in, enum answer_scope scope, struct answer *a) {
   do {
     int len = 0;
 
-    int cols = serialiser_count_columns(in, 65536);
+    int cols = serialiser_count_columns(':', in, 65536);
     if (cols < 0) {
       LOG_ERROR("invalid answer line");
     }
