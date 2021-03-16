@@ -279,7 +279,7 @@ void free_answer(struct answer *a);
 struct answer *copy_answer(struct answer *aa);
 struct question *copy_question(struct question *qq);
 int answer_get_value_raw(struct answer *a, char *out, size_t sz);
-int answer_set_value_raw(struct answer *a, char *in);
+int answer_set_value_raw(struct answer *a, char *in); // #425
 
 int validate_session_id(char *session_id);
 int validate_session_action(enum actions action, struct session *ses, char *msg, size_t sz); // #379
