@@ -17,7 +17,8 @@ void usage(void) {
       "       surveycli delanswer <sessionid> <question id> -- delete an answer from an existing session\n"
       "       surveycli delsession <sessionid> -- delete an existing session\n"
       "       surveycli analyse <sessionid> -- get the analysis of a finished session\n"
-      "       surveycli progress <sessionid> -- get the progress count of an existing session\n");
+      "       surveycli progress <sessionid> -- get the progress count of an existing session\n"
+      "       surveycli getchecksum <sessionid> -- get consistency hash of an existing session\n");
 };
 
 void init(int argc, char **argv) {
@@ -420,6 +421,38 @@ int do_delanswer(char *session_id, char *question_id) {
   return retVal;
 }
 
+int do_getchecksum(char *session_id) {
+  int retVal = 0;
+
+  struct session *ses = NULL;
+
+  do {
+    LOG_INFO("Entering getchecksum handler.");
+
+    ses = load_session(session_id);
+    if (!ses) {
+      fprintf(stderr, "Could not load specified session. Does it exist?");
+      LOG_ERROR("Could not load session");
+    }
+
+    char reason[1024];
+    if (validate_session_action(ACTION_SESSION_NEXTQUESTIONS, ses, reason, 1024)) {
+      free_session(ses);
+      ses = NULL;
+      fprintf(stderr, "%s\n", reason);
+      LOG_ERROR("Session action validation failed");
+    }
+
+    printf("%s\n", ses->consistency_hash);
+
+    free_session(ses);
+    LOG_INFO("Leaving delanswer handler.");
+
+  } while (0);
+
+  return retVal;
+}
+
 int do_delsession(char *session_id) {
   int retVal = 0;
   struct session *ses = NULL;
@@ -621,6 +654,19 @@ int main(int argc, char **argv) {
         LOG_ERROR("Failed to add answer");
       }
 
+    } else if (!strcmp(argv[1], "getchecksum")) {
+
+      if (argc != 3) {
+        usage();
+        retVal = -1;
+        break;
+      }
+
+      if (do_getchecksum(argv[2])) {
+        fprintf(stderr, "Failed to fetch consistency checksum.\n");
+        LOG_ERROR("Failed fetch analysis");
+      }
+
     } else if (!strcmp(argv[1], "analyse")) {
 
       if (argc != 3) {
@@ -630,7 +676,7 @@ int main(int argc, char **argv) {
       }
 
       if (do_analyse(argv[2])) {
-        fprintf(stderr, "Failed fetch analysis.\n");
+        fprintf(stderr, "Failed to fetch analysis.\n");
         LOG_ERROR("Failed fetch analysis");
       }
 
