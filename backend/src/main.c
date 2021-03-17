@@ -11,14 +11,13 @@
 void usage(void) {
   fprintf(
       stderr,
-      "usage: survey newsession <survey name> -- create a new session\n"
-      "       survey addanswer <sessionid> <serialised answer> -- add an "
-      "answer to an existing session\n"
-      "       survey nextquestion <sessionid> -- get the next question that "
-      "should be asked\n"
-      "       survey delanswer <sessionid> <question id> -- delete an answer "
-      "from an existing session\n"
-      "       survey delsession <sessionid> -- delete an existing session\n");
+      "usage: surveycli newsession <survey name> -- create a new session\n"
+      "       surveycli addanswer <sessionid> <serialised answer> -- add an answer to an existing session\n"
+      "       surveycli nextquestion <sessionid> -- get the next question that  be asked\n"
+      "       surveycli delanswer <sessionid> <question id> -- delete an answer from an existing session\n"
+      "       surveycli delsession <sessionid> -- delete an existing session\n"
+      "       surveycli analyse <sessionid> -- get the analysis of a finished session\n"
+      "       surveycli progress <sessionid> -- get the progress count of an existing session\n");
 };
 
 void init(int argc, char **argv) {
@@ -111,6 +110,36 @@ int do_newsession(char *survey_id) {
     }
 
     printf("%s\n", session_id);
+    LOG_INFO("Leaving newsession handler.");
+  } while(0);
+
+  return retVal;
+}
+
+// #422, #425
+int do_progress(char *session_id) {
+  int retVal = 0;
+
+  struct session *ses = NULL;
+
+  do {
+    LOG_INFO("Entering countquestions handler.");
+
+    ses = load_session(session_id);
+    if (!ses) {
+      fprintf(stderr, "Could not load specified session. Does it exist?\n");
+      LOG_ERROR("Could not load session");
+    }
+
+    char reason[1024];
+    if (validate_session_action(ACTION_SESSION_NEXTQUESTIONS, ses, reason, 1024)) {
+      free_session(ses);
+      ses = NULL;
+      fprintf(stderr, "%s\n", reason);
+      LOG_ERROR("Session action validation failed");
+    }
+
+    printf("%d/%d\n", ses->given_answer_count + 1, ses->question_count);
     LOG_INFO("Leaving newsession handler.");
   } while(0);
 
@@ -244,6 +273,7 @@ int do_addanswer(char *session_id, char *serialised_answer) {
   return retVal;
 }
 
+// #425, 422
 int do_addanswervalue(char *session_id, char *uid, char *value) {
 
   int retVal = 0;
@@ -512,6 +542,18 @@ int main(int argc, char **argv) {
       if (do_newsession(argv[2])) {
         fprintf(stderr, "Failed to create new session.\n");
         LOG_ERROR("Failed to create new session");
+      }
+   } else if (!strcmp(argv[1], "progress")) {
+
+      if (argc != 3) {
+        usage();
+        retVal = -1;
+        break;
+      }
+
+      if (do_progress(argv[2])) {
+        fprintf(stderr, "Failed to count survey progress.\n");
+        LOG_ERROR("Failed to count survey progress");
       }
 
    } else if (!strcmp(argv[1], "nextquestion")) {
