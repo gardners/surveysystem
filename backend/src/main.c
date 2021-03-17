@@ -11,14 +11,13 @@
 void usage(void) {
   fprintf(
       stderr,
-      "usage: survey newsession <survey name> -- create a new session\n"
-      "       survey addanswer <sessionid> <serialised answer> -- add an "
-      "answer to an existing session\n"
-      "       survey nextquestion <sessionid> -- get the next question that "
-      "should be asked\n"
-      "       survey delanswer <sessionid> <question id> -- delete an answer "
-      "from an existing session\n"
-      "       survey delsession <sessionid> -- delete an existing session\n");
+      "usage: surveycli newsession <survey name> -- create a new session\n"
+      "       surveycli addanswer <sessionid> <serialised answer> -- add an answer to an existing session\n"
+      "       surveycli nextquestion <sessionid> -- get the next question that  be asked\n"
+      "       surveycli delanswer <sessionid> <question id> -- delete an answer from an existing session\n"
+      "       surveycli delsession <sessionid> -- delete an existing session\n"
+      "       surveycli analyse <sessionid> -- get the analysis of a finished session\n"
+      "       surveycli progress <sessionid> -- get the progress count of an existing session\n");
 };
 
 void init(int argc, char **argv) {
@@ -67,6 +66,26 @@ void init(int argc, char **argv) {
     }
 }
 
+void print_nextquestion(struct nextquestions *nq) {
+    if (!nq ) {
+      return;
+    }
+    // end of session
+    if (!nq->question_count) {
+      return;
+    }
+
+    // return adjacent next question only
+    char out [65536];
+    if (serialise_question(nq->next_questions[0], out, 65536)) {
+      LOG_WARNV("serialising next question '%s' failed", nq->next_questions[0]->uid);
+    }
+
+    printf("%s\n", out);
+
+    return;
+}
+
 int do_newsession(char *survey_id) {
   int retVal = 0;
 
@@ -91,6 +110,36 @@ int do_newsession(char *survey_id) {
     }
 
     printf("%s\n", session_id);
+    LOG_INFO("Leaving newsession handler.");
+  } while(0);
+
+  return retVal;
+}
+
+// #422, #425
+int do_progress(char *session_id) {
+  int retVal = 0;
+
+  struct session *ses = NULL;
+
+  do {
+    LOG_INFO("Entering countquestions handler.");
+
+    ses = load_session(session_id);
+    if (!ses) {
+      fprintf(stderr, "Could not load specified session. Does it exist?\n");
+      LOG_ERROR("Could not load session");
+    }
+
+    char reason[1024];
+    if (validate_session_action(ACTION_SESSION_NEXTQUESTIONS, ses, reason, 1024)) {
+      free_session(ses);
+      ses = NULL;
+      fprintf(stderr, "%s\n", reason);
+      LOG_ERROR("Session action validation failed");
+    }
+
+    printf("%d/%d\n", ses->given_answer_count + 1, ses->question_count);
     LOG_INFO("Leaving newsession handler.");
   } while(0);
 
@@ -137,8 +186,7 @@ int do_nextquestions(char *session_id) {
       LOG_ERROR("save_session() failed");
     }
 
-    // return adjacent next question only
-    printf("%s\n", (nq->question_count) ? nq->next_questions[0]->uid : "");
+    print_nextquestion(nq);
 
     free_session(ses);
     free_next_questions(nq);
@@ -214,8 +262,96 @@ int do_addanswer(char *session_id, char *serialised_answer) {
       LOG_ERROR("save_session() failed");
     }
 
-    // return adjacent next question only
-    printf("%s\n", (nq->question_count) ? nq->next_questions[0]->uid : "");
+    print_nextquestion(nq);
+
+    free_session(ses);
+    free_next_questions(nq);
+    LOG_INFO("Leaving addanswer handler.");
+
+  } while (0);
+
+  return retVal;
+}
+
+// #425, 422
+int do_addanswervalue(char *session_id, char *uid, char *value) {
+
+  int retVal = 0;
+
+  struct session *ses = NULL;
+  struct answer *ans = NULL;
+  struct nextquestions *nq = NULL;
+
+  do {
+    LOG_INFO("Entering addanswervalue handler.");
+
+    ses = load_session(session_id);
+    if (!ses) {
+      fprintf(stderr, "Could not load specified session. Does it exist?");
+      LOG_ERROR("Could not load session");
+    }
+
+    char reason[1024];
+    if (validate_session_action(ACTION_SESSION_ADDANSWER, ses, reason, 1024)) {
+      free_session(ses);
+      ses = NULL;
+      fprintf(stderr, "%s\n", reason);
+      LOG_ERROR("Session action validation failed");
+    }
+
+    // load question from session, we need the type
+    struct question *qn = session_get_question(uid, ses);
+    if (!qn) {
+      free_session(ses);
+      ses = NULL;
+      LOG_ERRORV("could not find question '%s' in survey", uid);
+    }
+
+    // Deserialise answer
+    ans = calloc(sizeof(struct answer), 1);
+    ans->uid = strdup(uid);
+    ans->type = qn->type;
+    if (!ans) {
+      fprintf(stderr, "calloc() of answer structure failed.\n");
+      LOG_ERROR("calloc() of answer structure failed.");
+    }
+
+    if (answer_set_value_raw(ans, value)) {
+      free_answer(ans);
+      fprintf(stderr, "answer format is invalid.\n");
+      LOG_ERROR("answer_set_value_raw() failed.");
+    }
+
+    if (session_add_answer(ses, ans)) {
+      free_session(ses);
+      ses = NULL;
+      free_answer(ans);
+      ans = NULL;
+      fprintf(stderr, "could not add answer to session.\n");
+      LOG_ERROR("session_add_answer() failed.");
+    }
+
+    free_answer(ans);
+    ans = NULL;
+
+    nq = get_next_questions(ses);
+    if (!nq) {
+      free_session(ses);
+      ses = NULL;
+      fprintf(stderr, "Could not load next questions.\n");
+      LOG_ERROR("get_next_questions() failed");
+    }
+
+    if (save_session(ses)) {
+      free_session(ses);
+      ses = NULL;
+      free_next_questions(nq);
+      nq = NULL;
+      fprintf(stderr, "Unable to update session.\n");
+      LOG_ERROR("save_session() failed");
+    }
+
+    print_nextquestion(nq);
 
     free_session(ses);
     free_next_questions(nq);
@@ -273,8 +409,7 @@ int do_delanswer(char *session_id, char *question_id) {
       LOG_ERROR("save_session() failed");
     }
 
-    // return adjacent next question only
-    printf("%s\n", (nq->question_count) ? nq->next_questions[0]->uid : "");
+    print_nextquestion(nq);
 
     free_session(ses);
     free_next_questions(nq);
@@ -408,6 +543,18 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Failed to create new session.\n");
         LOG_ERROR("Failed to create new session");
       }
+   } else if (!strcmp(argv[1], "progress")) {
+
+      if (argc != 3) {
+        usage();
+        retVal = -1;
+        break;
+      }
+
+      if (do_progress(argv[2])) {
+        fprintf(stderr, "Failed to count survey progress.\n");
+        LOG_ERROR("Failed to count survey progress");
+      }
 
    } else if (!strcmp(argv[1], "nextquestion")) {
 
@@ -446,6 +593,19 @@ int main(int argc, char **argv) {
       if (do_addanswer(argv[2], argv[3])) {
         fprintf(stderr, "Failed to add answer.\n");
         LOG_ERROR("Failed to add answer");
+      }
+
+    } else if (!strcmp(argv[1], "addanswervalue")) {
+
+      if (argc != 5) {
+        usage();
+        retVal = -1;
+        break;
+      }
+
+      if (do_addanswervalue(argv[2], argv[3], argv[4])) {
+        fprintf(stderr, "Failed to add answer value.\n");
+        LOG_ERROR("Failed to add answer value");
       }
 
     } else if (!strcmp(argv[1], "delanswer")) {

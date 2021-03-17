@@ -1383,7 +1383,7 @@ struct answer *session_get_header(char *uid, struct session *ses) {
 
 /**
  * set a string value of the current answer based on it's type
- * #384, #422
+ * #384, #425
  */
 int answer_set_value_raw(struct answer *a, char *in) {
   int retVal = 0;
