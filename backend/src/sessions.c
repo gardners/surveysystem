@@ -182,7 +182,7 @@ int validate_session_action(enum actions action, struct session *ses, char *msg,
     case ACTION_SESSION_ANALYSIS:
       if (ses->state < SESSION_FINISHED) {
         is_error = -1;
-        strncpy(msg, "(ANALYSE) Session is closed!", sz);
+        strncpy(msg, "(ANALYSE) Session is not closed!", sz);
         break;
       }
       break;

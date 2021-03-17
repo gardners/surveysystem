@@ -44,8 +44,7 @@ int log_recursed = 0;
   return lf;
 }
 
-int log_message(const char *file, const char *function, const int line,
-                char *format, ...) {
+int log_message(const char *file, const char *function, const int line, char *format, ...) {
 
   int retVal = 0;
 
