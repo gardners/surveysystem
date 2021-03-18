@@ -884,7 +884,7 @@ int get_next_questions_generic(struct session *s, struct nextquestions *nq) {
       }
 
       if (j < s->answer_count) {
-        LOG_INFOV("Answer to question %d exists.", i);
+        // LOG_INFOV("Answer to question %d exists.", i);
         continue;
       } else {
         if (nq->question_count < MAX_NEXTQUESTIONS) {

@@ -182,7 +182,7 @@ int validate_session_action(enum actions action, struct session *ses, char *msg,
     case ACTION_SESSION_ANALYSIS:
       if (ses->state < SESSION_FINISHED) {
         is_error = -1;
-        strncpy(msg, "(ANALYSE) Session is closed!", sz);
+        strncpy(msg, "(ANALYSE) Session is not closed!", sz);
         break;
       }
       break;
@@ -797,7 +797,7 @@ int dump_session(FILE *f, struct session *ses) {
       "  survey_id: \"%s\"\n"
       "  survey_description: \"%s\"\n"
       "  session_id: \"%s\"\n"
-      "  consistency_hash: \"<private>\""
+      "  consistency_hash: \"%s\"\n"
       "  nextquestions_flag: %d\n"
       "  answer_offset: %d\n"
       "  answer_count: %d\n"
@@ -808,6 +808,7 @@ int dump_session(FILE *f, struct session *ses) {
       ses->survey_id,
       ses->survey_description,
       ses->session_id,
+      (ses->consistency_hash) ? "<private>" : "(null)",
       ses->nextquestions_flag,
 
       ses->answer_offset,
@@ -1352,7 +1353,7 @@ struct answer *session_get_last_given_answer(struct session *ses) {
     return NULL;
   }
 
-  for (int i = ses->answer_offset; i < ses->answer_count; i++) {
+  for (int i = ses->answer_count - 1; i >= ses->answer_offset; i--) {
     if (is_given_answer(ses->answers[i])) {
       return ses->answers[i];
     }
@@ -1979,6 +1980,7 @@ int session_generate_consistency_hash(struct session *ses) {
 
     // #268 purge and generate new sha1 checksum
     freez(ses->consistency_hash);
+    ses->consistency_hash = NULL;
     char hash[HASH_LENGTH + 1];
     if (sha1_hash(&info, hash)) {
       LOG_ERRORV("session_generate_cecksum(): generating hash failed for session '%s'", ses->session_id);
