@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include "code_instrumentation.h"
+// #428 enable logging removed: #include "code_instrumentation.h"
 
 #ifdef __BIG_ENDIAN__
 #define SHA_BIG_ENDIAN
@@ -24,6 +24,8 @@
 #endif
 
 #include "sha1.h"
+// #428 enable logging
+#include "errorlog.h"
 
 /* code */
 #define SHA1_K0 0x5a827999
@@ -32,13 +34,11 @@
 #define SHA1_K60 0xca62c1d6
 
 void sha1_init(sha1nfo *s) {
-
-  LOG_ENTRY;
+  int retVal = 0; // #428 enable logging
 
   do {
     if (!s) {
       LOG_ERROR("s is null");
-      break;
     }
 
     s->state[0] = 0x67452301;
@@ -50,32 +50,21 @@ void sha1_init(sha1nfo *s) {
     s->bufferOffset = 0;
   } while (0);
 
-  LOG_EXIT;
 }
 
 uint32_t sha1_rol32(uint32_t number, uint8_t bits) {
-
-#if COMPILE_TEST_LEVEL >= TEST_LEVEL_HEAVY
-  LOG_ENTRY;
-#endif
-
+  // #428 enable logging: removed
   uint32_t retVal = ((number << bits) | (number >> (32 - bits)));
-
-#if COMPILE_TEST_LEVEL >= TEST_LEVEL_HEAVY
-  LOG_EXIT;
-#endif
-
+  // #428 enable logging: removed
   return retVal;
 }
 
 void sha1_hashBlock(sha1nfo *s) {
-
-  LOG_ENTRY;
+  int retVal = 0; // #428 enable logging
 
   do {
     if (!s) {
       LOG_ERROR("s is null");
-      break;
     }
 
     uint8_t i;
@@ -115,17 +104,14 @@ void sha1_hashBlock(sha1nfo *s) {
     s->state[4] += e;
   } while (0);
 
-  LOG_EXIT;
 }
 
 void sha1_addUncounted(sha1nfo *s, uint8_t data) {
-
-  LOG_ENTRY;
+  int retVal = 0; // #428 enable logging
 
   do {
     if (!s) {
       LOG_ERROR("s is null");
-      break;
     }
 
     uint8_t *const b = (uint8_t *)s->buffer;
@@ -137,7 +123,6 @@ void sha1_addUncounted(sha1nfo *s, uint8_t data) {
 #endif
     if (endianBufferOffset >= sizeof(s->buffer)) {
       LOG_ERROR("endianBufferOffset past buffer end");
-      break;
     }
     b[endianBufferOffset] = data;
 
@@ -149,63 +134,53 @@ void sha1_addUncounted(sha1nfo *s, uint8_t data) {
 
   } while (0);
 
-  LOG_EXIT;
 }
 
 void sha1_writebyte(sha1nfo *s, uint8_t data) {
-
-  LOG_ENTRY;
+  int retVal = 0; // #428 enable logging
 
   do {
 
     if (!s) {
       LOG_ERROR("s is null");
-      break;
     }
 
     ++s->byteCount;
     sha1_addUncounted(s, data);
   } while (0);
 
-  LOG_EXIT;
 }
 
 void sha1_write(sha1nfo *s, const char *data, size_t len) {
-
-  LOG_ENTRY;
+  int retVal = 0; // #428 enable logging
 
   do {
 
     if (!s) {
       LOG_ERROR("s is null");
-      break;
     }
 
     if (!data) {
       LOG_ERROR("data is null");
-      break;
     }
 
     if ((int)len <= 0) {
-      LOG_WARN("len might be wrong: %d", (int)len);
+      LOG_WARNV("len might be wrong: %d", (int)len);
     }
 
     for (; len--;)
       sha1_writebyte(s, (uint8_t)*data++);
   } while (0);
 
-  LOG_EXIT;
 }
 
 void sha1_pad(sha1nfo *s) {
-
-  LOG_ENTRY;
+  int retVal = 0; // #428 enable logging
 
   do {
 
     if (!s) {
       LOG_ERROR("s is null");
-      break;
     }
 
     // Implement SHA-1 padding (fips180-2 Â§5.1.1)
@@ -227,21 +202,16 @@ void sha1_pad(sha1nfo *s) {
     sha1_addUncounted(s, s->byteCount << 3);
 
   } while (0);
-
-  LOG_EXIT;
 }
 
 uint8_t *sha1_result(sha1nfo *s) {
-
-  uint8_t *retVal = NULL;
-
-  LOG_ENTRY;
+  int retVal = 0; // #428 enable logging
+  uint8_t *res = NULL;
 
   do {
 
     if (!s) {
       LOG_ERROR("s is null");
-      break;
     }
 
     // Pad to complete the last block
@@ -258,36 +228,31 @@ uint8_t *sha1_result(sha1nfo *s) {
     }
 #endif
 
-    retVal = (uint8_t *)s->state;
+    res = (uint8_t *)s->state;
+    if (!res) {
+      LOG_ERROR("result is null");
+    }
+
   } while (0);
 
-  if (!retVal) {
-    LOG_ERROR("retVal is null");
-  }
-
-  LOG_EXIT;
-
   // Return pointer to hash (20 characters)
-  return retVal;
+  return res;
 }
 
 #define HMAC_IPAD 0x36
 #define HMAC_OPAD 0x5c
 
 void sha1_initHmac(sha1nfo *s, const uint8_t *key, int keyLength) {
-
-  LOG_ENTRY;
+  int retVal = 0; // #428 enable logging
 
   do {
 
     if (!s) {
       LOG_ERROR("s is null");
-      break;
     }
 
     if (!key) {
       LOG_ERROR("key is null");
-      break;
     }
 
     uint8_t i;
@@ -311,20 +276,16 @@ void sha1_initHmac(sha1nfo *s, const uint8_t *key, int keyLength) {
 
   } while (0);
 
-  LOG_EXIT;
 }
 
 uint8_t *sha1_resultHmac(sha1nfo *s) {
-
-  uint8_t *retVal = NULL;
-
-  LOG_ENTRY;
+  int retVal = 0; // #428 enable logging
+  uint8_t *res = NULL;
 
   do {
 
     if (!s) {
       LOG_ERROR("s is null");
-      break;
     }
 
     uint8_t i;
@@ -339,22 +300,22 @@ uint8_t *sha1_resultHmac(sha1nfo *s) {
       sha1_writebyte(s, s->innerHash[i]);
     }
 
-    retVal = sha1_result(s);
+    res = sha1_result(s);
+    if (!res) {
+      LOG_ERROR("res is null");
+    }
   } while (0);
 
-  if (!retVal) {
-    LOG_ERROR("retVal is null");
-  }
-
-  LOG_EXIT;
-
-  return retVal;
+  return res;
 }
 
 int sha1_hash(sha1nfo *s, char *hash) {
   int retVal = 0;
 
   do {
+    if (!hash) {
+      LOG_ERROR("hash out is NULL");
+    }
     unsigned char *bytes = sha1_result(s);
     int len = snprintf(hash, HASHSTRING_LENGTH + 1,
               "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%"
@@ -377,15 +338,15 @@ int sha1_file(const char *filename, char *hash) {
 
   do {
     if (!filename) {
-      LOG_ERROR("filename is NULL", "");
+      LOG_ERROR("filename is NULL");
     }
     if (!hash) {
-      LOG_ERROR("hash is NULL", "");
+      LOG_ERROR("hash is NULL");
     }
 
     FILE *f = fopen(filename, "r");
     if (!f) {
-      LOG_ERROR("Could not open file for hashing", filename);
+      LOG_ERRORV("Could not open file for hashing", filename);
     }
     char buffer[8192];
     int count;
@@ -394,7 +355,7 @@ int sha1_file(const char *filename, char *hash) {
     do {
       count = fread(buffer, 1, 8192, f);
       if (count < 0) {
-        LOG_ERROR("Error hashing file", filename);
+        LOG_ERRORV("Error hashing file", filename);
       }
       if (count > 0) {
         sha1_write(&s, buffer, count);
@@ -403,12 +364,8 @@ int sha1_file(const char *filename, char *hash) {
 
     fclose(f);
 
-    if (retVal) {
-      break;
-    }
-
     if (sha1_hash(&s, hash)) {
-      LOG_ERROR("Failed to generate sha1 hash string for file '%s'");
+      LOG_ERRORV("Failed to generate sha1 hash string for file '%s'", filename);
     }
 
   } while (0);
@@ -426,20 +383,14 @@ int sha1_string(char *src, char *hash) {
   do {
     if (!src) {
       LOG_ERROR("input string src is NULL");
-      retVal = -1;
-      break;
     }
     if (!hash) {
       LOG_ERROR("output hash string is NULL");
-      retVal = -1;
-      break;
     }
 
     size_t src_len = strlen(src);
     if (!src_len) {
       LOG_ERROR("input string src is empty");
-      retVal = -1;
-      break;
     }
 
     sha1nfo s;
@@ -465,30 +416,21 @@ int validate_string_sha1(char *src, char *hash) {
   do {
     if (!src) {
       LOG_ERROR("input string src is NULL");
-      retVal = -1;
-      break;
     }
     if (!hash) {
       LOG_ERROR("input hash string is NULL");
-      retVal = -1;
-      break;
     }
     if (strlen(hash) != HASHSTRING_LENGTH) {
-      LOG_ERROR("input hash string is invlaid (length)");
-      retVal = -1;
-      break;
+      LOG_ERROR("input hash string is invalid (length)");
     }
 
     char new_hash[HASHSTRING_LENGTH];
     if (sha1_string(src, new_hash)) {
       LOG_ERROR("generating sha1 hash from input string src failed");
-      retVal = -1;
-      break;
     }
 
     if (strncmp(hash, new_hash, HASHSTRING_LENGTH)) {
-      retVal = -1;
-      break;
+      LOG_ERROR("compare sha1_string(src) == hash failed");
     }
   } while (0);
 
