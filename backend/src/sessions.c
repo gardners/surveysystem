@@ -586,7 +586,7 @@ int create_session_id(char *session_id_out, int max_len) {
  * have been answered), and if so, updates the session to use the latest version.
  * This could even be implemented in load_session().)
  */
-int create_session(char *survey_id, char *session_id, struct session_meta *meta) {
+struct session *create_session(char *survey_id, char *session_id, struct session_meta *meta) {
   int retVal = 0;
   struct session *ses = NULL;
 
@@ -652,11 +652,16 @@ int create_session(char *survey_id, char *session_id, struct session_meta *meta)
       LOG_ERROR("save_session() failed");
     }
 
-    free_session(ses);
+
     LOG_INFOV("Created new session file '%s' for survey '%s'", session_path, survey_id);
   } while (0);
 
-  return retVal;
+  if (retVal) {
+    free_session(ses); // if not done before
+    ses = NULL;
+  }
+  return ses;
+
 }
 
 /*
