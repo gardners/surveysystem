@@ -344,8 +344,9 @@ int main(int argc, char **argv) {
 
 /**
  * Open an HTTP response with a status code, a content-type and a mime type, then open the HTTP content body.
+ * #268: add optional consistency sha1 - if passing session->consistency_hash: you need to free the session after this call :)
  */
-void http_open(struct kreq *req, enum khttp status, enum kmime mime) {
+void http_open(struct kreq *req, enum khttp status, enum kmime mime, char *etag) {
   enum kcgi_err er;
 
   do {
@@ -361,6 +362,16 @@ void http_open(struct kreq *req, enum khttp status, enum kmime mime) {
 
     // Emit mime-type
     er = khttp_head(req, kresps[KRESP_CONTENT_TYPE], "%s", kmimetypes[mime]);
+    if (KCGI_HUP == er) {
+      fprintf(stderr, "khttp_head: interrupt\n");
+      continue;
+    } else if (KCGI_OK != er) {
+      fprintf(stderr, "khttp_head: error: %d\n", er);
+      break;
+    }
+
+    // #268, Emit session consistency_sha as Etag header
+    er = khttp_head(req, kresps[KRESP_ETAG], "%s", (etag) ? etag : "");
     if (KCGI_HUP == er) {
       fprintf(stderr, "khttp_head: interrupt\n");
       continue;
@@ -386,7 +397,7 @@ void http_json_error(struct kreq *req, enum khttp status, const char *msg) {
   int retVal = 0;
 
   do {
-    http_open(req, status, KMIME_APP_JSON);
+    http_open(req, status, KMIME_APP_JSON, NULL);
 
     struct kjsonreq jsonreq;
     kjson_open(&jsonreq, req);
@@ -428,8 +439,8 @@ static void fcgi_index(struct kreq *req) {
 static void fcgi_newsession(struct kreq *req) {
   int retVal = 0;
 
-  // #384 forward instantiation
-  struct session_meta *meta;
+  struct session_meta *meta = NULL;
+  struct session *ses = NULL;
 
   do {
 
@@ -463,31 +474,42 @@ static void fcgi_newsession(struct kreq *req) {
 
       if (meta->provider != IDENDITY_HTTP_TRUSTED) {
         // only allowed for trusted middleware, so return 400
+        int provider = meta->provider;
+        free_session_meta(meta);
+        meta = NULL;
         http_json_error(req, KHTTP_400, "POST session_id only allowed in a managed system.");
-        LOG_ERRORV("POST /newsession with invalid provider %d", meta->provider);
+        LOG_ERRORV("POST /newsession with invalid provider %d", provider);
       }
 
       struct kpair *sess = req->fieldmap[KEY_SESSIONID];
       if (!sess) {
         // No sess ID param, so return 400
+        free_session_meta(meta);
+        meta = NULL;
         http_json_error(req, KHTTP_400, "session_id missing.");
         LOG_ERROR("session_id missing from post body");
       }
 
       if (validate_session_id(sess->val)) {
         // valid uid or return 400
+        free_session_meta(meta);
+        meta = NULL;
         http_json_error(req, KHTTP_400, "Invalid session_id");
         LOG_ERROR("Invalid session_id");
       }
 
       char sess_path[1024];
       if(generate_session_path(sess->val, sess->val, sess_path, 1024)) {
+        free_session_meta(meta);
+        meta = NULL;
         http_json_error(req, KHTTP_500, "Failed to create session path");
         LOG_ERROR("Failed to create session path");
       }
 
       if(!access(sess_path, F_OK)) {
         // valid uid or return 400
+        free_session_meta(meta);
+        meta = NULL;
         http_json_error(req, KHTTP_400, "Session exists already");
         LOG_ERRORV("Session '%s' exists already", sess->val);
       }
@@ -506,23 +528,27 @@ static void fcgi_newsession(struct kreq *req) {
 
     } // if POST
 
-    // #363 save session meta
-    if (create_session(survey->val, session_id, meta)) {
+    // #363 save session meta into session
+    // #268 get ses->consistency_sha
+    ses = create_session(survey->val, session_id, meta);
+    if (!ses) {
       free_session_meta(meta);
       meta = NULL;
       http_json_error(req, KHTTP_500, "Session could not be created (create session).");
       LOG_ERROR("create_session() failed");
     }
 
-    // reply, #363 free session_meta
-    free_session_meta(meta);
-
     // reply
-    http_open(req, KHTTP_200, KMIME_TEXT_PLAIN);
+    http_open(req, KHTTP_200, KMIME_TEXT_PLAIN, ses->consistency_hash);
     enum kcgi_err er = khttp_puts(req, session_id);
     if (er != KCGI_OK) {
+       free_session_meta(meta);
+       free_session(ses);
       LOG_ERROR("khttp_puts() failed");
     }
+
+    free_session_meta(meta);
+    free_session(ses);
     LOG_INFO("Leaving page handler");
 
   } while (0);
@@ -614,17 +640,14 @@ static void fcgi_addanswer(struct kreq *req) {
     // #373, separate response handler for nextquestions
     if (response_nextquestion(req, ses, nq)) {
       free_session(ses);
-      ses = NULL;
       free_next_questions(nq);
-      nq = NULL;
       http_json_error(req, KHTTP_500, "Could not load next questions for specified session.");
       LOG_ERROR("Could not load next questions for specified session");
     }
 
     free_session(ses);
-    ses = NULL;
     free_next_questions(nq);
-    nq = NULL;
+
     LOG_INFO("Leaving page handler.");
 
   } while (0);
@@ -779,9 +802,7 @@ static void fcgi_updateanswer(struct kreq *req) {
     // #373, separate response handler for nextquestions
     if (response_nextquestion(req, ses, nq)) {
       free_session(ses);
-      ses = NULL;
       free_next_questions(nq);
-      nq = NULL;
       http_json_error(req, KHTTP_500, "Could not load next questions for specified session.");
       LOG_ERROR("Could not load next questions for specified session.");
     }
@@ -1030,7 +1051,7 @@ static void fcgi_delsession(struct kreq *req) {
     free_session(ses);
 
     // reply
-    http_open(req, KHTTP_200, KMIME_TEXT_PLAIN);
+    http_open(req, KHTTP_200, KMIME_TEXT_PLAIN, NULL);
     enum kcgi_err er = khttp_puts(req, "Session deleted");
     if (er != KCGI_OK) {
       LOG_ERROR("khttp_puts() failed");
@@ -1300,47 +1321,11 @@ static void fcgi_analyse(struct kreq *req) {
       // do not break here
     }
 
+    // reply, #268 add consistency hash
+    http_open(req, KHTTP_200, KMIME_APP_JSON, ses->consistency_hash);
+
     free_session(ses);
     ses = NULL;
-
-    // reply
-    er = khttp_head(req, kresps[KRESP_STATUS], "%s", khttps[KHTTP_200]);
-    if (KCGI_HUP == er) {
-      fprintf(stderr, "khttp_head: interrupt\n");
-      continue;
-    } else if (KCGI_OK != er) {
-      if (analysis) {
-        free((char *) analysis);
-      }
-      fprintf(stderr, "khttp_head: error: %d\n", er);
-      break;
-    }
-
-    // Emit mime-type
-    er = khttp_head(req, kresps[KRESP_CONTENT_TYPE], "%s", kmimetypes[KMIME_APP_JSON]);
-    if (KCGI_HUP == er) {
-      fprintf(stderr, "khttp_head: interrupt\n");
-      continue;
-    } else if (KCGI_OK != er) {
-      if (analysis) {
-        free((char *)analysis);
-      }
-      fprintf(stderr, "khttp_head: error: %d\n", er);
-      break;
-    }
-
-    // Begin sending body
-    er = khttp_body(req);
-    if (KCGI_HUP == er) {
-      fprintf(stderr, "khttp_body: interrupt\n");
-      continue;
-    } else if (KCGI_OK != er) {
-      if (analysis) {
-        free((char *)analysis);
-      }
-      fprintf(stderr, "khttp_body: error: %d\n", er);
-      break;
-    }
 
     er = khttp_puts(req, analysis);
     // #288, we need to free the analysis
@@ -1467,12 +1452,9 @@ int response_nextquestion(struct kreq *req, struct session *ses, struct nextques
     // json response
 
     struct kjsonreq resp;
+    http_open(req, KHTTP_200, KMIME_APP_JSON, ses->consistency_hash);
     kjson_open(&resp, req);
     kcgi_writer_disable(req);
-    khttp_head(req, kresps[KRESP_STATUS], "%s", khttps[KHTTP_200]);
-    khttp_head(req, kresps[KRESP_CONTENT_TYPE], "%s",
-               kmimetypes[KMIME_APP_JSON]);
-    khttp_body(req);
 
     // open nq object
     kjson_obj_open(&resp);
