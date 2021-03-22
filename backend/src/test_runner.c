@@ -29,6 +29,10 @@
  *
  * verify_sessionfiles_count <expected_number>
  *
+ * create_checksum(<string and/or token>)
+ *
+ * verify_response_etag(<string and/or token>)
+ *
  * These commands can be used more than once, so that more complex activities can be scripted.
  *
  * Apart from running these scripts, all that it has to do to is to setup and cleanup the
@@ -864,7 +868,7 @@ int run_test(struct Test *test) {
       } else if (sscanf(line, "create_checksum(%s)", tmp) == 1) {
 
         ////
-        // keyword: "create_checksum(%s)"
+        // keyword: "create_checksum(%s)", #268
         ////
 
         tmp[strlen(tmp) - 1] = 0; // remove closing ')'
@@ -888,7 +892,7 @@ int run_test(struct Test *test) {
       } else if (sscanf(line, "verify_response_etag(%s)", tmp) == 1) {
 
         ////
-        // keyword: "verify_response_etag(%s)"
+        // keyword: "verify_response_etag(%s)", #268
         ////
 
         tmp[strlen(tmp) - 1] = 0; // remove closing ')'
