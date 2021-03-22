@@ -93,7 +93,7 @@ char *py_traceback_func =
 /**
  * parses a 'request' directive line for defined patterns and creates a curl command
  */
-int parse_request(char *line, char *out, int *expected_http_status, char *last_sessionid, char *dir, FILE *log) {
+int parse_request(char *line, char *out, int *expected_http_status, char *last_sessionid, char *custom_checksum, char *dir, FILE *log) {
     int retVal = 0;
 
     do {
@@ -187,6 +187,8 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
         }
 
         if (strlen(curl_args)) {
+          test_replace_str(curl_args, "<session_id>", last_sessionid, TEST_MAX_BUFFER);
+          test_replace_str(curl_args, "<custom_checksum>", custom_checksum, TEST_MAX_BUFFER);
           strncpy(tmp, curl_args, TEST_MAX_BUFFER);
           snprintf(curl_args, TEST_MAX_BUFFER, " %s", tmp);
         }
@@ -822,7 +824,7 @@ int run_test(struct Test *test) {
           goto fatal;
         }
 
-        if (parse_request(line, cmd, &expected_http_status, last_sessionid, test->dir, log)) {
+        if (parse_request(line, cmd, &expected_http_status, last_sessionid, custom_checksum, test->dir, log)) {
           fprintf(log, "T+%4.3fms : FATAL: Could not parse args in declaration \"%s\"'", test_time_delta(start_time), line);
           goto fatal;
         }
@@ -882,7 +884,7 @@ int run_test(struct Test *test) {
 
         tmp[strlen(tmp) - 1] = 0; // remove closing ')'
 
-        test_replace_str(tmp, "<SESSION_ID>", last_sessionid, 1024); // parse optional $SESSION
+        test_replace_str(tmp, "<session_id>", last_sessionid, 1024); // parse optional $SESSION
         test_replace_tokens(test, tmp, 1024); // parse optional tokens
 
         snprintf(cmd, 1024, "echo -n %s | sha1sum", tmp);
