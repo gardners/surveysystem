@@ -1973,7 +1973,7 @@ int session_generate_consistency_hash(struct session *ses) {
 
     sha1nfo info;
     sha1_init(&info);
-    sha1_write(&info, line, 256);
+    sha1_write(&info, line, strlen(line));
 
     struct answer *last = session_get_last_given_answer(ses);
     if (last) {
@@ -1986,7 +1986,7 @@ int session_generate_consistency_hash(struct session *ses) {
     // #268 purge and generate new sha1 checksum
     freez(ses->consistency_hash);
     ses->consistency_hash = NULL;
-    char hash[HASH_LENGTH + 1];
+    char hash[HASHSTRING_LENGTH + 1];
     if (sha1_hash(&info, hash)) {
       LOG_ERRORV("session_generate_cecksum(): generating hash failed for session '%s'", ses->session_id);
     }
