@@ -93,7 +93,7 @@ char *py_traceback_func =
 /**
  * parses a 'request' directive line for defined patterns and creates a curl command
  */
-int parse_request(char *line, char *out, int *expected_http_status, char *last_sessionid, char *custom_checksum, char *dir, FILE *log) {
+int parse_request(char *line, char *out, int *expected_http_status, char *last_sessionid, struct HttpResponse *prev, char *custom_checksum, char *dir, FILE *log) {
     int retVal = 0;
 
     do {
@@ -189,6 +189,7 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
         if (strlen(curl_args)) {
           test_replace_str(curl_args, "<session_id>", last_sessionid, TEST_MAX_BUFFER);
           test_replace_str(curl_args, "<custom_checksum>", custom_checksum, TEST_MAX_BUFFER);
+          test_replace_str(curl_args, "<response_etag>", prev->eTag, TEST_MAX_BUFFER);
           strncpy(tmp, curl_args, TEST_MAX_BUFFER);
           snprintf(curl_args, TEST_MAX_BUFFER, " %s", tmp);
         }
@@ -799,9 +800,6 @@ int run_test(struct Test *test) {
         // keyword: "request"
         ////
 
-        // clear previous response
-        memset(&response, 0, sizeof(response));
-
         // Exeucte curl call. If it is a newsession command, then remember the session ID
         // We also log the returned data from the request, so that we can look at that
         // as well, if required.
@@ -824,11 +822,16 @@ int run_test(struct Test *test) {
           goto fatal;
         }
 
-        if (parse_request(line, cmd, &expected_http_status, last_sessionid, custom_checksum, test->dir, log)) {
+        if (parse_request(line, cmd, &expected_http_status, last_sessionid, &response, custom_checksum, test->dir, log)) {
           fprintf(log, "T+%4.3fms : FATAL: Could not parse args in declaration \"%s\"'", test_time_delta(start_time), line);
           goto fatal;
         }
         fprintf(log, "T+%4.3fms : HTTP API request command: '%s'\n", test_time_delta(start_time), cmd);
+
+        /*
+         * clear previous response !
+         */
+        memset(&response, 0, sizeof(response));
 
         int shell_result = system(cmd);
         if (shell_result) {
