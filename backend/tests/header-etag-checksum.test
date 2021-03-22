@@ -1,0 +1,138 @@
+@description test all endpoints for 'ETag' checksum headers (#268)
+
+create_checksum(test fdsaf)
+
+# Create a dummy survey
+definesurvey foo
+version 2
+Silly test survey updated
+without python
+question1:Question 1::TEXT:0::-1:-1:0:0::
+question2:Question 2::TEXT:0::-1:-1:0:0::
+question3:Question 3::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+#! -------
+#! ------ /index
+#! -------
+
+#! ------ (405: hash: EMPTY, required: NO -------
+request 405 /
+verify_response_etag()
+
+#! -------
+#! ------ /newsession
+#! -------
+
+#! ------ 200: hash: YES, required: NO -------
+request 200 /newsession?surveyid=foo
+verify_response_etag(<hashlike_etag>)
+#
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+#! - test hash was generated of <session_id><state>
+create_checksum(<SESSION_ID><SESSION_NEW>)
+verify_response_etag(<custom_checksum>)
+
+#! -------
+#! ------ /addanswer
+#! -------
+
+#! ------ 200: hash: YES, required: NO -------
+request 200 /addanswer?sessionid=$SESSION&answer=question1:Answer1:0:0:0:0:0:0:0:
+verify_response_etag(<hashlike_etag>)
+
+#! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
+create_checksum(<SESSION_ID><SESSION_OPEN>question1:TEXT:Answer1:0:0:0:0:0:0:0::0)
+verify_response_etag(<custom_checksum>)
+
+#! -------
+#! ------ /updateanswer
+#! -------
+
+#! ------ 200: hash: YES, required: NO -------
+request 200 /updateanswer?sessionid=$SESSION&answer=question2:Answer2:0:0:0:0:0:0:0:
+verify_response_etag(<hashlike_etag>)
+
+#! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
+create_checksum(<SESSION_ID><SESSION_OPEN>question2:TEXT:Answer2:0:0:0:0:0:0:0::0)
+verify_response_etag(<custom_checksum>)
+
+#! -------
+#! ------ /nextquestion
+#! -------
+
+#! ------ 200: hash: YES, required: NO -------
+request 200 /nextquestion?sessionid=$SESSION
+verify_response_etag(<hashlike_etag>)
+
+#! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
+create_checksum(<SESSION_ID><SESSION_OPEN>question2:TEXT:Answer2:0:0:0:0:0:0:0::0)
+verify_response_etag(<custom_checksum>)
+
+#! -------
+#! ------ /delanswer
+#! -------
+
+#! ------ 200: hash: YES, required: NO -------
+request 200 /delanswer?sessionid=$SESSION&questionid=question2
+verify_response_etag(<hashlike_etag>)
+
+#! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
+create_checksum(<SESSION_ID><SESSION_OPEN>question1:TEXT:Answer1:0:0:0:0:0:0:0::0)
+verify_response_etag(<custom_checksum>)
+
+#! -------
+#! ------ /delanswerandfollowing
+#! -------
+
+#! ------ 200: hash: YES, required: NO -------
+request 200 /delanswerandfollowing?sessionid=$SESSION&questionid=question1
+verify_response_etag(<hashlike_etag>)
+
+#! - test hash was generated of <session_id><state> (all answers deleted!)
+create_checksum(<SESSION_ID><SESSION_OPEN>)
+verify_response_etag(<custom_checksum>)
+
+#! -------
+#! ------ /delsession
+#! -------
+
+#! ------ 400: hash: YES, required: NO -------
+request 400 /delsession?sessionid=$SESSION&questionid=question1
+verify_response_etag()
+
+#! -------
+#! ------ /accesstest
+#! -------
+
+#! ------ 200: hash: EMPTY, required: NO -------
+request 200 /accesstest
+verify_response_etag()
+
+#! -------
+#! ------ /fastcgitest
+#! -------
+
+#! ------ 200: hash: EMPTY, required: NO -------
+request 200 /accesstest
+verify_response_etag()
+
+#! -------
+#! ------ /analyse (without pyhton)
+#! -------
+
+# re-fill session
+request 200 /addanswer?sessionid=$SESSION&answer=question1:Answer1:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=question2:Answer2:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=question3:Answer3:0:0:0:0:0:0:0:
+
+#! ------ 200 : hash: Yes, required: NO -------
+request 200 /analyse?sessionid=$SESSION&questionid=question1
+verify_response_etag(<hashlike_etag>)
+
+#! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
+create_checksum(<SESSION_ID><SESSION_CLOSED>question3:TEXT:Answer3:0:0:0:0:0:0:0::0)
+verify_response_etag(<custom_checksum>)
