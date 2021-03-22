@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 // #428 enable logging removed: #include "code_instrumentation.h"
 
 #ifdef __BIG_ENDIAN__
@@ -410,7 +411,7 @@ int sha1_string(char *src, char *hash) {
  * validate a string against a given sha1 hash
  * #268, #237
  */
-int validate_string_sha1(char *src, char *hash) {
+int sha1_validate_string(char *src, char *hash) {
   int retVal = 0;
 
   do {
@@ -433,6 +434,36 @@ int validate_string_sha1(char *src, char *hash) {
       LOG_ERROR("compare sha1_string(src) == hash failed");
     }
   } while (0);
+
+  return retVal;
+}
+
+/**
+ * weak validation if a string could be a sha1 hash (length, character types)
+ */
+int sha1_validate_string_hashlike(char *str) {
+  int retVal = 0;
+
+  do {
+    if (!str) {
+      LOG_ERROR("string is null");
+    }
+
+    int i = 0;
+    while (i < HASHSTRING_LENGTH) {
+      if (!isdigit(str[i]) && !isalpha(str[i])) {
+        LOG_ERROR("sha1 hash contains invalid characters");
+      }
+      i++;
+    }
+
+    if (i != HASHSTRING_LENGTH) {
+      LOG_ERROR("sha1 hash too short");
+    }
+    if (str[HASHSTRING_LENGTH] != 0) {
+      LOG_ERROR("sha1 hash too long");
+    }
+  } while(0);
 
   return retVal;
 }
