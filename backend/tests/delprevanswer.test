@@ -1,7 +1,5 @@
 @description /delprevanser and constistency_hash endpoint (#268)
 
-create_checksum(test fdsaf)
-
 # Create a dummy survey
 definesurvey foo
 version 2
@@ -13,10 +11,71 @@ question3:Question 3::TEXT:0::-1:-1:0:0::
 endofsurvey
 
 #! -------
-#! ------ /delprevanswer: decrement a session with 2 answers
+#! ------ /delprevanswer: AUTO (previous checksum) decrement a session with 3 answers
 #! -------
 
-definesession 18530e05-0000-0000-7288-7d0d602be5b6
+definesession bbbbbbbb-0000-0000-0000-bbbbbbbbbbbb
+foo/current
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
+question1:TEXT:Answer1:0:0:0:0:0:0:0::0:<UTIME>
+question2:TEXT:Answer2:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#! -- fetch checksum
+
+# create checksum of last answer
+request 200 /nextquestion?sessionid=$SESSION
+match_string {"status": 0, "message": "", "progress": [2, 3], "next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+verify_response_etag(<hashlike_etag>)
+
+#! -- del Answer 2
+
+# create checksum of last answer
+request 200 /delprevanswer?sessionid=$SESSION curlargs(-H "If-Match: <response_etag>")
+match_string {"status": 0, "message": "", "progress": [1, 3], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "Answer2", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+verify_response_etag(<hashlike_etag>)
+
+verify_session(skip_headers)
+foo/current
+question1:TEXT:Answer1:0:0:0:0:0:0:0::0:<UTIME>
+question2:TEXT:Answer2:0:0:0:0:0:0:0::1:<UTIME>
+endofsession
+
+#! -- del Answer 1
+
+# create checksum of last answer
+request 200 /delprevanswer?sessionid=$SESSION curlargs(-H "If-Match: <response_etag>")
+match_string {"status": 0, "message": "", "progress": [0, 3], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "Answer1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+verify_response_etag(<hashlike_etag>)
+
+verify_session(skip_headers)
+foo/current
+question1:TEXT:Answer1:0:0:0:0:0:0:0::1:<UTIME>
+question2:TEXT:Answer2:0:0:0:0:0:0:0::1:<UTIME>
+endofsession
+
+#! -- del Answer (no last answer) passes
+
+# create checksum of last answer
+request 200 /delprevanswer?sessionid=$SESSION curlargs(-H "If-Match: <response_etag>")
+match_string {"status": 0, "message": "", "progress": [0, 3], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "Answer1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+verify_response_etag(<hashlike_etag>)
+
+verify_session(skip_headers)
+del_answer_twice/0b39e0c93f1b338433b8a8773d57f738dd405e17
+question1:TEXT:Answer1:0:0:0:0:0:0:0::1:<UTIME>
+question2:TEXT:Answer2:0:0:0:0:0:0:0::1:<UTIME>
+endofsession
+
+
+#! -------
+#! ------ /delprevanswer: FUZZY (construct checksum) decrement a session with 3 answers
+#! -------
+
+definesession aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 foo/current
 @user:META::0:0:0:0:0:0:0::0:<UTIME>
 @group:META::0:0:0:0:0:0:0::0:<UTIME>
