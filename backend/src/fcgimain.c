@@ -19,6 +19,7 @@
 #include "serialisers.h"
 #include "survey.h"
 #include "utils.h"
+#include "sha1.h"
 
 #include "fcgirequest.h"
 
@@ -186,6 +187,7 @@ enum page {
   PAGE_NEXTQUESTION,
   PAGE_DELANSWER,
   PAGE_DELANSWERANDFOLLOWING,
+  PAGE_DELPREVANSWER, // #268
   PAGE_DELSESSION,
   PAGE_ACCESTEST,
   PAGE_FCGITEST,
@@ -202,6 +204,7 @@ static void fcgi_updateanswer(struct kreq *);
 static void fcgi_nextquestion(struct kreq *);
 static void fcgi_delanswer(struct kreq *);
 static void fcgi_delanswerandfollowing(struct kreq *);
+static void fcgi_delprevanswer(struct kreq *);
 static void fcgi_delsession(struct kreq *);
 static void fcgi_accesstest(struct kreq *);
 static void fcgi_fastcgitest(struct kreq *);
@@ -215,6 +218,7 @@ static const disp disps[PAGE__MAX] = {
     fcgi_nextquestion,
     fcgi_delanswer,
     fcgi_delanswerandfollowing,
+    fcgi_delprevanswer,
     fcgi_delsession,
     fcgi_accesstest,
     fcgi_fastcgitest,
@@ -229,6 +233,7 @@ static const char *const pages[PAGE__MAX] = {
     "nextquestion",
     "delanswer",
     "delanswerandfollowing",
+    "delprevanswer",
     "delsession",
     "accesstest",
     "fastcgitest",
@@ -967,6 +972,119 @@ static void fcgi_delanswerandfollowing(struct kreq *req) {
       // TODO could be both 400 or 500 (storage, serialization, not in session)
       http_json_error(req, KHTTP_400, "Answer does not match existing session records.");
       LOG_ERROR("session_delete_answers_by_question_uid() failed");
+    }
+
+    // #332 next_questions data struct
+    nq = get_next_questions(ses);
+    if (!nq) {
+      free_session(ses);
+      ses = NULL;
+      LOG_ERROR("get_next_questions() failed");
+    }
+
+    if (save_session(ses)) {
+      free_session(ses);
+      ses = NULL;
+      free_next_questions(nq);
+      nq = NULL;
+      http_json_error(req, KHTTP_500, "Unable to update session.");
+      LOG_ERROR("save_session() failed");
+    }
+
+    // All ok, so tell the caller the next question to be answered
+    // #373, separate response handler for nextquestions
+    if (response_nextquestion(req, ses, nq)) {
+      free_session(ses);
+      ses = NULL;
+      free_next_questions(nq);
+      nq = NULL;
+      http_json_error(req, KHTTP_500, "Could not load next questions for specified session.");
+      LOG_ERROR("Could not load next questions for specified session");
+    }
+
+    free_session(ses);
+    free_next_questions(nq);
+    LOG_INFO("Leaving page handler.");
+
+  } while (0);
+
+  (void)retVal;
+  return;
+}
+
+static void fcgi_delprevanswer(struct kreq *req) {
+  int retVal = 0;
+
+  // #384 forward instantiation
+  struct session *ses = NULL;
+  struct nextquestions *nq = NULL;
+
+  do {
+
+    LOG_INFO("Entering page handler /delprevanswer");
+
+    struct khead *header = req->reqmap[KREQU_IF_MATCH];
+
+    if (!header) {
+      http_json_error(req, KHTTP_400, "request header 'If-Match' is missing.");
+      LOG_ERROR("request header 'If-Match' is missing.");
+    }
+
+    // (weak) valiation if header->val is hash like string
+    if (sha1_validate_string_hashlike(header->val)) {
+      http_json_error(req, KHTTP_400, "request header 'If-Match' is invalid.");
+      LOG_ERROR("request header 'If-Match' is invalid.");
+    }
+
+    ses = request_load_session(req);
+    if (!ses) {
+      http_json_error(req, KHTTP_400, "Could not load specified session. Does it exist?");
+      LOG_ERROR("Could not load session");
+    }
+
+    // validate request against session meta (#363)
+    enum khttp status = fcgirequest_validate_session_request(req, ses);
+    if (status != KHTTP_200) {
+      free_session(ses);
+      ses = NULL;
+      http_json_error(req, status, "Invalid idendity provider, check app configuration");
+      LOG_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
+    }
+
+    // validate requested action against session current state (#379)
+    //  - get last answer (not a system answer and not deleted)
+    //  - define validation scope: if a last answer was found (to be flagged as deleted) use DELTEANSWER. Otherwise otherwise the lower NEXTQUESTIONS
+    struct answer *last = session_get_last_given_answer(ses);
+    int action = (last) ? ACTION_SESSION_DELETEANSWER : ACTION_SESSION_NEXTQUESTIONS;
+
+    char reason[1024];
+    if (validate_session_action(action, ses, reason, 1024)) {
+      free_session(ses);
+      ses = NULL;
+      http_json_error(req, KHTTP_400, reason);
+      LOG_ERROR("Session action validation failed");
+    }
+
+    if (strncmp(header->val, ses->consistency_hash, HASHSTRING_LENGTH)) {
+      free_session(ses);
+      ses = NULL;
+      http_json_error(req, KHTTP_412, "Request header 'If-Match' does not match");
+      LOG_ERROR("checksum does not match session consistency hash!");
+    }
+    LOG_INFOV("checksum match passed for session '%s'", ses->session_id);
+
+    // We have a question -- so delete all answers to the given question
+    if (last) {
+      LOG_INFOV("deleting last given answer '%'", last->uid);
+      if (session_delete_answer(ses, last, 0) < 0) {
+        free_session(ses);
+        ses = NULL;
+        // TODO could be both 400 or 500 (storage, serialization, not in session)
+        http_json_error(req, KHTTP_400, "Answer does not match existing session records.");
+        LOG_ERROR("session_delete_answer() failed");
+      }
+    } else {
+      LOG_INFO("no last given answer in session");
     }
 
     // #332 next_questions data struct
