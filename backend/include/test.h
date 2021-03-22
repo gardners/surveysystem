@@ -41,6 +41,13 @@ struct HttpResponse {
 };
 
 ////
+// string replacement
+////
+
+void test_replace_str(char *str, char *pattern, char *replacement, size_t sz);
+void test_replace_int(char *str, char *pattern, int replacement, size_t sz);
+
+////
 // logs
 ////
 
@@ -91,6 +98,7 @@ int test_copy_session(char *session_id, char *targ, struct Test *test);
 // test file parsing
 ////
 
+void test_replace_tokens(struct Test *test, char *line, size_t len);
 int test_compile_session_definition(FILE *in, char *session_id, struct Test *test);
 int test_compare_session(FILE *sess, int skip_s, FILE *comp, int skip_c, struct Test *test, int server_port, FILE *log, long long start_time);
 
@@ -99,5 +107,11 @@ int test_compare_session(FILE *sess, int skip_s, FILE *comp, int skip_c, struct 
 ////
 
 int test_parse_http_response(FILE *fp, struct HttpResponse *resp);
+void test_dump_http_response(FILE *fp, struct HttpResponse *resp);
 
+////
+// misc
+///
+
+int test_run_process(char *cmd, char *out, size_t len);
 #endif
