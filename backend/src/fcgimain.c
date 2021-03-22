@@ -1053,7 +1053,7 @@ static void fcgi_delprevanswer(struct kreq *req) {
 
     // validate requested action against session current state (#379)
     //  - get last answer (not a system answer and not deleted)
-    //  - define validation scope: if a last answer was found (to be flagged as deleted) use DELTEANSWER. Otherwise otherwise the lower NEXTQUESTIONS
+    //  - define validation scope: if a last answer was found (to be flagged as deleted) use DELTEANSWER. Otherwise use the lower NEXTQUESTIONS
     struct answer *last = session_get_last_given_answer(ses);
     int action = (last) ? ACTION_SESSION_DELETEANSWER : ACTION_SESSION_NEXTQUESTIONS;
 
@@ -1073,7 +1073,6 @@ static void fcgi_delprevanswer(struct kreq *req) {
     }
     LOG_INFOV("checksum match passed for session '%s'", ses->session_id);
 
-    // We have a question -- so delete all answers to the given question
     if (last) {
       LOG_INFOV("deleting last given answer '%'", last->uid);
       if (session_delete_answer(ses, last, 0) < 0) {
