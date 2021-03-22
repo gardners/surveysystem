@@ -21,13 +21,22 @@
  *
  * nomatch <regex to search for in body of last response>
  *
+ * definesession <session id>
+ * <session headers>
+ * <session answers>
+ * endofsession
+ *
  * verifysession
  * <expected set of answers in the session file. Can be empty>
  * endofsession
  *
  * session_add_answer <serialised answer>
  *
+ * verify_session_id <existing session id>
+ *
  * verify_sessionfiles_count <expected_number>
+ *
+ * copy_session_to <file path>
  *
  * create_checksum(<string and/or token>)
  *
