@@ -15,7 +15,7 @@ request 200 /newsession?surveyid=qtype_daytimesequence
 extract_sessionid
 
 # Check that we have an empty session file created
-verify_session(skip_headers)verify_session
+verify_session(skip_headers)
 qtype_daytimesequence/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 

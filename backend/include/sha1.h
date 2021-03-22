@@ -55,6 +55,12 @@ int sha1_string(char *src, char *hash);
  * checks a given string against a given hash
  * #268, #237
  */
-int validate_string_sha1(char *src, char *hash);
+int sha1_validate_string(char *src, char *hash);
+
+/**
+ * weak validation if a string could be a sha1 hash (length, character types)eak validation if a string could be a sha1 hash (length, character types)
+ * #268, #237
+ */
+int sha1_validate_string_hashlike(char *str);
 
 #endif

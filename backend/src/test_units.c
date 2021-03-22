@@ -706,33 +706,88 @@ int main(int argc, char **argv) {
       LOG_UNMUTE();
     }
 
-    SECTION("sha1 tests: validate_string_sha1(), #237");
+    SECTION("sha1 tests: sha1_hash(), #237");
+
+    {
+      /* note: following tests rely on thest sha1_string('abc') */
+      int ret;
+      sha1nfo info;
+      char hash[256];
+
+      LOG_MUTE(); // supress error printing in sha1.c
+
+      sha1_init(&info);
+      sha1_write(&info, "abc", 3);
+      ret = sha1_hash(&info, hash);
+      ASSERT(ret == 0, "sha1_hash('%s', '%s') is valid", "abc", "a9993e364706816aba3e25717850c26c9cd0d89d");
+      ret = strcmp(hash, "a9993e364706816aba3e25717850c26c9cd0d89d");
+      ASSERT(ret == 0, "sha1_hash('abc'): '%s' == '%s'", hash, "a9993e364706816aba3e25717850c26c9cd0d89d");
+
+      sha1_init(&info);
+      // example of <session_id><state> pattern
+      sha1_write(&info, "e3bbd48d-0000-0000-78b1-35c785bf3e861", 37);
+      ret = sha1_hash(&info, hash);
+      ASSERT(ret == 0, "sha1_hash('%s', '%s') is valid", "e3bbd48d-0000-0000-78b1-35c785bf3e861", "79504b0a11b93721911e2547a60ae53e3982f179");
+      ret = strcmp(hash, "79504b0a11b93721911e2547a60ae53e3982f179");
+      ASSERT(ret == 0, "sha1_hash('abc'): '%s' == '%s'", hash, "79504b0a11b93721911e2547a60ae53e3982f179");
+
+      LOG_UNMUTE();
+    }
+
+    SECTION("sha1 tests: sha1_validate_string(), #237");
 
     {
       /* note: following tests rely on thest sha1_string('abc') */
       int ret;
       LOG_MUTE(); // supress error printing in sha1.c
 
-      ret = validate_string_sha1("abc", "a9993e364706816aba3e25717850c26c9cd0d89d");
+      ret = sha1_validate_string("abc", "a9993e364706816aba3e25717850c26c9cd0d89d");
       ASSERT(ret == 0, "sha1_string('%s', '%s') is valid", "abc", "a9993e364706816aba3e25717850c26c9cd0d89d");
 
-      ret = validate_string_sha1("abcd", "a9993e364706816aba3e25717850c26c9cd0d89d");
+      ret = sha1_validate_string("abcd", "a9993e364706816aba3e25717850c26c9cd0d89d");
       ASSERT(ret != 0, "sha1_string('%s', '%s') is invalid (wrong src)", "abcd", "a9993e364706816aba3e25717850c26c9cd0d89d");
 
-      ret = validate_string_sha1("abc", "99993e364706816aba3e25717850c26c9cd0d89d");
+      ret = sha1_validate_string("abc", "99993e364706816aba3e25717850c26c9cd0d89d");
       ASSERT(ret != 0, "sha1_string('%s', '%s') is invalid (wrong shash)", "abcd", "99993e364706816aba3e25717850c26c9cd0d89d");
 
-      ret = validate_string_sha1("abc", "99993e364706816aba3");
+      ret = sha1_validate_string("abc", "99993e364706816aba3");
       ASSERT(ret != 0, "sha1_string('%s', '%s') is invalid (invalid hash)", "abcd", "d9");
 
-      ret = validate_string_sha1(NULL, "a9993e364706816aba3e25717850c26c9cd0d89d");
+      ret = sha1_validate_string(NULL, "a9993e364706816aba3e25717850c26c9cd0d89d");
       ASSERT(ret != 0, "sha1_string(NULL, '%s') is invalid", "a9993e364706816aba3e25717850c26c9cd0d89d");
 
-      ret = validate_string_sha1("abc", NULL);
+      ret = sha1_validate_string("abc", NULL);
       ASSERT(ret != 0, "sha1_string('%s', NULL) is invalid", "abc");
 
-      ret = validate_string_sha1("", "");
+      ret = sha1_validate_string("", "");
       ASSERT(ret != 0, "sha1_string('', '') is invalid", "");
+
+      LOG_UNMUTE();
+    }
+
+    SECTION("sha1_validate_string_hashlike(), #268");
+
+    {
+      int ret;
+      LOG_MUTE(); // supress error printing in sha1.c
+
+      ret = sha1_validate_string_hashlike(NULL);
+      ASSERT(ret < 0, "FAIL: string has is '%s'", "NULL");
+
+      ret = sha1_validate_string_hashlike("1");
+      ASSERT(ret < 0, "FAIL: string too short '%s'", "1");
+
+      ret = sha1_validate_string_hashlike("a9993e364706816aba3e25717850c26c9cd0d89d");
+      ASSERT(ret == 0, "PASS: string '%s'", "a9993e364706816aba3e25717850c26c9cd0d89d");
+
+      ret = sha1_validate_string_hashlike("9993e364706816aba3e25717850c26c9cd0d89d");
+      ASSERT(ret < 0, "PASS: too short '%s'", "9993e364706816aba3e25717850c26c9cd0d89d");
+
+      ret = sha1_validate_string_hashlike("ta9993e364706816aba3e25717850c26c9cd0d89d");
+      ASSERT(ret < 0, "FAIL: too long '%s'", "t9993e364706816aba3e25717850c26c9cd0d89d");
+
+      ret = sha1_validate_string_hashlike("+9993e364706816aba3e25717850c26c9cd0d89d");
+      ASSERT(ret < 0, "FAIL: contains invalid characters '%s'", "+9993e364706816aba3e25717850c26c9cd0d89d");
 
       LOG_UNMUTE();
     }

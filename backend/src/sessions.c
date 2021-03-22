@@ -586,7 +586,7 @@ int create_session_id(char *session_id_out, int max_len) {
  * have been answered), and if so, updates the session to use the latest version.
  * This could even be implemented in load_session().)
  */
-int create_session(char *survey_id, char *session_id, struct session_meta *meta) {
+struct session *create_session(char *survey_id, char *session_id, struct session_meta *meta) {
   int retVal = 0;
   struct session *ses = NULL;
 
@@ -652,11 +652,16 @@ int create_session(char *survey_id, char *session_id, struct session_meta *meta)
       LOG_ERROR("save_session() failed");
     }
 
-    free_session(ses);
+
     LOG_INFOV("Created new session file '%s' for survey '%s'", session_path, survey_id);
   } while (0);
 
-  return retVal;
+  if (retVal) {
+    free_session(ses); // if not done before
+    ses = NULL;
+  }
+  return ses;
+
 }
 
 /*
@@ -1968,7 +1973,7 @@ int session_generate_consistency_hash(struct session *ses) {
 
     sha1nfo info;
     sha1_init(&info);
-    sha1_write(&info, line, 256);
+    sha1_write(&info, line, strlen(line));
 
     struct answer *last = session_get_last_given_answer(ses);
     if (last) {
@@ -1981,7 +1986,7 @@ int session_generate_consistency_hash(struct session *ses) {
     // #268 purge and generate new sha1 checksum
     freez(ses->consistency_hash);
     ses->consistency_hash = NULL;
-    char hash[HASH_LENGTH + 1];
+    char hash[HASHSTRING_LENGTH + 1];
     if (sha1_hash(&info, hash)) {
       LOG_ERRORV("session_generate_cecksum(): generating hash failed for session '%s'", ses->session_id);
     }

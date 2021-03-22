@@ -46,10 +46,14 @@ double test_time_delta(long long start_time) {
     return tdelta;
 }
 
+////
+// string replacement
+////
+
 /**
  * Replace pattern with string.
  */
-void replace_str(char *str, char *pattern, char *replacement, size_t sz) {
+void test_replace_str(char *str, char *pattern, char *replacement, size_t sz) {
     char *pos;
     char tmp[sz];
     int index = 0;
@@ -71,10 +75,10 @@ void replace_str(char *str, char *pattern, char *replacement, size_t sz) {
 /**
  * Replace pattern with int.
  */
-void replace_int(char *str, char *pattern, int replacement, size_t sz) {
+void test_replace_int(char *str, char *pattern, int replacement, size_t sz) {
   char tmp[sz];
   snprintf(tmp, sz, "%d", replacement);
-  replace_str(str, pattern, tmp, sz);
+  test_replace_str(str, pattern, tmp, sz);
 }
 
 ////
@@ -712,7 +716,6 @@ void test_load_test_file(int test_count, int test_index, char *test_file, struct
 // sessions
 ////
 
-
 /**
  * recusively scan files in directory and count file names who represent a valid session id
  */
@@ -810,6 +813,30 @@ int test_copy_session(char *session_id, char *targ, struct Test *test) {
 ////
 
 /**
+ * Replaces dedefined tokens with struct test values or survey.h variables
+ */
+void test_replace_tokens(struct Test *test, char *line, size_t len) {
+    if (!test || !line) {
+      fprintf(stderr, "test_replace_tokens(): one or all required args are NULL\n");
+      return;
+    }
+    test_replace_int(line, "<UTIME>", (int)time(0), len);
+    test_replace_str(line, "<FCGIENV_MIDDLEWARE>", test->fcgienv_middleware, len);
+    test_replace_int(line, "<IDENDITY_CLI>", IDENDITY_CLI, len);
+    test_replace_int(line, "<IDENDITY_HTTP_PUBLIC>", IDENDITY_HTTP_PUBLIC, len);
+    test_replace_int(line, "<IDENDITY_HTTP_BASIC>", IDENDITY_HTTP_BASIC, len);
+    test_replace_int(line, "<IDENDITY_HTTP_DIGEST>", IDENDITY_HTTP_DIGEST, len);
+    test_replace_int(line, "<IDENDITY_HTTP_TRUSTED>", IDENDITY_HTTP_TRUSTED, len);
+    test_replace_int(line, "<IDENDITY_UNKOWN>", IDENDITY_UNKOWN, len);
+
+    // #379 session states
+    test_replace_int(line, "<SESSION_NEW>", SESSION_NEW, len);
+    test_replace_int(line, "<SESSION_OPEN>", SESSION_OPEN, len);
+    test_replace_int(line, "<SESSION_FINISHED>", SESSION_FINISHED, len);
+    test_replace_int(line, "<SESSION_CLOSED>", SESSION_CLOSED, len);
+}
+
+/**
  * compiles and saves a session from a 'define session' directive in a test file, replaces placeholders with values defined in struct Test
  */
 int test_compile_session_definition(FILE *in, char *session_id, struct Test *test) {
@@ -847,20 +874,7 @@ int test_compile_session_definition(FILE *in, char *session_id, struct Test *tes
   while (line[0]) {
     trim_crlf(line);
 
-    replace_int(line, "<UTIME>", (int)time(0), TEST_MAX_LINE);
-    replace_str(line, "<FCGIENV_MIDDLEWARE>", test->fcgienv_middleware, TEST_MAX_LINE);
-    replace_int(line, "<IDENDITY_CLI>", IDENDITY_CLI, TEST_MAX_LINE);
-    replace_int(line, "<IDENDITY_HTTP_PUBLIC>", IDENDITY_HTTP_PUBLIC, TEST_MAX_LINE);
-    replace_int(line, "<IDENDITY_HTTP_BASIC>", IDENDITY_HTTP_BASIC, TEST_MAX_LINE);
-    replace_int(line, "<IDENDITY_HTTP_DIGEST>", IDENDITY_HTTP_DIGEST, TEST_MAX_LINE);
-    replace_int(line, "<IDENDITY_HTTP_TRUSTED>", IDENDITY_HTTP_TRUSTED, TEST_MAX_LINE);
-    replace_int(line, "<IDENDITY_UNKOWN>", IDENDITY_UNKOWN, TEST_MAX_LINE);
-
-    // #379 session states
-    replace_int(line, "<SESSION_NEW>", SESSION_NEW, TEST_MAX_LINE);
-    replace_int(line, "<SESSION_OPEN>", SESSION_OPEN, TEST_MAX_LINE);
-    replace_int(line, "<SESSION_FINISHED>", SESSION_FINISHED, TEST_MAX_LINE);
-    replace_int(line, "<SESSION_CLOSED>", SESSION_CLOSED, TEST_MAX_LINE);
+    test_replace_tokens(test, line, TEST_MAX_LINE);
 
     if (!strcmp(line, "endofsession")) {
       break;
@@ -1068,7 +1082,6 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
   return DIFF_MATCH;
 }
 
-
 /**
  * All file pointers are left open and have to be closed externally
  */
@@ -1230,10 +1243,10 @@ int parse_http_headers(FILE *fp, struct HttpResponse *resp) {
             strncpy(resp->contentType, val, 1024);
             continue;
         }
-        if (resp->eTag[0] == 0 && strncmp(buffer, "ETAG: ", 6) == 0) {
+        if (resp->eTag[0] == 0 && strncmp(buffer, "ETag: ", 6) == 0) {
             val = buffer;
             val += 6;
-            strncpy(resp->contentType, val, 1024);
+            strncpy(resp->eTag, val, 1024);
             continue;
         }
     }
@@ -1295,3 +1308,68 @@ int test_parse_http_response(FILE *fp, struct HttpResponse *resp) {
     return 0;
 }
 
+void test_dump_http_response(FILE *fp, struct HttpResponse *resp) {
+    if (!fp) {
+        fprintf(stderr, "Failed to dump response: file pointer is NULL\n");
+        return ;
+    }
+
+    fprintf(
+      fp,
+      "response {\n"
+      "  status: \"%d\"\n"
+      "  contentType: \"%s\"\n"
+      "  eTag \"%s\"\n"
+      "  line_count: \"%d\"\n\n",
+
+      resp->status,
+      resp->contentType,
+      resp->eTag,
+      resp->line_count
+    );
+
+    for (int i = 0; i < resp->line_count; i++) {
+      fprintf(fp, "  lines[%d]: '%s'\n", i, resp->lines[i]);
+    }
+    fprintf(fp, "}\n");
+}
+
+
+////
+// misc
+///
+
+/**
+ * Execute a given command via popen, captures stdout and returns exit code
+ */
+int test_run_process(char *cmd, char *out, size_t len) {
+    FILE *fp;
+    char ch;
+
+    if(!cmd || !out) {
+      fprintf(stderr, "argument error\n");
+      return -1;
+    }
+
+    fp = popen(cmd,"r");
+    if(fp == NULL){
+        fprintf(stderr,"Unable to open process for command '%s\n", cmd);
+        return -1;
+    }
+
+    size_t i = 0;
+    do {
+      if (i > len - 1) {
+        break;
+      }
+      ch = fgetc(fp);
+      if(feof(fp)) {
+         break ;
+      }
+      out[i++] = ch;
+   } while(1);
+
+   int status = pclose(fp);
+
+  return WEXITSTATUS(status);
+}

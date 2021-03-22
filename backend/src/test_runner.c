@@ -29,6 +29,10 @@
  *
  * verify_sessionfiles_count <expected_number>
  *
+ * create_checksum(<string and/or token>)
+ *
+ * verify_response_etag(<string and/or token>)
+ *
  * These commands can be used more than once, so that more complex activities can be scripted.
  *
  * Apart from running these scripts, all that it has to do to is to setup and cleanup the
@@ -54,6 +58,7 @@
 #include "errorlog.h"
 #include "survey.h"
 #include "utils.h"
+#include "sha1.h"
 
 #include "test.h"
 
@@ -298,6 +303,7 @@ int run_test(struct Test *test) {
   char line[TEST_MAX_LINE];
   char log_dir[1024];
   char tmp[1024];
+  char cmd[1024];
 
   char last_sessionid[100] = "";
 
@@ -339,6 +345,7 @@ int run_test(struct Test *test) {
 
     char surveyname[1024] = "";
     char custom_sessionid[1024] = "";
+    char custom_checksum[1024] = "";
     char glob[TEST_MAX_BUFFER];
 
     // Variables for FOR NEXT loops
@@ -857,6 +864,63 @@ int run_test(struct Test *test) {
                   test_time_delta(start_time), expected_http_status, response.status);
           goto fail;
         }
+
+      } else if (sscanf(line, "create_checksum(%s)", tmp) == 1) {
+
+        ////
+        // keyword: "create_checksum(%s)", #268
+        ////
+
+        tmp[strlen(tmp) - 1] = 0; // remove closing ')'
+
+        test_replace_str(tmp, "<SESSION_ID>", last_sessionid, 1024); // parse optional $SESSION
+        test_replace_tokens(test, tmp, 1024); // parse optional tokens
+
+        snprintf(cmd, 1024, "echo -n %s | sha1sum", tmp);
+
+        char csout[1024];
+        int cstat = test_run_process(cmd, csout, 1024);
+        if (cstat) {
+          fprintf(log, "T+%4.3fms : ERROR : generate_checksum: failed! command: '%s', return code %d, stdout: ''%s'\n", test_time_delta(start_time), cmd, cstat, csout);
+          goto fail;
+        }
+
+        strncpy(custom_checksum, strtok(csout, " "), 1024);
+        fprintf(log, "T+%4.3fms : generated custom_checksum: '%s', from string '%s' (return code %d).\n", test_time_delta(start_time), custom_checksum, tmp, cstat);
+        tmp[0] =0;
+
+      } else if (sscanf(line, "verify_response_etag(%s)", tmp) == 1) {
+
+        ////
+        // keyword: "verify_response_etag(%s)", #268
+        ////
+
+        tmp[strlen(tmp) - 1] = 0; // remove closing ')'
+
+        if (!strncmp(tmp, "<custom_checksum>", 1024)) {
+
+          if (strncmp(custom_checksum, response.eTag, HASHSTRING_LENGTH + 1)) {
+            fprintf(log, "T+%4.3fms : ERROR :  custom_checksum: verify_response_etag('%s' == '%s') failed\n", test_time_delta(start_time), custom_checksum, response.eTag);
+            goto fail;
+          }
+
+        } else  if (!strncmp(tmp, "<hashlike_etag>", 1024)) {
+
+          if (sha1_validate_string_hashlike(response.eTag)) {
+            fprintf(log, "T+%4.3fms : ERROR :  validate etag hashlike: verify_response_etag(has hash) '%s'failed\n", test_time_delta(start_time), response.eTag);
+            goto fail;
+          }
+
+        } else {
+          if (strncmp(tmp, response.eTag, HASHSTRING_LENGTH + 1)) {
+            fprintf(log, "T+%4.3fms : ERROR : stringarg: verify_response_etag('%s' == '%s')failed\n", test_time_delta(start_time), tmp, response.eTag);
+            goto fail;
+          }
+
+        }
+
+        fprintf(log, "T+%4.3fms : verify_response_etag('%s' == '%s') passed,  (response.eTag)\n", test_time_delta(start_time), tmp, response.eTag);
+        tmp[0] = 0;
 
       } else if (sscanf(line, "session_add_answer %[^\r\n]", arg) == 1) {
 
