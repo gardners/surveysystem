@@ -21,13 +21,22 @@
  *
  * nomatch <regex to search for in body of last response>
  *
+ * definesession <session id>
+ * <session headers>
+ * <session answers>
+ * endofsession
+ *
  * verifysession
  * <expected set of answers in the session file. Can be empty>
  * endofsession
  *
  * session_add_answer <serialised answer>
  *
+ * verify_session_id <existing session id>
+ *
  * verify_sessionfiles_count <expected_number>
+ *
+ * copy_session_to <file path>
  *
  * create_checksum(<string and/or token>)
  *
@@ -84,7 +93,7 @@ char *py_traceback_func =
 /**
  * parses a 'request' directive line for defined patterns and creates a curl command
  */
-int parse_request(char *line, char *out, int *expected_http_status, char *last_sessionid, char *dir, FILE *log) {
+int parse_request(char *line, char *out, int *expected_http_status, char *last_sessionid, struct HttpResponse *prev, char *custom_checksum, char *dir, FILE *log) {
     int retVal = 0;
 
     do {
@@ -178,6 +187,9 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
         }
 
         if (strlen(curl_args)) {
+          test_replace_str(curl_args, "<session_id>", last_sessionid, TEST_MAX_BUFFER);
+          test_replace_str(curl_args, "<custom_checksum>", custom_checksum, TEST_MAX_BUFFER);
+          test_replace_str(curl_args, "<response_etag>", prev->eTag, TEST_MAX_BUFFER);
           strncpy(tmp, curl_args, TEST_MAX_BUFFER);
           snprintf(curl_args, TEST_MAX_BUFFER, " %s", tmp);
         }
@@ -788,9 +800,6 @@ int run_test(struct Test *test) {
         // keyword: "request"
         ////
 
-        // clear previous response
-        memset(&response, 0, sizeof(response));
-
         // Exeucte curl call. If it is a newsession command, then remember the session ID
         // We also log the returned data from the request, so that we can look at that
         // as well, if required.
@@ -813,11 +822,16 @@ int run_test(struct Test *test) {
           goto fatal;
         }
 
-        if (parse_request(line, cmd, &expected_http_status, last_sessionid, test->dir, log)) {
+        if (parse_request(line, cmd, &expected_http_status, last_sessionid, &response, custom_checksum, test->dir, log)) {
           fprintf(log, "T+%4.3fms : FATAL: Could not parse args in declaration \"%s\"'", test_time_delta(start_time), line);
           goto fatal;
         }
         fprintf(log, "T+%4.3fms : HTTP API request command: '%s'\n", test_time_delta(start_time), cmd);
+
+        /*
+         * clear previous response !
+         */
+        memset(&response, 0, sizeof(response));
 
         int shell_result = system(cmd);
         if (shell_result) {
@@ -865,21 +879,20 @@ int run_test(struct Test *test) {
           goto fail;
         }
 
-      } else if (sscanf(line, "create_checksum(%s)", tmp) == 1) {
+      } else if (test_parse_fn_notation(line, "create_checksum", tmp, 1024) == 0) {
 
         ////
         // keyword: "create_checksum(%s)", #268
         ////
 
-        tmp[strlen(tmp) - 1] = 0; // remove closing ')'
-
-        test_replace_str(tmp, "<SESSION_ID>", last_sessionid, 1024); // parse optional $SESSION
+        test_replace_str(tmp, "<session_id>", last_sessionid, 1024); // parse optional $SESSION
         test_replace_tokens(test, tmp, 1024); // parse optional tokens
 
-        snprintf(cmd, 1024, "echo -n %s | sha1sum", tmp);
+        snprintf(cmd, 1024, "echo -n '%s' | sha1sum", tmp);
 
         char csout[1024];
         int cstat = test_run_process(cmd, csout, 1024);
+
         if (cstat) {
           fprintf(log, "T+%4.3fms : ERROR : generate_checksum: failed! command: '%s', return code %d, stdout: ''%s'\n", test_time_delta(start_time), cmd, cstat, csout);
           goto fail;
@@ -889,13 +902,11 @@ int run_test(struct Test *test) {
         fprintf(log, "T+%4.3fms : generated custom_checksum: '%s', from string '%s' (return code %d).\n", test_time_delta(start_time), custom_checksum, tmp, cstat);
         tmp[0] =0;
 
-      } else if (sscanf(line, "verify_response_etag(%s)", tmp) == 1) {
+      } else if (test_parse_fn_notation(line, "verify_response_etag", tmp, 1024) == 0) {
 
         ////
         // keyword: "verify_response_etag(%s)", #268
         ////
-
-        tmp[strlen(tmp) - 1] = 0; // remove closing ')'
 
         if (!strncmp(tmp, "<custom_checksum>", 1024)) {
 

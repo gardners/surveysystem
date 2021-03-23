@@ -33,7 +33,7 @@ verify_response_etag(<hashlike_etag>)
 extract_sessionid
 
 #! - test hash was generated of <session_id><state>
-create_checksum(<SESSION_ID><SESSION_NEW>)
+create_checksum(<session_id><SESSION_NEW>)
 verify_response_etag(<custom_checksum>)
 
 #! -------
@@ -45,7 +45,7 @@ request 200 /addanswer?sessionid=$SESSION&answer=question1:Answer1:0:0:0:0:0:0:0
 verify_response_etag(<hashlike_etag>)
 
 #! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
-create_checksum(<SESSION_ID><SESSION_OPEN>question1:TEXT:Answer1:0:0:0:0:0:0:0::0)
+create_checksum(<session_id><SESSION_OPEN>question1:TEXT:Answer1:0:0:0:0:0:0:0::0)
 verify_response_etag(<custom_checksum>)
 
 #! -------
@@ -57,7 +57,7 @@ request 200 /updateanswer?sessionid=$SESSION&answer=question2:Answer2:0:0:0:0:0:
 verify_response_etag(<hashlike_etag>)
 
 #! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
-create_checksum(<SESSION_ID><SESSION_OPEN>question2:TEXT:Answer2:0:0:0:0:0:0:0::0)
+create_checksum(<session_id><SESSION_OPEN>question2:TEXT:Answer2:0:0:0:0:0:0:0::0)
 verify_response_etag(<custom_checksum>)
 
 #! -------
@@ -69,7 +69,7 @@ request 200 /nextquestion?sessionid=$SESSION
 verify_response_etag(<hashlike_etag>)
 
 #! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
-create_checksum(<SESSION_ID><SESSION_OPEN>question2:TEXT:Answer2:0:0:0:0:0:0:0::0)
+create_checksum(<session_id><SESSION_OPEN>question2:TEXT:Answer2:0:0:0:0:0:0:0::0)
 verify_response_etag(<custom_checksum>)
 
 #! -------
@@ -81,7 +81,7 @@ request 200 /delanswer?sessionid=$SESSION&questionid=question2
 verify_response_etag(<hashlike_etag>)
 
 #! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
-create_checksum(<SESSION_ID><SESSION_OPEN>question1:TEXT:Answer1:0:0:0:0:0:0:0::0)
+create_checksum(<session_id><SESSION_OPEN>question1:TEXT:Answer1:0:0:0:0:0:0:0::0)
 verify_response_etag(<custom_checksum>)
 
 #! -------
@@ -93,7 +93,35 @@ request 200 /delanswerandfollowing?sessionid=$SESSION&questionid=question1
 verify_response_etag(<hashlike_etag>)
 
 #! - test hash was generated of <session_id><state> (all answers deleted!)
-create_checksum(<SESSION_ID><SESSION_OPEN>)
+create_checksum(<session_id><SESSION_OPEN>)
+verify_response_etag(<custom_checksum>)
+
+#! -------
+#! ------ /delprevanswer
+#! -------
+
+# restore
+request 200 /updateanswer?sessionid=$SESSION&answer=question1:Answer1:0:0:0:0:0:0:0:
+
+#! ------ 200: hash: YES, required:YES -------
+# create checksum from last answer
+create_checksum(<session_id><SESSION_OPEN>question1:TEXT:Answer1:0:0:0:0:0:0:0::0)
+
+#! - INCORRECT checksum should fail
+request 412 /delprevanswer?sessionid=$SESSION curlargs(-H "If-Match: 84983e441c3bd26ebaae4aa1f95129e5e54670f1")
+verify_response_etag()
+
+#! - CORRECT checksum should pass
+request 200 /delprevanswer?sessionid=$SESSION curlargs(-H "If-Match: <custom_checksum>")
+verify_response_etag(<hashlike_etag>)
+
+#! - test hash was generated of <session_id><state> (all answers deleted!)
+create_checksum(<session_id><SESSION_OPEN>)
+verify_response_etag(<custom_checksum>)
+
+#! - NO LAST ANSWER should pass
+create_checksum(<session_id><SESSION_OPEN>)
+request 200 /delprevanswer?sessionid=$SESSION curlargs(-H "If-Match: <custom_checksum>")
 verify_response_etag(<custom_checksum>)
 
 #! -------
@@ -134,5 +162,5 @@ request 200 /analyse?sessionid=$SESSION&questionid=question1
 verify_response_etag(<hashlike_etag>)
 
 #! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
-create_checksum(<SESSION_ID><SESSION_CLOSED>question3:TEXT:Answer3:0:0:0:0:0:0:0::0)
+create_checksum(<session_id><SESSION_CLOSED>question3:TEXT:Answer3:0:0:0:0:0:0:0::0)
 verify_response_etag(<custom_checksum>)

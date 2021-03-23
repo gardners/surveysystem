@@ -179,3 +179,30 @@ question2:TEXT:Answer 2:0:0:0:0:0:0:0::1:<UTIME>
 META_3:META:Meta 3:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
+#!------- restoring answers for next step
+request proxy 200 /addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0: curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "Answer 2", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+request proxy 200 /addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0: curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": []}
+
+#!------- trying to delprevanswer survey questions should succeed
+request proxy 200 /delprevanswer?sessionid=$SESSION curlargs(--user test:1234 -H "If-Match: <response_etag>" -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "Answer 2", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+request proxy 200 /delprevanswer?sessionid=$SESSION curlargs(--user test:1234 -H "If-Match: <response_etag>" -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "Answer 1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+verify_session
+foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
+@user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
+@group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_TRUSTED>:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
+META_1:META:Meta 1:0:0:0:0:0:0:0::0:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::1:<UTIME>
+META_2:META:Meta 2:0:0:0:0:0:0:0::0:<UTIME>
+question2:TEXT:Answer 2:0:0:0:0:0:0:0::1:<UTIME>
+META_3:META:Meta 3:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+

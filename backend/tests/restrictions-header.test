@@ -86,3 +86,20 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 @state:META::<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
+
+#!------- !!! PASS delprevanswer ignores header questions
+# create a valid checksum
+create_checksum(<session_id><SESSION_OPEN>question1:TEXT:Answer 1:0:0:0:0:0:0:0::0)
+request proxy 200 /delprevanswer?sessionid=$SESSION curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <custom_checksum>")
+request proxy 200 /delprevanswer?sessionid=$SESSION curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>")
+request proxy 200 /delprevanswer?sessionid=$SESSION curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>")
+request proxy 200 /delprevanswer?sessionid=$SESSION curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>")
+
+verify_session
+foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
+@user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
+@group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_TRUSTED>:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::1:<UTIME>
+endofsession

@@ -81,10 +81,51 @@ void test_replace_int(char *str, char *pattern, int replacement, size_t sz) {
   test_replace_str(str, pattern, tmp, sz);
 }
 
+/**
+ * parses value out of a function-like directive line, example "myfunctionname(my value)\n"
+ */
+int test_parse_fn_notation(char *line, char *name, char *out, size_t len) {
+
+    if (!line || !name || !out) {
+        return -1;
+    }
+
+    if (strlen(name) >= strlen(line)) {
+        return -1;
+    }
+
+    if(strncmp(name, line, strlen(name))) {
+        return -1;
+    }
+
+    out[0] = 0;
+    size_t n = strlen(name);
+    if(line[n] != '(') {
+        return -1;
+    }
+    n++;
+
+    size_t o = 0;
+    for (int i = n; i < strlen(line); i++) {
+        if (o >= len) {
+            out[0] = 0;
+            return -1;
+        }
+        if (line[i] == ')') {
+            out[o] = 0;
+            return 0;
+        }
+        out[o] = line[i];
+        o++;
+    }
+
+    out[0] = 0;
+    return -1;
+}
+
 ////
 // logs
 ////
-
 
 int test_dump_logs(char *dir, FILE *log) {
 

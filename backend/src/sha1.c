@@ -453,8 +453,13 @@ int sha1_validate_string_hashlike(char *str) {
     while (i < HASHSTRING_LENGTH) {
       if (!isdigit(str[i]) && !isalpha(str[i])) {
         LOG_ERROR("sha1 hash contains invalid characters");
+        break;
       }
       i++;
+    }
+
+    if (retVal) {
+      break;
     }
 
     if (i != HASHSTRING_LENGTH) {

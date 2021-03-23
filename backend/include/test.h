@@ -46,6 +46,7 @@ struct HttpResponse {
 
 void test_replace_str(char *str, char *pattern, char *replacement, size_t sz);
 void test_replace_int(char *str, char *pattern, int replacement, size_t sz);
+int test_parse_fn_notation(char *line, char *name, char *out, size_t len);
 
 ////
 // logs

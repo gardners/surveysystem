@@ -125,3 +125,21 @@ question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
+#! ------
+#! - SESSION_CLOSED: deleting previous answer fails (400)
+#! ------
+
+# create a valid checksum
+create_checksum(<session_id><SESSION_CLOSED>question2:TEXT:Answer 2:0:0:0:0:0:0:0::0)
+request 400 /delprevanswer?sessionid=$SESSION curlargs(-H "If-Match: <response_etag>")
+
+verify_session
+sessionlifetime/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_CLOSED>:0:0:<UTIME>:<UTIME>:0:0::0:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
