@@ -879,21 +879,20 @@ int run_test(struct Test *test) {
           goto fail;
         }
 
-      } else if (sscanf(line, "create_checksum(%s)", tmp) == 1) {
+      } else if (test_parse_fn_notation(line, "create_checksum", tmp, 1024) == 0) {
 
         ////
         // keyword: "create_checksum(%s)", #268
         ////
 
-        tmp[strlen(tmp) - 1] = 0; // remove closing ')'
-
         test_replace_str(tmp, "<session_id>", last_sessionid, 1024); // parse optional $SESSION
         test_replace_tokens(test, tmp, 1024); // parse optional tokens
 
-        snprintf(cmd, 1024, "echo -n %s | sha1sum", tmp);
+        snprintf(cmd, 1024, "echo -n '%s' | sha1sum", tmp);
 
         char csout[1024];
         int cstat = test_run_process(cmd, csout, 1024);
+
         if (cstat) {
           fprintf(log, "T+%4.3fms : ERROR : generate_checksum: failed! command: '%s', return code %d, stdout: ''%s'\n", test_time_delta(start_time), cmd, cstat, csout);
           goto fail;
@@ -903,13 +902,11 @@ int run_test(struct Test *test) {
         fprintf(log, "T+%4.3fms : generated custom_checksum: '%s', from string '%s' (return code %d).\n", test_time_delta(start_time), custom_checksum, tmp, cstat);
         tmp[0] =0;
 
-      } else if (sscanf(line, "verify_response_etag(%s)", tmp) == 1) {
+      } else if (test_parse_fn_notation(line, "verify_response_etag", tmp, 1024) == 0) {
 
         ////
         // keyword: "verify_response_etag(%s)", #268
         ////
-
-        tmp[strlen(tmp) - 1] = 0; // remove closing ')'
 
         if (!strncmp(tmp, "<custom_checksum>", 1024)) {
 
