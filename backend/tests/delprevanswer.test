@@ -13,6 +13,7 @@ endofsurvey
 #! -------
 #! ------ /delprevanswer: AUTO (previous checksum) decrement a session with 3 answers
 #! -------
+#!
 
 definesession bbbbbbbb-0000-0000-0000-bbbbbbbbbbbb
 foo/current
@@ -70,10 +71,10 @@ question1:TEXT:Answer1:0:0:0:0:0:0:0::1:<UTIME>
 question2:TEXT:Answer2:0:0:0:0:0:0:0::1:<UTIME>
 endofsession
 
-
 #! -------
 #! ------ /delprevanswer: FUZZY (construct checksum) decrement a session with 3 answers
 #! -------
+#!
 
 definesession aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 foo/current
