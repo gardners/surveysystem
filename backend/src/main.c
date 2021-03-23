@@ -7,6 +7,7 @@
 #include "errorlog.h"
 #include "serialisers.h"
 #include "survey.h"
+#include "sha1.h"
 
 void usage(void) {
   fprintf(
@@ -15,6 +16,7 @@ void usage(void) {
       "       surveycli addanswer <sessionid> <serialised answer> -- add an answer to an existing session\n"
       "       surveycli nextquestion <sessionid> -- get the next question that  be asked\n"
       "       surveycli delanswer <sessionid> <question id> -- delete an answer from an existing session\n"
+      "       surveycli delprevanswer <sessionid> <question id> -- delete an answer from an existing session\n"
       "       surveycli delsession <sessionid> -- delete an existing session\n"
       "       surveycli analyse <sessionid> -- get the analysis of a finished session\n"
       "       surveycli progress <sessionid> -- get the progress count of an existing session\n"
@@ -22,49 +24,73 @@ void usage(void) {
 };
 
 void init(int argc, char **argv) {
-   if (!getenv("SURVEY_HOME") ) {
-      setenv("SURVEY_HOME", ".", 1);
-      LOG_INFO("env 'SURVEY_HOME' not found set to '.'");
-    }
 
-    if (!getenv("SURVEY_PYTHONDIR") ) {
-      setenv("SURVEY_PYTHONDIR", "./python", 1);
-      LOG_INFO("env 'SURVEY_PYTHONDIR' not found set to './python'");
-    }
+  char *env;
+  char test[1024];
+  int log_tested = 0;
 
-    char test[1024];
-    char *env;
+  env = getenv("SURVEY_HOME");
+  if (!env) {
+    setenv("SURVEY_HOME", ".", 1);
+    LOG_INFO("env 'SURVEY_HOME' not found set to '.'");
+  }
 
+  env = getenv("SURVEY_PYTHONDIR") ;
+  if (!env) {
+    setenv("SURVEY_PYTHONDIR", "./python", 1);
+    LOG_INFO("env 'SURVEY_PYTHONDIR' not found set to './python'");
+  }
 
-    // test log dir
-    env = getenv("SURVEY_HOME");
-    snprintf(test, 1024 ,"%s/logs", (env) ? env: "");
-    if (access(test, W_OK)) {
-      fprintf(stderr, "Cannot access log dir '%s' (W_OK). Does it exist?\n", test);
+  env = getenv("SS_LOG_FILE");
+  if (env) {
+    LOG_INFOV("env 'SS_LOG_FILE' found, custom log path is '%s'", env);
+
+    // test custom log
+    FILE *fp = fopen(env, "a");
+    if (!fp) {
+      fprintf(stderr, "Cannot access custom log  '%s' for append. \n", env);
       exit(-1);
     }
+    fclose(fp);
+    log_tested = 1;
+  }
 
-    // test sessions dir
-    snprintf(test, 1024 ,"%s/sessions", (env) ? env: "");
-    if (access(test, W_OK)) {
-      fprintf(stderr, "Cannot access session dir '%s' (W_OK). Does it exist?\n", test);
-      exit(-1);
-    }
+  env = getenv("SURVEY_HOME");
 
-    // test surveys dir
-    snprintf(test, 1024 ,"%s/surveys", (env) ? env: "");
-    if (access(test, W_OK)) {
-      fprintf(stderr, "Cannot access survey dir '%s' (W_OK). Does it exist?\n", test);
-      exit(-1);
-    }
+  // test sessions dir
+  snprintf(test, 1024 ,"%s/sessions", (env) ? env: "");
+  if (access(test, W_OK)) {
+    fprintf(stderr, "Cannot access session dir '%s' (W_OK). Does it exist?\n", test);
+    exit(-1);
+  }
 
-    // test python dir
-    env = getenv("SURVEY_PYTHONDIR");
-    snprintf(test, 1024 ,"%s", (env) ? env: "");
-    if (access(test, R_OK)) {
-      fprintf(stderr, "Cannot access python dir '%s' (R_OK). Does it exist?\n", test);
-      exit(-1);
-    }
+  // test surveys dir
+  snprintf(test, 1024 ,"%s/surveys", (env) ? env: "");
+  if (access(test, W_OK)) {
+    fprintf(stderr, "Cannot access survey dir '%s' (W_OK). Does it exist?\n", test);
+    exit(-1);
+  }
+
+  // test python dir
+  env = getenv("SURVEY_PYTHONDIR");
+  snprintf(test, 1024 ,"%s", (env) ? env: "");
+  if (access(test, R_OK)) {
+    fprintf(stderr, "Cannot access python dir '%s' (R_OK). Does it exist?\n", test);
+    exit(-1);
+  }
+
+ // test log dir
+  if (log_tested) {
+    return;
+  }
+
+  env = getenv("SURVEY_HOME");
+  snprintf(test, 1024 ,"%s/logs", (env) ? env: "");
+  if (access(test, W_OK)) {
+    fprintf(stderr, "Cannot access log dir '%s' (W_OK). Does it exist?\n", test);
+    exit(-1);
+  }
+
 }
 
 void print_nextquestion(struct nextquestions *nq) {
@@ -105,10 +131,13 @@ int do_newsession(char *survey_id) {
       LOG_ERROR("Create session id failed.");
     }
 
-    if (create_session(survey_id, session_id, &meta)) {
+    // #268 create_session() now returns returns a session struct
+    struct session *ses = create_session(survey_id, session_id, &meta);
+    if (!ses) {
       fprintf(stderr, "failed to create session.\n");
       LOG_ERROR("Create session failed.");
     }
+    free_session(ses);
 
     printf("%s\n", session_id);
     LOG_INFO("Leaving newsession handler.");
@@ -141,7 +170,7 @@ int do_progress(char *session_id) {
     }
 
     printf("%d/%d\n", ses->given_answer_count + 1, ses->question_count);
-    LOG_INFO("Leaving newsession handler.");
+    LOG_INFO("Leaving progress handler.");
   } while(0);
 
   return retVal;
@@ -356,7 +385,7 @@ int do_addanswervalue(char *session_id, char *uid, char *value) {
 
     free_session(ses);
     free_next_questions(nq);
-    LOG_INFO("Leaving addanswer handler.");
+    LOG_INFO("Leaving addanswervalue handler.");
 
   } while (0);
 
@@ -421,6 +450,90 @@ int do_delanswer(char *session_id, char *question_id) {
   return retVal;
 }
 
+int do_delprevanswer(char *session_id, char *checksum) {
+  int retVal = 0;
+
+  struct session *ses = NULL;
+  struct nextquestions *nq = NULL;
+
+  do {
+    LOG_INFO("Entering delprevanswer handler.");
+
+
+    // (weak) valiation if header->val is hash like string
+    if (sha1_validate_string_hashlike(checksum)) {
+      fprintf(stderr, "arg 'checksum' is invalid!");
+      LOG_ERROR("carg 'checksum' is invalid!");
+    }
+
+    ses = load_session(session_id);
+    if (!ses) {
+      fprintf(stderr, "Could not load specified session. Does it exist?");
+      LOG_ERROR("Could not load session");
+    }
+
+    // get last answer (not a system answer and not deleted)
+    // define validation scope
+    // if no answer to delete was found demote validation scope to just nextquestions
+    struct answer *last = session_get_last_given_answer(ses);
+    int action = (last) ? ACTION_SESSION_DELETEANSWER : ACTION_SESSION_NEXTQUESTIONS;
+
+    char reason[1024];
+    if (validate_session_action(action, ses, reason, 1024)) {
+      free_session(ses);
+      ses = NULL;
+      fprintf(stderr, "%s\n", reason);
+      LOG_ERROR("Session action validation failed");
+    }
+
+    if (strncmp(checksum, ses->consistency_hash, HASHSTRING_LENGTH )) {
+      free_session(ses);
+      fprintf(stderr, "checksum does not match session consistency hash!");
+      LOG_ERROR("checksum does not match session consistency hash!");
+    }
+    LOG_INFOV("checksum match passed for session '%s'", ses->session_id);
+
+    if (last) {
+      if (session_delete_answer(ses, last, 0) < 0) {
+        free_session(ses);
+        ses = NULL;
+        fprintf(stderr, "delete last answer failed.\n");
+        LOG_ERROR("session_delete_answer() failed");
+      }
+      LOG_INFOV("deleted question '%s' in session '%s'", last->uid, ses->session_id);
+    } else {
+      LOG_WARNV("no last given answer in session '%s'", ses->session_id);
+    }
+
+    // fetch nextquestions, even if no last answer was found
+    nq = get_next_questions(ses);
+    if (!nq) {
+      free_session(ses);
+      ses = NULL;
+      fprintf(stderr, "Could not load next questions.\n");
+      LOG_ERROR("get_next_questions() failed");
+    }
+
+    if (save_session(ses)) {
+      free_session(ses);
+      ses = NULL;
+      free_next_questions(nq);
+      nq = NULL;
+      fprintf(stderr, "Unable to update session.\n");
+      LOG_ERROR("save_session() failed");
+    }
+
+    print_nextquestion(nq);
+
+    free_session(ses);
+    free_next_questions(nq);
+    LOG_INFO("Leaving delprevanswer handler.");
+
+  } while (0);
+
+  return retVal;
+}
+
 int do_getchecksum(char *session_id) {
   int retVal = 0;
 
@@ -443,10 +556,16 @@ int do_getchecksum(char *session_id) {
       LOG_ERROR("Session action validation failed");
     }
 
+    if (!ses->consistency_hash || !strlen(ses->consistency_hash)) {
+      free_session(ses);
+      fprintf(stderr, "session does not contain a consistency hash! (legacy session?)");
+      LOG_ERROR("consistency_hash is null or empty(legacy session?)");
+    }
+
     printf("%s\n", ses->consistency_hash);
 
     free_session(ses);
-    LOG_INFO("Leaving delanswer handler.");
+    LOG_INFO("Leaving getchecksum handler.");
 
   } while (0);
 
@@ -578,6 +697,7 @@ int main(int argc, char **argv) {
       }
    } else if (!strcmp(argv[1], "progress")) {
 
+      // #422, add command for session progress count
       if (argc != 3) {
         usage();
         retVal = -1;
@@ -630,6 +750,7 @@ int main(int argc, char **argv) {
 
     } else if (!strcmp(argv[1], "addanswervalue")) {
 
+      // #422 add command for simplified answer value submission
       if (argc != 5) {
         usage();
         retVal = -1;
@@ -654,8 +775,23 @@ int main(int argc, char **argv) {
         LOG_ERROR("Failed to add answer");
       }
 
+    } else if (!strcmp(argv[1], "delprevanswer")) {
+
+      // #426, add cli support for consistency hash
+      if (argc != 4) {
+        usage();
+        retVal = -1;
+        break;
+      }
+
+      if (do_delprevanswer(argv[2], argv[3])) {
+        fprintf(stderr, "Failed to delete last answer.\n");
+        LOG_ERROR("Failed to delete last answer");
+      }
+
     } else if (!strcmp(argv[1], "getchecksum")) {
 
+      // #426, add cli support for consistency hash
       if (argc != 3) {
         usage();
         retVal = -1;
