@@ -76,8 +76,8 @@ server.port                 = 80
 setenv.add-response-header = (
     "Access-Control-Allow-Origin" => "*",
     "Access-Control-Allow-Methods" => "HEAD, GET, OPTIONS",
-    "Access-Control-Expose-Headers" => "Content-Range, Date, Etag, Cache-Control, Last-Modified",
-    "Access-Control-Allow-Headers" => "Content-Type, Origin, Accept, Range, Cache-Control",
+    "Access-Control-Expose-Headers" => "WWW-Authenticate, Content-Range, Date, Etag, Cache-Control, Last-Modified, ETag",
+    "Access-Control-Allow-Headers" => "Authorization, Content-Type, Origin, Accept, Range, Cache-Control, If-Match",
     "Access-Control-Max-Age" => "600",
     "Timing-Allow-Origin" => "*"
 )
