@@ -638,17 +638,23 @@ int run_test(struct Test *test) {
         // keyword: "match_string"
         ////
 
-        // Check that the response contains the supplied pattern
-        int matches = 0;
-        for (int i = 0; i < response.line_count; i++) {
-          if (strstr(response.lines[i], glob)) {
-            matches++;
-          }
-        }
+        if(!strcmp("<empty>", glob)) {
+            if (response.line_count) {
+               fprintf(log, "T+%4.3fms : FAIL : Not empty (%d lines found).\n", test_time_delta(start_time), response.line_count);
+            }
+        } else {
+            // Check that the response contains the supplied pattern
+            int matches = 0;
+            for (int i = 0; i < response.line_count; i++) {
+                if (strstr(response.lines[i], glob)) {
+                    matches++;
+                }
+            }
 
-        if (!matches) {
-          fprintf(log, "T+%4.3fms : FAIL : No match for literal string.\n", test_time_delta(start_time));
-          goto fail;
+            if (!matches) {
+                fprintf(log, "T+%4.3fms : FAIL : No match for literal string.\n", test_time_delta(start_time));
+                goto fail;
+            }
         }
 
       } else if (sscanf(line, "nomatch_string %[^\r\n]", glob) == 1) {
