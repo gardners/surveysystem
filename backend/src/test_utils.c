@@ -731,6 +731,10 @@ void test_load_test_file(int test_count, int test_index, char *test_file, struct
           test->skip = 1;
       }
 
+      if (strncmp(line, "@usecors!", 19) == 0) {
+          strncpy(test->lighty_template, "tests/config/lighttpd-cors.conf.tpl", 1024);
+      }
+
       if (strncmp(line, "@useproxy!", 10) == 0) {
           strncpy(test->lighty_template, "tests/config/lighttpd-proxy.conf.tpl", 1024);
           strncpy(test->ligthy_userfile, "tests/config/lighttpd.user", 1024);

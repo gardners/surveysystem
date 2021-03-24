@@ -1,0 +1,150 @@
+@description OPTIONS requests - verify that sessions are not being processed
+
+# PAGE_INDEX,
+# PAGE_NEWSESSION,
+# PAGE_ADDANSWER,
+# PAGE_UPDATEANSWER,
+# PAGE_NEXTQUESTION,
+# PAGE_DELANSWER,
+# PAGE_DELANSWERANDFOLLOWING,
+# PAGE_DELPREVANSWER,
+# PAGE_DELSESSION,
+# PAGE_ACCESTEST,
+# PAGE_FCGITEST,
+# PAGE_ANALYSE,
+
+# Create a dummy survey
+definesurvey foo
+Silly test survey updated
+question1:Question 1::TEXT:0::-1:-1:0:0::
+question2:Question 2::TEXT:0::-1:-1:0:0::
+question3:Question 3::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+#! ------
+#! - PASS /index
+#! ------
+
+request 200 /index OPTIONS
+match_string <empty>
+
+#! ------
+#! - PASS /newsession - no session created
+#! ------
+
+request 200 /newsession?surveyid=foo OPTIONS
+match_string <empty>
+verify_sessionfiles_count 0
+
+#! ---- preparation: simulate an existing session
+
+definesession 23996a5d-0000-0000-86e3-48fb9ca00901
+foo/current
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+verify_sessionfiles_count 1
+
+#! ------
+#! - PASS /addanswer - no answer added
+#! ------
+
+request 200 /addanswer?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&answer=question2:Answer+2:0:0:0:0:0:0:0: OPTIONS
+match_string <empty>
+
+verify_session(skip_headers)
+foo/current
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#! ------
+#! - PASS /updateanswer - no answer added
+#! ------
+
+request 200 /updateanswer?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&answer=question2:Answer+2:0:0:0:0:0:0:0: OPTIONS
+match_string <empty>
+
+verify_session(skip_headers)
+foo/current
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#! ------
+#! - PASS /nextquestion
+#! ------
+
+request 200 /nextquestion?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&answer=question2:Answer+2:0:0:0:0:0:0:0: OPTIONS
+match_string <empty>
+
+#! ------
+#! - PASS /delanswer - no answer deleted
+#! ------
+
+request 200 /delanswer?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&questionid=question1 OPTIONS
+match_string <empty>
+
+verify_session(skip_headers)
+foo/current
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#! ------
+#! - PASS /delanswerandfollowing - no answer deleted
+#! ------
+
+request 200 /delanswerandfollowing?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&questionid=question1 OPTIONS
+match_string <empty>
+
+verify_session(skip_headers)
+foo/current
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#! ------
+#! - PASS /delprevanswer - no answer deleted, no checksum required
+#! ------
+
+request 200 /delprevanswer?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901 OPTIONS
+match_string <empty>
+
+verify_session(skip_headers)
+foo/current
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#! ------
+#! - PASS /delsession - no session deleted
+#! ------
+
+request 200 /delsession?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901 OPTIONS
+match_string <empty>
+
+verify_session(skip_headers)
+foo/current
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#! ------
+#! - PASS /accesstest
+#! ------
+
+request 200 /accesstest OPTIONS
+match_string <empty>
+
+#! ------
+#! - PASS /fastcgitest
+#! ------
+
+request 200 /fastcgitest OPTIONS
+match_string <empty>
+
+#! ------
+#! - PASS /analyse
+#! ------
+
+request 200 /analyse?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901 OPTIONS
+match_string <empty>
