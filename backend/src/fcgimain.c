@@ -241,6 +241,7 @@ static const char *const pages[PAGE__MAX] = {
 };
 
 void http_open(struct kreq *req, enum khttp status, enum kmime mime, char *etag);
+static enum khttp sanitise_page_request(const struct kreq *req);
 int response_nextquestion(struct kreq *req, struct session *ses, struct nextquestions *nq);
 struct session *request_load_session(struct kreq *req);
 struct answer *request_load_answer(struct kreq *req);
@@ -304,23 +305,14 @@ int main(int argc, char **argv) {
         break;
       }
 
-      // Fail if we can't find the page, or the mime type is wrong
-      LOG_WARNV("Considering whether to throw a 404 (req.page=%d, MAX=%d; req.mime=%d, KMIME=%d)", (int)req.page, (int)PAGE__MAX, (int)KMIME_TEXT_HTML, (int)req.mime);
+      // #437 add 404 page handler and request prevalidation
+      enum khttp valid = sanitise_page_request(&req);
+      if (valid != KHTTP_200) {
 
-      if (PAGE__MAX == req.page || KMIME_TEXT_HTML != req.mime) {
-
-        LOG_WARNV("Throwing a 404 error", 1);
-        er = khttp_head(&req, kresps[KRESP_STATUS], "%s", khttps[KHTTP_404]);
-
-        if (KCGI_HUP == er) {
-          fprintf(stderr, "khttp_head: interrupt\n");
-          continue;
-        } else if (KCGI_OK != er) {
-          fprintf(stderr, "khttp_head: error: %d\n", er);
-          break;
-        }
+        http_open(&req, valid, req.mime, NULL);
 
       } else {
+
         if (KMETHOD_OPTIONS == req.method) {
             khttp_head(&req, kresps[KRESP_ALLOW], "OPTIONS HEAD GET POST");
             http_open(&req, KHTTP_200, req.mime, NULL);
@@ -330,6 +322,7 @@ int main(int argc, char **argv) {
             // Make sure no sessions are locked when done.
             release_my_session_locks();
         }
+
       }
 
       // Close off request
@@ -347,6 +340,24 @@ int main(int argc, char **argv) {
     dump_errors(stderr);
   }
   return retVal;
+}
+
+/**
+ * Prevalidates incoming request (registred path, mime type etc)
+ * #414, #437
+ */
+static enum khttp sanitise_page_request(const struct kreq *req) {
+
+    if (!req) {
+        return KHTTP_500;
+    }
+    // man khttp_parse(3): The page index found by looking up pagename in the pages array. If pagename is not found in pages, pagesz is used; if pagename is empty, defpage is used.
+    if(req->page >= PAGE__MAX) {
+        return KHTTP_404;
+    }
+
+    // TODO, add mime type checks
+    return KHTTP_200;
 }
 
 /**
