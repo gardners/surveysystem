@@ -1,0 +1,14 @@
+@description OPTIONS requests - verify that sessions are being not processed (#435)
+@usecors!
+
+# Create a dummy survey
+definesurvey postrequests
+version 1
+Silly test survey updated
+question1:Question 1::TEXT:0::-1:-1:0:0::
+question2:Question 2::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+# Request creation of a  new session
+request 200 /newsession OPTIONS "surveyid=postrequests"
+verify_sessionfiles_count 0
