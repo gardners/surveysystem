@@ -240,6 +240,7 @@ static const char *const pages[PAGE__MAX] = {
     "analyse"
 };
 
+void http_open(struct kreq *req, enum khttp status, enum kmime mime, char *etag);
 int response_nextquestion(struct kreq *req, struct session *ses, struct nextquestions *nq);
 struct session *request_load_session(struct kreq *req);
 struct answer *request_load_answer(struct kreq *req);
@@ -290,12 +291,12 @@ int main(int argc, char **argv) {
       // Parse request
       fprintf(stderr, "Calling fcgi_parse()\n");
       er = khttp_fcgi_parse(fcgi, &req);
+
       fprintf(stderr, "Returned from fcgi_parse()\n");
 
       if (KCGI_EXIT == er) {
         LOG_WARNV("khttp_fcgi_parse: terminate, becausee er == KCGI_EXIT", 1);
-        fprintf(stderr,
-                "khttp_fcgi_parse: terminate, becausee er == KCGI_EXIT");
+        fprintf(stderr, "khttp_fcgi_parse: terminate, becausee er == KCGI_EXIT");
         break;
       } else if (KCGI_OK != er) {
         LOG_WARNV("khttp_fcgi_parse: error: %d\n", er);
@@ -304,10 +305,7 @@ int main(int argc, char **argv) {
       }
 
       // Fail if we can't find the page, or the mime type is wrong
-      LOG_WARNV("Considering whether to throw a 404 (req.page=%d, MAX=%d; "
-                "req.mime=%d, KMIME=%d)",
-                (int)req.page, (int)PAGE__MAX, (int)KMIME_TEXT_HTML,
-                (int)req.mime);
+      LOG_WARNV("Considering whether to throw a 404 (req.page=%d, MAX=%d; req.mime=%d, KMIME=%d)", (int)req.page, (int)PAGE__MAX, (int)KMIME_TEXT_HTML, (int)req.mime);
 
       if (PAGE__MAX == req.page || KMIME_TEXT_HTML != req.mime) {
 
@@ -323,11 +321,15 @@ int main(int argc, char **argv) {
         }
 
       } else {
-        // Call page dispatcher
-        (*disps[req.page])(&req);
-
-        // Make sure no sessions are locked when done.
-        release_my_session_locks();
+        if (KMETHOD_OPTIONS == req.method) {
+            khttp_head(&req, kresps[KRESP_ALLOW], "OPTIONS HEAD GET POST");
+            http_open(&req, KHTTP_200, req.mime, NULL);
+        } else {
+            // Call page dispatcher
+            (*disps[req.page])(&req);
+            // Make sure no sessions are locked when done.
+            release_my_session_locks();
+        }
       }
 
       // Close off request
