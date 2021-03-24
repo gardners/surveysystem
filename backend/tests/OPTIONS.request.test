@@ -1,14 +1,28 @@
-@description OPTIONS requests - verify that sessions are being not processed (#435)
-@usecors!
+@description OPTIONS requests - verify thatsessions are being not processed
 
 # Create a dummy survey
-definesurvey postrequests
-version 1
+definesurvey foo
 Silly test survey updated
 question1:Question 1::TEXT:0::-1:-1:0:0::
 question2:Question 2::TEXT:0::-1:-1:0:0::
 endofsurvey
 
 # Request creation of a  new session
-request 200 /newsession OPTIONS "surveyid=postrequests"
+request 200 /newsession?surveyid=foo OPTIONS
 verify_sessionfiles_count 0
+
+# #! ---- simulate an existing session
+#
+# definesession bbbbbbbb-0000-0000-0000-bbbbbbbbbbbb
+# foo/current
+# @user:META::0:0:0:0:0:0:0::0:<UTIME>
+# @group:META::0:0:0:0:0:0:0::0:<UTIME>
+# @authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+# @state:META::<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
+# question1:TEXT:Answer1:0:0:0:0:0:0:0::0:<UTIME>
+# endofsession
+#
+#
+#
+# # Get the session ID that newsession should have returned
+# extract_sessionid
