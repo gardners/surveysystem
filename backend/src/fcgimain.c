@@ -433,8 +433,12 @@ void http_json_error(struct kreq *req, enum khttp status, const char *msg) {
 static void fcgi_index(struct kreq *req) {
   int retVal = 0;
   do {
+    LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
+
     // #398 add root page
     http_json_error(req, KHTTP_405, "Not implemented");
+
+    LOG_INFO("Leaving page handler");
   } while (0);
 
   (void)retVal;
@@ -449,7 +453,7 @@ static void fcgi_newsession(struct kreq *req) {
 
   do {
 
-    LOG_INFO("Entering page handler /newsession");
+    LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
     char session_id[256] = { 0 };
 
     struct kpair *survey = req->fieldmap[KEY_SURVEYID];
@@ -572,7 +576,7 @@ static void fcgi_addanswer(struct kreq *req) {
 
   do {
 
-    LOG_INFO("Entering page handler /addanswer");
+    LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
 
     ses = request_load_session(req);
     if (!ses) {
@@ -730,7 +734,7 @@ static void fcgi_updateanswer(struct kreq *req) {
 
   do {
 
-    LOG_INFO("Entering page handler /addanswer");
+    LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
 
     ses = request_load_session(req);
     if (!ses) {
@@ -831,7 +835,7 @@ static void fcgi_delanswer(struct kreq *req) {
 
   do {
 
-    LOG_INFO("Entering page handler /delanswer");
+    LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
 
     struct kpair *arg = req->fieldmap[KEY_QUESTIONID];
 
@@ -926,7 +930,7 @@ static void fcgi_delanswerandfollowing(struct kreq *req) {
 
   do {
 
-    LOG_INFO("Entering page handler /delanswerandfollowing");
+    LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
 
     struct kpair *arg = req->fieldmap[KEY_QUESTIONID];
 
@@ -1021,7 +1025,7 @@ static void fcgi_delprevanswer(struct kreq *req) {
 
   do {
 
-    LOG_INFO("Entering page handler /delprevanswer");
+    LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
 
     struct khead *header = req->reqmap[KREQU_IF_MATCH];
 
@@ -1132,7 +1136,7 @@ static void fcgi_delsession(struct kreq *req) {
 
   do {
 
-    LOG_INFO("Entering page handler /delsession");
+    LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
 
     ses = request_load_session(req);
     if (!ses) {
@@ -1191,7 +1195,7 @@ static void fcgi_nextquestion(struct kreq *req) {
 
   do {
 
-    LOG_INFO("Entering page handler /nextquestion");
+    LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
 
     ses = request_load_session(req);
     if (!ses) {
@@ -1320,7 +1324,7 @@ static void fcgi_accesstest(struct kreq *req) {
 
   do {
 
-    LOG_INFO("Entering page handler /accesstest");
+    LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
 
     char test_path[8192];
     char failmsg[16384];
@@ -1361,9 +1365,13 @@ static void fcgi_accesstest(struct kreq *req) {
 
 static void fcgi_fastcgitest(struct kreq *req) {
   do {
-    LOG_INFO("Entering page handler /fastcgitest");
+
+    LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
+
     http_json_error(req, KHTTP_200, "All okay.");
+
     LOG_INFO("Leaving page handler.");
+
   } while (0);
   return;
 }
@@ -1381,7 +1389,7 @@ static void fcgi_analyse(struct kreq *req) {
 
   do {
 
-    LOG_INFO("Entering page handler /analyse");
+    LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
 
     ses = request_load_session(req);
     if (!ses) {
