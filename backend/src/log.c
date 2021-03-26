@@ -70,7 +70,7 @@ int log_message(const char *file, const char *function, const int line, char *fo
       lf = open_log(log_name);
 
     } else {
-      lf = open_log(custom_path);
+      lf = fopen(custom_path, "a");
     }
 
     if (!lf) {
