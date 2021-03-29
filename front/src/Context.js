@@ -8,8 +8,8 @@ export const AppContext = React.createContext({
 });
 
 export const SurveyContext = React.createContext({
-    sessionID: '',
-    surveyID: '',
+    session_id: '',
+    survey_id: '',
 });
 
 const authContextModel = function() {

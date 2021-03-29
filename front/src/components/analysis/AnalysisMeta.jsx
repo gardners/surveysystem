@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import {Models,  normalizeAnalysis, analysisPropTypes } from '../../Analysis';
+import { Models,  normalizeAnalysis, analysisPropTypes } from '../../Analysis';
 
 const parseISODate = function(str) {
 
@@ -45,15 +45,15 @@ Constraints.propTypes = {
 };
 
 
-const AnalysisMeta = function({ surveyID, sessionID, analysis }) {
+const AnalysisMeta = function({ survey_id, session_id, analysis }) {
     const data = normalizeAnalysis(analysis);
     const { version, created, constraints } = data;
 
     return (
         <React.Fragment>
-            <h2>Survey: <span className="text-success">{ surveyID }</span></h2>
+            <h2>Survey: <span className="text-success">{ survey_id }</span></h2>
             <p>
-                session: <small className="text-muted">{ sessionID } </small><br />
+                session: <small className="text-muted">{ session_id } </small><br />
                 algorithm: <small className="text-muted">version: { (version) ? version : 'n/a' }, created: { parseISODate(created) }</small>
             </p>
             <Constraints constraints= { constraints } />
@@ -66,8 +66,8 @@ AnalysisMeta.defaultProps = {
 };
 
 AnalysisMeta.propTypes = {
-    surveyID: PropTypes.string.isRequired,
-    sessionID: PropTypes.string.isRequired,
+    survey_id: PropTypes.string.isRequired,
+    session_id: PropTypes.string.isRequired,
     analysis: analysisPropTypes(),
 };
 

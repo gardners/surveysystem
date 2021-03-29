@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import SurveyManager from '../../SurveyManager';
+import Session from '../../Session';
 import InnerHtml from '../InnerHtml';
 
 /**
@@ -34,7 +34,7 @@ const SurveyMessage = function({ session }) {
 };
 
 SurveyMessage.propTypes = {
-    session: PropTypes.instanceOf(SurveyManager).isRequired,
+    session: PropTypes.instanceOf(Session).isRequired,
 };
 
 export default SurveyMessage;

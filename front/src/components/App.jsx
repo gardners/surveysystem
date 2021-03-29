@@ -115,8 +115,8 @@ class App extends Component {
                                 <ProtectedRoute path="/demo/form/:component?" component={ Demo } />
                                 <ProtectedRoute path="/demo/analyse" component={ DemoAnalysis } />
                                 <ProtectedRoute path="/demo/manifest" component={ DemoManifest } />
-                                <ProtectedRoute path="/analyse/:id/:sessionID" component={ Analysis } />
-                                <ProtectedRoute path="/survey/:id/:sessionID?" component={ Survey } />
+                                <ProtectedRoute path="/analyse/:id/:session_id?" component={ Analysis } />
+                                <ProtectedRoute path="/survey/:id/:session_id?" component={ Survey } />
                                 <Route path="*" component={ Page404 } />
                             </Switch>
                         </main>

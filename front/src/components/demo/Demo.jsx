@@ -332,8 +332,8 @@ const Demo = function(props){
     return (
 // context
         <SurveyContext.Provider value={ {
-            surveyID: 'DEMO-SURVEY-ID',
-            sessionID: 'DEMO-SESSION-ID',
+            survey_id: 'DEMO-SURVEY-ID',
+            session_id: 'DEMO-SESSION-ID',
         } }>
             <section>
 
@@ -443,7 +443,7 @@ const Demo = function(props){
                         description="Do you consent to give us access to your sleep data stored on your Fitbit device? <br />You will need your Fitbit account login."
                         choices={ ['Denied', 'Agreed'] }
                         unit="fitbit-module"
-                        sessionID="demosession"
+                        session_id="demosession"
                     />
                 </div>
             </section>

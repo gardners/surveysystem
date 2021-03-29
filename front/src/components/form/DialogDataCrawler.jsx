@@ -15,11 +15,11 @@ const { REACT_APP_MODULES_ENDPOINT } = process.env;
  * @see https://github.com/RoboSparrow/fitbit-queue/blob/master/server.js
  */
 
-const buildModuleLink = function(question, sessionID) {
+const buildModuleLink = function(question, session_id) {
     const { id, unit, choices } = question;
     let { href } = window.location;
 
-    if(!sessionID) {
+    if(!session_id) {
         console.error('no session id');
         return null; // wait until props update
     }
@@ -31,7 +31,7 @@ const buildModuleLink = function(question, sessionID) {
 
     href = (href.indexOf('?') === -1) ? `${href}?progress=finished` : `${href}&progress=finished`;
     const state = JSON.stringify({
-        session_id: sessionID,
+        session_id,
         href,
     });
 
@@ -46,9 +46,9 @@ const buildModuleLink = function(question, sessionID) {
     }
 };
 
-const Module = function({ question, sessionID, progress, accept, reject }) {
+const Module = function({ question, session_id, progress, accept, reject }) {
 
-    const moduleLink = buildModuleLink(question, sessionID);
+    const moduleLink = buildModuleLink(question, session_id);
 
     return (
             <React.Fragment>
@@ -91,13 +91,13 @@ const Module = function({ question, sessionID, progress, accept, reject }) {
 };
 
 Module.defaultProps = {
-    sessionID: '',
+    session_id: '',
     progress: '',
 };
 
 Module.propTypes = {
     question: QuestionModel.propTypes().isRequired,
-    sessionID: PropTypes.string,
+    session_id: PropTypes.string,
     progress: PropTypes.string,
     reject: PropTypes.func.isRequired,
 };
@@ -117,7 +117,7 @@ class DialogDataCrawler extends Component {
         const params = new URLSearchParams(window.location.search);
         const progress = params.get('progress'); // bar
 
-        // TODO: listening to sessionID, so move to componentdidupdate?
+        // TODO: listening to session_id, so move to componentdidupdate?
         const { question } = this.props;
 
         // supply either the neutral value (denied) or the error string
@@ -148,7 +148,7 @@ class DialogDataCrawler extends Component {
         return (
             <SurveyContext.Consumer>
             {
-                ({ sessionID }) => (
+                ({ session_id }) => (
                     <Field.Row className={ className } question={ question } grouped={ grouped } required={ required }>
                         <Field.Title grouped={ grouped } question={ question } required={ required } />
                         { (['finished', 'rejected'].indexOf(progress) === -1) && <Field.Description question={ question } grouped={ grouped } required={ required } /> }
@@ -161,7 +161,7 @@ class DialogDataCrawler extends Component {
                         />
                         <Module
                             question={ question }
-                            sessionID={ sessionID }
+                            session_id={ session_id }
                             progress={ progress }
                             reject={ this.reject.bind(this) }
                         />

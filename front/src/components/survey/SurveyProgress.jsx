@@ -1,15 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import SurveyManager, { validateProgress } from '../../SurveyManager';
+import Session from '../../Session';
 import { addClassNames } from '../../Utils';
 
 const SurveyProgress = function({ session, className }) {
     const { progress } = session;
 
-    if (!validateProgress(progress)) {
+    if (progress.length !== 2 || progress[0] < 0) {
         console.warn('invalid progress:', progress.toString());
-        return(null);
+        return (null);
     }
 
     const percent = Math.round((progress[0] / progress[1]) * 100);
@@ -30,7 +30,7 @@ SurveyProgress.defaultProps = {
 };
 
 SurveyProgress.propTypes = {
-    session: PropTypes.instanceOf(SurveyManager).isRequired,
+    session: PropTypes.instanceOf(Session).isRequired,
     className: PropTypes.string,
 };
 

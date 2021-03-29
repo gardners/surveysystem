@@ -1,20 +1,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import LocalStorage from '../../storage/LocalStorage';
-
-// config
-const { REACT_APP_SURVEY_CACHEKEY } = process.env;
+import Session, { delete_cached_session } from '../../Session';
 
 const restartSurvey = function() {
     // no e.preventDefault(); we DO want to refresh here
-    LocalStorage.delete(REACT_APP_SURVEY_CACHEKEY);
+    delete_cached_session();
     window.location.reload();
 };
 
-const RestartSurveyButton = function({ className, children }) {
+const RestartSurveyButton = function({ session, className, children }) {
 
-    if(!LocalStorage.get(REACT_APP_SURVEY_CACHEKEY)) {
+    if(!session) {
         return (null);
     }
 
@@ -23,7 +20,12 @@ const RestartSurveyButton = function({ className, children }) {
     );
 };
 
+RestartSurveyButton.defaultProps = {
+    session: null,
+};
+
 RestartSurveyButton.propTypes = {
+    session: PropTypes.instanceOf(Session),
     className: PropTypes.string,
 };
 
