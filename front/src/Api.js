@@ -66,10 +66,33 @@ const responseError = function (response) {
 };
 
 /**
+ * set up AbortController
+ * #441
+ */
+let controller = null;
+let signal = null;
+if (typeof window.AbortController !== 'undefined') {
+    controller = new AbortController();
+    signal = controller.signal;
+}
+
+/**
  * Backend requests
  * @type {object}
  */
 const Api = {
+
+    /**
+     * cancel running xhr requests using fetch api's AbortController
+     * #441
+     *
+     * @returns {void}
+     */
+    cancelRequests: function() {
+        if (controller) {
+            controller.abort();
+        }
+    },
 
     /**
      * Request a new session
@@ -81,6 +104,7 @@ const Api = {
         });
 
         const opts =  {
+            signal,
             headers: requestHeaders(),
         };
 
@@ -106,6 +130,7 @@ const Api = {
         });
 
         const opts =  {
+            signal,
             headers: requestHeaders(),
         };
 
@@ -132,6 +157,7 @@ const Api = {
         });
 
         const opts =  {
+            signal,
             headers: requestHeaders(),
         };
 
@@ -158,6 +184,7 @@ const Api = {
         });
 
         const opts =  {
+            signal,
             headers: requestHeaders(),
         };
 
@@ -183,6 +210,7 @@ const Api = {
         });
 
         const opts =  {
+            signal,
             headers: requestHeaders(),
         };
 
@@ -209,6 +237,7 @@ const Api = {
         });
 
         const opts =  {
+            signal,
             headers: requestHeaders(),
         };
 
@@ -235,6 +264,7 @@ const Api = {
         });
 
         const opts =  {
+            signal,
             headers: requestHeaders(),
         };
 

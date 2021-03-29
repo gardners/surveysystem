@@ -58,6 +58,14 @@ class Survey extends Component {
     }
 
     /**
+     * Teardown component, cancel running async processes
+     * #441
+     */
+    componentWillUnmount() {
+        Api.cancelRequests();
+    }
+
+    /**
      * Sends a message or an Error to this.state.alerts
      * This method ist tpically used by the request api in case of response or network errors
      * @param {Error} error
