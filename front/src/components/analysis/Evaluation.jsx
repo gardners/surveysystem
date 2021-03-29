@@ -64,14 +64,15 @@ const Evaluation = function({ index, evaluation }) {
                             </div>
                         </div>
                 }
+
                 {
-                    insights.length &&
+                    (insights.length) ?
                         <div className="list-group-item">
                             <div className="row">
                             <div className="col-sm-3">Insights</div>
                                 <div className="col-sm-9"><Insights insights = { insights } /></div>
                             </div>
-                        </div>
+                        </div> : ''
                 }
                 <div className="list-group-item bg-light">
                     <Toggle title="More..." className="mt-2 mb-2" titleTag="button" titleClassName="btn btn btn-primary d-print-none">
