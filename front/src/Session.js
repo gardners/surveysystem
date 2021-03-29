@@ -136,10 +136,7 @@ class Session {
      * @returns {boolean}
      */
     isFirst() {
-        if (this.session_state <= SESSION_OPEN) {
-            return false;
-        }
-        if (this.session_state >= SESSION_FINISHED) {
+        if (this.session_state < SESSION_OPEN || this.session_state >= SESSION_FINISHED) {
             return false;
         }
         return this.progress[0] === 0;
