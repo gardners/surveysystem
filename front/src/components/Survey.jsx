@@ -317,7 +317,7 @@ class Survey extends Component {
         const hasErrors = errorCount > 0;
         const hasAnswers = answersCount > 0 ;
         const hasAllAnswers = (answersCount === next_questions.length);
-        const didAnswerBefore = session.isFirst();
+        const isFirst = session.isFirst();
         const isFinished = session.isFinished();
 
         return (
@@ -403,7 +403,7 @@ class Survey extends Component {
                                 hasErrors={ hasErrors }
                                 hasAnswers={ hasAnswers }
                                 hasAllAnswers={ hasAllAnswers }
-                                didAnswerBefore={ didAnswerBefore }
+                                isFirst={ isFirst }
                             />
                         </SurveyForm>
                     </SurveyContext.Provider>

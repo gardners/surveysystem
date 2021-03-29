@@ -18,7 +18,7 @@ const FinishSurvey = function({ session, handleDelAnswer, handleGetAnalysis }) {
                     {
                         (!session.isClosed()) ?
                             <React.Fragment>
-                                Close this survey and get your analysis or go back to the <button className="btn btn-link p-0 m-0" onClick= { handleDelAnswer }>last question.</button>
+                                Close this survey and get your analysis or go back to the <button className="btn btn-link p-0 m-0" onClick={ handleDelAnswer }>last question.</button>
                             </React.Fragment> : ''
                     }
                 </p>

@@ -27,7 +27,7 @@ const SurveyItemButtons = function({ survey, session, isCurrent }) {
                     <React.Fragment>
                         <Link to={ `/survey/${session.survey_id}/${session.session_id}` } className="btn btn-lg btn-primary">Continue Survey</Link>
                         <Link to={ `/survey/${session.survey_id}/new` } onClick={ (e) => {
-                            e.preventDefault();
+                            // e.preventDefault(); intentionally commented out - do not break event probagation here
                             delete_cached_session();
                         } } className="btn btn-sm btn-link">Restart Survey</Link>
                     </React.Fragment>

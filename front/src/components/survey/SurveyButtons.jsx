@@ -11,12 +11,12 @@ const canNext = function ({ hasErrors, hasAnswers, hasAllAnswers }) {
  */
 const SurveyButtons = function(props) {
     const nextIconClass = (props.hasErrors || !props.hasAllAnswers) ? 'fas fa-ban' : 'fas fa-arrow-circle-right';
-    const prevIconClass = (props.didAnswerBefore) ? 'fas fa-arrow-circle-left' :  'fas fa-ban';
+    const prevIconClass = (props.isFirst) ? 'fas fa-ban' : 'fas fa-arrow-circle-left';
 
     return (
         <div className={ props.className }>
             <button type="submit" className="app--btn-arrow btn btn-default"
-                disabled={ !props.didAnswerBefore }
+                disabled={ props.isFirst }
                 onClick={ props.handlePrev }>
                 <i className={ prevIconClass } /> Previous Question
             </button>
@@ -41,7 +41,7 @@ SurveyButtons.propTypes = {
     hasErrors: PropTypes.bool.isRequired,
     hasAnswers: PropTypes.bool.isRequired,
     hasAllAnswers: PropTypes.bool.isRequired,
-    didAnswerBefore: PropTypes.bool.isRequired,
+    isFirst: PropTypes.bool.isRequired,
 };
 
 export default SurveyButtons;
