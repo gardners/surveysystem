@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Redirect } from 'react-router';
 
 // data
 import Api from '../Api';
@@ -290,7 +291,7 @@ class Survey extends Component {
             return;
         }
         // the session will be closed in <Analysis>
-        this.props.history.push(`/analyse/${session.survey_id}/${session.session_id}`);
+        history.push(`/analyse/${session.survey_id}/${session.session_id}`);
     }
 
     render() {

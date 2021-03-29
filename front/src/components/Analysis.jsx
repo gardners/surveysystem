@@ -36,7 +36,7 @@ class Analysis extends Component {
         const session = load_cached_session();
 
         if(!session) {
-            this.props.history.push(`/analyse/${survey_id}`);
+            history.push(`/survey/${survey_id}`);
             return;
         }
 
