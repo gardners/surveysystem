@@ -40,8 +40,8 @@ class DemoAnalysis extends Component {
         const { json, analysis } = this.state;
 
         const { evaluations } = analysis;
-        const surveyID = 'DEMO-SURVEY';
-        const sessionID = 'DEMO-SESSION';
+        const survey_id = 'DEMO-SURVEY';
+        const session_id = 'DEMO-SESSION';
         return (
             <section>
                 <textarea className="p-3 bg-dark text-white" style={ { width: '100%', height: '200px' } } onChange={ this.handleChange.bind(this) } value={ json } />
@@ -51,8 +51,8 @@ class DemoAnalysis extends Component {
                         <div class="alert alert-danger">{ evaluations.toString() }</div>
                         :
                         <React.Fragment>
-                            <AnalysisMeta surveyID={ surveyID } sessionID={ sessionID } analysis={ analysis } />
-                            <EvaluationGroup surveyID={ surveyID } sessionID={ sessionID } evaluations={ evaluations } />
+                            <AnalysisMeta survey_id={ survey_id } session_id={ session_id } analysis={ analysis } />
+                            <EvaluationGroup survey_id={ survey_id } session_id={ session_id } evaluations={ evaluations } />
                         </React.Fragment>
                 }
             </section>

@@ -3,17 +3,14 @@ import PropTypes from 'prop-types';
 
 import { Link } from 'react-router-dom';
 
-import LocalStorage from '../storage/LocalStorage';
+import Session, { load_cached_session, delete_cached_session } from '../Session';
 import SurveyList from '../SurveyList';
 
 import ApiAlert from './ApiAlert';
 import Modal from './Modal';
 import EmbedHtmlFile from './EmbedHtmlFile';
 
-const {
-    REACT_APP_SURVEY_CACHEKEY,
-    PUBLIC_URL
-} = process.env;
+const { PUBLIC_URL } = process.env;
 
 const formatDate = function(timestamp) {
     return (timestamp) ? new Date(timestamp).toLocaleString() : 'n/a';
@@ -28,8 +25,11 @@ const SurveyItemButtons = function({ survey, session, isCurrent }) {
         {
                 (session) ?
                     <React.Fragment>
-                        <Link to={ `/survey/${survey.id}/${session.sessionID}` } className="btn btn-lg btn-primary">Continue Survey</Link>
-                        <Link to={ `/survey/${survey.id}/new` } onClick={ () => LocalStorage.delete(REACT_APP_SURVEY_CACHEKEY) } className="btn btn-sm btn-link">Restart Survey</Link>
+                        <Link to={ `/survey/${session.survey_id}/${session.session_id}` } className="btn btn-lg btn-primary">Continue Survey</Link>
+                        <Link to={ `/survey/${session.survey_id}/new` } onClick={ (e) => {
+                            e.preventDefault();
+                            delete_cached_session();
+                        } } className="btn btn-sm btn-link">Restart Survey</Link>
                     </React.Fragment>
                 :
                     <Link to={ `/survey/${survey.id}` } className="btn btn-lg btn-primary">Start Survey</Link>
@@ -45,7 +45,7 @@ SurveyItemButtons.defaultProps = {
 
 SurveyItemButtons.propTypes = {
     survey: SurveyList.itemPropTypes().isRequired,
-    session: PropTypes.object,
+    session: PropTypes.instanceOf(Session),
     isCurrent: PropTypes.bool,
 };
 
@@ -66,7 +66,7 @@ const SurveyItem = function({ survey, session, isCurrent, withButtons }) {
 
     const created = (session && typeof session.created !== 'undefined') ? session.created : 0;
     const modified = (session && typeof session.modified !== 'undefined') ? session.modified : 0;
-    const sessionID = (session && typeof session.sessionID !== 'undefined') ? session.sessionID : '';
+    const session_id = (session && typeof session.session_id !== 'undefined') ? session.session_id : '';
 
     return (
         <React.Fragment>
@@ -103,7 +103,7 @@ const SurveyItem = function({ survey, session, isCurrent, withButtons }) {
             </div>
             <table className="mb-3" style={ { fontSize: '.8em' } }>
                 <tbody>
-                    { (sessionID) ?  <tr><td className="pr-3">sessionID:</td><td>{ sessionID }</td></tr> : null }
+                    { (session_id) ?  <tr><td className="pr-3">session_id:</td><td>{ session_id }</td></tr> : null }
                     { (created) ?  <tr><td className="pr-3">started:</td><td>{ formatDate(created) }</td></tr> : null }
                     { (modified) ?  <tr><td className="pr-3">last access:</td><td>{ formatDate(modified) }</td></tr> : null }
                 </tbody>
@@ -127,7 +127,7 @@ SurveyItem.defaultProps = {
 
 SurveyItem.propTypes = {
     survey: SurveyList.itemPropTypes().isRequired,
-    session: PropTypes.object,
+    session: PropTypes.instanceOf(Session),
     isCurrent: PropTypes.bool,
     withButtons: PropTypes.bool,
 };
@@ -155,12 +155,12 @@ class Surveys extends Component {
     render () {
         const { surveys, error } = this.state;
 
-        const currentSession = LocalStorage.get(REACT_APP_SURVEY_CACHEKEY);
+        const currentSession = load_cached_session();
         let currentSurvey = null;
         const availableSurveys = [];
 
         surveys.forEach(survey => {
-            if (currentSession && currentSession.surveyID === survey.id) {
+            if (currentSession && currentSession.survey_id === survey.id) {
                 currentSurvey = survey;
                 return;
             }

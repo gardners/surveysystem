@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import SurveyManager from '../../SurveyManager';
+import Session from '../../Session';
 import SurveyList from '../../SurveyList';
 
 import { SurveyItem } from '../Surveys';
@@ -21,7 +21,7 @@ class SurveyHeader extends Component {
 
     componentDidMount() {
         const { session } = this.props;
-        SurveyList.getById(session.surveyID)
+        SurveyList.getById(session.survey_id)
         .then(survey => this.setState({ survey }))
         .catch(error => { /* nothing */ });
     }
@@ -33,7 +33,7 @@ class SurveyHeader extends Component {
 
         return (
             <React.Fragment>
-                <h1>{ (survey) ? survey.name : session.surveyID }</h1>
+                <h1>{ (survey) ? survey.name : session.session_id }</h1>
                 {
                     (survey) ?
                         <ul className="nav">
@@ -74,7 +74,7 @@ class SurveyHeader extends Component {
 SurveyHeader.defaultProps = {};
 
 SurveyHeader.propTypes = {
-    session: PropTypes.instanceOf(SurveyManager).isRequired,
+    session: PropTypes.instanceOf(Session).isRequired,
 };
 
 export default SurveyHeader;

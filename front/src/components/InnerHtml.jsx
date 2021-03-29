@@ -26,8 +26,8 @@ const InnerHtml = function ({ htmlContent, className }) {
 
     // #346, add template tags
     const __html = template(htmlContent, {
-        '%SURVEY_ID%': ctx.surveyID,
-        '%SESSION_ID%': ctx.sessionID,
+        '%SURVEY_ID%': ctx.survey_id,
+        '%SESSION_ID%': ctx.session_id,
         '%PUBLIC_URL%': PUBLIC_URL,
         '%SITE_NAME%': REACT_APP_SITE_NAME,
         '%SURVEY_PROVIDER%': REACT_APP_SURVEY_PROVIDER,

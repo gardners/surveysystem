@@ -57,31 +57,28 @@ Pretty.propTypes = {
     open: PropTypes.bool,
 };
 
-const SurveyBar = function(props) {
-    const { survey } = props;
-
+const SurveyBar = function({ session, className }) {
     // don't display in production mode
     if (NODE_ENV === 'production') {
         return (null);
     }
 
-    if(!survey) {
+    if(!session) {
         return (null);
     }
 
     return(
-        <pre className={ props.className }>
-            session: { survey.sessionID }, env: { process.env.NODE_ENV }
-            { <RestartSurveyButton className="btn  btn-link btn-sm">Clear LocalStorage</RestartSurveyButton> }
+        <pre className={ className }>
+            session: { session.session_id }, env: { process.env.NODE_ENV }
+            { <RestartSurveyButton className="btn btn-link btn-sm">Clear LocalStorage</RestartSurveyButton> }
         </pre>
     );
 };
 
 SurveyBar.propTypes = {
     className: PropTypes.string,
-    survey: PropTypes.shape({
-        sessionID: PropTypes.string,
-        step: PropTypes.number,
+    session: PropTypes.shape({
+        session_id: PropTypes.string,
     })
 };
 
