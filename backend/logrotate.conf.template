@@ -1,11 +1,12 @@
-# external confs enabled: '/etc/logrotate.conf' statement 'include /etc/logrotate.d' uncommented?
-# save template as /etc/logrotate.d/surveysystem.conf
-# sudo mkdir -p /etc/logrotate.d
-# sudo cp ./logrotate.conf.template /etc/logrotate.d/surveysystem.conf
-# make your changes (path!) to /etc/logrotate.d/surveysystem.conf and test:
-# logrotate -d /etc/logrotate.d/surveysystem.conf
+# ------------
+# - check logrotate configuration if external confs enabled: 'cat /etc/logrotate.conf' -> uncommented line 'include /etc/logrotate.d'
+# - mkdir -p /etc/logrotate.d
+# - cp ./logrotate.conf.template /etc/logrotate.d/surveysystem.conf
+# - make your changes (path!): vim /etc/logrotate.d/surveysystem.conf
+# - test: logrotate -d /etc/logrotate.d/surveysystem.conf
+# ------------
 
-/var/surveyproject/surveysystem/backend/logs/* {
+/my/path/to/backend/logs/* {
     daily
     rotate 14
     size 1M

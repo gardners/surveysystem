@@ -78,10 +78,13 @@ question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #! ------
-#! - SESSION_CLOSED: requesting next questions fails (400)
+#! - SESSION_CLOSED: requesting next questions passes (200) - since #408
 #! ------
 
-request 400 /nextquestion?sessionid=$SESSION
+# #408, changed behaviour for nextquestions: let pass
+# request 400 /nextquestion?sessionid=$SESSION
+request 200 /nextquestion?sessionid=$SESSION
+match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": []}
 
 verify_session
 sessionlifetime/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
