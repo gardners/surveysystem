@@ -960,7 +960,10 @@ struct nextquestions *get_next_questions(struct session *s) {
 
     // #379 update state (finished)
     if (nq->question_count == 0) {
-      s->state = SESSION_FINISHED;
+      // #408, nextquestion queries can pass now after a session was closed, prevent regression
+      if (s->state < SESSION_FINISHED) {
+        s->state = SESSION_FINISHED;
+      }
       LOG_INFO("Set session state to SESSION_FINISHED");
     }
 

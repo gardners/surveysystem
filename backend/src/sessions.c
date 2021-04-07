@@ -145,6 +145,8 @@ int validate_session_action(enum actions action, struct session *ses, char *msg,
       strncpy(msg, "(DELETE SESSION) Session cannot be deleted!", sz);
       break;
 
+    /*
+    // #408, disabled, let it pass to nexquestion handlers in order to calculate progress
     case ACTION_SESSION_NEXTQUESTIONS:
       if (ses->state >= SESSION_CLOSED) {
         is_error = -1;
@@ -152,6 +154,7 @@ int validate_session_action(enum actions action, struct session *ses, char *msg,
         break;
       }
       break;
+    */
 
     case ACTION_SESSION_ADDANSWER:
       if (ses->state == SESSION_FINISHED) {
@@ -1156,7 +1159,7 @@ struct session *load_session(char *session_id) {
     struct answer *current_state = session_get_header("@state", ses);
     if (!current_state) {
       fclose(s);
-      LOG_ERRORV("Could not find state header for sessionfor session '%s'", session_id); // #268, changed to error
+      LOG_ERRORV("Could not find state header for session '%s'", session_id); // #268, changed to error
     }
     ses->state = current_state->value;
 

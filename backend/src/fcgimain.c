@@ -1091,7 +1091,7 @@ static void fcgi_delprevanswer(struct kreq *req) {
     LOG_INFOV("checksum match passed for session '%s'", ses->session_id);
 
     if (last) {
-      LOG_INFOV("deleting last given answer '%'", last->uid);
+      LOG_INFOV("deleting last given answer '%s'", last->uid);
       if (session_delete_answer(ses, last, 0) < 0) {
         free_session(ses);
         ses = NULL;
