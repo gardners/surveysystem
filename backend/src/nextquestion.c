@@ -633,7 +633,16 @@ void free_next_questions(struct nextquestions *nq) {
   return;
 }
 
-int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
+/**
+ * Python api next question selector.
+ * Loads Python next_question module and searches for defined functions with the following naming patterns:
+ *  - nextquestion_<survey_id>_<survey_hash>()
+ *  - nextquestion_<survey_id>()
+ *  - nextquestion()
+ * #332 next_questions data struct
+ * #445 add action, affected_answers_count args (to be used in later development)
+ */
+int call_python_nextquestion(struct session *s, struct nextquestions *nq, enum actions action, int affected_answers_count) {
   int retVal = 0;
   int is_error = 0;
 
@@ -676,8 +685,7 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
     }
     LOG_INFOV("Searching for python function '%s'", function_name);
 
-    PyObject *myFunction =
-        PyObject_GetAttrString(py_module, function_name);
+    PyObject *myFunction = PyObject_GetAttrString(py_module, function_name);
 
     if (!myFunction) {
       // Try again without _hash on the end
@@ -706,8 +714,7 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
       LOG_ERRORV("Python function '%s' is not callable", function_name);
     }
 
-    LOG_INFOV("Preparing to call python function '%s' to get next question(s)",
-              function_name);
+    LOG_INFOV("Preparing to call python function '%s' to get next question(s)", function_name);
 
     // Okay, we have the function object, so build the argument list and call it.
     PyObject *arg_questions = py_create_questions_list(s);
@@ -750,8 +757,7 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
     if(!PyDict_Check(result)) {
       is_error = 1;
       Py_DECREF(result);
-      LOG_ERRORV("Reply from Python function '%s' is of invalid type (not a dict)",
-                   function_name);
+      LOG_ERRORV("Reply from Python function '%s' is of invalid type (not a dict)", function_name);
     }
 
     // 1. extract status
@@ -759,16 +765,14 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
     if (!py_status) {
       is_error = 1;
       Py_DECREF(result);
-      LOG_ERRORV("Reply from Python function '%s' has no member 'status'",
-                   function_name);
+      LOG_ERRORV("Reply from Python function '%s' has no member 'status'", function_name);
     }
 
     long int status = PyLong_AsLong(py_status);
     if(status == -1) {
       is_error = 1;
       Py_DECREF(result);
-      LOG_ERRORV("Reply from Python function '%s': invalid member 'status' (int)",
-                   function_name);
+      LOG_ERRORV("Reply from Python function '%s': invalid member 'status' (int)", function_name);
     }
 
     // 2. assign status
@@ -779,16 +783,14 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
     if (!py_message) {
       is_error = 1;
       Py_DECREF(result);
-      LOG_ERRORV("Reply from Python function '%s' has no member 'message'",
-                   function_name);
+      LOG_ERRORV("Reply from Python function '%s' has no member 'message'", function_name);
     }
 
     const char *message = PyUnicode_AsUTF8(py_message);
     if(!message) {
       is_error = 1;
       Py_DECREF(result);
-      LOG_ERRORV("Reply from Python function '%s': invalid member 'message' (str)",
-                   function_name);
+      LOG_ERRORV("Reply from Python function '%s': invalid member 'message' (str)", function_name);
     }
 
     // 4. assign message
@@ -798,8 +800,7 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
     if (py_nextquestions_handle_progress(result, nq)) {
       is_error = 1;
       Py_DECREF(result);
-      LOG_ERRORV("Reply from Python function '%s': progess handler failed",
-                   function_name);
+      LOG_ERRORV("Reply from Python function '%s': progess handler failed", function_name);
     }
 
     // 6. extract nextquestions
@@ -807,15 +808,13 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
     if (!py_next_questions) {
       is_error = 1;
       Py_DECREF(result);
-      LOG_ERRORV("Reply from Python function '%s' has no member 'next_questions'",
-                   function_name);
+      LOG_ERRORV("Reply from Python function '%s' has no member 'next_questions'", function_name);
     }
 
     if(!PyList_Check(py_next_questions)) {
       is_error = 1;
       Py_DECREF(result);
-      LOG_ERRORV("Reply from Python function '%s': invalid member 'next_questions' (list(str))",
-                   function_name);
+      LOG_ERRORV("Reply from Python function '%s': invalid member 'next_questions' (list(str))", function_name);
     }
 
     int list_len = PyList_Size(py_next_questions);
@@ -829,8 +828,7 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
         if (!uid) {
           is_error = 1;
           Py_DECREF(result);
-          LOG_ERRORV("String in reply from Python function '%s' is null",
-                      function_name);
+          LOG_ERRORV("String in reply from Python function '%s' is null", function_name);
         }
 
         // 6. assign next_questions
@@ -839,16 +837,13 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
         if (mark_next_question(s, nq->next_questions, &nq->question_count, uid)) {
           is_error = 1;
           Py_DECREF(result);
-          LOG_ERRORV("Error adding question '%s' to list of next questions.  "
-                      "Is it a valid question UID?",
-                      uid);
+          LOG_ERRORV("Error adding question '%s' to list of next questions, question uid valid?", uid);
         }
 
       } else {
         Py_DECREF(result);
         LOG_ERRORV(
-            "result.next_questions[%d] list item is not a string in response from Python function '%s'",
-            i, function_name);
+            "result.next_questions[%d] item is not a string in response from Python function '%s'", i, function_name);
       }
 
     } // endfor
@@ -864,11 +859,12 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
   return retVal;
 }
 
-/*
-  Generic next question selector, which selects the first question lacking an answer.
-  #332 next_questions data struct
-*/
-int get_next_questions_generic(struct session *s, struct nextquestions *nq) {
+/**
+ * Generic next question selector, which selects the first question lacking an answer.
+ * #332 next_questions data struct
+ * #445 add action, affected_answers_count args (to be used in later development)
+ */
+int get_next_questions_generic(struct session *s, struct nextquestions *nq, enum actions action, int affected_answers_count) {
   int retVal = 0;
 
   do {
@@ -964,7 +960,7 @@ struct nextquestions *get_next_questions(struct session *s, enum actions action,
     if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_PYTHON) {
 
       LOG_INFO("NEXTQUESTIONS_FLAG_PYTHON set, calling call_python_nextquestion())");
-      fail = call_python_nextquestion(s, nq);
+      fail = call_python_nextquestion(s, nq, action, affected_answers_count);
 
       if (fail) {
         LOG_ERRORV("call_python_nextquestion() failed with return code %d", fail);
@@ -975,7 +971,7 @@ struct nextquestions *get_next_questions(struct session *s, enum actions action,
       // PGS: Disabled generic implementation of nextquestion, since if you have a python version and it can't be loaded
       // for some reason we should NOT fall back, because it may expose questions and IP in a survey that should not be revealed.
       LOG_INFO("NEXTQUESTIONS_FLAG_GENERIC set, calling get_next_questions_generic())");
-      fail = get_next_questions_generic(s, nq);
+      fail = get_next_questions_generic(s, nq, action, affected_answers_count);
 
       if (fail) {
         LOG_ERRORV("get_next_questions_generic() failed with return code %d", fail);
@@ -1033,24 +1029,26 @@ int get_analysis_generic(struct session *s, const char **output) {
 /*
  * Fetch analysis json string via Python script
  * #288, the parent unit is responsible for freeing *output pointer
- * **output needs to be freed outside of this function
+ * Note! output needs to be freed outside of this function
  */
 int call_python_analysis(struct session *s, const char **output) {
   int retVal = 0;
   int is_error = 0;
   do {
-    if (!s)
+    if (!s) {
       LOG_ERROR("session structure is NULL");
-    if (!output)
+    }
+    if (!output) {
       LOG_ERROR("output is NULL");
+    }
 
     // Setup python
     if (setup_python()) {
       LOG_ERROR("Failed to initialise python.\n");
     }
-    if (!py_module)
-      LOG_ERROR(
-          "Python module 'nextquestion' not loaded. Does it have an error?");
+    if (!py_module) {
+      LOG_ERROR( "Python module 'nextquestion' not loaded. Does it have an error?");
+    }
 
     // Build names of candidate functions.
     // nextquestion_<survey_id>_<hash of survey>
@@ -1145,8 +1143,7 @@ int call_python_analysis(struct session *s, const char **output) {
       if (!return_string) {
         is_error = 1;
         Py_DECREF(result);
-        LOG_ERRORV("String in reply from Python function '%s' is null",
-                   function_name);
+        LOG_ERRORV("String in reply from Python function '%s' is null", function_name);
       }
 
       // #288, allocate dedicated memory, managed by backend and write string
@@ -1154,8 +1151,7 @@ int call_python_analysis(struct session *s, const char **output) {
       // TODO should issues occur then consider hard-setting a \0 token at the last position of *output
     } else {
       Py_DECREF(result);
-      LOG_ERRORV("Return value from Python function '%s' is not a string.",
-                 function_name);
+      LOG_ERRORV("Return value from Python function '%s' is not a string.", function_name);
     }
 
     Py_DECREF(result);
