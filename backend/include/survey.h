@@ -259,7 +259,7 @@ int generate_survey_path(char *survey_id, char *filename, char *path_out, int ma
 int is_given_answer(struct answer *a);
 int is_system_answer(struct answer *a);
 
-struct nextquestions *get_next_questions(struct session *s);
+struct nextquestions *get_next_questions(struct session *s, enum actions action, int affected_answers_count);
 int get_analysis(struct session *s, const char **output);
 
 // #239

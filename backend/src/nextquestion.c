@@ -430,6 +430,79 @@ PyObject *py_create_answer(struct answer *a) {
 }
 
 /**
+ * Creates and a Python list of question uids for an existing session
+ * #445
+ * returns PyObject pointer or NULL on error
+ */
+PyObject *py_create_questions_list(struct session *ses) {
+    int retVal = 0;
+    PyObject *questions = NULL;
+
+    do {
+        questions = PyList_New(ses->question_count);
+
+        // build arguments: questions list
+        for (int i = 0; i < ses->question_count; i++) {
+            PyObject *item = PyUnicode_FromString(ses->questions[i]->uid);
+            if (PyList_SetItem(questions, i, item)) {
+                Py_DECREF(item);
+                LOG_ERRORV("Error inserting question name '%s' into Python list", ses->questions[i]->uid);
+            }
+        }
+    } while(0);
+
+    if (retVal) {
+        Py_XDECREF(questions);
+        return NULL;
+    }
+
+    return questions;
+}
+
+/**
+ * Creates and a Python list of answer dicts for an existing session.
+ * Header answers and system answers are excluded
+ * #445
+ * returns PyObject pointer or NULL on error
+ */
+PyObject *py_create_answers_list(struct session *ses) {
+    int retVal = 0;
+    PyObject *answers = NULL;
+
+    do {
+        answers = PyList_New(ses->given_answer_count);
+
+        // build arguments: answers list
+        int listIndex = 0;
+        for (int i = ses->answer_offset; i < ses->answer_count; i++) {
+
+          if (is_given_answer(ses->answers[i])) {
+            PyObject *item = py_create_answer(ses->answers[i]);
+            if (!item) {
+              LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.", ses->answers[i]->uid);
+            }
+
+            if (PyList_SetItem(answers, listIndex, item)) {
+              Py_DECREF(item);
+              LOG_ERRORV("Error inserting answer name '%s' into Python list", ses->answers[i]->uid);
+            }
+
+            listIndex++;
+          } // if is_given_answer
+
+        }
+
+    } while(0);
+
+    if (retVal) {
+        Py_XDECREF(answers);
+        return NULL;
+    }
+
+    return answers;
+}
+
+/**
  * handler function for processing python nextquestions progress values
  * on error, PyObject result remains open and has to be destroyed by callee
  * #13
@@ -637,38 +710,16 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
               function_name);
 
     // Okay, we have the function object, so build the argument list and call it.
-    PyObject *arg_questions = PyList_New(s->question_count);
-    PyObject *arg_answers = PyList_New(s->given_answer_count);
-
-    // build arguments: questions list
-    for (int i = 0; i < s->question_count; i++) {
-      PyObject *item = PyUnicode_FromString(s->questions[i]->uid);
-      if (PyList_SetItem(arg_questions, i, item)) {
-        Py_DECREF(item);
-        LOG_ERRORV("Error inserting question name '%s' into Python list", s->questions[i]->uid);
-      }
+    PyObject *arg_questions = py_create_questions_list(s);
+    if (!arg_questions) {
+      LOG_ERROR("Error building Python questions list");
+    }
+    PyObject *arg_answers = py_create_answers_list(s);
+    if (!arg_answers) {
+      LOG_ERROR("Error building Python answers list");
     }
 
-    // build arguments: answers list
-    int listIndex = 0;
-    for (int i = s->answer_offset; i < s->answer_count; i++) {
-      if (is_given_answer(s->answers[i])) {
-
-        PyObject *dict = py_create_answer(s->answers[i]);
-        if (!dict) {
-          LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.", s->answers[i]->uid);
-        }
-
-        if (PyList_SetItem(arg_answers, listIndex, dict)) {
-          Py_DECREF(dict);
-          LOG_ERRORV("Error inserting answer name '%s' into Python list", s->answers[i]->uid);
-        }
-
-        listIndex++;
-      }
-    }
-
-    log_python_object("Answers", arg_answers);
+    // log_python_object("Answers", arg_answers);
     PyObject *args = PyTuple_Pack(2, arg_questions, arg_answers);
 
     PyObject *result = PyObject_CallObject(myFunction, args);
@@ -892,7 +943,7 @@ int get_next_questions_generic(struct session *s, struct nextquestions *nq) {
  * #332 nextquestions data struct
  * #379 refactor
  */
-struct nextquestions *get_next_questions(struct session *s) {
+struct nextquestions *get_next_questions(struct session *s, enum actions action, int affected_answers_count) {
   // Call the function to get the next question(s) to ask.
   // First see if we have a python function to do the job.
   // If not, then return the list of all not-yet-answered questions
@@ -1019,8 +1070,7 @@ int call_python_analysis(struct session *s, const char **output) {
     }
     LOG_INFOV("Searching for python function '%s'", function_name);
 
-    PyObject *myFunction =
-        PyObject_GetAttrString(py_module, function_name);
+    PyObject *myFunction = PyObject_GetAttrString(py_module, function_name);
 
     if (!myFunction) {
       // Try again without _hash on the end
@@ -1048,58 +1098,19 @@ int call_python_analysis(struct session *s, const char **output) {
       LOG_ERRORV("Python function '%s' is not callable", function_name);
     }
 
-    LOG_INFOV("Preparing to call python function '%s' to get analysis",
-              function_name);
+    LOG_INFOV("Preparing to call python function '%s' to get analysis", function_name);
 
-    // TODO see get_analysis() - move answers and questions py list generation in separate unit
     // Okay, we have the function object, so build the argument list and call it.
-    PyObject *questions = PyList_New(s->question_count);
-
-    // #227 initialize answer list with the correct length (excluding ANSWER_DELETED)
-    // #363, answer offset, exclude session header
-    int count_given_answers = 0;
-    for (int i = s->answer_offset; i < s->answer_count; i++) {
-      // #186 Don't include deleted answers in the list fed to Python
-      // #363, exclude system (any position)
-      if (is_given_answer(s->answers[i])) {
-        count_given_answers++;
-      }
+    PyObject *arg_questions = py_create_questions_list(s);
+    if (!arg_questions) {
+      LOG_ERROR("Error building Python questions list");
     }
-    PyObject *answers = PyList_New(count_given_answers);
-
-    for (int i = 0; i < s->question_count; i++) {
-      PyObject *item = PyUnicode_FromString(s->questions[i]->uid);
-      if (PyList_SetItem(questions, i, item)) {
-        Py_DECREF(item);
-        LOG_ERRORV("Error inserting question name '%s' into Python list",
-                   s->questions[i]->uid);
-      }
+    PyObject *arg_answers = py_create_answers_list(s);
+    if (!arg_answers) {
+      LOG_ERROR("Error building Python answers list");
     }
 
-    // #311, PyList increment
-    // #363, answer offset, exclude session header
-    int listIndex = 0;
-    for (int i = s->answer_offset; i < s->answer_count; i++) {
-      // #363, exclude system (any position)
-      if (is_given_answer(s->answers[i])) {
-        PyObject *dict = py_create_answer(s->answers[i]);
-
-        if (!dict) {
-          LOG_ERRORV("Could not construct answer structure '%s' for Python. "
-                     "WARNING: Memory has been leaked.",
-                     s->answers[i]->uid);
-        }
-
-        if (PyList_SetItem(answers, listIndex, dict)) {
-          Py_DECREF(dict);
-          LOG_ERRORV("Error inserting answer name '%s' into Python list",
-                     s->answers[i]->uid);
-        }
-        listIndex++;
-      }
-    }
-
-    PyObject *args = PyTuple_Pack(2, questions, answers);
+    PyObject *args = PyTuple_Pack(2, arg_questions, arg_answers);
     PyObject *result = PyObject_CallObject(myFunction, args);
     Py_DECREF(args);
 
