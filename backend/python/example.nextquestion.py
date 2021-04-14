@@ -3,14 +3,15 @@ A simple example of a Python survey controller, includes the required C api hook
 Copy this file to "nextquestion.py" and restart the server without ENV "SURVEY_PYTHONDIR" (external package path) being set.
 
 kwargs supplied from backend:
- * survey_id: (str) survey id and hashed version - parttern: '<survey_id>/<hash>'
+ * survey_id: (str) survey id and hashed version - pattern: '<survey_id>/<hash>'
  * session_id: (str) current session id
- * action: (str) text reperesentation of current session action performed (see survey.h enum actions) - one of:
+ * action: (str) text representation of current (performed) session action (see survey.h enum actions) - one of:
    - 'SESSION_NEXTQUESTIONS',
    - 'SESSION_ADDANSWER',
    - 'SESSION_DELETEANSWER',
    - 'SESSION_ANALYSIS',
  * affected_count: (int) count of affected answers by above action, additions are positive and deletions are negative
+
 """
 import os
 import json
