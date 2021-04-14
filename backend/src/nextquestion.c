@@ -418,7 +418,7 @@ PyObject *py_get_hook_function(char *base_function, char *survey_id, char *funct
     // 2. <base_function>()
 
     if (!func) {
-        snprintf(function_name, len, "nextquestion");
+        snprintf(function_name, len, "%s", base_function);
         LOG_INFOV("Searching for python function '%s'", function_name);
         func = PyObject_GetAttrString(py_module, function_name);
     }
@@ -597,6 +597,89 @@ PyObject *py_create_answers_list(struct session *ses) {
 }
 
 /**
+ * Compiles arguments for a python callable (hook) and executes it
+ * returns result
+ *
+ * The result can be NULL. It's up to the callee to evaluate whether this is considered as an error or not.
+ */
+PyObject *py_invoke_hook_function(PyObject *myFunction, struct session *ses, enum actions action, int affected_answers_count) {
+  int retVal = 0;
+
+  PyObject *kwargs = NULL;
+  PyObject *questions = NULL;
+  PyObject *answers = NULL;
+
+  PyObject *result = NULL;
+
+  do {
+    if (!ses) {
+      LOG_ERROR("session is null");
+    }
+    if (!ses->survey_id || ses->survey_id[0] == 0) {
+        LOG_ERROR("session->survey_id is empty");
+    }
+    if (!ses->session_id|| ses->session_id[0] == 0) {
+        LOG_ERROR("session->session_id is empty");
+    }
+    if (action < ACTION_NONE || action >= NUM_SESSION_ACTIONS) {
+        LOG_ERROR("invalid action");
+    }
+
+    // build positional args
+
+    questions = py_create_questions_list(ses);
+    if (!questions) {
+        LOG_ERROR("Error building positional arg (questions list)");
+    }
+
+    answers = py_create_answers_list(ses);
+    if (!answers) {
+        LOG_ERROR("Error building positional arg (answers list)");
+    }
+
+    PyObject *args = PyTuple_Pack(2, questions, answers);
+
+    // build context args
+
+    kwargs = Py_BuildValue(
+      "{s:s:s:s,s:s:s:i}",
+      "survey_id", ses->survey_id,
+      "session_id", ses->session_id,
+      "action",  session_action_names[action],
+      "affected_count", affected_answers_count
+    );
+
+    if(!kwargs) {
+      LOG_INFO("Failed to build keyword args (context)");
+    }
+
+    result = PyObject_Call(myFunction, args, kwargs);
+    Py_XDECREF(args);
+    Py_XDECREF(kwargs);
+
+    if (PyErr_Occurred()) {
+      log_python_error();
+      LOG_ERROR("Python function exited with an Error "
+                 "(PyErr_Occurred()). Check the backtrace and error messages "
+                 "above, in case they give you any clues.)");
+      PyErr_Clear();
+    }
+
+  } while(0);
+
+  if (retVal) {
+    Py_XDECREF(kwargs);
+    Py_XDECREF(questions);
+    Py_XDECREF(answers);
+
+    Py_XDECREF(result);
+    return NULL;
+  }
+
+  return result;
+}
+
+/**
  * handler function for processing python nextquestions progress values
  * on error, PyObject result remains open and has to be destroyed by callee
  * #13
@@ -772,34 +855,7 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq, enum a
     }
 
     // Okay, we have the function object, so build the argument list and call it.
-
-    PyObject *arg_questions = py_create_questions_list(s);
-    if (!arg_questions) {
-      LOG_ERROR("Error building Python questions list");
-    }
-    PyObject *arg_answers = py_create_answers_list(s);
-    if (!arg_answers) {
-      LOG_ERROR("Error building Python answers list");
-    }
-
-    // log_python_object("Answers", arg_answers);
-    PyObject *args = PyTuple_Pack(2, arg_questions, arg_answers);
-    if(!args) {
-      LOG_ERROR("Error building Python function args");
-    }
-
-    PyObject *result = PyObject_CallObject(myFunction, args);
-    Py_DECREF(args);
-
-    if (PyErr_Occurred()) {
-      is_error = 1;
-      log_python_error();
-      LOG_ERRORV("Python function '%s' exited with an Error "
-                 "(PyErr_Occurred()). Check the backtrace and error messages "
-                 "above, in case they give you any clues.)",
-                 function_name);
-      PyErr_Clear();
-    }
+    PyObject *result = py_invoke_hook_function(myFunction, s, action, affected_answers_count);
 
     if (!result) {
       is_error = 1;
@@ -1110,34 +1166,13 @@ int call_python_analysis(struct session *s, const char **output) {
 
     // select from avaliable hook functions
     char function_name[1024];
-    PyObject *myFunction = py_get_hook_function("nextquestion", s->survey_id, function_name, 1024);
+    PyObject *myFunction = py_get_hook_function("analyse", s->survey_id, function_name, 1024);
     if (!myFunction) {
-      LOG_ERROR("Failed to get hook function for 'nextquestion'");
+      LOG_ERROR("Failed to get hook function for 'analyse'");
     }
 
     // Okay, we have the function object, so build the argument list and call it.
-    PyObject *arg_questions = py_create_questions_list(s);
-    if (!arg_questions) {
-      LOG_ERROR("Error building Python questions list");
-    }
-    PyObject *arg_answers = py_create_answers_list(s);
-    if (!arg_answers) {
-      LOG_ERROR("Error building Python answers list");
-    }
-
-    PyObject *args = PyTuple_Pack(2, arg_questions, arg_answers);
-    PyObject *result = PyObject_CallObject(myFunction, args);
-    Py_DECREF(args);
-
-    if (PyErr_Occurred()) {
-      is_error = 1;
-      log_python_error();
-      LOG_ERRORV("Python function '%s' exited with an Error "
-                 "(PyErr_Occurred()). Check the backtrace and error messages "
-                 "above, in case they give you any clues.)",
-                 function_name);
-      PyErr_Clear();
-    }
+    PyObject *result = py_invoke_hook_function(myFunction, s, ACTION_SESSION_ANALYSIS, 0);
 
     if (!result) {
       is_error = 1;
