@@ -42,6 +42,10 @@
  *
  * verify_response_etag(<string and/or token>)
  *
+ * python\n (code) endofpython\n
+ *  - block for executing Python nextquestion() and analyse() hook functions>
+ *  - traceback and logging core modules are available and pre-configured
+ *
  * These commands can be used more than once, so that more complex activities can be scripted.
  *
  * Apart from running these scripts, all that it has to do to is to setup and cleanup the
