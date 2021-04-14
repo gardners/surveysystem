@@ -14,7 +14,7 @@ endofsurvey
 
 # Create python module, skipping question 2. Test passes if this IS invoked
 python
-def nextquestion(questions, answers):
+def nextquestion(questions, answers, **kwargs):
 
     fp = open('/tmp/python-output', 'a')
     print(str(answers), file = fp)
@@ -43,7 +43,7 @@ def nextquestion(questions, answers):
         'next_questions': [],
     }
 
-def analyse(questions, answers):
+def analyse(questions, answers, **kwargs):
 
     fp = open('/tmp/python-output', 'a')
     print('analyse:')

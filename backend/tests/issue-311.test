@@ -20,7 +20,7 @@ endofsurvey
 python
 
 # simple nextquestion
-def nextquestion(questions, answers):
+def nextquestion(questions, answers, **kwargs):
     # fp = open('/tmp/python-output', 'a')
     # print(questions, file = fp)
     # print(answers, file = fp)
@@ -44,7 +44,7 @@ def nextquestion(questions, answers):
     }
 
 # note that we are allowing analysis on incomplete answer set
-def analyse(questions, answers):
+def analyse(questions, answers, **kwargs):
     json = '['
     for answer in answers:
       json += '"' + answer['uid'] + '", '

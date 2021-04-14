@@ -12,7 +12,7 @@ endofsurvey
 # Create python module, we reverse the question sequence in python script to assure it is called
 python
 
-def nextquestion(questions,answers):
+def nextquestion(questions,answers, **kwargs):
     next =  []
     step = len(answers)
 

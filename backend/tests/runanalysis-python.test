@@ -12,11 +12,11 @@ endofsurvey
 
 python
 # our test function return some json
-def analyse_runanalysispython(questions,answers):
+def analyse_runanalysispython(questions, answers, **kwargs):
     return "You will live"
 
 # required in version 2, simply return next question
-def nextquestion(questions, answers):
+def nextquestion(questions, answers, **kwargs):
     if len(answers) < len(questions):
         return {
             'status': 0,

@@ -55,7 +55,7 @@ def assert_answers(left, right):
                 raise ValueError('(count: {}, index {}): right[{}] != left[{}]'.format(count, i, prop, prop))
 
 
-def nextquestion(questions, answers):
+def nextquestion(questions, answers, **kwargs):
     count = len(answers)
     logs(' ===> count: {} (pid: {})'.format(count, os.getpid()))
 
