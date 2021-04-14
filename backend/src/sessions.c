@@ -19,6 +19,20 @@
 #include "survey.h"
 #include "utils.h"
 
+/**
+ * see: survey.h enum actions
+ * #455
+ */
+char *session_action_names[NUM_SESSION_ACTIONS] = {
+  "NONE",
+  "SESSION_NEW",
+  "SESSION_DELETE",
+  "SESSION_NEXTQUESTIONS",
+  "SESSION_ADDANSWER",
+  "SESSION_DELETEANSWER",
+  "SESSION_ANALYSIS"
+};
+
 /*
   Verify that a session ID does not contain any illegal characters.
   We allow only hex and the dash character.
@@ -1749,9 +1763,11 @@ struct question *copy_question(struct question *qq) {
   }
 }
 
-/*
-  Add the provided answer to the set of answers in the provided session.
-  If another answer exists for the same question, it will trigger an error.
+/**
+ * Add the provided answer to the set of answers in the provided session.
+ * If another answer exists for the same question, it will trigger an error.
+ *
+ * returns 1 (affected count) on success or -1 on error. (since #445)
  */
 int session_add_answer(struct session *ses, struct answer *a) {
   int retVal = 0;
@@ -1820,7 +1836,12 @@ int session_add_answer(struct session *ses, struct answer *a) {
     ses->state = SESSION_OPEN;
 
   } while (0);
-  return retVal;
+
+  if (retVal) {
+    return retVal;
+  }
+
+  return 1;
 }
 
 /**

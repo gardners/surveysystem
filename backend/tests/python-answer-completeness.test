@@ -45,7 +45,7 @@ def assert_answer(question_ids, answer):
   assert isinstance(answer['flags'], int)
   assert isinstance(answer['stored'], int)
 
-def nextquestion(questions, answers):
+def nextquestion(questions, answers, **kwargs):
     for answer in answers:
       assert_answer(questions, answer)
 
@@ -68,7 +68,7 @@ def nextquestion(questions, answers):
         'next_questions': [],
     }
 
-def analyse(questions, answers):
+def analyse(questions, answers, **kwargs):
     for answer in answers:
       assert_answer(questions, answer)
 

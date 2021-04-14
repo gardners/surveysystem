@@ -2,7 +2,7 @@
 
 #!---------------------
 #! running delanswer with python nextquestion()
-#! In this test the python function validatesthe submitted "answers" list
+#! In this test the python function validates the submitted "answers" list
 #! - if the json of the answers does not match the expected string then a ValidationError will be thrown, resulting in an HTTP 500 error
 #! - if answers cannot be serialized to json then a Value Error will be thrown, resulting in an HTTP 500 error
 #!---------------------
@@ -11,7 +11,7 @@
 definesurvey delanswerandfollowingpython
 version 2
 Silly test survey updated
-without python
+with python
 question1:Question 1::TEXT:0::-1:-1:0:0::
 question2:Question 2::TEXT:0::-1:-1:0:0::
 question3:Question 3::TEXT:0::-1:-1:0:0::
@@ -19,65 +19,99 @@ endofsurvey
 
 # Create python module
 python
-import sys, os, json
+import os, json
 
-count = 0
+def logs(line):
+    fp = open('./logs/python.log', 'a')
+    fp.write('{}\n'.format(line))
+    fp.close()
 
-def nextquestion(questions, answers):
-    global count
+def make_answer(uid, text):
+  return {
+      "uid": uid,
+      "type": "TEXT",
+      "text": text,
+      "value": 0,
+      "latitude": 0,
+      "longitude": 0,
+      "time_begin": 0,
+      "time_end": 0,
+      "time_zone_delta": 0,
+      "dst_delta": 0,
+      "unit": "",
+      "flags": 0,
+      "stored": 0,
+    }
 
-    str='invalid'
+def assert_answers(left, right):
+    if len(right) != len(left):
+        raise ValueError('(right {} != left {}'.format(len(right), len(left)))
 
-    # json.dumps() will throw a ValueError if the answer dict contains invalid values
-    str = json.dumps(answers)
+    for i in range(len(left)):
+        for prop in left[i]:
+            if prop == 'stored':
+                continue
+            if right[i][prop] != left[i][prop]:
+                raise ValueError('(count: {}, index {}): right[{}] != left[{}]'.format(count, i, prop, prop))
 
-    with open('/tmp/pythoninputs.txt', 'a') as f:
-        f.write("=========== %d ===========\n" % count)
-        f.write("QNs: %s\n" % questions)
-        f.write("Qn len: %d\n" % len(questions))
-        f.write("ans: %s\n" % answers)
-        f.write("ans len: %d\n" % len(answers))
-        f.write("ans JSON: %s\n" % str)
 
-    # addanswer
-    if (count == 0):
-      count +=1
-      assert str == '[{"uid": "question1", "text": "Answer 1", "value": 0, "latitude": 0, "longitude": 0, "time_begin": 0, "time_end": 0, "time_zone_delta": 0, "dst_delta": 0}]'
-      return {
-          'status': 0,
-          'message': '',
-          'next_questions': ['question2'],
-      }
-    # addanswer
-    if (count == 1):
-      count +=1
-      assert str == '[{"uid": "question1", "text": "Answer 1", "value": 0, "latitude": 0, "longitude": 0, "time_begin": 0, "time_end": 0, "time_zone_delta": 0, "dst_delta": 0}, {"uid": "question2", "text": "Answer 2", "value": 0, "latitude": 0, "longitude": 0, "time_begin": 0, "time_end": 0, "time_zone_delta": 0, "dst_delta": 0}]'
-      return {
-          'status': 0,
-          'message': '',
-          'next_questions': ['question3'],
-      }
-    # addanswer
-    if (count == 2):
-      count +=1
-      assert str == '[{"uid": "question1", "text": "Answer 1", "value": 0, "latitude": 0, "longitude": 0, "time_begin": 0, "time_end": 0, "time_zone_delta": 0, "dst_delta": 0}, {"uid": "question2", "text": "Answer 2", "value": 0, "latitude": 0, "longitude": 0, "time_begin": 0, "time_end": 0, "time_zone_delta": 0, "dst_delta": 0}, {"uid": "question3", "text": "Answer 3", "value": 0, "latitude": 0, "longitude": 0, "time_begin": 0, "time_end": 0, "time_zone_delta": 0, "dst_delta": 0}]'
-      return {
-          'status': 0,
-          'message': '',
-          'next_questions': [],
-      }
+def nextquestion(questions, answers, **kwargs):
+    count = len(answers)
+    logs(' ===> count: {} (pid: {})'.format(count, os.getpid()))
+
     # delanswerandfollowing
-    if (count == 3):
-      count +=1
-      assert str == '[]'
+    if (count == 0):
+      expected = []
+      logs('{}\n{}\n{}'.format(json.dumps(questions), json.dumps(answers), json.dumps(expected)))
+
+      assert_answers(expected, answers)
       return {
           'status': 0,
           'message': '',
+          'progress': [0, 3],
           'next_questions': ['question1'],
       }
 
-    raise ValueError('nextquestion logic failed')
+    # addanswer
+    if (count == 1):
+      expected = [make_answer('question1', 'Answer 1')]
+      logs('{}\n{}\n{}'.format(json.dumps(questions), json.dumps(answers), json.dumps(expected)))
 
+      assert_answers(expected, answers)
+      return {
+          'status': 0,
+          'message': '',
+          'progress': [1, 3],
+          'next_questions': ['question2'],
+      }
+
+    # addanswer
+    if (count == 2):
+      expected = [make_answer('question1', 'Answer 1'), make_answer('question2', 'Answer 2')]
+      logs('{}\n{}\n{}'.format(json.dumps(questions), json.dumps(answers), json.dumps(expected)))
+
+      assert_answers(expected, answers)
+      return {
+          'status': 0,
+          'message': '',
+          'progress': [2, 3],
+          'next_questions': ['question3'],
+      }
+
+    # addanswer
+    if (count == 3):
+      expected = [make_answer('question1', 'Answer 1'), make_answer('question2', 'Answer 2'), make_answer('question3', 'Answer 3')]
+      logs('{}\n{}\n{}'.format(json.dumps(questions), json.dumps(answers), json.dumps(expected)))
+
+      assert_answers(expected, answers)
+      return {
+          'status': 0,
+          'message': '',
+          'progress': [3, 3],
+          'next_questions': [],
+      }
+
+      raise ValueError('nextquestion logic failed')
 endofpython
 
 # Request creation of a  new session

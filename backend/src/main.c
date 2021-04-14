@@ -151,6 +151,7 @@ int do_progress(char *session_id) {
   int retVal = 0;
 
   struct session *ses = NULL;
+  enum actions action = ACTION_SESSION_NEXTQUESTIONS;
 
   do {
     LOG_INFO("Entering countquestions handler.");
@@ -162,7 +163,7 @@ int do_progress(char *session_id) {
     }
 
     char reason[1024];
-    if (validate_session_action(ACTION_SESSION_NEXTQUESTIONS, ses, reason, 1024)) {
+    if (validate_session_action(action, ses, reason, 1024)) {
       free_session(ses);
       ses = NULL;
       fprintf(stderr, "%s\n", reason);
@@ -181,6 +182,7 @@ int do_nextquestions(char *session_id) {
 
   struct session *ses = NULL;
   struct nextquestions *nq = NULL;
+  enum actions action = ACTION_SESSION_NEXTQUESTIONS;
 
   do {
     LOG_INFO("Entering nextquestion handler.");
@@ -192,14 +194,14 @@ int do_nextquestions(char *session_id) {
     }
 
     char reason[1024];
-    if (validate_session_action(ACTION_SESSION_NEXTQUESTIONS, ses, reason, 1024)) {
+    if (validate_session_action(action, ses, reason, 1024)) {
       free_session(ses);
       ses = NULL;
       fprintf(stderr, "%s\n", reason);
       LOG_ERROR("Session action validation failed");
     }
 
-    nq = get_next_questions(ses);
+    nq = get_next_questions(ses, action, 0);
     if (!nq) {
       free_session(ses);
       ses = NULL;
@@ -232,6 +234,7 @@ int do_addanswer(char *session_id, char *serialised_answer) {
   struct session *ses = NULL;
   struct answer *ans = NULL;
   struct nextquestions *nq = NULL;
+  enum actions action = ACTION_SESSION_ADDANSWER;
 
   do {
     LOG_INFO("Entering addanswer handler.");
@@ -243,7 +246,7 @@ int do_addanswer(char *session_id, char *serialised_answer) {
     }
 
     char reason[1024];
-    if (validate_session_action(ACTION_SESSION_ADDANSWER, ses, reason, 1024)) {
+    if (validate_session_action(action, ses, reason, 1024)) {
       free_session(ses);
       ses = NULL;
       fprintf(stderr, "%s\n", reason);
@@ -263,7 +266,9 @@ int do_addanswer(char *session_id, char *serialised_answer) {
       LOG_ERROR("deserialise_answer() failed.");
     }
 
-    if (session_add_answer(ses, ans)) {
+    // #445 count affected answers
+    int affected_count = session_add_answer(ses, ans);
+    if (affected_count < 0) {
       free_session(ses);
       ses = NULL;
       free_answer(ans);
@@ -275,7 +280,7 @@ int do_addanswer(char *session_id, char *serialised_answer) {
     free_answer(ans);
     ans = NULL;
 
-    nq = get_next_questions(ses);
+    nq = get_next_questions(ses, action, affected_count);
     if (!nq) {
       free_session(ses);
       ses = NULL;
@@ -311,6 +316,7 @@ int do_addanswervalue(char *session_id, char *uid, char *value) {
   struct session *ses = NULL;
   struct answer *ans = NULL;
   struct nextquestions *nq = NULL;
+  enum actions action = ACTION_SESSION_ADDANSWER;
 
   do {
     LOG_INFO("Entering addanswervalue handler.");
@@ -322,7 +328,7 @@ int do_addanswervalue(char *session_id, char *uid, char *value) {
     }
 
     char reason[1024];
-    if (validate_session_action(ACTION_SESSION_ADDANSWER, ses, reason, 1024)) {
+    if (validate_session_action(action, ses, reason, 1024)) {
       free_session(ses);
       ses = NULL;
       fprintf(stderr, "%s\n", reason);
@@ -352,7 +358,9 @@ int do_addanswervalue(char *session_id, char *uid, char *value) {
       LOG_ERROR("answer_set_value_raw() failed.");
     }
 
-    if (session_add_answer(ses, ans)) {
+    // #445 count affected answers
+    int affected_count = session_add_answer(ses, ans);
+    if (affected_count < 0) {
       free_session(ses);
       ses = NULL;
       free_answer(ans);
@@ -364,7 +372,7 @@ int do_addanswervalue(char *session_id, char *uid, char *value) {
     free_answer(ans);
     ans = NULL;
 
-    nq = get_next_questions(ses);
+    nq = get_next_questions(ses, action, affected_count);
     if (!nq) {
       free_session(ses);
       ses = NULL;
@@ -397,6 +405,7 @@ int do_delanswer(char *session_id, char *question_id) {
 
   struct session *ses = NULL;
   struct nextquestions *nq = NULL;
+  enum actions action = ACTION_SESSION_DELETEANSWER;
 
   do {
     LOG_INFO("Entering delanswer handler.");
@@ -408,21 +417,23 @@ int do_delanswer(char *session_id, char *question_id) {
     }
 
     char reason[1024];
-    if (validate_session_action(ACTION_SESSION_DELETEANSWER, ses, reason, 1024)) {
+    if (validate_session_action(action, ses, reason, 1024)) {
       free_session(ses);
       ses = NULL;
       fprintf(stderr, "%s\n", reason);
       LOG_ERROR("Session action validation failed");
     }
 
-    if (session_delete_answers_by_question_uid(ses, question_id, 1) < 0) {
+    // #445 count affected answers
+    int affected_count = session_delete_answers_by_question_uid(ses, question_id, 1);
+    if (affected_count < 0) {
       free_session(ses);
       ses = NULL;
       fprintf(stderr, "Answer does not match existing session records.\n");
       LOG_ERROR("session_delete_answers_by_question_uid() failed");
     }
 
-    nq = get_next_questions(ses);
+    nq = get_next_questions(ses, action, affected_count);
     if (!nq) {
       free_session(ses);
       ses = NULL;
@@ -455,6 +466,7 @@ int do_delprevanswer(char *session_id, char *checksum) {
 
   struct session *ses = NULL;
   struct nextquestions *nq = NULL;
+  enum actions action = ACTION_SESSION_DELETEANSWER;
 
   do {
     LOG_INFO("Entering delprevanswer handler.");
@@ -476,10 +488,10 @@ int do_delprevanswer(char *session_id, char *checksum) {
     // define validation scope
     // if no answer to delete was found demote validation scope to just nextquestions
     struct answer *last = session_get_last_given_answer(ses);
-    int action = (last) ? ACTION_SESSION_DELETEANSWER : ACTION_SESSION_NEXTQUESTIONS;
+    int validate_action = (last) ? ACTION_SESSION_DELETEANSWER : ACTION_SESSION_NEXTQUESTIONS;
 
     char reason[1024];
-    if (validate_session_action(action, ses, reason, 1024)) {
+    if (validate_session_action(validate_action, ses, reason, 1024)) {
       free_session(ses);
       ses = NULL;
       fprintf(stderr, "%s\n", reason);
@@ -493,20 +505,26 @@ int do_delprevanswer(char *session_id, char *checksum) {
     }
     LOG_INFOV("checksum match passed for session '%s'", ses->session_id);
 
+    // #445 count affected answers
+    int affected_count = -1;
+
     if (last) {
-      if (session_delete_answer(ses, last, 0) < 0) {
-        free_session(ses);
-        ses = NULL;
-        fprintf(stderr, "delete last answer failed.\n");
-        LOG_ERROR("session_delete_answer() failed");
-      }
-      LOG_INFOV("deleted question '%s' in session '%s'", last->uid, ses->session_id);
+      LOG_INFOV("deleting last given answer '%s'", last->uid);
+      affected_count = session_delete_answer(ses, last, 0);
     } else {
-      LOG_WARNV("no last given answer in session '%s'", ses->session_id);
+      LOG_INFO("no last given answer in session");
+      affected_count = 0;
+    }
+
+    if (affected_count < 0) {
+      free_session(ses);
+      ses = NULL;
+      fprintf(stderr, "delete last answer failed.\n");
+      LOG_ERROR("session_delete_answer() failed");
     }
 
     // fetch nextquestions, even if no last answer was found
-    nq = get_next_questions(ses);
+    nq = get_next_questions(ses, action, affected_count);
     if (!nq) {
       free_session(ses);
       ses = NULL;
@@ -538,6 +556,7 @@ int do_getchecksum(char *session_id) {
   int retVal = 0;
 
   struct session *ses = NULL;
+  enum actions action = ACTION_SESSION_NEXTQUESTIONS;
 
   do {
     LOG_INFO("Entering getchecksum handler.");
@@ -549,7 +568,7 @@ int do_getchecksum(char *session_id) {
     }
 
     char reason[1024];
-    if (validate_session_action(ACTION_SESSION_NEXTQUESTIONS, ses, reason, 1024)) {
+    if (validate_session_action(action, ses, reason, 1024)) {
       free_session(ses);
       ses = NULL;
       fprintf(stderr, "%s\n", reason);
@@ -574,7 +593,9 @@ int do_getchecksum(char *session_id) {
 
 int do_delsession(char *session_id) {
   int retVal = 0;
+
   struct session *ses = NULL;
+  // enum actions action = ACTION_SESSION_DELETE;
 
   do {
     LOG_INFO("Entering delsession handler.");
@@ -587,7 +608,7 @@ int do_delsession(char *session_id) {
 
     /* below is intentinally disabled for cli, but left as a reminder to develop an admin role stategy */
     // char reason[1024];
-    // if (validate_session_action(ACTION_SESSION_DELETE, ses, reason, 1024)) {
+    // if (validate_session_action(action, ses, reason, 1024)) {
     //   free_session(ses);
     //   ses = NULL;
     //   fprintf(stderr, "%s\n", reason);
@@ -611,7 +632,9 @@ int do_delsession(char *session_id) {
 
 int do_analyse(char *session_id) {
   int retVal = 0;
+
   struct session *ses = NULL;
+  enum actions action = ACTION_SESSION_ANALYSIS;
 
   do {
     LOG_INFO("Entering analyse handler.");
@@ -623,7 +646,7 @@ int do_analyse(char *session_id) {
     }
 
     char reason[1024];
-    if (validate_session_action(ACTION_SESSION_ANALYSIS, ses, reason, 1024)) {
+    if (validate_session_action(action, ses, reason, 1024)) {
       free_session(ses);
       ses = NULL;
       fprintf(stderr, "%s\n", reason);

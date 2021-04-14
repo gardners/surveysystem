@@ -15,7 +15,7 @@ endofsurvey
 # note that nexquestion is commented out!
 python
 """
-def nextquestion(questions, answers):
+def nextquestion(questions, answers, **kwargs):
     print (questions, answers)
     return {
         'status': 0,

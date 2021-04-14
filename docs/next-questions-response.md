@@ -37,7 +37,7 @@ At the current state (v0.2.2) the backend is not involved with these values and 
 This can be used to implement some context based validation
 
 ```python
-def nextquestion(questions, answers, logFilename=None):
+def nextquestion(questions, answers, , **kwargs):
 
     # ... answer to UltimateQuestion was 43,
     # ... serve last question again
@@ -49,6 +49,20 @@ def nextquestion(questions, answers, logFilename=None):
     }
 
 ```
+
+### Session context args (kwargs)
+
+ (since #447)
+
+ * `survey_id`: (str) survey id and hashed version - pattern: '<survey_id>/<hash>'
+ * `session_id` (str) current session id
+ * `action`: (str) text representation of current (performed) session action (see survey.h enum actions) - one of:
+   - 'SESSION_NEXTQUESTIONS',
+   - 'SESSION_ADDANSWER',
+   - 'SESSION_DELETEANSWER',
+   - 'SESSION_ANALYSIS',
+ * `affected_count`: (int) count of affected answers by above action, additions are positive and deletions are negative
+
 
 Controllers who don't support progress calculation may use negative values `[-1, -1]` to signal this to the frontend.
 

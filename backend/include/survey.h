@@ -240,8 +240,9 @@ struct session {
 };
 
 // #379 request actions (validated against session state)
+// keep in sync with session.c, char *session_action_names
 enum actions {
-  ACTION_TEST_ACCESS,
+  ACTION_NONE,
   ACTION_SESSION_NEW,
   ACTION_SESSION_DELETE,
   ACTION_SESSION_NEXTQUESTIONS,
@@ -249,6 +250,8 @@ enum actions {
   ACTION_SESSION_DELETEANSWER,
   ACTION_SESSION_ANALYSIS,
 };
+#define NUM_SESSION_ACTIONS 7
+extern char *session_action_names[NUM_SESSION_ACTIONS];
 
 int generate_path(char *path_in, char *path_out, int max_len);
 int generate_session_path(char *session_id, char *filename, char *path_out, int max_len);
@@ -259,7 +262,7 @@ int generate_survey_path(char *survey_id, char *filename, char *path_out, int ma
 int is_given_answer(struct answer *a);
 int is_system_answer(struct answer *a);
 
-struct nextquestions *get_next_questions(struct session *s);
+struct nextquestions *get_next_questions(struct session *s, enum actions action, int affected_answers_count);
 int get_analysis(struct session *s, const char **output);
 
 // #239

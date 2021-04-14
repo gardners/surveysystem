@@ -582,10 +582,10 @@ static void fcgi_newsession(struct kreq *req) {
 static void fcgi_addanswer(struct kreq *req) {
   int retVal = 0;
 
-  // #384 forward instantiation
   struct session *ses = NULL;
   struct answer *ans = NULL;
   struct nextquestions *nq = NULL;
+  enum actions action = ACTION_SESSION_ADDANSWER;
 
   do {
 
@@ -613,7 +613,7 @@ static void fcgi_addanswer(struct kreq *req) {
 
     // validate requested action against session current state (#379)
     char reason[1024];
-    if (validate_session_action(ACTION_SESSION_ADDANSWER, ses, reason, 1024)) {
+    if (validate_session_action(action, ses, reason, 1024)) {
       free_session(ses);
       ses = NULL;
       http_json_error(req, KHTTP_400, reason);
@@ -628,7 +628,9 @@ static void fcgi_addanswer(struct kreq *req) {
       LOG_ERROR("Could not load answer");
     }
 
-    if (session_add_answer(ses, ans)) {
+    // #445 count affected answers
+    int affected_count = session_add_answer(ses, ans);
+    if (affected_count < 0) {
       free_session(ses);
       ses = NULL;
       free_answer(ans);
@@ -641,7 +643,7 @@ static void fcgi_addanswer(struct kreq *req) {
     ans = NULL;
 
     // #332 next_questions data struct
-    nq = get_next_questions(ses);
+    nq = get_next_questions(ses, action, affected_count);
     if (!nq) {
       free_session(ses);
       ses = NULL;
@@ -740,10 +742,10 @@ struct answer *request_load_answer(struct kreq *req) {
 static void fcgi_updateanswer(struct kreq *req) {
   int retVal = 0;
 
-  // #384 forward instantiation
   struct session *ses = NULL;
   struct answer *ans = NULL;
   struct nextquestions *nq = NULL;
+  enum actions action = ACTION_SESSION_ADDANSWER;
 
   do {
 
@@ -766,7 +768,7 @@ static void fcgi_updateanswer(struct kreq *req) {
 
     // validate requested action against session current state (#379)
     char reason[1024];
-    if (validate_session_action(ACTION_SESSION_ADDANSWER, ses, reason, 1024)) {
+    if (validate_session_action(action, ses, reason, 1024)) {
       free_session(ses);
       ses = NULL;
       http_json_error(req, KHTTP_400, reason);
@@ -781,7 +783,9 @@ static void fcgi_updateanswer(struct kreq *req) {
       LOG_ERROR("Could not load answer");
     }
 
-    if (session_delete_answers_by_question_uid(ses, ans->uid, 0) < 0) {
+    // #445 count affected answers
+    int deleted = session_delete_answers_by_question_uid(ses, ans->uid, 0);
+    if (deleted < 0) {
       free_session(ses);
       ses = NULL;
       free_answer(ans);
@@ -791,7 +795,9 @@ static void fcgi_updateanswer(struct kreq *req) {
       LOG_ERROR("session_delete_answers_by_question_uid() failed");
     }
 
-    if (session_add_answer(ses, ans)) {
+    // #445 count affected answers
+    int affected_count = session_add_answer(ses, ans);
+    if (affected_count < 0) {
       free_session(ses);
       ses = NULL;
       free_answer(ans);
@@ -804,7 +810,7 @@ static void fcgi_updateanswer(struct kreq *req) {
     ans = NULL;
 
     // #332 next_questions data struct
-    nq = get_next_questions(ses);
+    nq = get_next_questions(ses, action, affected_count);
     if (!nq) {
       free_session(ses);
       ses = NULL;
@@ -842,9 +848,9 @@ static void fcgi_updateanswer(struct kreq *req) {
 static void fcgi_delanswer(struct kreq *req) {
   int retVal = 0;
 
-  // #384 forward instantiation
   struct session *ses = NULL;
   struct nextquestions *nq = NULL;
+  enum actions action = ACTION_SESSION_DELETEANSWER;
 
   do {
 
@@ -879,7 +885,7 @@ static void fcgi_delanswer(struct kreq *req) {
 
     // validate requested action against session current state (#379)
     char reason[1024];
-    if (validate_session_action(ACTION_SESSION_DELETEANSWER, ses, reason, 1024)) {
+    if (validate_session_action(action, ses, reason, 1024)) {
       free_session(ses);
       ses = NULL;
       http_json_error(req, KHTTP_400, reason);
@@ -888,7 +894,9 @@ static void fcgi_delanswer(struct kreq *req) {
 
     // We have a question -- so delete all answers to the given question
 
-    if (session_delete_answers_by_question_uid(ses, arg->val, 0) < 0) {
+    // #445 count affected answers
+    int affected_count = session_delete_answers_by_question_uid(ses, arg->val, 0);
+    if (affected_count < 0) {
       free_session(ses);
       ses = NULL;
       // TODO could be both 400 or 500 (storage, serialization, not in session)
@@ -897,7 +905,7 @@ static void fcgi_delanswer(struct kreq *req) {
     }
 
     // #332 next_questions data struct
-    nq = get_next_questions(ses);
+    nq = get_next_questions(ses, action, affected_count);
     if (!nq) {
       free_session(ses);
       ses = NULL;
@@ -937,9 +945,9 @@ static void fcgi_delanswer(struct kreq *req) {
 static void fcgi_delanswerandfollowing(struct kreq *req) {
   int retVal = 0;
 
-  // #384 forward instantiation
   struct session *ses = NULL;
   struct nextquestions *nq = NULL;
+  enum actions action = ACTION_SESSION_DELETEANSWER;
 
   do {
 
@@ -974,7 +982,7 @@ static void fcgi_delanswerandfollowing(struct kreq *req) {
 
     // validate requested action against session current state (#379)
     char reason[1024];
-    if (validate_session_action(ACTION_SESSION_DELETEANSWER, ses, reason, 1024)) {
+    if (validate_session_action(action, ses, reason, 1024)) {
       free_session(ses);
       ses = NULL;
       http_json_error(req, KHTTP_400, reason);
@@ -983,7 +991,9 @@ static void fcgi_delanswerandfollowing(struct kreq *req) {
 
     // We have a question -- so delete all answers to the given question
 
-    if (session_delete_answers_by_question_uid(ses, arg->val, 1) < 0) {
+    // #445 count affected answers
+    int affected_count = session_delete_answers_by_question_uid(ses, arg->val, 1);
+    if (affected_count < 0) {
       free_session(ses);
       ses = NULL;
       // TODO could be both 400 or 500 (storage, serialization, not in session)
@@ -992,7 +1002,7 @@ static void fcgi_delanswerandfollowing(struct kreq *req) {
     }
 
     // #332 next_questions data struct
-    nq = get_next_questions(ses);
+    nq = get_next_questions(ses, action, affected_count);
     if (!nq) {
       free_session(ses);
       ses = NULL;
@@ -1032,9 +1042,9 @@ static void fcgi_delanswerandfollowing(struct kreq *req) {
 static void fcgi_delprevanswer(struct kreq *req) {
   int retVal = 0;
 
-  // #384 forward instantiation
   struct session *ses = NULL;
   struct nextquestions *nq = NULL;
+  enum actions action = ACTION_SESSION_DELETEANSWER;
 
   do {
 
@@ -1072,10 +1082,10 @@ static void fcgi_delprevanswer(struct kreq *req) {
     //  - get last answer (not a system answer and not deleted)
     //  - define validation scope: if a last answer was found (to be flagged as deleted) use DELTEANSWER. Otherwise use the lower NEXTQUESTIONS
     struct answer *last = session_get_last_given_answer(ses);
-    int action = (last) ? ACTION_SESSION_DELETEANSWER : ACTION_SESSION_NEXTQUESTIONS;
+    int validate_action = (last) ? action : ACTION_SESSION_NEXTQUESTIONS;
 
     char reason[1024];
-    if (validate_session_action(action, ses, reason, 1024)) {
+    if (validate_session_action(validate_action, ses, reason, 1024)) {
       free_session(ses);
       ses = NULL;
       http_json_error(req, KHTTP_400, reason);
@@ -1090,21 +1100,27 @@ static void fcgi_delprevanswer(struct kreq *req) {
     }
     LOG_INFOV("checksum match passed for session '%s'", ses->session_id);
 
+    // #445 count affected answers
+    int affected_count = -1;
+
     if (last) {
       LOG_INFOV("deleting last given answer '%s'", last->uid);
-      if (session_delete_answer(ses, last, 0) < 0) {
-        free_session(ses);
-        ses = NULL;
-        // TODO could be both 400 or 500 (storage, serialization, not in session)
-        http_json_error(req, KHTTP_400, "Answer does not match existing session records.");
-        LOG_ERROR("session_delete_answer() failed");
-      }
+      affected_count = session_delete_answer(ses, last, 0);
     } else {
       LOG_INFO("no last given answer in session");
+      affected_count = 0;
+    }
+
+    if (affected_count < 0) {
+      free_session(ses);
+      ses = NULL;
+      // TODO could be both 400 or 500 (storage, serialization, not in session)
+      http_json_error(req, KHTTP_400, "Answer does not match existing session records.");
+      LOG_ERROR("session_delete_answer() failed");
     }
 
     // #332 next_questions data struct
-    nq = get_next_questions(ses);
+    nq = get_next_questions(ses, action, affected_count);
     if (!nq) {
       free_session(ses);
       ses = NULL;
@@ -1144,8 +1160,8 @@ static void fcgi_delprevanswer(struct kreq *req) {
 static void fcgi_delsession(struct kreq *req) {
   int retVal = 0;
 
-  // #384 forward instantiation
   struct session *ses = NULL;
+  enum actions action = ACTION_SESSION_DELETE;
 
   do {
 
@@ -1168,7 +1184,7 @@ static void fcgi_delsession(struct kreq *req) {
 
     // validate requested action against session current state (#379)
     char reason[1024];
-    if (validate_session_action(ACTION_SESSION_DELETE, ses, reason, 1024)) {
+    if (validate_session_action(action, ses, reason, 1024)) {
       free_session(ses);
       ses = NULL;
       http_json_error(req, KHTTP_400, reason);
@@ -1202,9 +1218,9 @@ static void fcgi_nextquestion(struct kreq *req) {
   //  enum kcgi_err    er;
   int retVal = 0;
 
-  // #384 forward instantiation
   struct session *ses = NULL;
   struct nextquestions *nq = NULL;
+  enum actions action = ACTION_SESSION_NEXTQUESTIONS;
 
   do {
 
@@ -1227,7 +1243,7 @@ static void fcgi_nextquestion(struct kreq *req) {
 
     // validate requested action against session current state (#379)
     char reason[1024];
-    if (validate_session_action(ACTION_SESSION_NEXTQUESTIONS, ses, reason, 1024)) {
+    if (validate_session_action(action, ses, reason, 1024)) {
       free_session(ses);
       ses = NULL;
       http_json_error(req, KHTTP_400, reason);
@@ -1235,7 +1251,7 @@ static void fcgi_nextquestion(struct kreq *req) {
     }
 
     // #332 next_questions data struct
-    nq = get_next_questions(ses);
+    nq = get_next_questions(ses, action, 0);
     if (!nq) {
       free_session(ses);
       ses = NULL;
@@ -1397,8 +1413,8 @@ static void fcgi_analyse(struct kreq *req) {
   enum kcgi_err er;
   int retVal = 0;
 
-  // #384 forward instantiation
   struct session *ses = NULL;
+  enum actions action = ACTION_SESSION_ANALYSIS;
 
   do {
 
@@ -1422,7 +1438,7 @@ static void fcgi_analyse(struct kreq *req) {
 
     // validate requested action against session current state (#379)
     char reason[1024];
-    if (validate_session_action(ACTION_SESSION_ANALYSIS, ses, reason, 1024)) {
+    if (validate_session_action(action, ses, reason, 1024)) {
       free_session(ses);
       ses = NULL;
       http_json_error(req, KHTTP_400, reason);

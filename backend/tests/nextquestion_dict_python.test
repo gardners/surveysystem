@@ -16,7 +16,7 @@ endofsurvey
 # Create python module
 python
 
-def nextquestion(questions, answers):
+def nextquestion(questions, answers, **kwargs):
   progress = [len(answers), len(questions)]
 
   if len(answers) == 0:
@@ -101,7 +101,7 @@ endofsurvey
 # Create python module
 python
 
-def nextquestion(questions, answers):
+def nextquestion(questions, answers, **kwargs):
   progress = [len(answers), len(questions)]
 
   if len(answers) == 0:

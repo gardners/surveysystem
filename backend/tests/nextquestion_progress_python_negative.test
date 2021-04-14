@@ -19,7 +19,7 @@ endofsurvey
 python
 import json
 
-def nextquestion(questions, answers):
+def nextquestion(questions, answers, **kwargs):
 
   if len(answers) == 0:
     return {

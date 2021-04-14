@@ -11,7 +11,7 @@ endofsurvey
 
 # Create python module
 python
-def nextquestion(questions,answers):
+def nextquestion(questions, answers, **kwargs):
     with open('/tmp/pythoninputs-nextquestion_multiple.txt', 'w') as f:
         f.write("QNs: %s\n" % questions)
         f.write("Qn len: %d\n" % len(questions))

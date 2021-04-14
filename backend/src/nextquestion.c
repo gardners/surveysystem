@@ -352,26 +352,96 @@ int mark_next_question(struct session *s, struct question *next_questions[], int
 }
 
 void log_python_object(char *msg, PyObject *result) {
-  char fname[1024];
-  snprintf(fname, 1024, "/tmp/pyobj.%d.txt", getpid());
-  FILE *f = fopen(fname, "w");
+  PyObject* repr = PyObject_Str(result);
+  PyObject* str = PyUnicode_AsEncodedString(repr, "utf-8", "~E~");
 
-  if (f) {
-    PyObject_Print(result, f, 0);
-    fclose(f);
-    f = fopen(fname, "r");
-    char buffer[8192] = "";
+  // https://docs.python.org/3/c-api/bytes.html#c.PyBytes_AsString: "It must not be deallocated"
+  const char *bytes = PyBytes_AS_STRING(str);
+  LOG_INFOV("%s: '%s'", msg, bytes);
 
-    if (f) {
-      int bytes = fread(buffer, 1, 8192, f);
-      (void)bytes;
-      fclose(f);
+  Py_XDECREF(repr);
+  Py_XDECREF(str);
+}
+
+/**
+ * Loads Python next_question module and searches for defined functions with the following naming patterns:
+ *  - <base_function>_<survey_id>_<survey_hash>
+ *  - <base_function_<survey_id>
+ *  - <base_function>
+ * Pattern example, given the base_function name is 'nextquestion' and syrvey_id is 'foo/12345'
+ *  - nextquestion_foo_12345
+ *  - nextquestion_foo
+ *  - nextquestion
+ * returns a Python callable object and sets function_name (mainly for parent logging)
+ */
+PyObject *py_get_hook_function(char *base_function, char *survey_id, char *function_name, size_t len) {
+  int retVal = 0;
+
+  PyObject *func = NULL;
+
+  do {
+    if (!py_module) {
+      LOG_ERROR("python module not initialised");
+    }
+    if (!base_function || base_function[0] == 0) {
+      LOG_ERROR("base_function is empty");
+    }
+    if (!survey_id || survey_id[0] == 0) {
+      LOG_ERROR("survey_id is empty");
     }
 
-    if (buffer[0])
-      LOG_INFOV("%s = %s", msg, buffer);
+    // 1. <base_function>_<survey_id>_<survey_hash>()
+
+    snprintf(function_name, len, "%s_%s", base_function, survey_id);
+    for (int i = 0; function_name[i]; i++) {
+        if (function_name[i] == '/') {
+          function_name[i] = '_';
+        }
+    }
+    LOG_INFOV("Searching for python function '%s'", function_name);
+    func = PyObject_GetAttrString(py_module, function_name);
+
+    // 2. <base_function>_<survey_id>()
+
+    if (!func) {
+        // Try again without _hash on the end
+        snprintf(function_name, len, "%s_%s", base_function, survey_id);
+        for (int i = 0; function_name[i]; i++) {
+          if (function_name[i] == '/') {
+              function_name[i] = 0;
+          }
+        }
+        LOG_INFOV("Searching for python function '%s'", function_name);
+        func = PyObject_GetAttrString(py_module, function_name);
+    }
+
+    // 2. <base_function>()
+
+    if (!func) {
+        snprintf(function_name, len, "%s", base_function);
+        LOG_INFOV("Searching for python function '%s'", function_name);
+        func = PyObject_GetAttrString(py_module, function_name);
+    }
+
+    if (!func) {
+        LOG_ERRORV("No matching python function for base '%s', survey '%s'", base_function, survey_id);
+    }
+
+    if (!PyCallable_Check(func)) {
+        LOG_ERRORV("Python function '%s' is not a callable, survey '%s'", function_name, survey_id);
+    }
+
+    LOG_INFOV("Preparing to call python hook '%s()' for base function '%s()'", base_function, function_name);
+
+  } while(0);
+
+  if (retVal) {
+    Py_XDECREF(func);
+    return NULL;
   }
-}
+
+  return func;
+};
 
 /**
  * Creates an answer Py_Dict
@@ -379,64 +449,234 @@ void log_python_object(char *msg, PyObject *result) {
  * the caller is responsible for derferencing the dict:  if(dict) Py_DECREF(dict);
  */
 PyObject *py_create_answer(struct answer *a) {
+  int retVal = 0;
+  PyObject *dict = NULL;
 
-  // #358 include question type
-  char stype[50];
-  if(!serialise_question_type(a->type, stype, 50)) { // serialise_question_type returns str length
-      return NULL;
-  }
+  do {
+    // #358 include question type
+    char stype[50];
+    if(!serialise_question_type(a->type, stype, 50)) { // serialise_question_type returns str length
+        return NULL;
+    }
 
-  PyObject *dict = PyDict_New();
-  PyObject *uid = PyUnicode_FromString(a->uid);
-  PyObject *type = PyUnicode_FromString(stype);
-  PyObject *text = PyUnicode_FromString(a->text);
-  PyObject *value = PyLong_FromLongLong(a->value);
-  PyObject *lat = PyLong_FromLongLong(a->lat);
-  PyObject *lon = PyLong_FromLongLong(a->lon);
-  PyObject *time_begin = PyLong_FromLongLong(a->time_begin);
-  PyObject *time_end = PyLong_FromLongLong(a->time_end);
-  PyObject *time_zone_delta = PyLong_FromLongLong(a->time_zone_delta);
-  PyObject *dst_delta = PyLong_FromLongLong(a->dst_delta);
-  //# 299
-  PyObject *unit = PyUnicode_FromString(a->unit);
-  PyObject *flags = PyLong_FromLongLong(a->flags);
-  PyObject *stored = PyLong_FromLongLong(a->stored);
+    dict = PyDict_New();
+    if(!dict) {
+      LOG_ERROR("failed to create answer dict");
+    }
 
-  PyObject *uid_l = PyUnicode_FromString("uid");
-  PyObject *type_l = PyUnicode_FromString("type");
-  PyObject *text_l = PyUnicode_FromString("text");
-  PyObject *value_l = PyUnicode_FromString("value");
-  PyObject *lat_l = PyUnicode_FromString("latitude");
-  PyObject *lon_l = PyUnicode_FromString("longitude");
-  PyObject *time_begin_l = PyUnicode_FromString("time_begin");
-  PyObject *time_end_l = PyUnicode_FromString("time_end");
-  PyObject *time_zone_delta_l = PyUnicode_FromString("time_zone_delta");
-  PyObject *dst_delta_l = PyUnicode_FromString("dst_delta");
-  //# 299
-  PyObject *unit_l = PyUnicode_FromString("unit");
-  PyObject *flags_l = PyUnicode_FromString("flags");
-  PyObject *stored_l = PyUnicode_FromString("stored");
+    PyObject *uid = PyUnicode_FromString(a->uid);
+    PyObject *type = PyUnicode_FromString(stype);
+    PyObject *text = PyUnicode_FromString(a->text);
+    PyObject *value = PyLong_FromLongLong(a->value);
+    PyObject *lat = PyLong_FromLongLong(a->lat);
+    PyObject *lon = PyLong_FromLongLong(a->lon);
+    PyObject *time_begin = PyLong_FromLongLong(a->time_begin);
+    PyObject *time_end = PyLong_FromLongLong(a->time_end);
+    PyObject *time_zone_delta = PyLong_FromLongLong(a->time_zone_delta);
+    PyObject *dst_delta = PyLong_FromLongLong(a->dst_delta);
+    //# 299
+    PyObject *unit = PyUnicode_FromString(a->unit);
+    PyObject *flags = PyLong_FromLongLong(a->flags);
+    PyObject *stored = PyLong_FromLongLong(a->stored);
 
-  int errors = PyDict_SetItem(dict, uid_l, uid);
-  errors += PyDict_SetItem(dict, type_l, type);
-  errors += PyDict_SetItem(dict, text_l, text);
-  errors += PyDict_SetItem(dict, value_l, value);
-  errors += PyDict_SetItem(dict, lat_l, lat);
-  errors += PyDict_SetItem(dict, lon_l, lon);
-  errors += PyDict_SetItem(dict, time_begin_l, time_begin);
-  errors += PyDict_SetItem(dict, time_end_l, time_end);
-  errors += PyDict_SetItem(dict, time_zone_delta_l, time_zone_delta);
-  errors += PyDict_SetItem(dict, dst_delta_l, dst_delta);
-  //# 299
-  errors += PyDict_SetItem(dict, unit_l, unit);
-  errors += PyDict_SetItem(dict, flags_l, flags);
-  errors += PyDict_SetItem(dict, stored_l, stored);
+    PyObject *uid_l = PyUnicode_FromString("uid");
+    PyObject *type_l = PyUnicode_FromString("type");
+    PyObject *text_l = PyUnicode_FromString("text");
+    PyObject *value_l = PyUnicode_FromString("value");
+    PyObject *lat_l = PyUnicode_FromString("latitude");
+    PyObject *lon_l = PyUnicode_FromString("longitude");
+    PyObject *time_begin_l = PyUnicode_FromString("time_begin");
+    PyObject *time_end_l = PyUnicode_FromString("time_end");
+    PyObject *time_zone_delta_l = PyUnicode_FromString("time_zone_delta");
+    PyObject *dst_delta_l = PyUnicode_FromString("dst_delta");
+    //# 299
+    PyObject *unit_l = PyUnicode_FromString("unit");
+    PyObject *flags_l = PyUnicode_FromString("flags");
+    PyObject *stored_l = PyUnicode_FromString("stored");
 
-  if (errors) {
-    Py_DECREF(dict);
+    int errors = PyDict_SetItem(dict, uid_l, uid);
+    errors += PyDict_SetItem(dict, type_l, type);
+    errors += PyDict_SetItem(dict, text_l, text);
+    errors += PyDict_SetItem(dict, value_l, value);
+    errors += PyDict_SetItem(dict, lat_l, lat);
+    errors += PyDict_SetItem(dict, lon_l, lon);
+    errors += PyDict_SetItem(dict, time_begin_l, time_begin);
+    errors += PyDict_SetItem(dict, time_end_l, time_end);
+    errors += PyDict_SetItem(dict, time_zone_delta_l, time_zone_delta);
+    errors += PyDict_SetItem(dict, dst_delta_l, dst_delta);
+    //# 299
+    errors += PyDict_SetItem(dict, unit_l, unit);
+    errors += PyDict_SetItem(dict, flags_l, flags);
+    errors += PyDict_SetItem(dict, stored_l, stored);
+
+    if (errors) {
+      LOG_ERRORV("setting dict item failed wiht %d errors", errors);
+    }
+
+  } while (0);
+
+  if (retVal) {
+    Py_XDECREF(dict);
     return NULL;
   }
+
   return dict;
+}
+
+/**
+ * Creates and a Python list of question uids for an existing session
+ * #445
+ * returns PyObject pointer or NULL on error
+ */
+PyObject *py_create_questions_list(struct session *ses) {
+    int retVal = 0;
+    PyObject *questions = NULL;
+
+    do {
+        questions = PyList_New(ses->question_count);
+
+        // build arguments: questions list
+        for (int i = 0; i < ses->question_count; i++) {
+            PyObject *item = PyUnicode_FromString(ses->questions[i]->uid);
+            if (PyList_SetItem(questions, i, item)) {
+                Py_DECREF(item);
+                LOG_ERRORV("Error inserting question name '%s' into Python list", ses->questions[i]->uid);
+            }
+        }
+    } while(0);
+
+    if (retVal) {
+        Py_XDECREF(questions);
+        return NULL;
+    }
+
+    return questions;
+}
+
+/**
+ * Creates and a Python list of answer dicts for an existing session.
+ * Header answers and system answers are excluded
+ * #445
+ * returns PyObject pointer or NULL on error
+ */
+PyObject *py_create_answers_list(struct session *ses) {
+    int retVal = 0;
+    PyObject *answers = NULL;
+
+    do {
+        answers = PyList_New(ses->given_answer_count);
+
+        // build arguments: answers list
+        int listIndex = 0;
+        for (int i = ses->answer_offset; i < ses->answer_count; i++) {
+
+          if (is_given_answer(ses->answers[i])) {
+            PyObject *item = py_create_answer(ses->answers[i]);
+            if (!item) {
+              LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.", ses->answers[i]->uid);
+            }
+
+            if (PyList_SetItem(answers, listIndex, item)) {
+              Py_DECREF(item);
+              LOG_ERRORV("Error inserting answer name '%s' into Python list", ses->answers[i]->uid);
+            }
+
+            listIndex++;
+          } // if is_given_answer
+
+        }
+
+    } while(0);
+
+    if (retVal) {
+        Py_XDECREF(answers);
+        return NULL;
+    }
+
+    return answers;
+}
+
+/**
+ * Compiles arguments for a python callable (hook) and executes it
+ * returns result
+ *
+ * The result can be NULL. It's up to the callee to evaluate whether this is considered as an error or not.
+ */
+PyObject *py_invoke_hook_function(PyObject *myFunction, struct session *ses, enum actions action, int affected_answers_count) {
+  int retVal = 0;
+
+  PyObject *kwargs = NULL;
+  PyObject *questions = NULL;
+  PyObject *answers = NULL;
+
+  PyObject *result = NULL;
+
+  do {
+    if (!ses) {
+      LOG_ERROR("session is null");
+    }
+    if (!ses->survey_id || ses->survey_id[0] == 0) {
+        LOG_ERROR("session->survey_id is empty");
+    }
+    if (!ses->session_id|| ses->session_id[0] == 0) {
+        LOG_ERROR("session->session_id is empty");
+    }
+    if (action < ACTION_NONE || action >= NUM_SESSION_ACTIONS) {
+        LOG_ERROR("invalid action");
+    }
+
+    // build positional args
+
+    questions = py_create_questions_list(ses);
+    if (!questions) {
+        LOG_ERROR("Error building positional arg (questions list)");
+    }
+
+    answers = py_create_answers_list(ses);
+    if (!answers) {
+        LOG_ERROR("Error building positional arg (answers list)");
+    }
+
+    PyObject *args = PyTuple_Pack(2, questions, answers);
+
+    // build context args
+
+    kwargs = Py_BuildValue(
+      "{s:s:s:s,s:s:s:i}",
+      "survey_id", ses->survey_id,
+      "session_id", ses->session_id,
+      "action",  session_action_names[action],
+      "affected_count", affected_answers_count
+    );
+
+    if(!kwargs) {
+      LOG_INFO("Failed to build keyword args (context)");
+    }
+
+    result = PyObject_Call(myFunction, args, kwargs);
+    Py_XDECREF(args);
+    Py_XDECREF(kwargs);
+
+    if (PyErr_Occurred()) {
+      log_python_error();
+      LOG_ERROR("Python function exited with an Error "
+                 "(PyErr_Occurred()). Check the backtrace and error messages "
+                 "above, in case they give you any clues.)");
+      PyErr_Clear();
+    }
+
+  } while(0);
+
+  if (retVal) {
+    Py_XDECREF(kwargs);
+    Py_XDECREF(questions);
+    Py_XDECREF(answers);
+
+    Py_XDECREF(result);
+    return NULL;
+  }
+
+  return result;
 }
 
 /**
@@ -570,7 +810,19 @@ void free_next_questions(struct nextquestions *nq) {
   return;
 }
 
-int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
+/**
+ * Python api next question selector.
+ * Loads Python next_question module, loads and calls defined "nextquestion_* function.
+ * We pass into the function:
+ * - list of questions
+ * - list of answers
+ * - context information about the current session and performend action
+ * We expect a list of strings of question UIDs to ask as the return value.
+ *
+ * #332 next_questions data struct
+ * #445 add action, affected_answers_count args (to be used in later development), out sourcetasks into units
+ */
+int call_python_nextquestion(struct session *s, struct nextquestions *nq, enum actions action, int affected_answers_count) {
   int retVal = 0;
   int is_error = 0;
 
@@ -595,118 +847,15 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
       LOG_ERROR( "Python module 'nextquestion' not loaded. Does it have an error?");
     }
 
-    // Build names of candidate functions.
-    // nextquestion_<survey_id>_<hash of survey>
-    // or failing that, nextquestion_<survey_id>
-    // or failing that, nextquestion
-    // In all cases, we pass in an list of questions, and an list of answers,
-    // and expect a list of strings of question UIDs to ask as the return value.
-
+    // select from avaliable hook functions
     char function_name[1024];
-
-    // Try all three possible function names
-    snprintf(function_name, 1024, "nextquestion_%s", s->survey_id);
-    for (int i = 0; function_name[i]; i++) {
-      if (function_name[i] == '/') {
-        function_name[i] = '_';
-      }
-    }
-    LOG_INFOV("Searching for python function '%s'", function_name);
-
-    PyObject *myFunction =
-        PyObject_GetAttrString(py_module, function_name);
-
+    PyObject *myFunction = py_get_hook_function("nextquestion", s->survey_id, function_name, 1024);
     if (!myFunction) {
-      // Try again without _hash on the end
-      snprintf(function_name, 1024, "nextquestion_%s", s->survey_id);
-      for (int i = 0; function_name[i]; i++) {
-        if (function_name[i] == '/') {
-          function_name[i] = 0;
-        }
-      }
-      LOG_INFOV("Searching for python function '%s'", function_name);
-      myFunction = PyObject_GetAttrString(py_module, function_name);
+      LOG_ERROR("Failed to get hook function for 'nextquestion'");
     }
-
-    if (!myFunction) {
-      snprintf(function_name, 1024, "nextquestion");
-      LOG_INFOV("Searching for python function '%s'", function_name);
-      myFunction = PyObject_GetAttrString(py_module, function_name);
-    }
-
-    if (!myFunction) {
-      LOG_ERRORV("No matching python function for survey '%s'", s->survey_id);
-    }
-
-    if (!PyCallable_Check(myFunction)) {
-      is_error = 1;
-      LOG_ERRORV("Python function '%s' is not callable", function_name);
-    }
-
-    LOG_INFOV("Preparing to call python function '%s' to get next question(s)",
-              function_name);
 
     // Okay, we have the function object, so build the argument list and call it.
-    //    #227 initialize answer list with the correct length (excluding ANSWER_DELETED)
-    //    #363, answer offset, exclude session header
-
-    PyObject *questions = PyList_New(s->question_count);
-    int count_given_answers = 0;
-    for (int i = s->answer_offset; i < s->answer_count; i++) {
-      // #186 Don't include deleted answers in the list fed to Python
-      // #363, exclude system (any position)
-      if (is_given_answer(s->answers[i])) {
-        count_given_answers++;
-      }
-    }
-    PyObject *answers = PyList_New(count_given_answers);
-
-    for (int i = 0; i < s->question_count; i++) {
-      PyObject *item = PyUnicode_FromString(s->questions[i]->uid);
-      if (PyList_SetItem(questions, i, item)) {
-        Py_DECREF(item);
-        LOG_ERRORV("Error inserting question name '%s' into Python list",
-                   s->questions[i]->uid);
-      }
-    }
-
-    // #311, PyList increment
-    // #363, answer offset, exclude session header
-    int listIndex = 0;
-    for (int i = s->answer_offset; i < s->answer_count; i++) {
-      // #186 Don't include deleted answers in the list fed to Python
-      // #363, exclude system answers (any position)
-      if (is_given_answer(s->answers[i])) {
-        PyObject *dict = py_create_answer(s->answers[i]);
-
-        if (!dict) {
-          LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.", s->answers[i]->uid);
-        }
-
-        if (PyList_SetItem(answers, listIndex, dict)) {
-          Py_DECREF(dict);
-          LOG_ERRORV("Error inserting answer name '%s' into Python list", s->answers[i]->uid);
-        }
-
-        listIndex++;
-      }
-    }
-
-    //    log_python_object("Answers",answers);
-    PyObject *args = PyTuple_Pack(2, questions, answers);
-
-    PyObject *result = PyObject_CallObject(myFunction, args);
-    Py_DECREF(args);
-
-    if (PyErr_Occurred()) {
-      is_error = 1;
-      log_python_error();
-      LOG_ERRORV("Python function '%s' exited with an Error "
-                 "(PyErr_Occurred()). Check the backtrace and error messages "
-                 "above, in case they give you any clues.)",
-                 function_name);
-      PyErr_Clear();
-    }
+    PyObject *result = py_invoke_hook_function(myFunction, s, action, affected_answers_count);
 
     if (!result) {
       is_error = 1;
@@ -723,8 +872,7 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
     if(!PyDict_Check(result)) {
       is_error = 1;
       Py_DECREF(result);
-      LOG_ERRORV("Reply from Python function '%s' is of invalid type (not a dict)",
-                   function_name);
+      LOG_ERRORV("Reply from Python function '%s' is of invalid type (not a dict)", function_name);
     }
 
     // 1. extract status
@@ -732,16 +880,14 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
     if (!py_status) {
       is_error = 1;
       Py_DECREF(result);
-      LOG_ERRORV("Reply from Python function '%s' has no member 'status'",
-                   function_name);
+      LOG_ERRORV("Reply from Python function '%s' has no member 'status'", function_name);
     }
 
     long int status = PyLong_AsLong(py_status);
     if(status == -1) {
       is_error = 1;
       Py_DECREF(result);
-      LOG_ERRORV("Reply from Python function '%s': invalid member 'status' (int)",
-                   function_name);
+      LOG_ERRORV("Reply from Python function '%s': invalid member 'status' (int)", function_name);
     }
 
     // 2. assign status
@@ -752,16 +898,14 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
     if (!py_message) {
       is_error = 1;
       Py_DECREF(result);
-      LOG_ERRORV("Reply from Python function '%s' has no member 'message'",
-                   function_name);
+      LOG_ERRORV("Reply from Python function '%s' has no member 'message'", function_name);
     }
 
     const char *message = PyUnicode_AsUTF8(py_message);
     if(!message) {
       is_error = 1;
       Py_DECREF(result);
-      LOG_ERRORV("Reply from Python function '%s': invalid member 'message' (str)",
-                   function_name);
+      LOG_ERRORV("Reply from Python function '%s': invalid member 'message' (str)", function_name);
     }
 
     // 4. assign message
@@ -771,8 +915,7 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
     if (py_nextquestions_handle_progress(result, nq)) {
       is_error = 1;
       Py_DECREF(result);
-      LOG_ERRORV("Reply from Python function '%s': progess handler failed",
-                   function_name);
+      LOG_ERRORV("Reply from Python function '%s': progess handler failed", function_name);
     }
 
     // 6. extract nextquestions
@@ -780,15 +923,13 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
     if (!py_next_questions) {
       is_error = 1;
       Py_DECREF(result);
-      LOG_ERRORV("Reply from Python function '%s' has no member 'next_questions'",
-                   function_name);
+      LOG_ERRORV("Reply from Python function '%s' has no member 'next_questions'", function_name);
     }
 
     if(!PyList_Check(py_next_questions)) {
       is_error = 1;
       Py_DECREF(result);
-      LOG_ERRORV("Reply from Python function '%s': invalid member 'next_questions' (list(str))",
-                   function_name);
+      LOG_ERRORV("Reply from Python function '%s': invalid member 'next_questions' (list(str))", function_name);
     }
 
     int list_len = PyList_Size(py_next_questions);
@@ -802,8 +943,7 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
         if (!uid) {
           is_error = 1;
           Py_DECREF(result);
-          LOG_ERRORV("String in reply from Python function '%s' is null",
-                      function_name);
+          LOG_ERRORV("String in reply from Python function '%s' is null", function_name);
         }
 
         // 6. assign next_questions
@@ -812,16 +952,13 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
         if (mark_next_question(s, nq->next_questions, &nq->question_count, uid)) {
           is_error = 1;
           Py_DECREF(result);
-          LOG_ERRORV("Error adding question '%s' to list of next questions.  "
-                      "Is it a valid question UID?",
-                      uid);
+          LOG_ERRORV("Error adding question '%s' to list of next questions, question uid valid?", uid);
         }
 
       } else {
         Py_DECREF(result);
         LOG_ERRORV(
-            "result.next_questions[%d] list item is not a string in response from Python function '%s'",
-            i, function_name);
+            "result.next_questions[%d] item is not a string in response from Python function '%s'", i, function_name);
       }
 
     } // endfor
@@ -837,11 +974,12 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq) {
   return retVal;
 }
 
-/*
-  Generic next question selector, which selects the first question lacking an answer.
-  #332 next_questions data struct
-*/
-int get_next_questions_generic(struct session *s, struct nextquestions *nq) {
+/**
+ * Generic next question selector, which selects the first question lacking an answer.
+ * #332 next_questions data struct
+ * #445 add action, affected_answers_count args (to be used in later development)
+ */
+int get_next_questions_generic(struct session *s, struct nextquestions *nq, enum actions action, int affected_answers_count) {
   int retVal = 0;
 
   do {
@@ -916,7 +1054,7 @@ int get_next_questions_generic(struct session *s, struct nextquestions *nq) {
  * #332 nextquestions data struct
  * #379 refactor
  */
-struct nextquestions *get_next_questions(struct session *s) {
+struct nextquestions *get_next_questions(struct session *s, enum actions action, int affected_answers_count) {
   // Call the function to get the next question(s) to ask.
   // First see if we have a python function to do the job.
   // If not, then return the list of all not-yet-answered questions
@@ -937,7 +1075,7 @@ struct nextquestions *get_next_questions(struct session *s) {
     if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_PYTHON) {
 
       LOG_INFO("NEXTQUESTIONS_FLAG_PYTHON set, calling call_python_nextquestion())");
-      fail = call_python_nextquestion(s, nq);
+      fail = call_python_nextquestion(s, nq, action, affected_answers_count);
 
       if (fail) {
         LOG_ERRORV("call_python_nextquestion() failed with return code %d", fail);
@@ -948,7 +1086,7 @@ struct nextquestions *get_next_questions(struct session *s) {
       // PGS: Disabled generic implementation of nextquestion, since if you have a python version and it can't be loaded
       // for some reason we should NOT fall back, because it may expose questions and IP in a survey that should not be revealed.
       LOG_INFO("NEXTQUESTIONS_FLAG_GENERIC set, calling get_next_questions_generic())");
-      fail = get_next_questions_generic(s, nq);
+      fail = get_next_questions_generic(s, nq, action, affected_answers_count);
 
       if (fail) {
         LOG_ERRORV("get_next_questions_generic() failed with return code %d", fail);
@@ -1006,136 +1144,35 @@ int get_analysis_generic(struct session *s, const char **output) {
 /*
  * Fetch analysis json string via Python script
  * #288, the parent unit is responsible for freeing *output pointer
- * **output needs to be freed outside of this function
+ * Note! output needs to be freed outside of this function
  */
 int call_python_analysis(struct session *s, const char **output) {
   int retVal = 0;
   int is_error = 0;
   do {
-    if (!s)
-      LOG_ERROR("session structure is NULL");
-    if (!output)
-      LOG_ERROR("output is NULL");
-
+    if (!s->survey_id) {
+      LOG_ERROR("surveyname is NULL");
+    }
+    if (!s->session_id) {
+      LOG_ERROR("session_uuid is NULL");
+    }
     // Setup python
     if (setup_python()) {
       LOG_ERROR("Failed to initialise python.\n");
     }
-    if (!py_module)
-      LOG_ERROR(
-          "Python module 'nextquestion' not loaded. Does it have an error?");
+    if (!py_module) {
+      LOG_ERROR( "Python module 'nextquestion' not loaded. Does it have an error?");
+    }
 
-    // Build names of candidate functions.
-    // nextquestion_<survey_id>_<hash of survey>
-    // or failing that, nextquestion_<survey_id>
-    // or failing that, nextquestion
-    // In all cases, we pass in an list of questions, and an list of answers,
-    // and expect a list of strings of question UIDs to ask as the return value.
-
+    // select from avaliable hook functions
     char function_name[1024];
-
-    // Try all three possible function names
-    snprintf(function_name, 1024, "analyse_%s", s->survey_id);
-    for (int i = 0; function_name[i]; i++) {
-      if (function_name[i] == '/') {
-        function_name[i] = '_';
-      }
-    }
-    LOG_INFOV("Searching for python function '%s'", function_name);
-
-    PyObject *myFunction =
-        PyObject_GetAttrString(py_module, function_name);
-
+    PyObject *myFunction = py_get_hook_function("analyse", s->survey_id, function_name, 1024);
     if (!myFunction) {
-      // Try again without _hash on the end
-      snprintf(function_name, 1024, "analyse_%s", s->survey_id);
-      for (int i = 0; function_name[i]; i++) {
-        if (function_name[i] == '/') {
-          function_name[i] = 0;
-        }
-      }
-      LOG_INFOV("Searching for python function '%s'", function_name);
-      myFunction = PyObject_GetAttrString(py_module, function_name);
+      LOG_ERROR("Failed to get hook function for 'analyse'");
     }
 
-    if (!myFunction) {
-      snprintf(function_name, 1024, "analyse");
-      LOG_INFOV("Searching for python function '%s'", function_name);
-      myFunction = PyObject_GetAttrString(py_module, function_name);
-    }
-
-    if (!myFunction)
-      LOG_ERRORV("No matching python function for survey '%s'", s->survey_id);
-
-    if (!PyCallable_Check(myFunction)) {
-      is_error = 1;
-      LOG_ERRORV("Python function '%s' is not callable", function_name);
-    }
-
-    LOG_INFOV("Preparing to call python function '%s' to get analysis",
-              function_name);
-
-    // TODO see get_analysis() - move answers and questions py list generation in separate unit
     // Okay, we have the function object, so build the argument list and call it.
-    PyObject *questions = PyList_New(s->question_count);
-
-    // #227 initialize answer list with the correct length (excluding ANSWER_DELETED)
-    // #363, answer offset, exclude session header
-    int count_given_answers = 0;
-    for (int i = s->answer_offset; i < s->answer_count; i++) {
-      // #186 Don't include deleted answers in the list fed to Python
-      // #363, exclude system (any position)
-      if (is_given_answer(s->answers[i])) {
-        count_given_answers++;
-      }
-    }
-    PyObject *answers = PyList_New(count_given_answers);
-
-    for (int i = 0; i < s->question_count; i++) {
-      PyObject *item = PyUnicode_FromString(s->questions[i]->uid);
-      if (PyList_SetItem(questions, i, item)) {
-        Py_DECREF(item);
-        LOG_ERRORV("Error inserting question name '%s' into Python list",
-                   s->questions[i]->uid);
-      }
-    }
-
-    // #311, PyList increment
-    // #363, answer offset, exclude session header
-    int listIndex = 0;
-    for (int i = s->answer_offset; i < s->answer_count; i++) {
-      // #363, exclude system (any position)
-      if (is_given_answer(s->answers[i])) {
-        PyObject *dict = py_create_answer(s->answers[i]);
-
-        if (!dict) {
-          LOG_ERRORV("Could not construct answer structure '%s' for Python. "
-                     "WARNING: Memory has been leaked.",
-                     s->answers[i]->uid);
-        }
-
-        if (PyList_SetItem(answers, listIndex, dict)) {
-          Py_DECREF(dict);
-          LOG_ERRORV("Error inserting answer name '%s' into Python list",
-                     s->answers[i]->uid);
-        }
-        listIndex++;
-      }
-    }
-
-    PyObject *args = PyTuple_Pack(2, questions, answers);
-    PyObject *result = PyObject_CallObject(myFunction, args);
-    Py_DECREF(args);
-
-    if (PyErr_Occurred()) {
-      is_error = 1;
-      log_python_error();
-      LOG_ERRORV("Python function '%s' exited with an Error "
-                 "(PyErr_Occurred()). Check the backtrace and error messages "
-                 "above, in case they give you any clues.)",
-                 function_name);
-      PyErr_Clear();
-    }
+    PyObject *result = py_invoke_hook_function(myFunction, s, ACTION_SESSION_ANALYSIS, 0);
 
     if (!result) {
       is_error = 1;
@@ -1158,8 +1195,7 @@ int call_python_analysis(struct session *s, const char **output) {
       if (!return_string) {
         is_error = 1;
         Py_DECREF(result);
-        LOG_ERRORV("String in reply from Python function '%s' is null",
-                   function_name);
+        LOG_ERRORV("String in reply from Python function '%s' is null", function_name);
       }
 
       // #288, allocate dedicated memory, managed by backend and write string
@@ -1167,8 +1203,7 @@ int call_python_analysis(struct session *s, const char **output) {
       // TODO should issues occur then consider hard-setting a \0 token at the last position of *output
     } else {
       Py_DECREF(result);
-      LOG_ERRORV("Return value from Python function '%s' is not a string.",
-                 function_name);
+      LOG_ERRORV("Return value from Python function '%s' is not a string.", function_name);
     }
 
     Py_DECREF(result);

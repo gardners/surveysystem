@@ -16,7 +16,7 @@ endofsurvey
 
 # Create unused python module. Test passes if this is NOT invoked
 python
-def nextquestion(questions, answers):
+def nextquestion(questions, answers, **kwargs):
     # note that question2 will never be returned
     progress = [len(answers), len(questions)]
     if len(answers) == 0:
@@ -95,7 +95,7 @@ endofsurvey
 
 # Create python module, skipping question 2. Test passes if this IS invoked
 python
-def nextquestion(questions, answers):
+def nextquestion(questions, answers, **kwargs):
 
     # note that question2 will never be returned
     # progress howver, will supply the number of all questions

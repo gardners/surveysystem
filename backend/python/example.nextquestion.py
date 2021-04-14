@@ -1,6 +1,17 @@
 """
 A simple example of a Python survey controller, includes the required C api hook functions
 Copy this file to "nextquestion.py" and restart the server without ENV "SURVEY_PYTHONDIR" (external package path) being set.
+
+kwargs supplied from backend:
+ * survey_id: (str) survey id and hashed version - pattern: '<survey_id>/<hash>'
+ * session_id: (str) current session id
+ * action: (str) text representation of current (performed) session action (see survey.h enum actions) - one of:
+   - 'SESSION_NEXTQUESTIONS',
+   - 'SESSION_ADDANSWER',
+   - 'SESSION_DELETEANSWER',
+   - 'SESSION_ANALYSIS',
+ * affected_count: (int) count of affected answers by above action, additions are positive and deletions are negative
+
 """
 import os
 import json
@@ -32,14 +43,16 @@ CONST_STATUS_ERROR = 2
 # C backend hooks
 ####
 
-def nextquestion(questions, answers, logFilename=None):
+def nextquestion(questions, answers, **kwargs):
     """
     invoke questionLogic and return next question ids
      - this example simply retuns the next question id
+     - available kwargs: see module description
     """
 
-    if logFilename:
-        init_logging(logFilename)
+    log_file = kwargs.get('log_file')
+    if log_file:
+        init_logging(log_file)
 
     logging.info('nextquestion hook invoked: {}'.format(os.getcwd()))
 
@@ -63,13 +76,15 @@ def nextquestion(questions, answers, logFilename=None):
     }
 
 
-def analyse(questions, answers, logFilename=None, debug=False):
+def analyse(questions, answers, **kwargs):
     """
     invoke analytics and return analyse json
+    - available kwargs: see module description
     """
 
-    if logFilename:
-        init_logging(logFilename)
+    log_file = kwargs.get('log_file')
+    if log_file:
+        init_logging(log_file)
 
     logging.info('analyse hook invoked: {}'.format(os.getcwd()))
 
