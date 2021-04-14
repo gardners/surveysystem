@@ -369,63 +369,77 @@ void log_python_object(char *msg, PyObject *result) {
  * the caller is responsible for derferencing the dict:  if(dict) Py_DECREF(dict);
  */
 PyObject *py_create_answer(struct answer *a) {
+  int retVal = 0;
+  PyObject *dict = NULL;
 
-  // #358 include question type
-  char stype[50];
-  if(!serialise_question_type(a->type, stype, 50)) { // serialise_question_type returns str length
-      return NULL;
-  }
+  do {
+    // #358 include question type
+    char stype[50];
+    if(!serialise_question_type(a->type, stype, 50)) { // serialise_question_type returns str length
+        return NULL;
+    }
 
-  PyObject *dict = PyDict_New();
-  PyObject *uid = PyUnicode_FromString(a->uid);
-  PyObject *type = PyUnicode_FromString(stype);
-  PyObject *text = PyUnicode_FromString(a->text);
-  PyObject *value = PyLong_FromLongLong(a->value);
-  PyObject *lat = PyLong_FromLongLong(a->lat);
-  PyObject *lon = PyLong_FromLongLong(a->lon);
-  PyObject *time_begin = PyLong_FromLongLong(a->time_begin);
-  PyObject *time_end = PyLong_FromLongLong(a->time_end);
-  PyObject *time_zone_delta = PyLong_FromLongLong(a->time_zone_delta);
-  PyObject *dst_delta = PyLong_FromLongLong(a->dst_delta);
-  //# 299
-  PyObject *unit = PyUnicode_FromString(a->unit);
-  PyObject *flags = PyLong_FromLongLong(a->flags);
-  PyObject *stored = PyLong_FromLongLong(a->stored);
+    dict = PyDict_New();
+    if(!dict) {
+      LOG_ERROR("failed to create answer dict");
+    }
 
-  PyObject *uid_l = PyUnicode_FromString("uid");
-  PyObject *type_l = PyUnicode_FromString("type");
-  PyObject *text_l = PyUnicode_FromString("text");
-  PyObject *value_l = PyUnicode_FromString("value");
-  PyObject *lat_l = PyUnicode_FromString("latitude");
-  PyObject *lon_l = PyUnicode_FromString("longitude");
-  PyObject *time_begin_l = PyUnicode_FromString("time_begin");
-  PyObject *time_end_l = PyUnicode_FromString("time_end");
-  PyObject *time_zone_delta_l = PyUnicode_FromString("time_zone_delta");
-  PyObject *dst_delta_l = PyUnicode_FromString("dst_delta");
-  //# 299
-  PyObject *unit_l = PyUnicode_FromString("unit");
-  PyObject *flags_l = PyUnicode_FromString("flags");
-  PyObject *stored_l = PyUnicode_FromString("stored");
+    PyObject *uid = PyUnicode_FromString(a->uid);
+    PyObject *type = PyUnicode_FromString(stype);
+    PyObject *text = PyUnicode_FromString(a->text);
+    PyObject *value = PyLong_FromLongLong(a->value);
+    PyObject *lat = PyLong_FromLongLong(a->lat);
+    PyObject *lon = PyLong_FromLongLong(a->lon);
+    PyObject *time_begin = PyLong_FromLongLong(a->time_begin);
+    PyObject *time_end = PyLong_FromLongLong(a->time_end);
+    PyObject *time_zone_delta = PyLong_FromLongLong(a->time_zone_delta);
+    PyObject *dst_delta = PyLong_FromLongLong(a->dst_delta);
+    //# 299
+    PyObject *unit = PyUnicode_FromString(a->unit);
+    PyObject *flags = PyLong_FromLongLong(a->flags);
+    PyObject *stored = PyLong_FromLongLong(a->stored);
 
-  int errors = PyDict_SetItem(dict, uid_l, uid);
-  errors += PyDict_SetItem(dict, type_l, type);
-  errors += PyDict_SetItem(dict, text_l, text);
-  errors += PyDict_SetItem(dict, value_l, value);
-  errors += PyDict_SetItem(dict, lat_l, lat);
-  errors += PyDict_SetItem(dict, lon_l, lon);
-  errors += PyDict_SetItem(dict, time_begin_l, time_begin);
-  errors += PyDict_SetItem(dict, time_end_l, time_end);
-  errors += PyDict_SetItem(dict, time_zone_delta_l, time_zone_delta);
-  errors += PyDict_SetItem(dict, dst_delta_l, dst_delta);
-  //# 299
-  errors += PyDict_SetItem(dict, unit_l, unit);
-  errors += PyDict_SetItem(dict, flags_l, flags);
-  errors += PyDict_SetItem(dict, stored_l, stored);
+    PyObject *uid_l = PyUnicode_FromString("uid");
+    PyObject *type_l = PyUnicode_FromString("type");
+    PyObject *text_l = PyUnicode_FromString("text");
+    PyObject *value_l = PyUnicode_FromString("value");
+    PyObject *lat_l = PyUnicode_FromString("latitude");
+    PyObject *lon_l = PyUnicode_FromString("longitude");
+    PyObject *time_begin_l = PyUnicode_FromString("time_begin");
+    PyObject *time_end_l = PyUnicode_FromString("time_end");
+    PyObject *time_zone_delta_l = PyUnicode_FromString("time_zone_delta");
+    PyObject *dst_delta_l = PyUnicode_FromString("dst_delta");
+    //# 299
+    PyObject *unit_l = PyUnicode_FromString("unit");
+    PyObject *flags_l = PyUnicode_FromString("flags");
+    PyObject *stored_l = PyUnicode_FromString("stored");
 
-  if (errors) {
-    Py_DECREF(dict);
+    int errors = PyDict_SetItem(dict, uid_l, uid);
+    errors += PyDict_SetItem(dict, type_l, type);
+    errors += PyDict_SetItem(dict, text_l, text);
+    errors += PyDict_SetItem(dict, value_l, value);
+    errors += PyDict_SetItem(dict, lat_l, lat);
+    errors += PyDict_SetItem(dict, lon_l, lon);
+    errors += PyDict_SetItem(dict, time_begin_l, time_begin);
+    errors += PyDict_SetItem(dict, time_end_l, time_end);
+    errors += PyDict_SetItem(dict, time_zone_delta_l, time_zone_delta);
+    errors += PyDict_SetItem(dict, dst_delta_l, dst_delta);
+    //# 299
+    errors += PyDict_SetItem(dict, unit_l, unit);
+    errors += PyDict_SetItem(dict, flags_l, flags);
+    errors += PyDict_SetItem(dict, stored_l, stored);
+
+    if (errors) {
+      LOG_ERRORV("setting dict item failed wiht %d errors", errors);
+    }
+
+  } while (0);
+
+  if (retVal) {
+    Py_XDECREF(dict);
     return NULL;
   }
+
   return dict;
 }
 
@@ -717,6 +731,7 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq, enum a
     LOG_INFOV("Preparing to call python function '%s' to get next question(s)", function_name);
 
     // Okay, we have the function object, so build the argument list and call it.
+
     PyObject *arg_questions = py_create_questions_list(s);
     if (!arg_questions) {
       LOG_ERROR("Error building Python questions list");
@@ -728,6 +743,9 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq, enum a
 
     // log_python_object("Answers", arg_answers);
     PyObject *args = PyTuple_Pack(2, arg_questions, arg_answers);
+    if(!args) {
+      LOG_ERROR("Error building Python function args");
+    }
 
     PyObject *result = PyObject_CallObject(myFunction, args);
     Py_DECREF(args);
