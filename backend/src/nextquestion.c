@@ -364,6 +364,86 @@ void log_python_object(char *msg, PyObject *result) {
 }
 
 /**
+ * Loads Python next_question module and searches for defined functions with the following naming patterns:
+ *  - <base_function>_<survey_id>_<survey_hash>
+ *  - <base_function_<survey_id>
+ *  - <base_function>
+ * Pattern example, given the base_function name is 'nextquestion' and syrvey_id is 'foo/12345'
+ *  - nextquestion_foo_12345
+ *  - nextquestion_foo
+ *  - nextquestion
+ * returns a Python callable object and sets function_name (mainly for parent logging)
+ */
+PyObject *py_get_hook_function(char *base_function, char *survey_id, char *function_name, size_t len) {
+  int retVal = 0;
+
+  PyObject *func = NULL;
+
+  do {
+    if (!py_module) {
+      LOG_ERROR("python module not initialised");
+    }
+    if (!base_function || base_function[0] == 0) {
+      LOG_ERROR("base_function is empty");
+    }
+    if (!survey_id || survey_id[0] == 0) {
+      LOG_ERROR("survey_id is empty");
+    }
+
+    // 1. <base_function>_<survey_id>_<survey_hash>()
+
+    snprintf(function_name, len, "%s_%s", base_function, survey_id);
+    for (int i = 0; function_name[i]; i++) {
+        if (function_name[i] == '/') {
+          function_name[i] = '_';
+        }
+    }
+    LOG_INFOV("Searching for python function '%s'", function_name);
+    func = PyObject_GetAttrString(py_module, function_name);
+
+    // 2. <base_function>_<survey_id>()
+
+    if (!func) {
+        // Try again without _hash on the end
+        snprintf(function_name, len, "%s_%s", base_function, survey_id);
+        for (int i = 0; function_name[i]; i++) {
+          if (function_name[i] == '/') {
+              function_name[i] = 0;
+          }
+        }
+        LOG_INFOV("Searching for python function '%s'", function_name);
+        func = PyObject_GetAttrString(py_module, function_name);
+    }
+
+    // 2. <base_function>()
+
+    if (!func) {
+        snprintf(function_name, len, "nextquestion");
+        LOG_INFOV("Searching for python function '%s'", function_name);
+        func = PyObject_GetAttrString(py_module, function_name);
+    }
+
+    if (!func) {
+        LOG_ERRORV("No matching python function for base '%s', survey '%s'", base_function, survey_id);
+    }
+
+    if (!PyCallable_Check(func)) {
+        LOG_ERRORV("Python function '%s' is not a callable, survey '%s'", function_name, survey_id);
+    }
+
+    LOG_INFOV("Preparing to call python hook '%s()' for base function '%s()'", base_function, function_name);
+
+  } while(0);
+
+  if (retVal) {
+    Py_XDECREF(func);
+    return NULL;
+  }
+
+  return func;
+};
+
+/**
  * Creates an answer Py_Dict
  *
  * the caller is responsible for derferencing the dict:  if(dict) Py_DECREF(dict);
@@ -649,12 +729,15 @@ void free_next_questions(struct nextquestions *nq) {
 
 /**
  * Python api next question selector.
- * Loads Python next_question module and searches for defined functions with the following naming patterns:
- *  - nextquestion_<survey_id>_<survey_hash>()
- *  - nextquestion_<survey_id>()
- *  - nextquestion()
+ * Loads Python next_question module, loads and calls defined "nextquestion_* function.
+ * We pass into the function:
+ * - list of questions
+ * - list of answers
+ * - context information about the current session and performend action
+ * We expect a list of strings of question UIDs to ask as the return value.
+ *
  * #332 next_questions data struct
- * #445 add action, affected_answers_count args (to be used in later development)
+ * #445 add action, affected_answers_count args (to be used in later development), out sourcetasks into units
  */
 int call_python_nextquestion(struct session *s, struct nextquestions *nq, enum actions action, int affected_answers_count) {
   int retVal = 0;
@@ -681,54 +764,12 @@ int call_python_nextquestion(struct session *s, struct nextquestions *nq, enum a
       LOG_ERROR( "Python module 'nextquestion' not loaded. Does it have an error?");
     }
 
-    // Build names of candidate functions.
-    // nextquestion_<survey_id>_<hash of survey>
-    // or failing that, nextquestion_<survey_id>
-    // or failing that, nextquestion
-    // In all cases, we pass in an list of questions, and an list of answers,
-    // and expect a list of strings of question UIDs to ask as the return value.
-
+    // select from avaliable hook functions
     char function_name[1024];
-
-    // Try all three possible function names
-    snprintf(function_name, 1024, "nextquestion_%s", s->survey_id);
-    for (int i = 0; function_name[i]; i++) {
-      if (function_name[i] == '/') {
-        function_name[i] = '_';
-      }
-    }
-    LOG_INFOV("Searching for python function '%s'", function_name);
-
-    PyObject *myFunction = PyObject_GetAttrString(py_module, function_name);
-
+    PyObject *myFunction = py_get_hook_function("nextquestion", s->survey_id, function_name, 1024);
     if (!myFunction) {
-      // Try again without _hash on the end
-      snprintf(function_name, 1024, "nextquestion_%s", s->survey_id);
-      for (int i = 0; function_name[i]; i++) {
-        if (function_name[i] == '/') {
-          function_name[i] = 0;
-        }
-      }
-      LOG_INFOV("Searching for python function '%s'", function_name);
-      myFunction = PyObject_GetAttrString(py_module, function_name);
+      LOG_ERROR("Failed to get hook function for 'nextquestion'");
     }
-
-    if (!myFunction) {
-      snprintf(function_name, 1024, "nextquestion");
-      LOG_INFOV("Searching for python function '%s'", function_name);
-      myFunction = PyObject_GetAttrString(py_module, function_name);
-    }
-
-    if (!myFunction) {
-      LOG_ERRORV("No matching python function for survey '%s'", s->survey_id);
-    }
-
-    if (!PyCallable_Check(myFunction)) {
-      is_error = 1;
-      LOG_ERRORV("Python function '%s' is not callable", function_name);
-    }
-
-    LOG_INFOV("Preparing to call python function '%s' to get next question(s)", function_name);
 
     // Okay, we have the function object, so build the argument list and call it.
 
@@ -1053,13 +1094,12 @@ int call_python_analysis(struct session *s, const char **output) {
   int retVal = 0;
   int is_error = 0;
   do {
-    if (!s) {
-      LOG_ERROR("session structure is NULL");
+    if (!s->survey_id) {
+      LOG_ERROR("surveyname is NULL");
     }
-    if (!output) {
-      LOG_ERROR("output is NULL");
+    if (!s->session_id) {
+      LOG_ERROR("session_uuid is NULL");
     }
-
     // Setup python
     if (setup_python()) {
       LOG_ERROR("Failed to initialise python.\n");
@@ -1068,53 +1108,12 @@ int call_python_analysis(struct session *s, const char **output) {
       LOG_ERROR( "Python module 'nextquestion' not loaded. Does it have an error?");
     }
 
-    // Build names of candidate functions.
-    // nextquestion_<survey_id>_<hash of survey>
-    // or failing that, nextquestion_<survey_id>
-    // or failing that, nextquestion
-    // In all cases, we pass in an list of questions, and an list of answers,
-    // and expect a list of strings of question UIDs to ask as the return value.
-
+    // select from avaliable hook functions
     char function_name[1024];
-
-    // Try all three possible function names
-    snprintf(function_name, 1024, "analyse_%s", s->survey_id);
-    for (int i = 0; function_name[i]; i++) {
-      if (function_name[i] == '/') {
-        function_name[i] = '_';
-      }
-    }
-    LOG_INFOV("Searching for python function '%s'", function_name);
-
-    PyObject *myFunction = PyObject_GetAttrString(py_module, function_name);
-
+    PyObject *myFunction = py_get_hook_function("nextquestion", s->survey_id, function_name, 1024);
     if (!myFunction) {
-      // Try again without _hash on the end
-      snprintf(function_name, 1024, "analyse_%s", s->survey_id);
-      for (int i = 0; function_name[i]; i++) {
-        if (function_name[i] == '/') {
-          function_name[i] = 0;
-        }
-      }
-      LOG_INFOV("Searching for python function '%s'", function_name);
-      myFunction = PyObject_GetAttrString(py_module, function_name);
+      LOG_ERROR("Failed to get hook function for 'nextquestion'");
     }
-
-    if (!myFunction) {
-      snprintf(function_name, 1024, "analyse");
-      LOG_INFOV("Searching for python function '%s'", function_name);
-      myFunction = PyObject_GetAttrString(py_module, function_name);
-    }
-
-    if (!myFunction)
-      LOG_ERRORV("No matching python function for survey '%s'", s->survey_id);
-
-    if (!PyCallable_Check(myFunction)) {
-      is_error = 1;
-      LOG_ERRORV("Python function '%s' is not callable", function_name);
-    }
-
-    LOG_INFOV("Preparing to call python function '%s' to get analysis", function_name);
 
     // Okay, we have the function object, so build the argument list and call it.
     PyObject *arg_questions = py_create_questions_list(s);
