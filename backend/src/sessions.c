@@ -19,6 +19,20 @@
 #include "survey.h"
 #include "utils.h"
 
+/**
+ * see: survey.h enum actions
+ * #455
+ */
+char *session_action_names[NUM_SESSION_ACTIONS] = {
+  "NONE",
+  "SESSION_NEW",
+  "SESSION_DELETE",
+  "SESSION_NEXTQUESTIONS",
+  "SESSION_ADDANSWER",
+  "SESSION_DELETEANSWER",
+  "SESSION_ANALYSIS"
+};
+
 /*
   Verify that a session ID does not contain any illegal characters.
   We allow only hex and the dash character.
