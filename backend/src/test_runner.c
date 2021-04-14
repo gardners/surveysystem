@@ -81,13 +81,22 @@
 int tests = 0;
 
 // python traceback function for nextquestion
-char *py_traceback_func =
+char *py_module_head =
+    "import traceback\n"
+    "import logging\n"
+    "\n"
+    "logging.basicConfig(\n"
+    "    filename='./logs/python.log',\n"
+    "    level=logging.DEBUG,\n"
+    "    format='%(asctime)s [%(levelname)s] %(message)s',\n"
+    "    datefmt='%m/%d/%Y %I:%M:%S %p'\n"
+    ")"
+    "\n"
     "def cmodule_traceback(exc_type, exc_value, exc_tb):\n"
-    "   import sys, traceback\n"
-    "   lines = [];\n"
-    "   lines = traceback.format_exception(exc_type, exc_value, exc_tb)\n"
-    "   output = '\\n'.join(lines)\n"
-    "   return output\n"
+    "    lines = [];\n"
+    "    lines = traceback.format_exception(exc_type, exc_value, exc_tb)\n"
+    "    output = '\\n'.join(lines)\n"
+    "    return output\n"
     "\n";
 
 /**
@@ -549,7 +558,7 @@ int run_test(struct Test *test) {
           goto error;
         }
 
-        fprintf(s, "%s\n", py_traceback_func);
+        fprintf(s, "%s\n", py_module_head);
 
         // write python content from testfile
         line[0] = 0;
