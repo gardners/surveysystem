@@ -47,7 +47,7 @@ def assert_answer(question_ids, answer):
 
 def nextquestion(questions, answers, **kwargs):
     for answer in answers:
-      assert_answer(questions, answer)
+        assert_answer(questions, answer)
 
     progress = [len(answers), len(questions)]
 

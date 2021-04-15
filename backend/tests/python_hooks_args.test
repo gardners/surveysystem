@@ -73,7 +73,7 @@ def nextquestion(questions, answers, **kwargs):
     }
 
 
-def analyse(questions, answers, **kwargs, **kwargs):
+def analyse(questions, answers, **kwargs):
     logging.info('----- analyse() -----')
     # logging.info('questions: \'{}\''.format(questions))
     # logging.info('answers: \'{}\''.format(answers))
