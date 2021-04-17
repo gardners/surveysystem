@@ -510,9 +510,9 @@ PyObject *py_create_answer(struct answer *a) {
     errors += PyDict_SetItem(dict, stored_l, stored);
 
     if (errors) {
-      LOG_ERRORV("setting dict item failed wiht %d errors", errors);
+      LOG_ERRORV("setting dict item failed with %d errors", errors);
     }
-
+    
   } while (0);
 
   if (retVal) {
@@ -554,6 +554,53 @@ PyObject *py_create_questions_list(struct session *ses) {
 }
 
 /**
+ * Merges some question properties into py dict answer
+ * Question properties are prefixed with an underscore. For the sake of simplicitiy we refrain from creating a nested question dict.
+ * Note: This function will not DECREF the answer dict on failure
+ * #449
+ */
+int py_answer_merge_question(PyObject *ans, struct question *qn) {
+  int retVal = 0;
+
+  do {
+    if(!PyDict_Check(ans)) {
+      LOG_ERROR("py dict answer is NULL or not a dict");
+    }
+    if(!qn) {
+      LOG_ERROR("question is NULL");
+    }
+      
+    PyObject *_flags = PyUnicode_FromString("_flags");
+    PyObject *_default_value = PyUnicode_FromString("_default_value");
+    PyObject *_min_value = PyUnicode_FromString("_min_value");
+    PyObject *_max_value = PyUnicode_FromString("_max_value");
+    PyObject *_choices = PyUnicode_FromString("_choices");
+    PyObject *_unit = PyUnicode_FromString("_unit"); // #448
+  
+    PyObject *flags = PyLong_FromLongLong(qn->flags);
+    PyObject *default_value = PyUnicode_FromString(qn->default_value);
+    PyObject *min_value = PyLong_FromLongLong(qn->min_value);
+    PyObject *max_value = PyLong_FromLongLong(qn->max_value);
+    PyObject *choices = PyUnicode_FromString(qn->choices);
+    PyObject *unit = PyUnicode_FromString(qn->unit);
+
+    int errors = PyDict_SetItem(ans, _flags, flags);
+    errors += PyDict_SetItem(ans, _default_value, default_value);
+    errors += PyDict_SetItem(ans, _min_value, min_value);
+    errors += PyDict_SetItem(ans, _max_value, max_value);
+    errors += PyDict_SetItem(ans, _choices, choices);
+    errors += PyDict_SetItem(ans, _unit, unit);
+
+    if (errors) {
+      LOG_ERRORV("setting dict item to py answer failed with %d errors", errors);
+    }
+  
+  } while(0);
+  
+  return retVal;
+}
+
+/**
  * Creates and a Python list of answer dicts for an existing session.
  * Header answers and system answers are excluded
  * #445
@@ -575,7 +622,13 @@ PyObject *py_create_answers_list(struct session *ses) {
             if (!item) {
               LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.", ses->answers[i]->uid);
             }
-
+            
+            struct question *qn = session_get_question(ses->answers[i]->uid, ses);
+            if (py_answer_merge_question(item, qn)) {
+              Py_DECREF(item);
+              LOG_ERRORV("Error merging question properties into PyDict answer '%s'", ses->answers[i]->uid);
+            }
+            
             if (PyList_SetItem(answers, listIndex, item)) {
               Py_DECREF(item);
               LOG_ERRORV("Error inserting answer name '%s' into Python list", ses->answers[i]->uid);
