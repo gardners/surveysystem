@@ -1,13 +1,15 @@
 @description Assert answer list completeness in python hooks
 
+#!-- #449: added tests fror merged in question properties
+
 # Create a dummy survey
 definesurvey python_answercompleteness
 version 2
 Silly test survey updated
 with python
-question1:Question 1::TEXT:0::-1:-1:0:0::
-question2:Question 2::TEXT:0::-1:-1:0:0::
-question3:Question 3::TEXT:0::-1:-1:0:0::
+question1:Question 1::TEXT:99:default_value:-1:-1:0:0::
+question2:Question 2::INT:0::-99:99:0:0::unit
+question3:Question 3::SINGLECHOICE:0::-1:-1:0:0:YES,NO:
 endofsurvey
 
 python
@@ -15,11 +17,8 @@ python
 # logs Python AssertionError in backend logs
 def assert_answer(question_ids, answer):
 
-  #fp = open('/tmp/python-output', 'a')
-  #print(answer, file = fp)
-  #fp.close()
-
   assert 'uid' in answer
+  assert 'type' in answer
   assert 'text' in answer
   assert 'value' in answer
   assert 'latitude' in answer
@@ -33,6 +32,9 @@ def assert_answer(question_ids, answer):
   assert 'stored' in answer
 
   assert answer['uid'] in question_ids
+
+  assert isinstance(answer['uid'], str)
+  assert isinstance(answer['type'], str)
   assert isinstance(answer['text'], str)
   assert isinstance(answer['value'], int)
   assert isinstance(answer['latitude'], int)
@@ -45,9 +47,63 @@ def assert_answer(question_ids, answer):
   assert isinstance(answer['flags'], int)
   assert isinstance(answer['stored'], int)
 
+  # #448: merged question properties
+
+  assert '_flags' in answer
+  assert '_default_value' in answer
+  assert '_min_value' in answer
+  assert '_max_value' in answer
+  assert '_choices' in answer
+
+  assert isinstance(answer['_flags'], int)
+  assert isinstance(answer['_default_value'], str)
+  assert isinstance(answer['_min_value'], int)
+  assert isinstance(answer['_max_value'], int)
+  assert isinstance(answer['_choices'], str)
+  assert isinstance(answer['_unit'], str) #see #447
+
+  # q->flags
+  if answer['type'] == 'TEXT':
+    assert answer['_flags'] == 99
+  else:
+    assert answer['_flags'] == 0
+
+  # q->default_value
+  if answer['type'] == 'TEXT':
+    assert answer['_default_value'] == 'default_value'
+  else:
+    assert answer['_default_value'] == ''
+
+  # q->min_value
+  if answer['type'] == 'INT':
+    assert answer['_min_value'] == -99
+  else:
+    assert answer['_min_value'] == -1
+
+  # q->max_value
+  if answer['type'] == 'INT':
+    assert answer['_max_value'] == 99
+  else:
+    assert answer['_max_value'] == -1
+
+  # q->choices
+  if answer['type'] == 'SINGLECHOICE':
+    assert answer['_choices'] == 'YES,NO'
+  else:
+    assert answer['_choices'] == ''
+
+  # q->unit
+  if answer['type'] == 'INT':
+    assert answer['_unit'] == 'unit'
+  else:
+    assert answer['_unit'] == ''
+
+
 def nextquestion(questions, answers, **kwargs):
     for answer in answers:
-        assert_answer(questions, answer)
+
+      logging.info(answer)
+      assert_answer(questions, answer)
 
     progress = [len(answers), len(questions)]
 
@@ -82,20 +138,23 @@ request 200 /newsession?surveyid=python_answercompleteness
 extract_sessionid
 
 #! ------- answer questions -------
+request 200 /nextquestion?sessionid=$SESSION
+match_string {"status": 0, "message": "hello world", "progress": [0, 3], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "default_value", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
 request 200 /addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0:
-match_string {"status": 0, "message": "hello world", "progress": [1, 3], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+match_string {"status": 0, "message": "hello world", "progress": [1, 3], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "INT", "default_value": "", "min_value": -99, "max_value": 99, "choices": [], "unit": "unit"}]}
 
-request 200 /addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0:
-match_string {"status": 0, "message": "hello world", "progress": [2, 3], "next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+request 200 /addanswer?sessionid=$SESSION&answer=question2::99:0:0:0:0:0:0:unit
+match_string {"status": 0, "message": "hello world", "progress": [2, 3], "next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "SINGLECHOICE", "default_value": "", "min_value": -1, "max_value": -1, "choices": ["YES", "NO"], "unit": ""}]}
 
-request 200 /addanswer?sessionid=$SESSION&answer=question3:Answer+3:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=question3:NO:0:0:0:0:0:0:0:
 match_string {"status": 0, "message": "", "progress": [3, 3], "next_questions": []}
 
 verify_session(skip_headers)
 python_answercompleteness/0b39e0c93f1b338433b8a8773d57f738dd405e17
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
-question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
-question3:TEXT:Answer 3:0:0:0:0:0:0:0::0:<UTIME>
+question2:INT::99:0:0:0:0:0:0:unit:0:<UTIME>
+question3:SINGLECHOICE:NO:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #! ------- run analysis -------
