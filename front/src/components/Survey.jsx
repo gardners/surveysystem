@@ -45,20 +45,17 @@ class Survey extends Component {
     }
 
     componentDidMount() {
-        const { session } = this.state;
-
         const cached = load_cached_session();
-        const init = (cached) ? () => this.initNextQuestion() : () => this.initNewSession();
-
-        // open session
-        this.setState({
-            loading: '',
-            session: (cached) ? cached : session,
-        }, init);
+        if (cached) {
+            this.initNextQuestion(cached);
+        } else {
+            const { session } = this.state;
+            this.initNewSession(session);
+        }
     }
 
     /**
-     * Teardown component, cancel running async processes
+     * Tear down component, cancel running async processes
      * #441
      */
     componentWillUnmount() {
@@ -156,10 +153,7 @@ class Survey extends Component {
      * @param {Event}
      * @returns {void}
      */
-    initNewSession(e) {
-        e && e.preventDefault();
-
-        const { session } = this.state;
+    initNewSession(session) {
         this.setState({ loading: 'Initializing survey...' });
 
         // 1. request a new session id
@@ -188,10 +182,7 @@ class Survey extends Component {
      * @param {Event}
      * @returns {void}
      */
-    initNextQuestion(e) {
-        e && e.preventDefault();
-
-        const { session } = this.state;
+    initNextQuestion(session) {
         this.setState({ loading: 'Initializing survey...' });
 
         // 1. fetch the current question set, providing a previoiusly cached sessionid
@@ -303,17 +294,13 @@ class Survey extends Component {
     }
 
     render() {
-        const { session, errors, answers, loading } = this.state;
+        const { session, errors, answers, loading, alerts } = this.state;
 
         if (!session) {
             return (null);
         }
 
         const { session_id, survey_id, next_questions } = session;
-
-        if (session.isClosed()) {
-            return (<Redirect to={ `/analyse/${survey_id}/${session_id}` } />);
-        }
 
         // compile groups
         const withGroups = mapQuestionGroups(next_questions);
@@ -323,10 +310,11 @@ class Survey extends Component {
 
         const hasQuestions = next_questions.length > 0;
         const hasErrors = errorCount > 0;
-        const hasAnswers = answersCount > 0 ;
+        const hasAnswers = answersCount > 0;
         const hasAllAnswers = (answersCount === next_questions.length);
+
         const isFirst = session.isFirst();
-        const isFinished = session.isFinished();
+        const isCompleted = session.isCompleted();
 
         return (
             <React.Fragment>
@@ -335,16 +323,16 @@ class Survey extends Component {
                     <Preloader loading={ loading } message={ loading }/>
 
                     {
-                        (this.state.alerts.length) ?
+                        (alerts.length) ?
                             <React.Fragment>
                                 Unfortunately we encountered an error sending your data.
-                                { this.state.alerts.map((entry, index) => <ApiAlert key={ index } error={ entry } />) }
+                                { alerts.map((entry, index) => <ApiAlert key={ index } error={ entry } />) }
                             </React.Fragment> : null
                     }
 
                     {
                         /* #379 show if survey is finished but not closed yet */
-                        (isFinished) ?
+                        (isCompleted) ?
                             <FinishSurvey
                                 session = { session }
                                 handleGetAnalysis = { this.handleGetAnalysis.bind(this) }
@@ -358,10 +346,10 @@ class Survey extends Component {
                         session_id,
                     } }>
                         <SurveyMessage session={ session } />
-                        { !isFinished && <SurveyProgress className="mb-2" session={ session }/> }
+                        <SurveyProgress className="mb-2" session={ session }/>
 
                         <SurveyForm
-                            show={ !isFinished && next_questions.length > 0 && !this.state.loading }
+                            show={ !isCompleted && !loading }
                             className="list-group"
                         >
                             {
@@ -411,7 +399,7 @@ class Survey extends Component {
                                 hasErrors={ hasErrors }
                                 hasAnswers={ hasAnswers }
                                 hasAllAnswers={ hasAllAnswers }
-                                isFirst={ isFirst }
+                                isFirst={ session.isFirst() }
                             />
                         </SurveyForm>
                     </SurveyContext.Provider>

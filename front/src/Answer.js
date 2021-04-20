@@ -12,27 +12,31 @@ const { isFinite, isInteger } = Number;
  @see backend/include/survey.h
  @see backend/src/serialisers.c
 
- #define QTYPE_INT          1
-#define QTYPE_FIXEDPOINT          2
-#define QTYPE_MULTICHOICE         3  // answer->text (comma separated): instruction for multi choice inputs (checkbox), answer is a single choice or comma separated list.
-#define QTYPE_MULTISELECT         4  // answer->text (comma separated): instruction for multi choice inputs (select), answer is a single choice or comma separated list. (unit: *)
-#define QTYPE_LATLON              5  // answer->lat & answer->lon: instruction for geographic coordinate ([-90 +90] & [-180 +180]). (unit: degrees)
-#define QTYPE_DATETIME            6  // answer->time_begin: instruction for UNIX datetime (+-). (unit: seconds)
-#define QTYPE_DAYTIME             7  // answer->time_begin: instruction for time of a generic day in seconds since midnight. (unit: seconds)
-#define QTYPE_TIMERANGE           8  // answer->time_begin & answer->time_end: instruction for time range within a generic day. (unit: seconds)
-#define QTYPE_UPLOAD              9
-#define QTYPE_TEXT                10 // answer->text: instruction for generic text. (unit: *)
-#define QTYPE_CHECKBOX            11 // answer->text: instruction for single html checkbox, requires two defined choices in the following order: [OFF-value, ON-value]. (unit: *)
-#define QTYPE_HIDDEN              12 // answer->text: instruction for hidden input (pure textslide) answer is default value or default value. (unit: *)
-#define QTYPE_TEXTAREA            13 // answer->text: instruction for textarea. (unit: *)
-#define QTYPE_EMAIL               14 // answer->text: instruction for email input. (unit: *)
-#define QTYPE_PASSWORD            15 // answer->text: instruction for (html) password input, this type can be used to mask any user input. (unit: *)
-#define QTYPE_SINGLECHOICE        16 // answer->text: instruction for single choice inputs (checkbox, radios), answer is a single choice. (unit: *)
-#define QTYPE_SINGLESELECT        17 // answer->text: instruction for single choice inputs (select), answer is a single choice. (unit: *)
-#define QTYPE_FIXEDPOINT_SEQUENCE 18 // answer->text (comma separated): instruction an ascending sequence of FIXEDPOINT values, labels are defined in q.choices. (unit: *)
-#define QTYPE_DAYTIME_SEQUENCE    19 // answer->text (comma separated): instruction an ascending sequence of DAYTIME values (comma separated), labels are defined in q.choices. (unit: seconds)
-#define QTYPE_DATETIME_SEQUENCE   20 // answer->text (comma separated): instruction an ascending sequence of DATETIME values (comma separated), labels are defined in q.choices (unit: seconds)
-#define QTYPE_UUID 21
+#define QTYPE_META                1 // internal sytem answer
+#define QTYPE_INT                 2 // Answer is an integer, bounded by min_value and max_value
+#define QTYPE_FIXEDPOINT          3  // Answer is a fixed point value encoded as a 64-bit integer
+#define QTYPE_MULTICHOICE         4  // answer->text (comma separated): instruction for multi choice inputs (checkbox), answer is a single choice or comma separated list.
+#define QTYPE_MULTISELECT         5  // answer->text (comma separated): instruction for multi choice inputs (select), answer is a single choice or comma separated list. (unit: *)
+#define QTYPE_LATLON              6  // answer->lat & answer->lon: instruction for geographic coordinate ([-90 +90] & [-180 +180]). (unit: degrees)
+#define QTYPE_DATETIME            7  // answer->time_begin: instruction for UNIX datetime (+-). (unit: seconds)
+#define QTYPE_DAYTIME             8  // answer->time_begin: instruction for time of a generic day in seconds since midnight. (unit: seconds)
+#define QTYPE_TIMERANGE           9  // answer->time_begin & answer->time_end: instruction for time range within a generic day. (unit: seconds)
+#define QTYPE_UPLOAD              10
+#define QTYPE_TEXT                11 // answer->text: instruction for generic text. (unit: *)
+#define QTYPE_CHECKBOX            12 // answer->text: instruction for single html checkbox, requires two defined choices in the following order: [OFF-value, ON-value]. (unit: *)
+#define QTYPE_HIDDEN              13 // answer->text: instruction for hidden input (pure textslide) answer is default value or default value. (unit: *)
+#define QTYPE_TEXTAREA            14 // answer->text: instruction for textarea. (unit: *)
+#define QTYPE_EMAIL               15 // answer->text: instruction for email input. (unit: *)
+#define QTYPE_PASSWORD            16 // answer->text: instruction for (html) password input, this type can be used to mask any user input. (unit: *)
+#define QTYPE_SINGLECHOICE        17 // answer->text: instruction for single choice inputs (checkbox, radios), answer is a single choice. (unit: *)
+#define QTYPE_SINGLESELECT        18 // answer->text: instruction for single choice inputs (select), answer is a single choice. (unit: *)
+#define QTYPE_FIXEDPOINT_SEQUENCE 19 // answer->text (comma separated): instruction an ascending sequence of FIXEDPOINT values, labels are defined in q.choices. (unit: *)
+#define QTYPE_DAYTIME_SEQUENCE    20 // answer->text (comma separated): instruction an ascending sequence of DAYTIME values (comma separated), labels are defined in q.choices. (unit: seconds)
+#define QTYPE_DATETIME_SEQUENCE   21 // answer->text (comma separated): instruction an ascending sequence of DATETIME values (comma separated), labels are defined in q.choices (unit: seconds)
+#define QTYPE_DURATION24          22 // answer->value: instruction time period in seconds maximum 24 hours (86400 seconds), TODO enable min_value and max_value support, which would make this type redundant in favour of a more generic QTYPE_DURATION type.
+#define QTYPE_DIALOG_DATA_CRAWLER 23 // answer->text: instruction for a dialog to give consent to accessing external data requires two defined choices in the following order: [DENIED, GRANTED], (unit: id of the data crawler module)
+#define QTYPE_SHA1_HASH           24 // submitted answer->text is converted and stored as sha1 hash
+#define QTYPE_UUID                25
 */
 
 /**
@@ -68,6 +72,9 @@ const { isFinite, isInteger } = Number;
 const _number = function(val) {
     if (typeof val !== 'number' && typeof val !== 'string') {
        return new Error ('CSV serializer: Invalid number: wrong type.');
+    }
+    if (val === '') {
+       return new Error ('CSV serializer: Invalid number: wempty string.');
     }
 
     const value = Number(val);
@@ -118,14 +125,15 @@ const _latitude = function(val) {
  * @returns {(number|Error)}
  */
 const _timestamp = function(val) {
-    if (!isInteger(val)) { // checks also infini &, type
+    const value =_number(val);
+    if (!isInteger(value)) { // checks also infini &, type
         return new Error ('CSV serializer: Invalid timestamp value: not an integer.');
     }
 
-    if (val < 0) {
+    if (value < 0) {
         return new Error ('CSV serializer: Invalid timestamp value: negative number.');
     }
-    return val;
+    return value;
 };
 
 /**
@@ -379,11 +387,10 @@ const setValue = function(question, value) {
             if (!isArray(value) || value.length !== 2) {
                 answer.lat = new Error('CSV serializer: LATLON value requires an array of two numbers');
                 break;
-            } else {
-                answer.lat = _latitude(value[0]);
-                answer.lon = _longitude(value[1]);
-                answer.unit = 'degrees';
             }
+            answer.lat = _latitude(value[0]);
+            answer.lon = _longitude(value[1]);
+            answer.unit = 'degrees';
         break;
 
         case 'DATETIME':
@@ -428,10 +435,6 @@ const setValue = function(question, value) {
             answer.unit = 'seconds';
         break;
 
-        case 'UPLOAD':
-            answer.text = new Error(`CSV serializer: unsupported question type: ${type}`);
-        break;
-
         case 'TEXT':
         case 'HIDDEN':
         case 'TEXTAREA':
@@ -441,6 +444,7 @@ const setValue = function(question, value) {
         case 'SINGLECHOICE':
         case 'SINGLESELECT':
         case 'DIALOG_DATA_CRAWLER':
+        case 'SHA1_HASH':
             // string
             answer.text = _text(value);
         break;
@@ -495,14 +499,22 @@ const getValue = function(question, answer) {
             return answer.time_begin;
         case 'TIMERANGE':
             return [answer.time_begin, answer.time_end];
+        case 'FIXEDPOINT_SEQUENCE':
+            return answer.text.split(',').map(part => parseFloat(part));
+        case 'DAYTIME_SEQUENCE':
+        case 'DATETIME_SEQUENCE':
+            return answer.text.split(',').map(part => parseInt(part, 10));
+        case 'QTYPE_DURATION24':
+            return answer.value;
         case 'TEXT':
         case 'HIDDEN':
         case 'TEXTAREA':
         case 'EMAIL':
-        case 'PASSWORD':
         case 'CHECKBOX':
         case 'SINGLECHOICE':
         case 'SINGLESELECT':
+        case 'DIALOG_DATA_CRAWLER':
+        case 'SHA1_HASH':
         case 'DIALOG_DATA_CRAWLER':
         case 'UUID': // TODO no component
             return answer.text;

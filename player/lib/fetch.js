@@ -24,7 +24,7 @@ const Fetch = {
             surveyid: Fetch.SURVEYID,
         }, params);
 
-        const uri = Fetch.PROTOCOL + '://' + ((Fetch.PORT) ? `${Fetch.DOMAIN}:${Fetch.PORT}` : Fetch.DOMAIN) + path;
+        const uri = Fetch.PROTOCOL + '://' + ((Fetch.PORT) ? `${Fetch.DOMAIN}:${Fetch.PORT}` : Fetch.DOMAIN) + '/' + Fetch.ENDPOINT + path;
 
         if (Fetch.AUTH) {
             const auth = Fetch.AUTH.split(':');

@@ -15,6 +15,7 @@ const load_cached_session = function() {
     }
 
     const cached = LocalStorage.get(REACT_APP_SURVEY_CACHEKEY);
+
     if (!cached) {
         return null;
     }
@@ -121,6 +122,14 @@ class Session {
      */
     isFinished() {
         return this.session_state === SESSION_FINISHED;
+    }
+
+    /**
+     * check if session is finished or closed
+     * @returns {boolean}
+     */
+    isCompleted() {
+        return this.session_state >= SESSION_FINISHED;
     }
 
     /**

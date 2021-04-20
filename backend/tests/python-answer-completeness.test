@@ -32,7 +32,7 @@ def assert_answer(question_ids, answer):
   assert 'stored' in answer
 
   assert answer['uid'] in question_ids
-  
+
   assert isinstance(answer['uid'], str)
   assert isinstance(answer['type'], str)
   assert isinstance(answer['text'], str)
@@ -46,9 +46,9 @@ def assert_answer(question_ids, answer):
   assert isinstance(answer['unit'], str)
   assert isinstance(answer['flags'], int)
   assert isinstance(answer['stored'], int)
-  
+
   # #448: merged question properties
-   
+
   assert '_flags' in answer
   assert '_default_value' in answer
   assert '_min_value' in answer
@@ -61,46 +61,47 @@ def assert_answer(question_ids, answer):
   assert isinstance(answer['_max_value'], int)
   assert isinstance(answer['_choices'], str)
   assert isinstance(answer['_unit'], str) #see #447
-  
+
   # q->flags
   if answer['type'] == 'TEXT':
     assert answer['_flags'] == 99
   else:
     assert answer['_flags'] == 0
-  
+
   # q->default_value
   if answer['type'] == 'TEXT':
     assert answer['_default_value'] == 'default_value'
   else:
     assert answer['_default_value'] == ''
-  
+
   # q->min_value
   if answer['type'] == 'INT':
     assert answer['_min_value'] == -99
   else:
     assert answer['_min_value'] == -1
-  
+
   # q->max_value
   if answer['type'] == 'INT':
     assert answer['_max_value'] == 99
   else:
     assert answer['_max_value'] == -1
-  
+
   # q->choices
   if answer['type'] == 'SINGLECHOICE':
     assert answer['_choices'] == 'YES,NO'
   else:
     assert answer['_choices'] == ''
-  
+
   # q->unit
   if answer['type'] == 'INT':
     assert answer['_unit'] == 'unit'
   else:
     assert answer['_unit'] == ''
-  
+
 
 def nextquestion(questions, answers, **kwargs):
     for answer in answers:
+
       logging.info(answer)
       assert_answer(questions, answer)
 

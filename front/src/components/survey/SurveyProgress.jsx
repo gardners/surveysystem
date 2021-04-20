@@ -7,6 +7,10 @@ import { addClassNames } from '../../Utils';
 const SurveyProgress = function({ session, className }) {
     const { progress } = session;
 
+    if (session.isCompleted()) {
+        return (null);
+    }
+
     if (progress.length !== 2 || progress[0] < 0) {
         console.warn('invalid progress:', progress.toString());
         return (null);

@@ -104,9 +104,10 @@ const run_questiontype_answer__value = function(type, unit) {
         expect(Answer.setValue(q, -0.1)).toMatchObject({ uid, value: -0.1, unit });
         expect(Answer.setValue(q, Number('123'))).toMatchObject({ uid, value: 123, unit });
         expect(Answer.setValue(q, '123')).toMatchObject({ uid, value: 123, unit });
-        expect(Answer.setValue(q, '')).toMatchObject({ uid, value: 0, unit });
+
 
         // negative
+        expect(Answer.setValue(q, '')).toBeInstanceOf(Error);
         expect(Answer.setValue(q, null)).toBeInstanceOf(Error);
         expect(Answer.setValue(q, undefined)).toBeInstanceOf(Error);
         expect(Answer.setValue(q, 'string')).toBeInstanceOf(Error);
@@ -131,13 +132,12 @@ const run_questiontype_answer__time_begin = function(type) {
         expect(Answer.setValue(q, 0)).toMatchObject({ uid, time_begin: 0, unit });
         expect(Answer.setValue(q, 5)).toMatchObject({ uid, time_begin: 5, unit });
         expect(Answer.setValue(q, Number('123'))).toMatchObject({ uid, time_begin: 123, unit });
+        expect(Answer.setValue(q, '123')).toMatchObject({ uid, time_begin: 123, unit });
 
         // negative
-        expect(Answer.setValue(q, '123')).toBeInstanceOf(Error);
         expect(Answer.setValue(q, 0.1)).toBeInstanceOf(Error);
         expect(Answer.setValue(q, -1)).toBeInstanceOf(Error);
         expect(Answer.setValue(q, null)).toBeInstanceOf(Error);
-        expect(Answer.setValue(q, '123')).toBeInstanceOf(Error);
         expect(Answer.setValue(q, undefined)).toBeInstanceOf(Error);
         expect(Answer.setValue(q, '')).toBeInstanceOf(Error);
         expect(Answer.setValue(q, 'string')).toBeInstanceOf(Error);
@@ -158,41 +158,10 @@ const run_questiontype_answer__time_begin = function(type) {
 };
 
 const run_questiontype_answer__time_end = function(type) {
-    const unit = 'seconds';
-
-    test(`question type: ${type}`, () => {
-        const uid = 'timestampid';
-        const q = { id: uid, type };
-
-
-        //positive
-        expect(Answer.setValue(q, 0)).toMatchObject({ uid, time_end: 0, unit });
-        expect(Answer.setValue(q, 5)).toMatchObject({ uid, time_end: 5, unit });
-        expect(Answer.setValue(q, Number('123'))).toMatchObject({ uid, time_end: 123, unit });
-
-        // negative
-        expect(Answer.setValue(q, '123')).toBeInstanceOf(Error);
-        expect(Answer.setValue(q, 0.1)).toBeInstanceOf(Error);
-        expect(Answer.setValue(q, -1)).toBeInstanceOf(Error);
-        expect(Answer.setValue(q, null)).toBeInstanceOf(Error);
-        expect(Answer.setValue(q, '123')).toBeInstanceOf(Error);
-        expect(Answer.setValue(q, undefined)).toBeInstanceOf(Error);
-        expect(Answer.setValue(q, '')).toBeInstanceOf(Error);
-        expect(Answer.setValue(q, 'string')).toBeInstanceOf(Error);
-        expect(Answer.setValue(q, {})).toBeInstanceOf(Error);
-        expect(Answer.setValue(q, [])) .toBeInstanceOf(Error);
-        expect(Answer.setValue(q, Symbol(1))).toBeInstanceOf(Error);
-        expect(Answer.setValue(q, NaN)).toBeInstanceOf(Error);
-        expect(Answer.setValue(q, Infinity)).toBeInstanceOf(Error);
-        expect(Answer.setValue(q, new Number('123'))).toBeInstanceOf(Error);
+    // no question type who writes only in time_end
+    test.skip(`tested in TIMERANGE`, () => {
+        expect(true).toMatch(false);
     });
-
-    test(`force unit: ${unit}`, () => {
-        const uid = 'timestampunitid';
-        expect(Answer.setValue({ id: uid, type }, 0)).toMatchObject({ uid, time_end: 0, unit });
-        expect(Answer.setValue({ id: uid, type, unit: 'overwrite' }, 0)).toMatchObject({ uid, time_end: 0, unit });
-    });
-
 };
 
 // #336 sequences
@@ -274,6 +243,10 @@ const run_questiontype__TIMERANGE = function() {
         expect(Answer.setValue(q, [5, 0])).toMatchObject({ uid, time_begin: 5, time_end: 0, unit });
         expect(Answer.setValue(q, [ Number('123'), 125])).toMatchObject({ uid, time_begin: 123, time_end: 125, unit });
 
+        // mixed  allowed
+        expect(Answer.setValue(q, ['123', 125])).toMatchObject({ uid, time_begin: 123, time_end: 125, unit });
+        expect(Answer.setValue(q, [123, '125'])).toMatchObject({ uid, time_begin: 123, time_end: 125, unit });
+
         // negative
         expect(Answer.setValue(q, [])).toBeInstanceOf(Error);
         expect(Answer.setValue(q, {})).toBeInstanceOf(Error);
@@ -290,9 +263,6 @@ const run_questiontype__TIMERANGE = function() {
 
         expect(Answer.setValue(q, [null, 1])).toBeInstanceOf(Error);
         expect(Answer.setValue(q, [1, null])).toBeInstanceOf(Error);
-
-        expect(Answer.setValue(q, ['123', 1])).toBeInstanceOf(Error);
-        expect(Answer.setValue(q, [1, '123'])).toBeInstanceOf(Error);
 
         expect(Answer.setValue(q, [undefined, 1])).toBeInstanceOf(Error);
         expect(Answer.setValue(q, [1, undefined])).toBeInstanceOf(Error);
@@ -345,6 +315,10 @@ const run_questiontype__LATLON = function() {
         expect(Answer.setValue(q, [90, 180])).toMatchObject({ uid, lat: 90, lon: 180, unit });
         expect(Answer.setValue(q, [ Number('89'), 125])).toMatchObject({ uid, lat: 89, lon: 125, unit });
 
+        // mixed  allowed
+        expect(Answer.setValue(q, ['45', 45])).toMatchObject({ uid, lat: 45, lon: 45, unit });
+        expect(Answer.setValue(q, [45, '45'])).toMatchObject({ uid, lat: 45, lon: 45, unit });
+
         // negative
         expect(Answer.setValue(q, [])).toBeInstanceOf(Error);
         expect(Answer.setValue(q, {})).toBeInstanceOf(Error);
@@ -361,8 +335,6 @@ const run_questiontype__LATLON = function() {
         expect(Answer.setValue(q, [null, 1])).toBeInstanceOf(Error);
         expect(Answer.setValue(q, [1, null])).toBeInstanceOf(Error);
 
-        expect(Answer.setValue(q, ['123', 1])).toBeInstanceOf(Error);
-        expect(Answer.setValue(q, [1, '123'])).toBeInstanceOf(Error);
 
         expect(Answer.setValue(q, [undefined, 1])).toBeInstanceOf(Error);
         expect(Answer.setValue(q, [1, undefined])).toBeInstanceOf(Error);
@@ -432,11 +404,14 @@ describe('Answer.setValue()', () => {
     run_questiontype_answer__value('INT', '');
     run_questiontype_answer__value('FIXEDPOINT', '');
 
-    run_questiontype_answer__time_begin('DATETIME');
-    run_questiontype_answer__time_begin('DAYTIME');
+    run_questiontype__LATLON();
+    run_questiontype__TIMERANGE();
 
     run_questiontype_answer__time_begin('DATETIME');
     run_questiontype_answer__time_begin('DAYTIME');
+
+    run_questiontype_answer__time_end('DATETIME');
+    run_questiontype_answer__time_end('DAYTIME');
 
     // #336, sequences
     run_questiontype__sequencetypes('DAYTIME_SEQUENCE')
