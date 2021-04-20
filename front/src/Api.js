@@ -115,6 +115,12 @@ const Api = {
                 }
                 cacheResponse(response);
                 return response.text();
+            })
+            .catch((error) => {
+                if(error && error.name === 'AbortError') {
+                    return;
+                }
+                throw error;
             });
     },
 
@@ -141,6 +147,12 @@ const Api = {
                 }
                 cacheResponse(response);
                 return response.json();
+            })
+            .catch((error) => {
+                if(error && error.name === 'AbortError') {
+                    return;
+                }
+                throw error;
             });
     },
 
@@ -168,6 +180,12 @@ const Api = {
                 }
                 cacheResponse(response);
                 return response.json();
+            })
+            .catch((error) => {
+                if(error && error.name === 'AbortError') {
+                    return;
+                }
+                throw error;
             });
     },
 
@@ -195,6 +213,12 @@ const Api = {
                 }
                 cacheResponse(response);
                 return response.json();
+            })
+            .catch((error) => {
+                if(error && error.name === 'AbortError') {
+                    return;
+                }
+                throw error;
             });
     },
 
@@ -221,6 +245,12 @@ const Api = {
                 }
                 cacheResponse(response);
                 return response.json();
+            })
+            .catch((error) => {
+                if(error && error.name === 'AbortError') {
+                    return;
+                }
+                throw error;
             });
     },
 
@@ -248,6 +278,12 @@ const Api = {
                 }
                 cacheResponse(response);
                 return response.json();
+            })
+            .catch((error) => {
+                if(error && error.name === 'AbortError') {
+                    return;
+                }
+                throw error;
             });
     },
 
@@ -269,13 +305,19 @@ const Api = {
         };
 
         return fetch(uri, opts)
-        .then((response) => {
-            if (!response.ok) {
-                return responseError(response);
-            }
-            cacheResponse(response);
-            return response.json();
-        });
+            .then((response) => {
+                if (!response.ok) {
+                    return responseError(response);
+                }
+                cacheResponse(response);
+                return response.json();
+            })
+            .catch((error) => {
+                if(error && error.name === 'AbortError') {
+                    return;
+                }
+                throw error;
+            });
     },
 
     /**
@@ -299,13 +341,13 @@ const Api = {
     updateAnswers_SEQUENTIAL: function(session_id, answers, responses = []) {
         const next = responses.length;
         return Api.updateAnswer(session_id, answers[next])
-        .then((response) => {
-            responses.push(response);
-            if (responses.length < answers.length) {
-                return Api.updateAnswers_SEQUENTIAL(session_id, answers, responses);
-            }
-            return responses;
-        });
+            .then((response) => {
+                responses.push(response);
+                if (responses.length < answers.length) {
+                    return Api.updateAnswers_SEQUENTIAL(session_id, answers, responses);
+                }
+                return responses;
+            });
     },
 
     /**
