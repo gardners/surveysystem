@@ -445,6 +445,7 @@ const Demo = function(props){
                         unit="fitbit-module"
                         session_id="demosession"
                     />
+                    <Row selected={ selected } type={ 'SHA1_HASH' }       componentName="Sha1Hash"  />
                 </div>
             </section>
         </SurveyContext.Provider>
