@@ -10,6 +10,7 @@ module.exports = {
         SURVEYID: 'foo',
         PROTOCOL: 'http',
         DOMAIN: 'localhost',
+        ENDPOINT: 'surveyapi',
         PORT: 3098,
 
         // authentication: http basic or digest

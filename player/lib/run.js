@@ -88,6 +88,7 @@ let assertions = Config.assertions || {};
 if (sessionFile) {
     const assertionFile = `${process.cwd()}/sessions/${sessionId}.test.js`;
     if (fs.existsSync(assertionFile)) {
+        // eslint-disable-next-line global-require, import/no-dynamic-require
         assertions = require(assertionFile);
     }
 }
@@ -230,7 +231,7 @@ const provideSerializedAnswer = function(question, customAnswer = null) {
  * @returns {Promise} http request response
  */
 const analyse = function() {
-    return Fetch.json('/surveyapi/analyse', {
+    return Fetch.json('/analyse', {
         sessionid: SESSIONID,
     });
 };
@@ -242,7 +243,7 @@ const analyse = function() {
  * @returns {Promise} http request response
  */
 const nextQuestions = function() {
-    return Fetch.json('/surveyapi/nextquestion', {
+    return Fetch.json('/nextquestion', {
         sessionid: SESSIONID,
     });
 };
@@ -254,6 +255,7 @@ const nextQuestions = function() {
  * @returns {Promise} http request response
  */
 const handleResponse = function(response) {
+    // eslint-disable-next-line camelcase
     const { next_questions } = response;
     const nextIds = next_questions.map(q => q.id).toString();
     FSLOG.append(`received next questions.. [${nextIds}]`);
@@ -283,12 +285,12 @@ const answerQuestion = function(question, answer, answerType) {
 
     FSLOG.append(`sending answer... [${answerType.toUpperCase()}] qid: ${question.id}, answer: ${answer}`);
     FSLOG.append(` => "${answer}"`);
-    return Fetch.json('/surveyapi/updateAnswer', {
+    return Fetch.json('/updateAnswer', {
         sessionid: SESSIONID,
         answer,
     })
         .then(response => handleResponse(response))
-        .then(response => {
+        .then((response) => {
             // run next_questions assert
             if (typeof assertions[id] === 'function') {
                 Log.log(`    |      └── run assertion for response of for answer "${id}"...`);
@@ -305,9 +307,7 @@ const answerQuestion = function(question, answer, answerType) {
  */
 const answerQuestionsSequential = function(entries, count, responses = []) {
     const next = responses.length;
-
     const { question, answer, answerType } = entries[next];
-    const { id } = question;
 
     return answerQuestion(question, answer, answerType)
         .then(response => Log.log(`    |   └── ${answer}`, response))
@@ -399,7 +399,7 @@ getCustomAnswers()
 // initialize new session
     .then((answers) => {
         customAnswers = answers;
-        return Fetch.raw('/surveyapi/newsession');
+        return Fetch.raw('/newsession');
     })
     .then((sessid) => {
         SESSIONID = sessid;
