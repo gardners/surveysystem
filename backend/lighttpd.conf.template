@@ -3,6 +3,7 @@
 ## variables
 
 var.base_path="{BASE_PATH}"
+var.static_path="{STATIC_PATH}"
 var.server_user="{SERVER_USER}"
 var.server_group="{SERVER_GROUP}"
 var.server_port="{SERVER_PORT}"
@@ -34,32 +35,32 @@ server.modules = (
      "mod_accesslog",
 )
 
-server.breakagelog          = base_path + "/logs/breakage.log"
-server.upload-dirs          = ("/var/cache/lighttpd/uploads")
-server.errorlog             = base_path + "/logs/lighttpd-error.log"
-server.pid-file             = base_path + "/lighttpd.pid"
-server.document-root        = base_path + "www"
-server.username             = server_user
-server.groupname            = server_group
-server.port                 = server_port
+server.breakagelog              = base_path + "/logs/breakage.log"
+server.upload-dirs              = ("/var/cache/lighttpd/uploads")
+server.errorlog                 = base_path + "/logs/lighttpd-error.log"
+server.pid-file                 = base_path + "/lighttpd.pid"
+server.document-root            = base_path + "www"
+server.username                 = server_user
+server.groupname                = server_group
+server.port                     = server_port
 
-accesslog.filename          = base_path + "/logs/lighttpd-access.log"
+accesslog.filename              = base_path + "/logs/lighttpd-access.log"
 
-index-file.names            = ( "index.php", "index.html", "index.lighttpd.html" )
-url.access-deny             = ( "~", ".inc" )
-static-file.exclude-extensions = ( ".php", ".pl", ".fcgi" )
-server.error-handler-404   = "/index.html"
+index-file.names                = ( "index.php", "index.html", "index.lighttpd.html" )
+url.access-deny                 = ( "~", ".inc" )
+static-file.exclude-extensions  = ( ".php", ".pl", ".fcgi" )
+server.error-handler-404        = "/index.html"
 
-compress.cache-dir          = "/var/cache/lighttpd/compress/"
-compress.filetype           = ( "application/javascript", "text/css", "text/html", "text/plain" )
+compress.cache-dir              = "/var/cache/lighttpd/compress/"
+compress.filetype               = ( "application/javascript", "text/css", "text/html", "text/plain" )
 
 $SERVER["socket"] == ":" + server_port {
 
      # static home
-     server.document-root        = static_path
+     server.document-root = static_path
 
      # cors headers (optional)
-     # setenv.set-response-header  = response_header_policy
+     # setenv.set-response-header = response_header_policy
 
      fastcgi.debug = 1
 
