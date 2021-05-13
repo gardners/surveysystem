@@ -19,30 +19,34 @@ REQUIRE_SUDO
 
 REQUIRE_FILE "surveyfcgi" # binary compiled?
 
-read -p "Server port: [${default_server_port}]: " SERVER_PORT
-SERVER_PORT=${SERVER_PORT:-$default_server_port}
+read -rp "Server port: [${default_server_port}]: " SERVER_PORT
+SERVER_PORT="${SERVER_PORT:-$default_server_port}"
 out=$(sudo lsof -t -i:"${SERVER_PORT}")
+
 if [ "$out" ]; then
    EXIT_ERROR "server port '${SERVER_PORT}' is already in use (pid: ${out})"
 fi
 
-read -p "Fastcgi port: [${default_fastcgi_port}]: " FASTCGI_PORT
-FASTCGI_PORT=${FASTCGI_PORT:-$default_fastcgi_port}
+read -rp "Fastcgi port: [${default_fastcgi_port}]: " FASTCGI_PORT
+FASTCGI_PORT="${FASTCGI_PORT:-$default_fastcgi_port}"
 out=$(sudo lsof -t -i:"${SERVER_PORT}")
+
 if [ "$out" ]; then
    EXIT_ERROR "fastcgi port '${FASTCGI_PORT}' is already in use (pid: ${out})"
 fi
 
-read -p "User: [${default_server_user}]: " SERVER_USER
-SERVER_USER=${SERVER_USER:-$default_server_user}
+read -rp "User: [${default_server_user}]: " SERVER_USER
+SERVER_USER="${SERVER_USER:-$default_server_user}"
 out=$(sudo id "${SERVER_USER}")
+
 if [ -z "$out" ]; then
    EXIT_ERROR "invalid '${SERVER_USER}'"
 fi
 
-read -p "Group: [${default_server_group}]: " SERVER_GROUP
-SERVER_GROUP=${SERVER_GROUP:-$default_server_group}
+read -rp "Group: [${default_server_group}]: " SERVER_GROUP
+SERVER_GROUP="${SERVER_GROUP:-$default_server_group}"
 out=$(sudo id "${SERVER_GROUP}")
+
 if [ -z "$out" ]; then
    EXIT_ERROR "invalid group '${SERVER_GROUP}'"
 fi
@@ -56,6 +60,7 @@ mkdir -p sandbox/sessions/
 mkdir -p sandbox/python/
 mkdir -p sandbox/locks/
 mkdir -p sandbox/logs/
+mkdir -p sandbox/static/
 mkdir -p sandbox/www/ # not used, required by lighttpd
 
 # copy survey definitions (without hash copies)
@@ -68,6 +73,7 @@ cp surveyfcgi ./sandbox/surveyfcgi
 # fill in lighttpd vars
 sed \
     -e "s|{BASE_PATH}|${BASE_PATH}/sandbox|g" \
+    -e "s|{STATIC_PATH}|${BASE_PATH}/sandbox/www/static|g" \
     -e "s|{SERVER_USER}|${SERVER_USER}|g" \
     -e "s|{SERVER_GROUP}|${SERVER_GROUP}|g" \
     -e "s|{SERVER_PORT}|${SERVER_PORT}|g" \
@@ -91,6 +97,12 @@ lighttpd -f sandbox/lighttpd.conf
 # test
 echo "Testing.. (GET /surveyapi/accesstest)"
 sleep 1
-curl "http://localhost:${SERVER_PORT}/surveyapi/accesstest"
+
+status=$(curl --silent --output /dev/null --write-out "%{http_code}" "http://localhost:${SERVER_PORT}/surveyapi/accesstest")
+
+if [ "${status}" -ne 200 ]; then
+    EXIT_ERROR "curl GET /accesstest returned status ${status}"
+fi
+
 echo ""
 
