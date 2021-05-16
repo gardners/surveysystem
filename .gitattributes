@@ -1,0 +1,4 @@
+# flag main project language as C
+*.js linguist-detectable=false
+*.jsx linguist-detectable=false
+*.html linguist-detectable=false
