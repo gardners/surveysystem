@@ -15,8 +15,6 @@
       fprintf(stderr, "%s:%d: %s() failed.\n", __FILE__, __LINE__,             \
               __FUNCTION__);                                                   \
   }
-#define CHECKPOINT                                                             \
-  fprintf(stderr, "%s:%d:%s() CHECKPOINT\n", __FILE__, __LINE__, __FUNCTION__)
 
 #define MAX_WLEN 65536
 wchar_t as_wchar_out[MAX_WLEN];
@@ -512,7 +510,7 @@ PyObject *py_create_answer(struct answer *a) {
     if (errors) {
       LOG_ERRORV("setting dict item failed with %d errors", errors);
     }
-    
+
   } while (0);
 
   if (retVal) {
@@ -569,14 +567,14 @@ int py_answer_merge_question(PyObject *ans, struct question *qn) {
     if(!qn) {
       LOG_ERROR("question is NULL");
     }
-      
+
     PyObject *_flags = PyUnicode_FromString("_flags");
     PyObject *_default_value = PyUnicode_FromString("_default_value");
     PyObject *_min_value = PyUnicode_FromString("_min_value");
     PyObject *_max_value = PyUnicode_FromString("_max_value");
     PyObject *_choices = PyUnicode_FromString("_choices");
     PyObject *_unit = PyUnicode_FromString("_unit"); // #448
-  
+
     PyObject *flags = PyLong_FromLongLong(qn->flags);
     PyObject *default_value = PyUnicode_FromString(qn->default_value);
     PyObject *min_value = PyLong_FromLongLong(qn->min_value);
@@ -594,9 +592,9 @@ int py_answer_merge_question(PyObject *ans, struct question *qn) {
     if (errors) {
       LOG_ERRORV("setting dict item to py answer failed with %d errors", errors);
     }
-  
+
   } while(0);
-  
+
   return retVal;
 }
 
@@ -622,13 +620,13 @@ PyObject *py_create_answers_list(struct session *ses) {
             if (!item) {
               LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.", ses->answers[i]->uid);
             }
-            
+
             struct question *qn = session_get_question(ses->answers[i]->uid, ses);
             if (py_answer_merge_question(item, qn)) {
               Py_DECREF(item);
               LOG_ERRORV("Error merging question properties into PyDict answer '%s'", ses->answers[i]->uid);
             }
-            
+
             if (PyList_SetItem(answers, listIndex, item)) {
               Py_DECREF(item);
               LOG_ERRORV("Error inserting answer name '%s' into Python list", ses->answers[i]->uid);
