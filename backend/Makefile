@@ -21,6 +21,7 @@ STATICHEADERS=	Makefile \
 		$(INCDIR)/code_instrumentation.h \
 		$(INCDIR)/serialisers.h \
 		$(INCDIR)/utils.h \
+		$(INCDIR)/py_module.h \
 		$(INCDIR)/test.h
 
 STATICSRCS=	$(SRCDIR)/serialisers.c \
@@ -33,6 +34,8 @@ STATICSRCS=	$(SRCDIR)/serialisers.c \
 		$(SRCDIR)/filelocks.c \
 		$(SRCDIR)/errorlog.c \
 		$(SRCDIR)/utils.c \
+		$(SRCDIR)/py_module.c \
+		$(SRCDIR)/py_hooks.c \
 		$(SRCDIR)/test_utils.c
 
 # #363
@@ -53,6 +56,8 @@ COREOBJS=	$(SRCDIR)/errorlog.o \
 		$(SRCDIR)/filelocks.o \
 		$(SRCDIR)/question_types.o \
 		$(SRCDIR)/utils.o \
+		$(SRCDIR)/py_module.o \
+		$(SRCDIR)/py_hooks.o \
 		$(SRCDIR)/test_utils.o
 
 TESTOBJS =	$(COREOBJS) \
