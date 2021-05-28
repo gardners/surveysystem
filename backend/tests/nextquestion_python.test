@@ -15,7 +15,7 @@ endofsurvey
 python
 def nextquestion_nextquestion_python(questions, answers, **kwargs):
     fp = open('logs/python.log', 'a')
-    fp.write('{}\n'.format(action))
+    fp.write('{}\n'.format(kwargs))
     return {
         'status': 1,
         'message': 'warning!',
