@@ -47,13 +47,14 @@ void code_instrumentation_unmute();
     break;                                                                     \
   }
 
-#define LOG_INFOV(MSG, ...)                                                    \
-  log_message(__FILE__, __FUNCTION__, __LINE__, MSG, __VA_ARGS__)
+#define LOG_INFOV(MSG, ...)  log_message(__FILE__, __FUNCTION__, __LINE__, MSG, __VA_ARGS__)
 #define LOG_INFO(MSG) log_message(__FILE__, __FUNCTION__, __LINE__, "%s", MSG)
 
+#define CHECKPOINT() fprintf(stderr, "%s:%d:%s():pid=%d: Checkpoint\n", __FILE__, __LINE__, __FUNCTION__, getpid())
+
+
 FILE *open_log(char *name);
-int log_message(const char *file, const char *function, const int line,
-                char *format, ...);
+int log_message(const char *file, const char *function, const int line, char *format, ...);
 
 #define MAX_ERRORS 20
 extern char error_messages[MAX_ERRORS][1024];

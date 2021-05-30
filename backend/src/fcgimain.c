@@ -23,11 +23,6 @@
 
 #include "fcgirequest.h"
 
-#define CHECKPOINT()                                                           \
-  {                                                                            \
-    fprintf(stderr, "%s:%d:%s():pid=%d: Checkpoint\n", __FILE__, __LINE__,     \
-            __FUNCTION__, getpid());                                           \
-  }
 
 int kvalid_surveyid(struct kpair *kp) {
 
