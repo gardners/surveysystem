@@ -87,16 +87,19 @@ test_runner:	Makefile $(SRCDIR)/test_runner.o $(TESTOBJS)
 	$(CC) $(COPT) -c $< -o $@
 
 $(INCDIR)/question_types.h:	$(INCDIR)/survey.h $(STATICHEADERS)
-	grep '#define QTYPE_' $(INCDIR)/survey.h | cut -c8- | sort -k2n -t' ' | tail -1 | awk -F' ' '{ printf("#define NUM_QUESTION_TYPES %s\n",$$2); }' >$@
-	echo "extern char *question_type_names[1+NUM_QUESTION_TYPES+1];" >>$@
+	echo "// clang-format on" > $@
+	grep '#define QTYPE_' $(INCDIR)/survey.h | cut -c8- | sort -k2n -t' ' | tail -1 | awk -F' ' '{ printf("#define NUM_QUESTION_TYPES %s\n",$$2); }' >> $@
+	echo "extern char *question_type_names[1+NUM_QUESTION_TYPES+1];" >> $@
+	echo "// clang-format off" >> $@
 
 $(SRCDIR)/question_types.c:	$(INCDIR)/survey.h $(HEADERS)
-	grep '#define QTYPE_' $(INCDIR)/survey.h | cut -c8- | sort -k2n -t' ' | tail -1 | awk -F' ' '{ printf("#define NUM_QUESTION_TYPES %s\n",$$2); }' >>$@
-	echo "#include \"question_types.h\"" > $@
+	echo "// clang-format on" > $@
+	echo "#include \"question_types.h\"" >> $@
 	echo "char *question_type_names[1+NUM_QUESTION_TYPES+1]={" >> $@
 	echo "  \"start of list\"," >> $@
-	grep '#define QTYPE_' $(INCDIR)/survey.h | cut -f2- -d_ | sort -k2n -t' ' | awk -F' ' '{ printf("  \"%s\",\n",$$1); }' >>$@
-	echo "  \"end of list\"};" >> $@
+	grep '#define QTYPE_' $(INCDIR)/survey.h | cut -f2- -d_ | sort -k2n -t' ' | awk -F' ' '{ printf("  \"%s\",\n",$$1); }' >> $@
+	echo "  \"end of list\"\n};" >> $@
+	echo "// clang-format off" >> $@
 
 test_units:	$(TESTOBJS)
 	$(CC) $(COPT) -o $@ $^ $(LOPT)

@@ -26,6 +26,10 @@ function BOLD {
     echo -e "\033[1m${1}\033[0m"
 }
 
+function DIM {
+    echo -e "\033[2m${1}\033[0m"
+}
+
 function EXIT_ERROR {
   echo "$(RED "[ERROR] ") ${1}"
   exit 1
