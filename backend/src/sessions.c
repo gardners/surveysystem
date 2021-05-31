@@ -798,29 +798,29 @@ void free_session_meta(struct session_meta *m) {
   return;
 }
 
-int dump_session(FILE *f, struct session *ses) {
+int dump_session(FILE *fp, struct session *ses) {
   int retVal = 0;
   int i;
 
   do {
-    if (!f) {
+    if (!fp) {
       LOG_ERROR("dump_session(): invalid file pointer.");
     }
 
     if (!ses) {
-      fprintf(f, "session { <NULL> }\n");
+      fprintf(fp, "session { <NULL> }\n");
       break;
     }
 
     fprintf(
-      f,
+      fp,
 
       "session {\n"
       "  survey_id: \"%s\"\n"
       "  survey_description: \"%s\"\n"
       "  session_id: \"%s\"\n"
       "  consistency_hash: \"%s\"\n"
-      "  nextquestions_flag: %d\n"
+      "  nextquestions_flag: %u\n"
       "  answer_offset: %d\n"
       "  answer_count: %d\n"
       "  question_count: %d\n"
@@ -840,19 +840,19 @@ int dump_session(FILE *f, struct session *ses) {
       ses->state
     );
 
-    fprintf(f , "  questions: [\n");
+    fprintf(fp , "  questions: [\n");
     for (i = 0; i < ses->question_count; i++) {
-      fprintf(f, "    \"%s\"%s\n", ses->questions[i]->uid, (i < ses->question_count - 1) ? ",": "");
+      fprintf(fp, "    \"%s\"%s\n", ses->questions[i]->uid, (i < ses->question_count - 1) ? ",": "");
     }
-    fprintf(f , "  ]\n");
+    fprintf(fp , "  ]\n");
 
-    fprintf(f , "  answers: [\n");
+    fprintf(fp , "  answers: [\n");
     for (i = 0; i < ses->answer_count; i++) {
-      fprintf(f, "    \"%s\"%s\n", ses->answers[i]->uid, (i < ses->answer_count - 1) ? ",": "");
+      fprintf(fp, "    \"%s\"%s\n", ses->answers[i]->uid, (i < ses->answer_count - 1) ? ",": "");
     }
-    fprintf(f , "  ]\n");
+    fprintf(fp , "  ]\n");
 
-  fprintf(f , "}\n");
+  fprintf(fp , "}\n");
   } while (0);
 
   return retVal;
@@ -1185,9 +1185,7 @@ struct session *load_session(char *session_id) {
 
     if (retVal) {
       fclose(s);
-      if (ses) {
-        free_session(ses);
-      }
+      free_session(ses);
       ses = NULL;
       break;
     }
@@ -1224,7 +1222,6 @@ int save_session(struct session *s) {
     // update header with current state of loaded and processed session (#379)
     struct answer *header = session_get_header("@state", s);
     if (!header) {
-      retVal = -1;
       LOG_ERROR("Could not find state header for session!"); // don't break here fall through
     }
 
@@ -1895,10 +1892,8 @@ int session_delete_answers_by_question_uid(struct session *ses, char *uid, int d
       break;
     }
 
-    if (!retVal) {
-      ses->given_answer_count -= deletions;
-      retVal = deletions;
-    }
+    ses->given_answer_count -= deletions;
+    retVal = deletions;
   } while (0);
   return retVal;
 }
