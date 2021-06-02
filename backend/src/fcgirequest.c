@@ -9,26 +9,11 @@
 #include "fcgirequest.h"
 #include "errorlog.h"
 
-void log_session_meta(struct session_meta *meta){
-  LOG_INFOV(
-    "session_meta\n"
-    "  |_ user: %s\n"
-    "  |_ group: %s\n"
-    "  |_ authority: %s\n"
-    "  |_ provider: %d\n",
-
-    meta->user,
-    meta->group,
-    meta->authority,
-    meta->provider
-  );
-}
-
 /**
  * Determines (but does not validate) authorisation type from an incoming kcgi request
  * #363
  */
-int get_autorisation_type(struct kreq *req) {
+static int get_autorisation_type(struct kreq *req) {
   // is trusted middleware
   if (getenv("SS_TRUSTED_MIDDLEWARE")) {
     return IDENDITY_HTTP_TRUSTED;
@@ -54,7 +39,7 @@ int get_autorisation_type(struct kreq *req) {
  * The returned session_meta structure needs to be freed
  * #363
  */
-struct session_meta *fcgirequest_parse_session_meta(struct kreq *req) {
+struct session_meta *fcgi_request_parse_meta(struct kreq *req) {
 
   /*
   LOG_INFOV(
@@ -138,7 +123,7 @@ struct session_meta *fcgirequest_parse_session_meta(struct kreq *req) {
  * Validates incoming kcgi request against server config, using previously parsed session meta
  * #363
  */
-enum khttp fcgirequest_validate_request(struct kreq *req, struct session_meta *meta) {
+enum khttp fcgi_request_validate_meta_kreq(struct kreq *req, struct session_meta *meta) {
 
   // no authorisation
   if (meta->provider <= IDENDITY_HTTP_PUBLIC) {
@@ -258,12 +243,12 @@ enum khttp fcgirequest_validate_session_authority( struct session_meta *meta, st
  * We only verify if the request source is consitent with thew initial newsession request
  */
 
-enum khttp fcgirequest_validate_session_request(struct kreq *req, struct session *ses) {
+enum khttp fcgi_request_validate_meta_session(struct kreq *req, struct session *ses) {
   enum khttp status;
   struct session_meta *meta = NULL;
 
   if (!req) {
-    LOG_WARNV("Cannot validate request. request meta is null for session '%s'.", ses->session_id);
+    LOG_WARNV("Cannot validate request. request is null for session '%s'.", ses->session_id);
     return KHTTP_500;
   }
 
@@ -273,17 +258,17 @@ enum khttp fcgirequest_validate_session_request(struct kreq *req, struct session
   }
 
   // #363 parse session meta
-  meta = fcgirequest_parse_session_meta(req);
+  meta = fcgi_request_parse_meta(req);
   if (!meta) {
     LOG_WARNV("create_session_meta_kreq() failed",  0);
     return KHTTP_500;
   }
 
   // validate session meta against request
-  status = fcgirequest_validate_request(req, meta);
+  status = fcgi_request_validate_meta_kreq(req, meta);
   if (status != KHTTP_200) {
     free_session_meta(meta);
-    LOG_WARNV("fcgirequest_validate_request() status %d != (%d)", KHTTP_200, status);
+    LOG_WARNV("fcgi_request_validate_meta_kreq() status %d != (%d)", KHTTP_200, status);
     return status;
   }
 

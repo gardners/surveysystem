@@ -340,19 +340,19 @@ static void fcgi_newsession(struct kreq *req) {
     }
 
     // #363 parse session meta
-    meta = fcgirequest_parse_session_meta(req);
+    meta = fcgi_request_parse_meta(req);
     if (!meta) {
       http_json_error(req, KHTTP_500, "Session could not be created (parse request meta).");
-      LOG_ERROR("fcgirequest_parse_session_meta() failed");
+      LOG_ERROR("fcgi_request_parse_meta() failed");
     }
 
     // #363 validate session meta
-    enum khttp status = fcgirequest_validate_request(req, meta);
+    enum khttp status = fcgi_request_validate_meta_kreq(req, meta);
     if (status >= KHTTP_400) {
       free_session_meta(meta);
       meta = NULL;
       http_json_error(req, status, "Invalid idendity provider check app configuration");
-      LOG_ERRORV("fcgirequest_validate_request() returned status %d >= KHTTP_400 (%d)", KHTTP_400, status);
+      LOG_ERRORV("fcgi_request_validate_meta_kreq() returned status %d >= KHTTP_400 (%d)", KHTTP_400, status);
     }
 
     if (KMETHOD_POST == req->method) {
@@ -456,7 +456,7 @@ static void fcgi_addanswer(struct kreq *req) {
     */
 
     // validate request against session meta (#363)
-    enum khttp status = fcgirequest_validate_session_request(req, ses);
+    enum khttp status = fcgi_request_validate_meta_session(req, ses);
     if (status != KHTTP_200) {
       free_session(ses);
       ses = NULL;
@@ -606,7 +606,7 @@ static void fcgi_updateanswer(struct kreq *req) {
     }
 
     // validate request against session meta (#363)
-    enum khttp status = fcgirequest_validate_session_request(req, ses);
+    enum khttp status = fcgi_request_validate_meta_session(req, ses);
     if (status != KHTTP_200) {
       free_session(ses);
       ses = NULL;
@@ -718,7 +718,7 @@ static void fcgi_delanswer(struct kreq *req) {
     }
 
     // validate request against session meta (#363)
-    enum khttp status = fcgirequest_validate_session_request(req, ses);
+    enum khttp status = fcgi_request_validate_meta_session(req, ses);
     if (status != KHTTP_200) {
       free_session(ses);
       ses = NULL;
@@ -810,7 +810,7 @@ static void fcgi_delanswerandfollowing(struct kreq *req) {
     }
 
     // validate request against session meta (#363)
-    enum khttp status = fcgirequest_validate_session_request(req, ses);
+    enum khttp status = fcgi_request_validate_meta_session(req, ses);
     if (status != KHTTP_200) {
       free_session(ses);
       ses = NULL;
@@ -908,7 +908,7 @@ static void fcgi_delprevanswer(struct kreq *req) {
     }
 
     // validate request against session meta (#363)
-    enum khttp status = fcgirequest_validate_session_request(req, ses);
+    enum khttp status = fcgi_request_validate_meta_session(req, ses);
     if (status != KHTTP_200) {
       free_session(ses);
       ses = NULL;
@@ -1012,7 +1012,7 @@ static void fcgi_delsession(struct kreq *req) {
     }
 
     // validate request against session meta (#363)
-    enum khttp status = fcgirequest_validate_session_request(req, ses);
+    enum khttp status = fcgi_request_validate_meta_session(req, ses);
     if (status != KHTTP_200) {
       free_session(ses);
       ses = NULL;
@@ -1071,7 +1071,7 @@ static void fcgi_nextquestion(struct kreq *req) {
     }
 
     // validate request against session meta (#363)
-    enum khttp status = fcgirequest_validate_session_request(req, ses);
+    enum khttp status = fcgi_request_validate_meta_session(req, ses);
     if (status != KHTTP_200) {
       free_session(ses);
       ses = NULL;
@@ -1266,7 +1266,7 @@ static void fcgi_analyse(struct kreq *req) {
     }
 
     // validate request against session meta (#363)
-    enum khttp status = fcgirequest_validate_session_request(req, ses);
+    enum khttp status = fcgi_request_validate_meta_session(req, ses);
     if (status != KHTTP_200) {
       free_session(ses);
       ses = NULL;
