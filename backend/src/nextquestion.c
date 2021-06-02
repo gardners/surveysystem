@@ -61,11 +61,11 @@ int is_system_answer(struct answer *a) {
 /**
  * Given a question uid load the question data and append it to the givven next_questions struct
  */
-int mark_next_question(struct session *s, struct question *next_questions[], int *next_question_count, const char *uid) {
+int mark_next_question(struct session *ses, struct question *next_questions[], int *next_question_count, const char *uid) {
   int retVal = 0;
   do {
     int qn;
-    if (!s) {
+    if (!ses) {
       LOG_ERROR("session structure is NULL");
     }
     if (!next_questions) {
@@ -81,25 +81,25 @@ int mark_next_question(struct session *s, struct question *next_questions[], int
       LOG_ERRORV("Too many questions in list when marking question uid='%s'", uid);
     }
 
-    for (qn = 0; qn < s->question_count; qn++) {
-      if (!strcmp(s->questions[qn]->uid, uid)) {
+    for (qn = 0; qn < ses->question_count; qn++) {
+      if (!strcmp(ses->questions[qn]->uid, uid)) {
         break;
       }
     }
 
-    if (qn == s->question_count) {
+    if (qn == ses->question_count) {
       LOG_ERRORV("Asked to mark non-existent question UID '%s'", uid);
     }
 
     for (int j = 0; j < (*next_question_count); j++) {
-      if (next_questions[j] == s->questions[qn]) {
+      if (next_questions[j] == ses->questions[qn]) {
         LOG_ERRORV("Duplicate question UID '%s' in list of next questions", uid);
         break;
       }
     }
 
     // #373 separate allocated space for questions
-    next_questions[*next_question_count] = copy_question(s->questions[qn]);
+    next_questions[*next_question_count] = copy_question(ses->questions[qn]);
     if (!next_questions[*next_question_count]) {
       LOG_ERRORV("Copying question '%s' in list of next questions failed", uid);
     }
@@ -335,8 +335,6 @@ struct nextquestions *get_next_questions(struct session *s, enum actions action,
     LOG_WARNV("get_next_questions() failed.", 0);
     return NULL;
   }
-
-
 
   return nq;
 }
