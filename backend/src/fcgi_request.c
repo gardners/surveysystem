@@ -6,29 +6,16 @@
 #include "kcgi.h"
 
 #include "survey.h"
-#include "fcgirequest.h"
+#include "fcgi.h"
+#include "serialisers.h"
+#include "validators.h"
 #include "errorlog.h"
-
-void log_session_meta(struct session_meta *meta){
-  LOG_INFOV(
-    "session_meta\n"
-    "  |_ user: %s\n"
-    "  |_ group: %s\n"
-    "  |_ authority: %s\n"
-    "  |_ provider: %d\n",
-
-    meta->user,
-    meta->group,
-    meta->authority,
-    meta->provider
-  );
-}
 
 /**
  * Determines (but does not validate) authorisation type from an incoming kcgi request
  * #363
  */
-int get_autorisation_type(struct kreq *req) {
+static int get_autorisation_type(struct kreq *req) {
   // is trusted middleware
   if (getenv("SS_TRUSTED_MIDDLEWARE")) {
     return IDENDITY_HTTP_TRUSTED;
@@ -49,12 +36,59 @@ int get_autorisation_type(struct kreq *req) {
   return IDENDITY_HTTP_PUBLIC;
 }
 
+
+/**
+ * Validates session meta, parsed from incoming kcgi request, against previously stored session meta (header)
+ * We do not manage authorisation or idendity in the backend, only verify if the request source is consitent with thew initial newsession request
+ */
+static enum khttp validate_session_authority( struct session_meta *meta, struct session *ses) {
+  if (!meta) {
+    LOG_WARNV("Cannot validate request. request meta is null for session '%s'.", ses->session_id);
+    return KHTTP_500;
+  }
+
+  if (!ses) {
+    LOG_WARNV("Cannot validate request. session is null.", 0);
+    return KHTTP_500;
+  }
+
+  // parse initial authority from session
+  struct answer *authority = session_get_header("@authority", ses);
+  if (!authority) {
+    LOG_WARNV("'@authority' header missing in session '%s'", ses->session_id);
+    return KHTTP_502;
+  }
+
+  // all requests must match provider type
+  int provider = authority->value;
+  if(provider != meta->provider) {
+    LOG_WARNV("Invalid request. Provider type mismatch %d != %d for session '%s'.", provider, meta->provider, ses->session_id);
+    return KHTTP_502;
+  }
+
+  if (provider != IDENDITY_HTTP_TRUSTED) {
+    return KHTTP_200;
+  }
+
+  // if middleware: (fcgi env SS_TRUSTED_MIDDLEWARE is set) match current authority (ip, port)
+  if (!authority->text || !strlen(authority->text)){
+    LOG_WARNV("Invalid request. authority value is empty in session '%s'.", ses->session_id);
+    return KHTTP_502;
+  }
+  if (strcmp(authority->text, meta->authority)) {
+    LOG_WARNV("Invalid request. Provider authority string mismatch '%s' != '%s' for session '%s'.", authority->text, meta->authority, ses->session_id);
+    return KHTTP_502;
+  }
+
+  return KHTTP_200;
+}
+
 /**
  * Parses session meta from an incoming kcgi request
  * The returned session_meta structure needs to be freed
  * #363
  */
-struct session_meta *fcgirequest_parse_session_meta(struct kreq *req) {
+struct session_meta *fcgi_request_parse_meta(struct kreq *req) {
 
   /*
   LOG_INFOV(
@@ -138,7 +172,7 @@ struct session_meta *fcgirequest_parse_session_meta(struct kreq *req) {
  * Validates incoming kcgi request against server config, using previously parsed session meta
  * #363
  */
-enum khttp fcgirequest_validate_request(struct kreq *req, struct session_meta *meta) {
+enum khttp fcgi_request_validate_meta_kreq(struct kreq *req, struct session_meta *meta) {
 
   // no authorisation
   if (meta->provider <= IDENDITY_HTTP_PUBLIC) {
@@ -207,63 +241,16 @@ enum khttp fcgirequest_validate_request(struct kreq *req, struct session_meta *m
 }
 
 /**
- * Validates session meta, parsed from incoming kcgi request, against previously stored session meta (header)
- * We do not manage authorisation or idendity in the backend, only verify if the request source is consitent with thew initial newsession request
- */
-enum khttp fcgirequest_validate_session_authority( struct session_meta *meta, struct session *ses) {
-  if (!meta) {
-    LOG_WARNV("Cannot validate request. request meta is null for session '%s'.", ses->session_id);
-    return KHTTP_500;
-  }
-
-  if (!ses) {
-    LOG_WARNV("Cannot validate request. session is null.", 0);
-    return KHTTP_500;
-  }
-
-  // parse initial authority from session
-  struct answer *authority = session_get_header("@authority", ses);
-  if (!authority) {
-    LOG_WARNV("'@authority' header missing in session '%s'", ses->session_id);
-    return KHTTP_502;
-  }
-
-  // all requests must match provider type
-  int provider = authority->value;
-  if(provider != meta->provider) {
-    LOG_WARNV("Invalid request. Provider type mismatch %d != %d for session '%s'.", provider, meta->provider, ses->session_id);
-    return KHTTP_502;
-  }
-
-  if (provider != IDENDITY_HTTP_TRUSTED) {
-    return KHTTP_200;
-  }
-
-  // if middleware: (fcgi env SS_TRUSTED_MIDDLEWARE is set) match current authority (ip, port)
-  if (!authority->text || !strlen(authority->text)){
-    LOG_WARNV("Invalid request. authority value is empty in session '%s'.", ses->session_id);
-    return KHTTP_502;
-  }
-  if (strcmp(authority->text, meta->authority)) {
-    LOG_WARNV("Invalid request. Provider authority string mismatch '%s' != '%s' for session '%s'.", authority->text, meta->authority, ses->session_id);
-    return KHTTP_502;
-  }
-
-  return KHTTP_200;
-}
-
-/**
  * Validate a loaded session against request
  * The backend does not manage authorisation or idendity, it relies on outer wrappers,
  * We only verify if the request source is consitent with thew initial newsession request
  */
-
-enum khttp fcgirequest_validate_session_request(struct kreq *req, struct session *ses) {
+enum khttp fcgi_request_validate_meta_session(struct kreq *req, struct session *ses) {
   enum khttp status;
   struct session_meta *meta = NULL;
 
   if (!req) {
-    LOG_WARNV("Cannot validate request. request meta is null for session '%s'.", ses->session_id);
+    LOG_WARNV("Cannot validate request. request is null for session '%s'.", ses->session_id);
     return KHTTP_500;
   }
 
@@ -273,28 +260,101 @@ enum khttp fcgirequest_validate_session_request(struct kreq *req, struct session
   }
 
   // #363 parse session meta
-  meta = fcgirequest_parse_session_meta(req);
+  meta = fcgi_request_parse_meta(req);
   if (!meta) {
     LOG_WARNV("create_session_meta_kreq() failed",  0);
     return KHTTP_500;
   }
 
   // validate session meta against request
-  status = fcgirequest_validate_request(req, meta);
+  status = fcgi_request_validate_meta_kreq(req, meta);
   if (status != KHTTP_200) {
     free_session_meta(meta);
-    LOG_WARNV("fcgirequest_validate_request() status %d != (%d)", KHTTP_200, status);
+    LOG_WARNV("fcgi_request_validate_meta_kreq() status %d != (%d)", KHTTP_200, status);
     return status;
   }
 
   // validate session meta against session
-  status = fcgirequest_validate_session_authority(meta, ses);
+  status = validate_session_authority(meta, ses);
   if (status != KHTTP_200) {
     free_session_meta(meta);
-    LOG_WARNV("fcgirequest_validate_session_authority() status %d != (%d)", KHTTP_200, status);
+    LOG_WARNV("validate_session_authority() status %d != (%d)", KHTTP_200, status);
     return status;
   }
 
   free_session_meta(meta);
   return KHTTP_200;
+}
+
+/**
+ *  fetch the field value (param) for a given key from kreq.fieldmap
+ */
+char *fcgi_request_get_field_value(enum key field, struct kreq *req) {
+    struct kpair *pair = req->fieldmap[field];
+    if (!pair) {
+      return NULL;
+    }
+    return pair->val;
+}
+
+/**
+ * Fetch and desrialise the kreq 'answer' param to an answer struct.
+ * - param has to be validate beforehand
+ */
+struct answer *fcgi_request_load_answer(struct kreq *req) {
+  int retVal = 0;
+  struct answer *ans = NULL;
+
+  do {
+    char *serialised = fcgi_request_get_field_value(KEY_ANSWER, req);
+
+    // Deserialise answer
+    ans = calloc(sizeof(struct answer), 1);
+    if (!ans) {
+      LOG_ERRORV("calloc() of answer structure failed.", 0);
+    }
+
+    if (deserialise_answer(serialised, ANSWER_SCOPE_PUBLIC, ans)) {
+      LOG_ERRORV("deserialise_answer() failed.", 0);
+    }
+  } while(0);
+
+  if (retVal) {
+    free_answer(ans);
+    return NULL;
+  }
+
+  return ans;
+}
+
+/**
+ * Fetch and desrialise the kreq 'sessionid' param to a session struct.
+ * - param has to be validate beforehand
+ */
+struct session *fcgi_request_load_session(struct kreq *req) {
+  int retVal = 0;
+  struct session *ses = NULL;
+
+  do {
+    char *session_id = fcgi_request_get_field_value(KEY_SESSIONID, req);
+    if (validate_session_id(session_id)) {
+      LOG_ERROR("Invalid survey id");
+    }
+
+    // joerg: break if session could not be updated
+    if (lock_session(session_id)) {
+      LOG_ERRORV("failed to lock session '%s'", session_id);
+    }
+
+    ses = load_session(session_id);
+    if (!ses) {
+      LOG_ERRORV("Could not load session '%s'", session_id);
+    }
+  } while(0);
+
+  if (retVal) {
+    return NULL;
+  }
+
+  return ses;
 }

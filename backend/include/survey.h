@@ -205,6 +205,8 @@ struct session_meta {
   } provider;
 };
 
+void log_session_meta(struct session_meta *meta);
+
 // #379 session live cycle
 enum session_state {
   SESSION_NULL, // init state, overwritten by load_session
@@ -275,7 +277,7 @@ int save_session(struct session *s);
 int session_add_answer(struct session *s, struct answer *a);
 int session_delete_answer(struct session *s, struct answer *a, int deleteFollowingP);
 int session_delete_answers_by_question_uid(struct session *ses, char *uid, int deleteFollowingP);
-int delete_session(char *session_id);
+
 void free_session(struct session *s);
 void free_question(struct question *q);
 void free_answer(struct answer *a);
@@ -285,7 +287,6 @@ struct question *copy_question(struct question *qq);
 int answer_get_value_raw(struct answer *a, char *out, size_t sz);
 int answer_set_value_raw(struct answer *a, char *in); // #425
 
-int validate_session_id(char *session_id);
 int validate_session_action(enum actions action, struct session *ses, char *msg, size_t sz); // #379
 int session_add_datafile(char *session_id, char *filename_suffix, const char *data);
 int lock_session(char *session_id);

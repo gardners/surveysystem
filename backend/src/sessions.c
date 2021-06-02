@@ -308,6 +308,21 @@ int session_new_add_meta(struct session *ses, struct session_meta *meta) {
   return retVal;
 }
 
+void log_session_meta(struct session_meta *meta) {
+  LOG_INFOV(
+    "session_meta\n"
+    "  |_ user: %s\n"
+    "  |_ group: %s\n"
+    "  |_ authority: %s\n"
+    "  |_ provider: %d\n",
+
+    meta->user,
+    meta->group,
+    meta->authority,
+    meta->provider
+  );
+}
+
 /**
  * #239
  * Make sure that the survey exists, and if the exact version of the survey

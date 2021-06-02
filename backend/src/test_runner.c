@@ -70,6 +70,7 @@
 
 #include "errorlog.h"
 #include "survey.h"
+#include "validators.h"
 #include "utils.h"
 #include "sha1.h"
 

@@ -12,6 +12,7 @@
 
 #include "errorlog.h"
 #include "survey.h"
+#include "validators.h"
 
 struct locked_files {
   FILE *file_handle;

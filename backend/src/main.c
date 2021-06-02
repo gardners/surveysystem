@@ -8,6 +8,7 @@
 #include "serialisers.h"
 #include "survey.h"
 #include "sha1.h"
+#include "utils.h"
 
 void usage(void) {
   fprintf(
@@ -116,6 +117,8 @@ void print_nextquestion(struct nextquestions *nq) {
 int do_newsession(char *survey_id) {
   int retVal = 0;
 
+  struct session *ses = NULL;
+
   do {
     LOG_INFO("Entering newsession handler.");
     struct session_meta meta = {
@@ -132,16 +135,18 @@ int do_newsession(char *survey_id) {
     }
 
     // #268 create_session() now returns returns a session struct
-    struct session *ses = create_session(survey_id, session_id, &meta);
+    ses = create_session(survey_id, session_id, &meta);
     if (!ses) {
       fprintf(stderr, "failed to create session.\n");
       LOG_ERROR("Create session failed.");
     }
-    free_session(ses);
 
     printf("%s\n", session_id);
     LOG_INFO("Leaving newsession handler.");
   } while(0);
+
+  // destruct
+  free_session(ses);
 
   return retVal;
 }
@@ -164,8 +169,6 @@ int do_progress(char *session_id) {
 
     char reason[1024];
     if (validate_session_action(action, ses, reason, 1024)) {
-      free_session(ses);
-      ses = NULL;
       fprintf(stderr, "%s\n", reason);
       LOG_ERROR("Session action validation failed");
     }
@@ -173,6 +176,9 @@ int do_progress(char *session_id) {
     printf("%d/%d\n", ses->given_answer_count + 1, ses->question_count);
     LOG_INFO("Leaving progress handler.");
   } while(0);
+
+  // destruct
+  free_session(ses);
 
   return retVal;
 }
@@ -195,35 +201,29 @@ int do_nextquestions(char *session_id) {
 
     char reason[1024];
     if (validate_session_action(action, ses, reason, 1024)) {
-      free_session(ses);
-      ses = NULL;
       fprintf(stderr, "%s\n", reason);
       LOG_ERROR("Session action validation failed");
     }
 
     nq = get_next_questions(ses, action, 0);
     if (!nq) {
-      free_session(ses);
-      ses = NULL;
       fprintf(stderr, "Could not load next questions.\n");
       LOG_ERROR("get_next_questions() failed");
     }
 
     if (save_session(ses)) {
-      free_session(ses);
-      ses = NULL;
-      free_next_questions(nq);
-      nq = NULL;
       fprintf(stderr, "Unable to update session.\n");
       LOG_ERROR("save_session() failed");
     }
 
     print_nextquestion(nq);
-
-    free_session(ses);
-    free_next_questions(nq);
     LOG_INFO("Leaving nextquestion handler.");
+
   } while (0);
+
+  // destruct
+  free_session(ses);
+  free_next_questions(nq);
 
   return retVal;
 }
@@ -247,8 +247,6 @@ int do_addanswer(char *session_id, char *serialised_answer) {
 
     char reason[1024];
     if (validate_session_action(action, ses, reason, 1024)) {
-      free_session(ses);
-      ses = NULL;
       fprintf(stderr, "%s\n", reason);
       LOG_ERROR("Session action validation failed");
     }
@@ -261,7 +259,6 @@ int do_addanswer(char *session_id, char *serialised_answer) {
     }
 
     if (deserialise_answer(serialised_answer, ANSWER_SCOPE_PUBLIC, ans)) {
-      free_answer(ans);
       fprintf(stderr, "answer format is invalid.\n");
       LOG_ERROR("deserialise_answer() failed.");
     }
@@ -269,41 +266,30 @@ int do_addanswer(char *session_id, char *serialised_answer) {
     // #445 count affected answers
     int affected_count = session_add_answer(ses, ans);
     if (affected_count < 0) {
-      free_session(ses);
-      ses = NULL;
-      free_answer(ans);
-      ans = NULL;
       fprintf(stderr, "could not add answer to session.\n");
       LOG_ERROR("session_add_answer() failed.");
     }
 
-    free_answer(ans);
-    ans = NULL;
-
     nq = get_next_questions(ses, action, affected_count);
     if (!nq) {
-      free_session(ses);
-      ses = NULL;
       fprintf(stderr, "Could not load next questions.\n");
       LOG_ERROR("get_next_questions() failed");
     }
 
     if (save_session(ses)) {
-      free_session(ses);
-      ses = NULL;
-      free_next_questions(nq);
-      nq = NULL;
       fprintf(stderr, "Unable to update session.\n");
       LOG_ERROR("save_session() failed");
     }
 
     print_nextquestion(nq);
-
-    free_session(ses);
-    free_next_questions(nq);
     LOG_INFO("Leaving addanswer handler.");
 
   } while (0);
+
+  // destruct
+  free_session(ses);
+  free_answer(ans);
+  free_next_questions(nq);
 
   return retVal;
 }
@@ -329,8 +315,6 @@ int do_addanswervalue(char *session_id, char *uid, char *value) {
 
     char reason[1024];
     if (validate_session_action(action, ses, reason, 1024)) {
-      free_session(ses);
-      ses = NULL;
       fprintf(stderr, "%s\n", reason);
       LOG_ERROR("Session action validation failed");
     }
@@ -338,8 +322,6 @@ int do_addanswervalue(char *session_id, char *uid, char *value) {
     // load question from session, we need the type
     struct question *qn = session_get_question(uid, ses);
     if (!qn) {
-      free_session(ses);
-      ses = NULL;
       LOG_ERRORV("could not find question '%s' in survey", uid);
     }
 
@@ -353,7 +335,6 @@ int do_addanswervalue(char *session_id, char *uid, char *value) {
     ans->type = qn->type;
 
     if (answer_set_value_raw(ans, value)) {
-      free_answer(ans);
       fprintf(stderr, "answer format is invalid.\n");
       LOG_ERROR("answer_set_value_raw() failed.");
     }
@@ -361,41 +342,30 @@ int do_addanswervalue(char *session_id, char *uid, char *value) {
     // #445 count affected answers
     int affected_count = session_add_answer(ses, ans);
     if (affected_count < 0) {
-      free_session(ses);
-      ses = NULL;
-      free_answer(ans);
-      ans = NULL;
       fprintf(stderr, "could not add answer to session.\n");
       LOG_ERROR("session_add_answer() failed.");
     }
 
-    free_answer(ans);
-    ans = NULL;
-
     nq = get_next_questions(ses, action, affected_count);
     if (!nq) {
-      free_session(ses);
-      ses = NULL;
       fprintf(stderr, "Could not load next questions.\n");
       LOG_ERROR("get_next_questions() failed");
     }
 
     if (save_session(ses)) {
-      free_session(ses);
-      ses = NULL;
-      free_next_questions(nq);
-      nq = NULL;
       fprintf(stderr, "Unable to update session.\n");
       LOG_ERROR("save_session() failed");
     }
 
     print_nextquestion(nq);
-
-    free_session(ses);
-    free_next_questions(nq);
     LOG_INFO("Leaving addanswervalue handler.");
 
   } while (0);
+
+  // destruct
+  free_session(ses);
+  free_answer(ans);
+  free_next_questions(nq);
 
   return retVal;
 }
@@ -418,8 +388,6 @@ int do_delanswer(char *session_id, char *question_id) {
 
     char reason[1024];
     if (validate_session_action(action, ses, reason, 1024)) {
-      free_session(ses);
-      ses = NULL;
       fprintf(stderr, "%s\n", reason);
       LOG_ERROR("Session action validation failed");
     }
@@ -427,36 +395,29 @@ int do_delanswer(char *session_id, char *question_id) {
     // #445 count affected answers
     int affected_count = session_delete_answers_by_question_uid(ses, question_id, 1);
     if (affected_count < 0) {
-      free_session(ses);
-      ses = NULL;
       fprintf(stderr, "Answer does not match existing session records.\n");
       LOG_ERROR("session_delete_answers_by_question_uid() failed");
     }
 
     nq = get_next_questions(ses, action, affected_count);
     if (!nq) {
-      free_session(ses);
-      ses = NULL;
       fprintf(stderr, "Could not load next questions.\n");
       LOG_ERROR("get_next_questions() failed");
     }
 
     if (save_session(ses)) {
-      free_session(ses);
-      ses = NULL;
-      free_next_questions(nq);
-      nq = NULL;
       fprintf(stderr, "Unable to update session.\n");
       LOG_ERROR("save_session() failed");
     }
 
     print_nextquestion(nq);
-
-    free_session(ses);
-    free_next_questions(nq);
     LOG_INFO("Leaving delanswer handler.");
 
   } while (0);
+
+  // destruct
+  free_session(ses);
+  free_next_questions(nq);
 
   return retVal;
 }
@@ -492,14 +453,11 @@ int do_delprevanswer(char *session_id, char *checksum) {
 
     char reason[1024];
     if (validate_session_action(validate_action, ses, reason, 1024)) {
-      free_session(ses);
-      ses = NULL;
       fprintf(stderr, "%s\n", reason);
       LOG_ERROR("Session action validation failed");
     }
 
     if (strncmp(checksum, ses->consistency_hash, HASHSTRING_LENGTH )) {
-      free_session(ses);
       fprintf(stderr, "checksum does not match session consistency hash!");
       LOG_ERROR("checksum does not match session consistency hash!");
     }
@@ -517,8 +475,6 @@ int do_delprevanswer(char *session_id, char *checksum) {
     }
 
     if (affected_count < 0) {
-      free_session(ses);
-      ses = NULL;
       fprintf(stderr, "delete last answer failed.\n");
       LOG_ERROR("session_delete_answer() failed");
     }
@@ -526,28 +482,23 @@ int do_delprevanswer(char *session_id, char *checksum) {
     // fetch nextquestions, even if no last answer was found
     nq = get_next_questions(ses, action, affected_count);
     if (!nq) {
-      free_session(ses);
-      ses = NULL;
       fprintf(stderr, "Could not load next questions.\n");
       LOG_ERROR("get_next_questions() failed");
     }
 
     if (save_session(ses)) {
-      free_session(ses);
-      ses = NULL;
-      free_next_questions(nq);
-      nq = NULL;
       fprintf(stderr, "Unable to update session.\n");
       LOG_ERROR("save_session() failed");
     }
 
     print_nextquestion(nq);
-
-    free_session(ses);
-    free_next_questions(nq);
     LOG_INFO("Leaving delprevanswer handler.");
 
   } while (0);
+
+  // destruct
+  free_session(ses);
+  free_next_questions(nq);
 
   return retVal;
 }
@@ -569,24 +520,22 @@ int do_getchecksum(char *session_id) {
 
     char reason[1024];
     if (validate_session_action(action, ses, reason, 1024)) {
-      free_session(ses);
-      ses = NULL;
       fprintf(stderr, "%s\n", reason);
       LOG_ERROR("Session action validation failed");
     }
 
     if (!ses->consistency_hash || !strlen(ses->consistency_hash)) {
-      free_session(ses);
       fprintf(stderr, "session does not contain a consistency hash! (legacy session?)");
       LOG_ERROR("consistency_hash is null or empty(legacy session?)");
     }
 
     printf("%s\n", ses->consistency_hash);
-
-    free_session(ses);
     LOG_INFO("Leaving getchecksum handler.");
 
   } while (0);
+
+  // destruct
+  free_session(ses);
 
   return retVal;
 }
@@ -609,23 +558,22 @@ int do_delsession(char *session_id) {
     /* below is intentinally disabled for cli, but left as a reminder to develop an admin role stategy */
     // char reason[1024];
     // if (validate_session_action(action, ses, reason, 1024)) {
-    //   free_session(ses);
-    //   ses = NULL;
     //   fprintf(stderr, "%s\n", reason);
     //   LOG_ERROR("Session action validation failed");
     // }
 
     if (delete_session(session_id)) {
-      free_session(ses);
-      ses = NULL;
       fprintf(stderr, "Could not delete session. Does it exist?\n");
       LOG_ERROR("delete_session() failed");
     }
 
-    free_session(ses);
+    printf("session deleted \n");
     LOG_INFO("Leaving delsession handler.");
 
   } while (0);
+
+  // destruct
+  free_session(ses);
 
   return retVal;
 }
@@ -634,6 +582,7 @@ int do_analyse(char *session_id) {
   int retVal = 0;
 
   struct session *ses = NULL;
+  const char *analysis = NULL;
   enum actions action = ACTION_SESSION_ANALYSIS;
 
   do {
@@ -647,30 +596,21 @@ int do_analyse(char *session_id) {
 
     char reason[1024];
     if (validate_session_action(action, ses, reason, 1024)) {
-      free_session(ses);
-      ses = NULL;
       fprintf(stderr, "%s\n", reason);
       LOG_ERROR("Session action validation failed");
     }
 
-    const char *analysis = NULL;
     if (get_analysis(ses, &analysis)) {
-      free_session(ses);
-      ses = NULL;
       fprintf(stderr, "Could not retrieve analysis.\n");
       LOG_ERROR("get_analysis() failed");
     }
 
     if (!analysis) {
-      free_session(ses);
-      ses = NULL;
       fprintf(stderr, "Could not retrieve analysis (NULL).\n");
       LOG_ERROR("get_analysis() returned NULL result");
     }
 
     if (!analysis[0]) {
-      free_session(ses);
-      ses = NULL;
       fprintf(stderr, "Could not retrieve analysis (empty result).\n");
       LOG_ERROR("get_analysis() returned empty result");
     }
@@ -681,15 +621,14 @@ int do_analyse(char *session_id) {
       // do not break here
     }
 
-    if (analysis) {
-      printf("%s\n", analysis);
-      free((char *)analysis);
-    }
-
-    free_session(ses);
+    printf("%s\n", (char *)analysis);
     LOG_INFO("Leaving analyse handler.");
 
   } while (0);
+
+  // destruct
+  free_session(ses);
+  freez((char *)analysis);
 
   return retVal;
 }
