@@ -12,6 +12,7 @@
 
 #include "utils.h"
 #include "survey.h"
+#include "validators.h"
 #include "test.h"
 
 ////

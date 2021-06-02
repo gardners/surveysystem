@@ -8,6 +8,7 @@
 #include "survey.h"
 #include "fcgi.h"
 #include "serialisers.h"
+#include "validators.h"
 #include "errorlog.h"
 
 /**
