@@ -59,20 +59,11 @@ next
 #! -------
 #! ------- run 10 x /delanswer
 #! -------
-for i = 1 to 10
-request 200 /delanswer?sessionid=$SESSION&questionid=question1
-match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "Answer 1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
-next
+
+#! -- removed #414 changed response from 200 to 400
 
 #! -------
 #! ------- run 10 x /delanswerandfollowing
 #! -------
 
-# finsh survey again
-request 200 /addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0:
-match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": []}
-
-for i = 1 to 10
-request 200 /delanswerandfollowing?sessionid=$SESSION&questionid=question0
-match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "question0", "name": "question0", "title": "Question 0", "description": "", "type": "TEXT", "default_value": "Answer 0", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
-next
+#! -- removed #414 changed response from 200 to 400
