@@ -7,6 +7,7 @@
 
 #include "survey.h"
 #include "fcgi.h"
+#include "serialisers.h"
 #include "errorlog.h"
 
 /**
@@ -243,7 +244,6 @@ enum khttp fcgi_request_validate_meta_kreq(struct kreq *req, struct session_meta
  * The backend does not manage authorisation or idendity, it relies on outer wrappers,
  * We only verify if the request source is consitent with thew initial newsession request
  */
-
 enum khttp fcgi_request_validate_meta_session(struct kreq *req, struct session *ses) {
   enum khttp status;
   struct session_meta *meta = NULL;
@@ -283,4 +283,77 @@ enum khttp fcgi_request_validate_meta_session(struct kreq *req, struct session *
 
   free_session_meta(meta);
   return KHTTP_200;
+}
+
+/**
+ *  fetch the field value (param) for a given key from kreq.fieldmap
+ */
+char *fcgi_request_get_field_value(enum key field, struct kreq *req) {
+    struct kpair *pair = req->fieldmap[field];
+    if (!pair) {
+      return NULL;
+    }
+    return pair->val;
+}
+
+/**
+ * Fetch and desrialise the kreq 'answer' param to an answer struct.
+ * - param has to be validate beforehand
+ */
+struct answer *fcgi_request_load_answer(struct kreq *req) {
+  int retVal = 0;
+  struct answer *ans = NULL;
+
+  do {
+    char *serialised = fcgi_request_get_field_value(KEY_ANSWER, req);
+
+    // Deserialise answer
+    ans = calloc(sizeof(struct answer), 1);
+    if (!ans) {
+      LOG_ERRORV("calloc() of answer structure failed.", 0);
+    }
+
+    if (deserialise_answer(serialised, ANSWER_SCOPE_PUBLIC, ans)) {
+      LOG_ERRORV("deserialise_answer() failed.", 0);
+    }
+  } while(0);
+
+  if (retVal) {
+    free_answer(ans);
+    return NULL;
+  }
+
+  return ans;
+}
+
+/**
+ * Fetch and desrialise the kreq 'sessionid' param to a session struct.
+ * - param has to be validate beforehand
+ */
+struct session *fcgi_request_load_session(struct kreq *req) {
+  int retVal = 0;
+  struct session *ses = NULL;
+
+  do {
+    char *session_id = fcgi_request_get_field_value(KEY_SESSIONID, req);
+    if (validate_session_id(session_id)) {
+      LOG_ERROR("Invalid survey id");
+    }
+
+    // joerg: break if session could not be updated
+    if (lock_session(session_id)) {
+      LOG_ERRORV("failed to lock session '%s'", session_id);
+    }
+
+    ses = load_session(session_id);
+    if (!ses) {
+      LOG_ERRORV("Could not load session '%s'", session_id);
+    }
+  } while(0);
+
+  if (retVal) {
+    return NULL;
+  }
+
+  return ses;
 }
