@@ -205,6 +205,8 @@ struct session_meta {
   } provider;
 };
 
+void log_session_meta(struct session_meta *meta);
+
 // #379 session live cycle
 enum session_state {
   SESSION_NULL, // init state, overwritten by load_session
