@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<results version="2">
+    <cppcheck version="1.90"/>
+    <errors>
+        <error id="variableScope" severity="style" msg="The scope of the variable &amp;#039;retVal&amp;#039; can be reduced." verbose="The scope of the variable &amp;#039;retVal&amp;#039; can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for &amp;#039;i&amp;#039; can be reduced:\012void f(int x)\012{\012    int i = 0;\012    if (x) {\012        // it&amp;#039;s safe to move &amp;#039;int i = 0;&amp;#039; here\012        for (int n = 0; n &amp;lt; 10; ++n) {\012            // it is possible but not safe to move &amp;#039;int i = 0;&amp;#039; here\012            do_something(&amp;amp;i);\012        }\012    }\012}\012When you see this message it is always safe to reduce the variable scope 1 level." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/sha1.c" line="38"/>
+        </error>
+        <error id="variableScope" severity="style" msg="The scope of the variable &amp;#039;retVal&amp;#039; can be reduced." verbose="The scope of the variable &amp;#039;retVal&amp;#039; can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for &amp;#039;i&amp;#039; can be reduced:\012void f(int x)\012{\012    int i = 0;\012    if (x) {\012        // it&amp;#039;s safe to move &amp;#039;int i = 0;&amp;#039; here\012        for (int n = 0; n &amp;lt; 10; ++n) {\012            // it is possible but not safe to move &amp;#039;int i = 0;&amp;#039; here\012            do_something(&amp;amp;i);\012        }\012    }\012}\012When you see this message it is always safe to reduce the variable scope 1 level." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/sha1.c" line="64"/>
+        </error>
+        <error id="variableScope" severity="style" msg="The scope of the variable &amp;#039;retVal&amp;#039; can be reduced." verbose="The scope of the variable &amp;#039;retVal&amp;#039; can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for &amp;#039;i&amp;#039; can be reduced:\012void f(int x)\012{\012    int i = 0;\012    if (x) {\012        // it&amp;#039;s safe to move &amp;#039;int i = 0;&amp;#039; here\012        for (int n = 0; n &amp;lt; 10; ++n) {\012            // it is possible but not safe to move &amp;#039;int i = 0;&amp;#039; here\012            do_something(&amp;amp;i);\012        }\012    }\012}\012When you see this message it is always safe to reduce the variable scope 1 level." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/sha1.c" line="111"/>
+        </error>
+        <error id="variableScope" severity="style" msg="The scope of the variable &amp;#039;retVal&amp;#039; can be reduced." verbose="The scope of the variable &amp;#039;retVal&amp;#039; can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for &amp;#039;i&amp;#039; can be reduced:\012void f(int x)\012{\012    int i = 0;\012    if (x) {\012        // it&amp;#039;s safe to move &amp;#039;int i = 0;&amp;#039; here\012        for (int n = 0; n &amp;lt; 10; ++n) {\012            // it is possible but not safe to move &amp;#039;int i = 0;&amp;#039; here\012            do_something(&amp;amp;i);\012        }\012    }\012}\012When you see this message it is always safe to reduce the variable scope 1 level." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/sha1.c" line="141"/>
+        </error>
+        <error id="variableScope" severity="style" msg="The scope of the variable &amp;#039;retVal&amp;#039; can be reduced." verbose="The scope of the variable &amp;#039;retVal&amp;#039; can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for &amp;#039;i&amp;#039; can be reduced:\012void f(int x)\012{\012    int i = 0;\012    if (x) {\012        // it&amp;#039;s safe to move &amp;#039;int i = 0;&amp;#039; here\012        for (int n = 0; n &amp;lt; 10; ++n) {\012            // it is possible but not safe to move &amp;#039;int i = 0;&amp;#039; here\012            do_something(&amp;amp;i);\012        }\012    }\012}\012When you see this message it is always safe to reduce the variable scope 1 level." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/sha1.c" line="156"/>
+        </error>
+        <error id="variableScope" severity="style" msg="The scope of the variable &amp;#039;retVal&amp;#039; can be reduced." verbose="The scope of the variable &amp;#039;retVal&amp;#039; can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for &amp;#039;i&amp;#039; can be reduced:\012void f(int x)\012{\012    int i = 0;\012    if (x) {\012        // it&amp;#039;s safe to move &amp;#039;int i = 0;&amp;#039; here\012        for (int n = 0; n &amp;lt; 10; ++n) {\012            // it is possible but not safe to move &amp;#039;int i = 0;&amp;#039; here\012            do_something(&amp;amp;i);\012        }\012    }\012}\012When you see this message it is always safe to reduce the variable scope 1 level." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/sha1.c" line="179"/>
+        </error>
+        <error id="variableScope" severity="style" msg="The scope of the variable &amp;#039;retVal&amp;#039; can be reduced." verbose="The scope of the variable &amp;#039;retVal&amp;#039; can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for &amp;#039;i&amp;#039; can be reduced:\012void f(int x)\012{\012    int i = 0;\012    if (x) {\012        // it&amp;#039;s safe to move &amp;#039;int i = 0;&amp;#039; here\012        for (int n = 0; n &amp;lt; 10; ++n) {\012            // it is possible but not safe to move &amp;#039;int i = 0;&amp;#039; here\012            do_something(&amp;amp;i);\012        }\012    }\012}\012When you see this message it is always safe to reduce the variable scope 1 level." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/sha1.c" line="209"/>
+        </error>
+        <error id="variableScope" severity="style" msg="The scope of the variable &amp;#039;retVal&amp;#039; can be reduced." verbose="The scope of the variable &amp;#039;retVal&amp;#039; can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for &amp;#039;i&amp;#039; can be reduced:\012void f(int x)\012{\012    int i = 0;\012    if (x) {\012        // it&amp;#039;s safe to move &amp;#039;int i = 0;&amp;#039; here\012        for (int n = 0; n &amp;lt; 10; ++n) {\012            // it is possible but not safe to move &amp;#039;int i = 0;&amp;#039; here\012            do_something(&amp;amp;i);\012        }\012    }\012}\012When you see this message it is always safe to reduce the variable scope 1 level." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/sha1.c" line="247"/>
+        </error>
+        <error id="variableScope" severity="style" msg="The scope of the variable &amp;#039;retVal&amp;#039; can be reduced." verbose="The scope of the variable &amp;#039;retVal&amp;#039; can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for &amp;#039;i&amp;#039; can be reduced:\012void f(int x)\012{\012    int i = 0;\012    if (x) {\012        // it&amp;#039;s safe to move &amp;#039;int i = 0;&amp;#039; here\012        for (int n = 0; n &amp;lt; 10; ++n) {\012            // it is possible but not safe to move &amp;#039;int i = 0;&amp;#039; here\012            do_something(&amp;amp;i);\012        }\012    }\012}\012When you see this message it is always safe to reduce the variable scope 1 level." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/sha1.c" line="283"/>
+        </error>
+        <error id="unreadVariable" severity="style" msg="Variable &amp;#039;retVal&amp;#039; is assigned a value that is never used." verbose="Variable &amp;#039;retVal&amp;#039; is assigned a value that is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/sha1.c" line="38"/>
+        </error>
+        <error id="unreadVariable" severity="style" msg="Variable &amp;#039;retVal&amp;#039; is assigned a value that is never used." verbose="Variable &amp;#039;retVal&amp;#039; is assigned a value that is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/sha1.c" line="64"/>
+        </error>
+        <error id="unreadVariable" severity="style" msg="Variable &amp;#039;retVal&amp;#039; is assigned a value that is never used." verbose="Variable &amp;#039;retVal&amp;#039; is assigned a value that is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/sha1.c" line="111"/>
+        </error>
+        <error id="unreadVariable" severity="style" msg="Variable &amp;#039;retVal&amp;#039; is assigned a value that is never used." verbose="Variable &amp;#039;retVal&amp;#039; is assigned a value that is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/sha1.c" line="141"/>
+        </error>
+        <error id="unreadVariable" severity="style" msg="Variable &amp;#039;retVal&amp;#039; is assigned a value that is never used." verbose="Variable &amp;#039;retVal&amp;#039; is assigned a value that is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/sha1.c" line="156"/>
+        </error>
+        <error id="unreadVariable" severity="style" msg="Variable &amp;#039;retVal&amp;#039; is assigned a value that is never used." verbose="Variable &amp;#039;retVal&amp;#039; is assigned a value that is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/sha1.c" line="179"/>
+        </error>
+        <error id="unreadVariable" severity="style" msg="Variable &amp;#039;retVal&amp;#039; is assigned a value that is never used." verbose="Variable &amp;#039;retVal&amp;#039; is assigned a value that is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/sha1.c" line="209"/>
+        </error>
+        <error id="unreadVariable" severity="style" msg="Variable &amp;#039;retVal&amp;#039; is assigned a value that is never used." verbose="Variable &amp;#039;retVal&amp;#039; is assigned a value that is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/sha1.c" line="247"/>
+        </error>
+        <error id="unreadVariable" severity="style" msg="Variable &amp;#039;retVal&amp;#039; is assigned a value that is never used." verbose="Variable &amp;#039;retVal&amp;#039; is assigned a value that is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/sha1.c" line="283"/>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &amp;#039;sha1_validate_string&amp;#039; is never used." verbose="The function &amp;#039;sha1_validate_string&amp;#039; is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/sha1.c" line="414"/>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &amp;#039;call_python_analysis&amp;#039; is never used." verbose="The function &amp;#039;call_python_analysis&amp;#039; is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/py_hooks.c" line="603"/>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &amp;#039;call_python_nextquestion&amp;#039; is never used." verbose="The function &amp;#039;call_python_nextquestion&amp;#039; is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/py_hooks.c" line="446"/>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &amp;#039;code_instrumentation_entry&amp;#039; is never used." verbose="The function &amp;#039;code_instrumentation_entry&amp;#039; is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/code_instrumentation.c" line="56"/>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &amp;#039;code_instrumentation_exit&amp;#039; is never used." verbose="The function &amp;#039;code_instrumentation_exit&amp;#039; is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/code_instrumentation.c" line="58"/>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &amp;#039;code_instrumentation_log&amp;#039; is never used." verbose="The function &amp;#039;code_instrumentation_log&amp;#039; is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/code_instrumentation.c" line="29"/>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &amp;#039;compare_answers&amp;#039; is never used." verbose="The function &amp;#039;compare_answers&amp;#039; is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/serialisers.c" line="820"/>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &amp;#039;compare_questions&amp;#039; is never used." verbose="The function &amp;#039;compare_questions&amp;#039; is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/serialisers.c" line="794"/>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &amp;#039;dump_answer&amp;#039; is never used." verbose="The function &amp;#039;dump_answer&amp;#039; is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/serialisers.c" line="525"/>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &amp;#039;dump_question&amp;#039; is never used." verbose="The function &amp;#039;dump_question&amp;#039; is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/serialisers.c" line="486"/>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &amp;#039;copy_question&amp;#039; is never used." verbose="The function &amp;#039;copy_question&amp;#039; is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/sessions.c" line="1695"/>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &amp;#039;dump_session&amp;#039; is never used." verbose="The function &amp;#039;dump_session&amp;#039; is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/sessions.c" line="801"/>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &amp;#039;format_time_ISO8601&amp;#039; is never used." verbose="The function &amp;#039;format_time_ISO8601&amp;#039; is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/utils.c" line="32"/>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &amp;#039;log_session_meta&amp;#039; is never used." verbose="The function &amp;#039;log_session_meta&amp;#039; is never used." sinceDate="31/5/21">
+            <location file="/home/marvin/Workspace/00_SS/surveysystem/backend/src/fcgirequest.c" line="12"/>
+        </error>
+    </errors>
+</results>

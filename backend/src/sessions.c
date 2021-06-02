@@ -1,5 +1,3 @@
-
-#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -17,6 +15,7 @@
 #include "serialisers.h"
 #include "sha1.h"
 #include "survey.h"
+#include "validators.h"
 #include "utils.h"
 
 /**
@@ -33,111 +32,6 @@ char *session_action_names[NUM_SESSION_ACTIONS] = {
   "SESSION_ANALYSIS"
 };
 
-/*
-  Verify that a session ID does not contain any illegal characters.
-  We allow only hex and the dash character.
-  The main objective is to disallow colons and slashes, to
-  prevent subverting the CSV file format or the formation of file names
-  and paths.
-*/
-int validate_session_id(char *session_id) {
-  int retVal = 0;
-  do {
-    if (!session_id) {
-      LOG_ERROR("session_id is NULL");
-    }
-    LOG_WARNV("Validating session id '%s'", session_id);
-    if (strlen(session_id) != 36) {
-      LOG_ERRORV("session_id '%s' must be exactly 36 characters long",
-                 session_id);
-    }
-    if (session_id[0] == '-') {
-      LOG_ERRORV("session_id '%s' may not begin with a dash", session_id);
-    }
-
-    for (int i = 0; session_id[i]; i++) {
-
-      switch (session_id[i]) {
-      case '0':
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-      case '8':
-      case '9':
-      case 'a':
-      case 'b':
-      case 'c':
-      case 'd':
-      case 'e':
-      case 'f':
-      case '-':
-        // Acceptable characters
-        break;
-
-      case 'A':
-      case 'B':
-      case 'C':
-      case 'D':
-      case 'E':
-      case 'F':
-        LOG_ERRORV("session_id '%s' must be lower case", session_id);
-        break;
-
-      default:
-        LOG_ERRORV(
-            "Illegal character 0x%02x in session_id '%s'. Must be a valid UUID",
-            session_id[i], session_id);
-        break;
-      } // endswitch
-
-    } // endfor
-  } while (0);
-  return retVal;
-}
-
-/*
-  Similarly, here we make sure that a survey ID contains no disallowed characters.
-  We allow undderscore and space as well as dash and period, to allow some greater
-  freedom when specifying the symbolic name of a survey (form).  We naturally also
-  allow all upper and lower case latin characters, rather than just hexadecimal
-  characters.
-*/
-int validate_survey_id(char *survey_id) {
-  int retVal = 0;
-  do {
-    if (!survey_id) {
-      LOG_ERROR("survey_id is NULL");
-    }
-    if (!survey_id[0]) {
-      LOG_ERROR("survey_id is empty string");
-    }
-
-    for (int i = 0; survey_id[i]; i++) {
-
-      switch (survey_id[i]) {
-      case ' ':
-      case '.':
-      case '-':
-      case '_':
-        break;
-
-      default:
-        if (!isalnum(survey_id[i])) {
-          LOG_ERRORV("Illegal character 0x%02x in survey_id '%s'.  Must be "
-                     "0-9, a-z, or space, period, comma or underscore",
-                     survey_id[i], survey_id);
-        }
-        break;
-      } // endswitch
-
-    } // endfor
-  } while (0);
-  return retVal;
-}
 
 /**
  * #379 validate requested action against current session
@@ -798,29 +692,29 @@ void free_session_meta(struct session_meta *m) {
   return;
 }
 
-int dump_session(FILE *f, struct session *ses) {
+int dump_session(FILE *fp, struct session *ses) {
   int retVal = 0;
   int i;
 
   do {
-    if (!f) {
+    if (!fp) {
       LOG_ERROR("dump_session(): invalid file pointer.");
     }
 
     if (!ses) {
-      fprintf(f, "session { <NULL> }\n");
+      fprintf(fp, "session { <NULL> }\n");
       break;
     }
 
     fprintf(
-      f,
+      fp,
 
       "session {\n"
       "  survey_id: \"%s\"\n"
       "  survey_description: \"%s\"\n"
       "  session_id: \"%s\"\n"
       "  consistency_hash: \"%s\"\n"
-      "  nextquestions_flag: %d\n"
+      "  nextquestions_flag: %u\n"
       "  answer_offset: %d\n"
       "  answer_count: %d\n"
       "  question_count: %d\n"
@@ -840,19 +734,19 @@ int dump_session(FILE *f, struct session *ses) {
       ses->state
     );
 
-    fprintf(f , "  questions: [\n");
+    fprintf(fp , "  questions: [\n");
     for (i = 0; i < ses->question_count; i++) {
-      fprintf(f, "    \"%s\"%s\n", ses->questions[i]->uid, (i < ses->question_count - 1) ? ",": "");
+      fprintf(fp, "    \"%s\"%s\n", ses->questions[i]->uid, (i < ses->question_count - 1) ? ",": "");
     }
-    fprintf(f , "  ]\n");
+    fprintf(fp , "  ]\n");
 
-    fprintf(f , "  answers: [\n");
+    fprintf(fp , "  answers: [\n");
     for (i = 0; i < ses->answer_count; i++) {
-      fprintf(f, "    \"%s\"%s\n", ses->answers[i]->uid, (i < ses->answer_count - 1) ? ",": "");
+      fprintf(fp, "    \"%s\"%s\n", ses->answers[i]->uid, (i < ses->answer_count - 1) ? ",": "");
     }
-    fprintf(f , "  ]\n");
+    fprintf(fp , "  ]\n");
 
-  fprintf(f , "}\n");
+  fprintf(fp , "}\n");
   } while (0);
 
   return retVal;
@@ -1185,9 +1079,7 @@ struct session *load_session(char *session_id) {
 
     if (retVal) {
       fclose(s);
-      if (ses) {
-        free_session(ses);
-      }
+      free_session(ses);
       ses = NULL;
       break;
     }
@@ -1224,7 +1116,6 @@ int save_session(struct session *s) {
     // update header with current state of loaded and processed session (#379)
     struct answer *header = session_get_header("@state", s);
     if (!header) {
-      retVal = -1;
       LOG_ERROR("Could not find state header for session!"); // don't break here fall through
     }
 
@@ -1895,10 +1786,8 @@ int session_delete_answers_by_question_uid(struct session *ses, char *uid, int d
       break;
     }
 
-    if (!retVal) {
-      ses->given_answer_count -= deletions;
-      retVal = deletions;
-    }
+    ses->given_answer_count -= deletions;
+    retVal = deletions;
   } while (0);
   return retVal;
 }

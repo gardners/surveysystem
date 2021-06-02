@@ -13,7 +13,6 @@
 int log_recursed = 0;
 
  FILE *open_log(char *name) {
-  char log_name[1024];
   char log_file[1024];
 
   if (!name) {
@@ -26,6 +25,7 @@ int log_recursed = 0;
   }
 
   if (generate_path(name, log_file, 1024)) {
+      char log_name[1024];
       fprintf(stderr, "generate_path('%s') failed to build path for log file: '%s'\n", log_name, log_file);
       fprintf(stderr, "'%s'\n", log_file);
       return NULL;

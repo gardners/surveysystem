@@ -18,160 +18,19 @@
 #include "question_types.h"
 #include "serialisers.h"
 #include "survey.h"
+#include "validators.h"
 #include "utils.h"
 #include "sha1.h"
 
 #include "fcgirequest.h"
 
-
-int kvalid_surveyid(struct kpair *kp) {
-
-  // XXX - This process runs in the sandboxed child environment, from where
-  // it is not possible to emit any log output.  Very annoying, but we have
-  // to live with it.
-  LOG_MUTE();
-
-  int retVal = 0;
-  do {
-    if (!kp)
-      LOG_ERROR("kp is NULL");
-
-    // Only use our validation here, not one of the pre-defined ones
-    kp->type = KPAIR__MAX;
-    LOG_WARNV("Validating surveyid", 1);
-
-    // Is okay
-    kp->parsed.s = kp->val;
-  } while (0);
-
-  if (retVal) {
-    retVal = 0;
-  } else {
-    retVal = 1;
-  }
-
-  LOG_UNMUTE();
-  return retVal;
-}
-
-int kvalid_sessionid(struct kpair *kp) {
-  // XXX - This process runs in the sandboxed child environment, from where
-  // it is not possible to emit any log output.  Very annoying, but we have
-  // to live with it.
-  LOG_MUTE();
-
-  int retVal = 0;
-  do {
-    if (!kp)
-      LOG_ERROR("kp is NULL");
-
-    // Only use our validation here, not one of the pre-defined ones
-    kp->type = KPAIR__MAX;
-
-    kp->parsed.s = kp->val;
-    LOG_WARNV("Validating sessionid", 1);
-    if (validate_session_id(kp->val)) {
-      LOG_ERROR("validate_session_id failed");
-    }
-  } while (0);
-
-  if (retVal) {
-    retVal = 0;
-  } else {
-    retVal = 1;
-  }
-
-  LOG_UNMUTE();
-  return retVal;
-}
-
-int kvalid_questionid(struct kpair *kp) {
-  // XXX - This process runs in the sandboxed child environment, from where
-  // it is not possible to emit any log output.  Very annoying, but we have
-  // to live with it.
-  LOG_MUTE();
-
-  int retVal = 0;
-  do {
-    if (!kp)
-      LOG_ERROR("kp is NULL");
-    // Only use our validation here, not one of the pre-defined ones
-    kp->type = KPAIR__MAX;
-
-    LOG_WARNV("Validating questionid", 1);
-
-    kp->parsed.s = kp->val;
-    // Is okay
-    if (kvalid_string(kp)) {
-      retVal = 0;
-    } else {
-      LOG_ERROR("questionid is not a valid string");
-    }
-  } while (0);
-
-  if (retVal) {
-    retVal = 0;
-  } else {
-    retVal = 1;
-  }
-
-  LOG_UNMUTE();
-  return retVal;
-}
-
-int kvalid_answer(struct kpair *kp) {
-
-  // XXX - This process runs in the sandboxed child environment, from where
-  // it is not possible to emit any log output.  Very annoying, but we have
-  // to live with it.
-  LOG_MUTE();
-
-  int retVal = 0;
-
-  do {
-
-    LOG_WARNV("Validating answer", 1);
-
-    // Only use our validation here, not one of the pre-defined ones
-    kp->type = KPAIR__MAX;
-
-    kp->parsed.s = kp->val;
-
-    struct answer *a = calloc(sizeof(struct answer), 1);
-    if (!a) {
-      LOG_ERROR("Could not calloc() answer structure.");
-    }
-
-    // TODO XXX Remember deserialised answer and keep it in memory to save parsing twice? alternatively just basic validation by counting delimiters
-
-    if (deserialise_answer(kp->val, ANSWER_SCOPE_PUBLIC, a)) {
-      free_answer(a);
-      LOG_ERROR("deserialise_answer() failed");
-    } else {
-      free_answer(a);
-      // Success, so nothing to do
-    }
-  } while (0);
-
-  LOG_WARNV("retVal=%d", retVal);
-
-  if (retVal) {
-    retVal = 0;
-  } else {
-    retVal = 1;
-  }
-
-  LOG_UNMUTE();
-  return retVal;
-}
-
 enum key { KEY_SURVEYID, KEY_SESSIONID, KEY_QUESTIONID, KEY_ANSWER, KEY__MAX };
 
 static const struct kvalid keys[KEY__MAX] = {
-  { kvalid_surveyid, "surveyid" },
-  { kvalid_sessionid, "sessionid" },
-  { kvalid_questionid, "questionid" },
-  { kvalid_answer, "answer" }
+  { kvalid_stringne, "surveyid" },
+  { kvalid_stringne, "sessionid" },
+  { kvalid_stringne, "questionid" },
+  { kvalid_stringne, "answer" }
 };
 
 enum page {
@@ -240,6 +99,14 @@ static enum khttp sanitise_page_request(const struct kreq *req);
 int response_nextquestion(struct kreq *req, struct session *ses, struct nextquestions *nq);
 struct session *request_load_session(struct kreq *req);
 struct answer *request_load_answer(struct kreq *req);
+
+char *request_get_field_value(enum key field, struct kreq *req) {
+    struct kpair *pair = req->fieldmap[field];
+    if (!pair) {
+      return NULL;
+    }
+    return pair->val;
+}
 
 void usage(void) {
   fprintf(stderr, "usage: surveyfcgi -- Start fast CGI service\n");
@@ -462,13 +329,14 @@ static void fcgi_newsession(struct kreq *req) {
   do {
 
     LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
-    char session_id[256] = { 0 };
 
-    struct kpair *survey = req->fieldmap[KEY_SURVEYID];
-    if (!survey) {
-      // No survey ID, so return 400
-      http_json_error(req, KHTTP_400, "Surveyid missing.");
-      LOG_ERROR("surveyid missing from query string");
+    char *survey_id = request_get_field_value(KEY_SURVEYID, req);
+    char *session_id = request_get_field_value(KEY_SESSIONID, req); // POST only!
+    char created_sessid[40] = { '\0' };
+
+    if (validate_survey_id(survey_id)) {
+      http_json_error(req, KHTTP_400, "Surveyid is invalid.");
+      LOG_ERROR("Invalid survey id");
     }
 
     // #363 parse session meta
@@ -498,16 +366,7 @@ static void fcgi_newsession(struct kreq *req) {
         LOG_ERRORV("POST /newsession with invalid provider %d", provider);
       }
 
-      struct kpair *sess = req->fieldmap[KEY_SESSIONID];
-      if (!sess) {
-        // No sess ID param, so return 400
-        free_session_meta(meta);
-        meta = NULL;
-        http_json_error(req, KHTTP_400, "session_id missing.");
-        LOG_ERROR("session_id missing from post body");
-      }
-
-      if (validate_session_id(sess->val)) {
+      if (validate_session_id(session_id)) {
         // valid uid or return 400
         free_session_meta(meta);
         meta = NULL;
@@ -516,7 +375,7 @@ static void fcgi_newsession(struct kreq *req) {
       }
 
       char sess_path[1024];
-      if(generate_session_path(sess->val, sess->val, sess_path, 1024)) {
+      if(generate_session_path(session_id, session_id, sess_path, 1024)) {
         free_session_meta(meta);
         meta = NULL;
         http_json_error(req, KHTTP_500, "Failed to create session path");
@@ -528,26 +387,25 @@ static void fcgi_newsession(struct kreq *req) {
         free_session_meta(meta);
         meta = NULL;
         http_json_error(req, KHTTP_400, "Session exists already");
-        LOG_ERRORV("Session '%s' exists already", sess->val);
+        LOG_ERRORV("Session '%s' exists already", session_id);
       }
-
-      strncpy(session_id, sess->val, 256);
 
     } else {
 
       // #239, create new session id (separated out)
-      if(create_session_id(session_id, 256)) {
+      if(create_session_id(created_sessid, 40)) {
         free_session_meta(meta);
         meta = NULL;
         http_json_error(req, KHTTP_500, "Session could not be created (create session id).");
         LOG_ERROR("create session id failed");
       }
+      session_id = created_sessid;
 
     } // if POST
 
     // #363 save session meta into session
     // #268 get ses->consistency_sha
-    ses = create_session(survey->val, session_id, meta);
+    ses = create_session(survey_id, session_id, meta);
     if (!ses) {
       free_session_meta(meta);
       meta = NULL;
@@ -676,62 +534,57 @@ static void fcgi_addanswer(struct kreq *req) {
 }
 
 struct session *request_load_session(struct kreq *req) {
-    struct kpair *arg = req->fieldmap[KEY_SESSIONID];
-    if (!arg) {
-      // No session ID, so return 400
-      LOG_WARNV("Sessionid missing. from query string", 0);
-      return NULL;
-    }
-    if (!arg->val) {
-      LOG_WARNV("sessionid is blank", 0);
-      return NULL;
+  int retVal = 0;
+  struct session *ses = NULL;
+
+  do {
+    char *session_id = request_get_field_value(KEY_SESSIONID, req);
+    if (validate_session_id(session_id)) {
+      LOG_ERROR("Invalid survey id");
     }
 
     // joerg: break if session could not be updated
-    if (lock_session(arg->val)) {
-      LOG_WARNV("failed to lock session '%s'", arg->val);
-      return NULL;
+    if (lock_session(session_id)) {
+      LOG_ERRORV("failed to lock session '%s'", session_id);
     }
 
-    struct session *ses = load_session(arg->val);
+    ses = load_session(session_id);
     if (!ses) {
-      LOG_WARNV("Could not load session '%s'", arg->val);
-      return NULL;
+      LOG_ERRORV("Could not load session '%s'", session_id);
     }
+  } while(0);
 
-    return ses;
+  if (retVal) {
+    return NULL;
+  }
+
+  return ses;
 }
 
 struct answer *request_load_answer(struct kreq *req) {
-    struct kpair *arg = req->fieldmap[KEY_ANSWER];
-    if (!arg) {
-      LOG_WARNV("answer is missing", 0);
-      return NULL;
-    }
+  int retVal = 0;
+  struct answer *ans = NULL;
 
-    if (!arg->val) {
-      LOG_WARNV("answer is blank", 0);
-      return NULL;
-    }
+  do {
+    char *serialised = request_get_field_value(KEY_ANSWER, req);
 
     // Deserialise answer
-    struct answer *ans = calloc(sizeof(struct answer), 1);
+    ans = calloc(sizeof(struct answer), 1);
     if (!ans) {
-      LOG_WARNV("calloc() of answer structure failed.", 0);
-      return NULL;
+      LOG_ERRORV("calloc() of answer structure failed.", 0);
     }
 
-    if (deserialise_answer(arg->val, ANSWER_SCOPE_PUBLIC, ans)) {
-      free_answer(ans);
-      LOG_WARNV("deserialise_answer() failed.", 0);
-      return NULL;
+    if (deserialise_answer(serialised, ANSWER_SCOPE_PUBLIC, ans)) {
+      LOG_ERRORV("deserialise_answer() failed.", 0);
     }
+  } while(0);
 
-    if (!ans) {
-      LOG_WARNV("deserialise_answer() failed. (answer is null)", 0);
-      return NULL;
-    }
-    return ans;
+  if (retVal) {
+    free_answer(ans);
+    return NULL;
+  }
+
+  return ans;
 }
 
 static void fcgi_updateanswer(struct kreq *req) {
@@ -851,22 +704,17 @@ static void fcgi_delanswer(struct kreq *req) {
 
     LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
 
-    struct kpair *arg = req->fieldmap[KEY_QUESTIONID];
-
-    if (!arg) {
-      http_json_error(req, KHTTP_400, " Question is missing.");
-      LOG_ERROR("question is missing");
-    }
-
-    if (!arg->val) {
-      http_json_error(req, KHTTP_400, "question is blank.");
-      LOG_ERROR("question is blank");
-    }
+    char *question_id = request_get_field_value(KEY_QUESTIONID, req);
 
     ses = request_load_session(req);
     if (!ses) {
       http_json_error(req, KHTTP_400, "Could not load specified session. Does it exist?");
       LOG_ERROR("Could not load session");
+    }
+
+    if (validate_session_delete_answer(question_id, ses)) {
+      http_json_error(req, KHTTP_400, "Could load answer. Does it exist?");
+      LOG_ERRORV("Could not load answer '%s'", question_id);
     }
 
     // validate request against session meta (#363)
@@ -890,7 +738,7 @@ static void fcgi_delanswer(struct kreq *req) {
     // We have a question -- so delete all answers to the given question
 
     // #445 count affected answers
-    int affected_count = session_delete_answers_by_question_uid(ses, arg->val, 0);
+    int affected_count = session_delete_answers_by_question_uid(ses, question_id, 0);
     if (affected_count < 0) {
       free_session(ses);
       ses = NULL;
@@ -948,22 +796,17 @@ static void fcgi_delanswerandfollowing(struct kreq *req) {
 
     LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
 
-    struct kpair *arg = req->fieldmap[KEY_QUESTIONID];
-
-    if (!arg) {
-      http_json_error(req, KHTTP_400, " Question is missing.");
-      LOG_ERROR("question is missing");
-    }
-
-    if (!arg->val) {
-      http_json_error(req, KHTTP_400, "question is blank.");
-      LOG_ERROR("question is blank");
-    }
+    char *question_id = request_get_field_value(KEY_QUESTIONID, req);
 
     ses = request_load_session(req);
     if (!ses) {
       http_json_error(req, KHTTP_400, "Could not load specified session. Does it exist?");
       LOG_ERROR("Could not load session");
+    }
+
+    if (validate_session_delete_answer(question_id, ses)) {
+      http_json_error(req, KHTTP_400, "Could load answer. Does it exist?");
+      LOG_ERRORV("Could not load answer '%s'", question_id);
     }
 
     // validate request against session meta (#363)
@@ -987,7 +830,7 @@ static void fcgi_delanswerandfollowing(struct kreq *req) {
     // We have a question -- so delete all answers to the given question
 
     // #445 count affected answers
-    int affected_count = session_delete_answers_by_question_uid(ses, arg->val, 1);
+    int affected_count = session_delete_answers_by_question_uid(ses, question_id, 1);
     if (affected_count < 0) {
       free_session(ses);
       ses = NULL;

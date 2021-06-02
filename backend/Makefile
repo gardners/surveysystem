@@ -17,6 +17,7 @@ KCGIARS=	kcgi/libkcgihtml.a kcgi/libkcgi.a kcgi/libkcgijson.a
 STATICHEADERS=	Makefile \
 		$(INCDIR)/errorlog.h \
 		$(INCDIR)/survey.h \
+		$(INCDIR)/validators.h \
 		$(INCDIR)/sha1.h \
 		$(INCDIR)/code_instrumentation.h \
 		$(INCDIR)/serialisers.h \
@@ -28,6 +29,7 @@ STATICSRCS=	$(SRCDIR)/serialisers.c \
 		$(SRCDIR)/sha1.c \
 		$(SRCDIR)/paths.c \
 		$(SRCDIR)/log.c \
+		$(SRCDIR)/validators.c \
 		$(SRCDIR)/sessions.c \
 		$(SRCDIR)/nextquestion.c \
 		$(SRCDIR)/code_instrumentation.c \
@@ -49,6 +51,7 @@ COREOBJS=	$(SRCDIR)/errorlog.o \
 		$(SRCDIR)/sha1.o \
 		$(SRCDIR)/paths.o \
 		$(SRCDIR)/log.o \
+		$(SRCDIR)/validators.o \
 		$(SRCDIR)/sessions.o \
 		$(SRCDIR)/nextquestion.o \
 		$(SRCDIR)/serialisers.o \

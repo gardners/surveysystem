@@ -345,12 +345,12 @@ int do_addanswervalue(char *session_id, char *uid, char *value) {
 
     // Deserialise answer
     ans = calloc(sizeof(struct answer), 1);
-    ans->uid = strdup(uid);
-    ans->type = qn->type;
     if (!ans) {
       fprintf(stderr, "calloc() of answer structure failed.\n");
       LOG_ERROR("calloc() of answer structure failed.");
     }
+    ans->uid = strdup(uid);
+    ans->type = qn->type;
 
     if (answer_set_value_raw(ans, value)) {
       free_answer(ans);
@@ -783,19 +783,6 @@ int main(int argc, char **argv) {
       if (do_addanswervalue(argv[2], argv[3], argv[4])) {
         fprintf(stderr, "Failed to add answer value.\n");
         LOG_ERROR("Failed to add answer value");
-      }
-
-    } else if (!strcmp(argv[1], "delanswer")) {
-
-      if (argc != 4) {
-        usage();
-        retVal = -1;
-        break;
-      }
-
-      if (do_delanswer(argv[2], argv[3])) {
-        fprintf(stderr, "Failed to add answer.\n");
-        LOG_ERROR("Failed to add answer");
       }
 
     } else if (!strcmp(argv[1], "delprevanswer")) {
