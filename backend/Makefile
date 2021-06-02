@@ -1,5 +1,6 @@
-SRCDIR=	src
+SRCDIR= src
 INCDIR= include
+OBJDIR= obj
 
 # gh#396, @see https://docs.python.org/3.8/whatsnew/3.8.html#debug-build-uses-the-same-abi-as-release-build
 # API stuff
@@ -40,9 +41,9 @@ STATICSRCS=	$(SRCDIR)/serialisers.c \
 		$(SRCDIR)/py_hooks.c \
 		$(SRCDIR)/test_utils.c
 
-# #363
-FCGIHEADERS=	$(INCDIR)/fcgirequest.h
-FCGISRC=	$(SRCDIR)/fcgirequest.c
+FCGIHEADERS=	$(INCDIR)/fcgi.h
+FCGISRC=	$(SRCDIR)/fcgi_request.c \
+		$(SRCDIR)/fcgi_response.c
 
 GENERATEDHEADERS=$(INCDIR)/question_types.h
 GENERATEDSRCS=	$(SRCDIR)/question_types.c
@@ -71,8 +72,9 @@ CLIOBJS=	$(COREOBJS) \
 		$(SRCDIR)/main.o
 
 FCGIOBJS=	$(COREOBJS) \
-		$(SRCDIR)/fcgimain.o \
-		$(SRCDIR)/fcgirequest.o
+		$(SRCDIR)/fcgi_main.o \
+		$(SRCDIR)/fcgi_request.o \
+		$(SRCDIR)/fcgi_response.o
 
 HEADERS=	$(STATICHEADERS) $(GENERATEDHEADERS) $(FCGIHEADERS)
 
