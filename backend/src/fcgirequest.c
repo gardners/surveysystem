@@ -6,7 +6,7 @@
 #include "kcgi.h"
 
 #include "survey.h"
-#include "fcgirequest.h"
+#include "fcgi.h"
 #include "errorlog.h"
 
 /**

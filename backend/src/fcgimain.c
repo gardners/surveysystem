@@ -22,7 +22,7 @@
 #include "utils.h"
 #include "sha1.h"
 
-#include "fcgirequest.h"
+#include "fcgi.h"
 
 enum key { KEY_SURVEYID, KEY_SESSIONID, KEY_QUESTIONID, KEY_ANSWER, KEY__MAX };
 
