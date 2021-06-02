@@ -34,6 +34,53 @@ static int get_autorisation_type(struct kreq *req) {
   return IDENDITY_HTTP_PUBLIC;
 }
 
+
+/**
+ * Validates session meta, parsed from incoming kcgi request, against previously stored session meta (header)
+ * We do not manage authorisation or idendity in the backend, only verify if the request source is consitent with thew initial newsession request
+ */
+static enum khttp validate_session_authority( struct session_meta *meta, struct session *ses) {
+  if (!meta) {
+    LOG_WARNV("Cannot validate request. request meta is null for session '%s'.", ses->session_id);
+    return KHTTP_500;
+  }
+
+  if (!ses) {
+    LOG_WARNV("Cannot validate request. session is null.", 0);
+    return KHTTP_500;
+  }
+
+  // parse initial authority from session
+  struct answer *authority = session_get_header("@authority", ses);
+  if (!authority) {
+    LOG_WARNV("'@authority' header missing in session '%s'", ses->session_id);
+    return KHTTP_502;
+  }
+
+  // all requests must match provider type
+  int provider = authority->value;
+  if(provider != meta->provider) {
+    LOG_WARNV("Invalid request. Provider type mismatch %d != %d for session '%s'.", provider, meta->provider, ses->session_id);
+    return KHTTP_502;
+  }
+
+  if (provider != IDENDITY_HTTP_TRUSTED) {
+    return KHTTP_200;
+  }
+
+  // if middleware: (fcgi env SS_TRUSTED_MIDDLEWARE is set) match current authority (ip, port)
+  if (!authority->text || !strlen(authority->text)){
+    LOG_WARNV("Invalid request. authority value is empty in session '%s'.", ses->session_id);
+    return KHTTP_502;
+  }
+  if (strcmp(authority->text, meta->authority)) {
+    LOG_WARNV("Invalid request. Provider authority string mismatch '%s' != '%s' for session '%s'.", authority->text, meta->authority, ses->session_id);
+    return KHTTP_502;
+  }
+
+  return KHTTP_200;
+}
+
 /**
  * Parses session meta from an incoming kcgi request
  * The returned session_meta structure needs to be freed
@@ -192,52 +239,6 @@ enum khttp fcgi_request_validate_meta_kreq(struct kreq *req, struct session_meta
 }
 
 /**
- * Validates session meta, parsed from incoming kcgi request, against previously stored session meta (header)
- * We do not manage authorisation or idendity in the backend, only verify if the request source is consitent with thew initial newsession request
- */
-enum khttp fcgirequest_validate_session_authority( struct session_meta *meta, struct session *ses) {
-  if (!meta) {
-    LOG_WARNV("Cannot validate request. request meta is null for session '%s'.", ses->session_id);
-    return KHTTP_500;
-  }
-
-  if (!ses) {
-    LOG_WARNV("Cannot validate request. session is null.", 0);
-    return KHTTP_500;
-  }
-
-  // parse initial authority from session
-  struct answer *authority = session_get_header("@authority", ses);
-  if (!authority) {
-    LOG_WARNV("'@authority' header missing in session '%s'", ses->session_id);
-    return KHTTP_502;
-  }
-
-  // all requests must match provider type
-  int provider = authority->value;
-  if(provider != meta->provider) {
-    LOG_WARNV("Invalid request. Provider type mismatch %d != %d for session '%s'.", provider, meta->provider, ses->session_id);
-    return KHTTP_502;
-  }
-
-  if (provider != IDENDITY_HTTP_TRUSTED) {
-    return KHTTP_200;
-  }
-
-  // if middleware: (fcgi env SS_TRUSTED_MIDDLEWARE is set) match current authority (ip, port)
-  if (!authority->text || !strlen(authority->text)){
-    LOG_WARNV("Invalid request. authority value is empty in session '%s'.", ses->session_id);
-    return KHTTP_502;
-  }
-  if (strcmp(authority->text, meta->authority)) {
-    LOG_WARNV("Invalid request. Provider authority string mismatch '%s' != '%s' for session '%s'.", authority->text, meta->authority, ses->session_id);
-    return KHTTP_502;
-  }
-
-  return KHTTP_200;
-}
-
-/**
  * Validate a loaded session against request
  * The backend does not manage authorisation or idendity, it relies on outer wrappers,
  * We only verify if the request source is consitent with thew initial newsession request
@@ -273,10 +274,10 @@ enum khttp fcgi_request_validate_meta_session(struct kreq *req, struct session *
   }
 
   // validate session meta against session
-  status = fcgirequest_validate_session_authority(meta, ses);
+  status = validate_session_authority(meta, ses);
   if (status != KHTTP_200) {
     free_session_meta(meta);
-    LOG_WARNV("fcgirequest_validate_session_authority() status %d != (%d)", KHTTP_200, status);
+    LOG_WARNV("validate_session_authority() status %d != (%d)", KHTTP_200, status);
     return status;
   }
 
