@@ -295,6 +295,7 @@ int release_my_session_locks(void);
 struct answer *session_get_answer(char *uid, struct session *ses);
 struct answer *session_get_last_given_answer(struct session *ses); // #268
 struct answer *session_get_header(char *uid, struct session *ses);
+int answer_mark_as_deleted(struct answer *ans);
 int session_get_answer_index(char *uid, struct session *ses);
 
 struct question *session_get_question(char *uid, struct session *ses);

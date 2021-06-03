@@ -289,18 +289,18 @@ struct nextquestions *get_next_questions(struct session *s, enum actions action,
 
     if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_PYTHON) {
 
-      LOG_INFO("NEXTQUESTIONS_FLAG_PYTHON set, calling call_python_nextquestion())");
-      fail = call_python_nextquestion(s, nq, action, affected_answers_count);
+      LOG_INFO("NEXTQUESTIONS_FLAG_PYTHON set, calling get_next_question_python()");
+      fail = get_next_question_python(s, nq, action, affected_answers_count);
 
       if (fail) {
-        LOG_ERRORV("call_python_nextquestion() failed with return code %d", fail);
+        LOG_ERRORV("get_next_question_python() failed with return code %d", fail);
       }
 
     } else if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_GENERIC) {
 
       // PGS: Disabled generic implementation of nextquestion, since if you have a python version and it can't be loaded
       // for some reason we should NOT fall back, because it may expose questions and IP in a survey that should not be revealed.
-      LOG_INFO("NEXTQUESTIONS_FLAG_GENERIC set, calling get_next_questions_generic())");
+      LOG_INFO("NEXTQUESTIONS_FLAG_GENERIC set, calling get_next_questions_generic()");
       fail = get_next_questions_generic(s, nq, action, affected_answers_count);
 
       if (fail) {
@@ -308,7 +308,7 @@ struct nextquestions *get_next_questions(struct session *s, enum actions action,
       }
 
     } else {
-      LOG_ERRORV("Could not identify nextquestion mode, Unknown next_questions_flag. %d", s->nextquestions_flag);
+      LOG_ERRORV("Could not identify nextquestion mode, session contains unknown next_questions_flag. %d", s->nextquestions_flag);
     }
 
     // #379 update state (finished)
@@ -372,11 +372,11 @@ int get_analysis(struct session *s, const char **output) {
 
     if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_PYTHON) {
 
-      LOG_INFO("NEXTQUESTIONS_FLAG_PYTHON set, calling call_python_analysis())");
-      fail = call_python_analysis(s, output);
+      LOG_INFO("NEXTQUESTIONS_FLAG_PYTHON set, calling get_analysis_python()");
+      fail = get_analysis_python(s, output);
 
       if (fail) {
-        LOG_ERRORV("call_python_analysis() failed with return code %d", fail);
+        LOG_ERRORV("get_analysis_python() failed with return code %d", fail);
       }
 
     } else if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_GENERIC) {

@@ -1,17 +1,105 @@
+#### github /gitignore/C.gitignore
+
+# Prerequisites
+*.d
+
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Linker output
+*.ilk
+*.map
+*.exp
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Kernel Module Compile Results
+*.mod*
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+Mkfile.old
+dkms.conf
+
+##### project
+
+!.gitignore
+!.gitkeep
+
+# editors
+*.geany
+*.vscode/
+*~
+.cache
+.idea
+
+# generated code (see Makefile)
+include/question_types.h
+src/question_types.c
+
+# local python code
+python/*
+!python/example.*
+
+# sandbox
+sandbox/*
+
+# libs
+kcgi/*
+
+# binaries
+surveycli
+surveyfcgi
+test_runner
+test_units
+
+# data
+sessions/*
+surveys/*
+locks/*
+
+# logs
+logs/*
+testlog/*
+
 # docker env
 .env
 
-logs/*
-!logs/.gitkeep
-
-testlog/*
-!testlog/.gitkeep
-
-sessions/*
-!sessions/.gitkeep
-
-surveys/*
-!surveys/.gitkeep
+# local configurations
+*.local
+lighttpd.conf.tmp
 
 # external modules
 queue/*
@@ -20,20 +108,17 @@ queue/*
 compile_commands.*
 cppcheck.log
 valgrind.log
-src/files.txt
-
-# code check compilers
-*.a1
+cppcheck-build/*
 
 # dev env specific sripts
 propTests.*
 tmux*
 
-# dev docs
+# development scratchareas
+_dev/*
+dev.*
 TODO.*
-
-# sandbox
-sandbox/*
+*.bak
 
 # deploy scripts and configs
 deploy
