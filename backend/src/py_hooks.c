@@ -443,7 +443,7 @@ static int py_nextquestions_handle_progress(PyObject *result, struct nextquestio
  * #332 next_questions data struct
  * #445 add action, affected_answers_count args (to be used in later development), out sourcetasks into units
  */
-int call_python_nextquestion(struct session *ses, struct nextquestions *nq, enum actions action, int affected_answers_count) {
+int get_next_question_python(struct session *ses, struct nextquestions *nq, enum actions action, int affected_answers_count) {
   int retVal = 0;
   int is_error = 0;
 
@@ -600,7 +600,7 @@ int call_python_nextquestion(struct session *ses, struct nextquestions *nq, enum
  * #288, the parent unit is responsible for freeing *output pointer
  * Note! output needs to be freed outside of this function
  */
-int call_python_analysis(struct session *ses, const char **output) {
+int get_analysis_python(struct session *ses, const char **output) {
   int retVal = 0;
   int is_error = 0;
   do {
