@@ -1,8 +1,0 @@
-**/node_modules/**
-
-# ignore symlink-ed fronend files, see #289
-Answer.js
-Utils.js
-
-# ignore custom player configs
-configs/*.js

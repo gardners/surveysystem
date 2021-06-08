@@ -1,5 +1,0 @@
-{
-  "watch": ["*.js"],
-  "ignore": ["**/*.test.js", "**/*.spec.js", ".git", "node_modules"],
-  "exec": "eslint \"{{pwd}}\" --ignore-path=./.eslintignore"
-}
