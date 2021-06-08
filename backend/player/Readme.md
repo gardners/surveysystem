@@ -12,7 +12,7 @@ copy `config_template.py` to `config_<my_scenario>.py`
 **Usage:**
 
 ```bash
-# ...config prompt
+# with config prompt
 ./player
 # specify config
 ./player --config config_<my_scenario>.py
