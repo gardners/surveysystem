@@ -239,60 +239,7 @@ request 400 /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=met
 request 400 /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@system:NOTALLOWED:0:0:0:0:0:0:0:
 
 #!---------------------
-#! GET /delanswerandfollowing
-#!---------------------
-
-#!-- prepare test: re-answer question deleted before
-request 200 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question2:Answer2:0:0:0:0:0:0:0:
-
-#!-- PASS:
-request 200 /delanswerandfollowing?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=question2
-match_string {"status": 0, "message": "", "progress": [2, 4], "next_questions": [{"id": "question2", "name": "question2", "title": "Question2", "description": "", "type": "TEXT", "default_value": "Answer2", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
-
-#!-- FAIL: missing sessionid and answer
-request 400 /delanswerandfollowing
-
-#!-- FAIL: missing sessionid
-request 400 /delanswerandfollowing?questionid=question2
-
-#!-- FAIL: empty sessionid
-request 400 /delanswerandfollowing?sessionid=&questionid=question2
-
-#!-- FAIL: invalid sessionid
-request 400 /delanswerandfollowing?sessionid=aaa&questionid=question2
-
-#!-- FAIL: uppercased sessionid
-request 400 /delanswerandfollowing?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA&questionid=question2
-
-#!-- FAIL: unknown sessionid
-request 400 /delanswerandfollowing?sessionid=21c00c79-0000-0000-1a30-e98476f71b42&questionid=question2
-
-#!-- FAIL: missing answer
-request 400 /delanswerandfollowing?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
-
-#!-- FAIL: empty answer
-request 400 /delanswerandfollowing?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=
-
-#!-- FAIL: invalid answer
-request 400 /delanswerandfollowing?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=invalid
-
-#!-- FAIL: already deleted answer
-request 400 /delanswerandfollowing?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=question3
-
-#!-- FAIL: unknown answer
-request 400 /delanswerandfollowing?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=question4
-
-#!-- FAIL: header answer
-request 400 /delanswerandfollowing?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@user:NOTALLOWED:0:0:0:0:0:0:0:
-
-#!-- FAIL: META answer
-request 400 /delanswerandfollowing?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=meta:NOTALLOWED:0:0:0:0:0:0:0:
-
-#!-- FAIL: system answer
-request 400 /delanswerandfollowing?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@system:NOTALLOWED:0:0:0:0:0:0:0:
-
-#!---------------------
-#! GET /delprevanswer: not testing checksum validity here, see delanswerandfollowing.test
+#! GET /delprevanswer: not testing checksum validity here
 #!---------------------
 
 #!-- prepare test: re-answer question deleted before

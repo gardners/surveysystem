@@ -41,7 +41,6 @@ const save_cached_session = function(session) {
 
     const { session_id, survey_id, session_state, modified } = session;
     if (!survey_id || !session_id || isNaN(session_state)) {
-        console.log({ session_id, survey_id, session_state, modified });
         return false;
     }
 

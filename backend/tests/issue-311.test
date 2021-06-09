@@ -81,11 +81,12 @@ endofsession
 #! ------- delanswer question 2 -------
 request 200 /delanswer?sessionid=$SESSION&questionid=question2
 
+# #462 changed question3 to deleted
 verify_session(skip_headers)
 delanswerinnerpythonpasses/0b39e0c93f1b338433b8a8773d57f738dd405e17
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 question2:TEXT:Answer 2:0:0:0:0:0:0:0::1:<UTIME>
-question3:TEXT:Answer 3:0:0:0:0:0:0:0::0:<UTIME>
+question3:TEXT:Answer 3:0:0:0:0:0:0:0::1:<UTIME>
 endofsession
 
 #! ------- analyse fails (session not finished) -------

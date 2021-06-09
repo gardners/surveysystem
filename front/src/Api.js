@@ -254,39 +254,6 @@ const Api = {
             });
     },
 
-    /**
-     * Delete all previous answers until the specified question id
-     * @param {string} session_id
-     * @param {string} question_id
-     * @returns {Promise} deserialized json including next questions
-     */
-    deleteAnswerAndFollowing: function(session_id, question_id) {
-        const uri = url('/delanswer', {
-            'sessionid': session_id,
-            'questionid': question_id,
-        });
-
-        const opts =  {
-            signal,
-            headers: requestHeaders(),
-        };
-
-        return fetch(uri, opts)
-            .then((response) => {
-                if (!response.ok) {
-                    return responseError(response);
-                }
-                cacheResponse(response);
-                return response.json();
-            })
-            .catch((error) => {
-                if(error && error.name === 'AbortError') {
-                    return;
-                }
-                throw error;
-            });
-    },
-
     // TODO: this is a temporary implementation
 
     /**
@@ -348,36 +315,6 @@ const Api = {
                 }
                 return responses;
             });
-    },
-
-    /**
-     * Send multiple answers to current questions and receive next question(s)
-     * @param {string} session_id
-     * @param {[string]} array of serialized answers
-     * @returns {Promise} deserialized json including next questions
-     */
-    deleteAnswers: function(session_id, answers) {
-        return Promise.all(
-            answers.map(fragment => Api.deleteAnswer(session_id, fragment))
-        )
-    },
-
-    /**
-     * Delete mutiple answers to current questions and new receive next question(s)
-     * @param {string} session_id
-     * @param {[string]} question_ids array of question ids for answers to delete
-     * @returns {Promise} deserialized json including next questions
-     */
-    deleteAnswers_SEQUENTIAL: function(session_id, question_ids, responses = []) {
-        const next = responses.length;
-        return Api.deleteAnswer(session_id, question_ids[next])
-        .then((response) => {
-            responses.push(response);
-            if(responses.length < question_ids.length) {
-                return Api.deleteAnswers_SEQUENTIAL(session_id, question_ids, responses);
-            }
-            return responses;
-        });
     },
 
 };

@@ -275,8 +275,7 @@ struct session *load_session(char *session_id);
 int delete_session(char *session_id);
 int save_session(struct session *s);
 int session_add_answer(struct session *s, struct answer *a);
-int session_delete_answer(struct session *s, struct answer *a, int deleteFollowingP);
-int session_delete_answers_by_question_uid(struct session *ses, char *uid, int deleteFollowingP);
+int session_delete_answer(struct session *s, char *uid);
 
 void free_session(struct session *s);
 void free_question(struct question *q);
@@ -299,11 +298,11 @@ int answer_mark_as_deleted(struct answer *ans);
 int session_get_answer_index(char *uid, struct session *ses);
 
 struct question *session_get_question(char *uid, struct session *ses);
+int session_get_question_index(char *uid, struct session *ses); // #462
 
-int session_generate_consistency_hash(struct session *ses); //#268
+int session_generate_consistency_hash(struct session *ses); // #268
 
 // #332 next_question struct
-struct nextquestions *init_next_questions();
 void free_next_questions(struct nextquestions *nq);
 
 int dump_next_questions(FILE *f, struct nextquestions *nq);

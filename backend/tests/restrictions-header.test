@@ -72,21 +72,6 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
-#!------- trying to delanswerandfollowing header question should fail
-request proxy 400 /delanswerandfollowing?sessionid=$SESSION&questionid=@state curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
-request proxy 400 /delanswerandfollowing?sessionid=$SESSION&questionid=@authority curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
-request proxy 400 /delanswerandfollowing?sessionid=$SESSION&questionid=@group curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
-request proxy 400 /delanswerandfollowing?sessionid=$SESSION&questionid=@user curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
-
-verify_session
-foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
-@user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
-@group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
-@authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_TRUSTED>:0:0:0:0:0:0::0:<UTIME>
-@state:META::<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
-question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
-endofsession
-
 #!------- !!! PASS delprevanswer ignores header questions
 # create a valid checksum
 create_checksum(<session_id><SESSION_OPEN>question1:TEXT:Answer 1:0:0:0:0:0:0:0::0)

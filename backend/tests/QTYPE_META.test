@@ -85,21 +85,6 @@ question2:TEXT:Answer 2:0:0:0:0:0:0:0::1:<UTIME>
 endofsession
 
 #!-------
-#!- delanswerandfollowing is skipping over META question
-#!-------
-
-# the first deletion is not relevant here
-request 200 /delanswerandfollowing?sessionid=$SESSION&questionid=question1
-match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "Answer 1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
-
-verify_session(skip_headers)
-qtype_meta/current
-question1:TEXT:Answer 1:0:0:0:0:0:0:0::1:<UTIME>
-QMETA:META:Meta Answer 1:0:0:0:0:0:0:0::0:<UTIME>
-question2:TEXT:Answer 2:0:0:0:0:0:0:0::1:<UTIME>
-endofsession
-
-#!-------
 #!- create new session for next test
 #!-------
 
@@ -136,17 +121,6 @@ endofsession
 #!- delanswer META is rejected
 #!-------
 request 400 /delanswer?sessionid=$SESSION&questionid=QMETA
-
-verify_session(skip_headers)
-qtype_meta/current
-question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
-QMETA:META:Meta Answer 1:0:0:0:0:0:0:0::0:<UTIME>
-endofsession
-
-#!-------
-#!- delanswerandfollowing META is rejected
-#!-------
-request 400 /delanswerandfollowing?sessionid=$SESSION&questionid=QMETA
 
 verify_session(skip_headers)
 qtype_meta/current
