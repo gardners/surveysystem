@@ -59,7 +59,7 @@ class Survey extends Component {
      * #441
      */
     componentWillUnmount() {
-        Api.cancelRequests();
+        // Api.cancelRequests();
     }
 
     /**

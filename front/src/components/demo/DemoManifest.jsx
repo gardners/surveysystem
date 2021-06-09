@@ -75,7 +75,6 @@ const parseQuestionManifest = function(survey) {
         }
 
         const line = lines[i].replace(/\\:/g, '%3A');
-        console.log(line);
         const fields = line.trim().split(':');
 
         if(fields.length !== 12) {

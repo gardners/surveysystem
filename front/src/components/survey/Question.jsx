@@ -23,6 +23,8 @@ import DialogDataCrawler from '../form/DialogDataCrawler';
 
 import { addClassNames } from '../../Utils';
 
+import Dev from '../Dev';
+
 /**
  * Provides data for "debug-data" HTML attribute
  * @param {object} question
@@ -125,6 +127,7 @@ const Question = function({ handleChange, question, value, error, grouped, compo
     const cls = addClassNames('question', className, (grouped) ? 'grouped' : '');
     return (
         <div className={ cls }>
+            <Dev.Question question={ question } />
             <Component
                 { ...fallthroughProps }
                 handleChange={ handleChange }
