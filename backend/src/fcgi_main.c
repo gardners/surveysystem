@@ -426,11 +426,11 @@ static void fcgi_updateanswer(struct kreq *req) {
     }
 
     // #445 count affected answers
-    int deleted = session_delete_answers_by_question_uid(ses, ans->uid, 0);
+    int deleted = session_delete_answer(ses, ans->uid);
     if (deleted < 0) {
       // TODO could be both 400 or 500 (storage, serialization, not in session)
       http_json_error(req, KHTTP_400, "Answer does not match existing session records.");
-      LOG_ERROR("session_delete_answers_by_question_uid() failed");
+      LOG_ERROR("session_delete_answer() failed");
     }
 
     // #445 count affected answers
@@ -513,11 +513,11 @@ static void fcgi_delanswer(struct kreq *req) {
     // We have a question -- so delete all answers to the given question
 
     // #445 count affected answers
-    int affected_count = session_delete_answers_by_question_uid(ses, question_id, 0);
+    int affected_count = session_delete_answer(ses, question_id);
     if (affected_count < 0) {
       // TODO could be both 400 or 500 (storage, serialization, not in session)
       http_json_error(req, KHTTP_400, "Answer does not match existing session records.");
-      LOG_ERROR("session_delete_answers_by_question_uid() failed");
+      LOG_ERROR("session_delete_answer() failed");
     }
 
     // #332 next_questions data struct
@@ -591,11 +591,11 @@ static void fcgi_delanswerandfollowing(struct kreq *req) {
     // We have a question -- so delete all answers to the given question
 
     // #445 count affected answers
-    int affected_count = session_delete_answers_by_question_uid(ses, question_id, 1);
+    int affected_count = session_delete_answer(ses, question_id);
     if (affected_count < 0) {
       // TODO could be both 400 or 500 (storage, serialization, not in session)
       http_json_error(req, KHTTP_400, "Answer does not match existing session records.");
-      LOG_ERROR("session_delete_answers_by_question_uid() failed");
+      LOG_ERROR("session_delete_answer() failed");
     }
 
     // #332 next_questions data struct
@@ -690,7 +690,7 @@ static void fcgi_delprevanswer(struct kreq *req) {
 
     if (last) {
       LOG_INFOV("deleting last given answer '%s'", last->uid);
-      affected_count = session_delete_answer(ses, last, 0);
+      affected_count = session_delete_answer(ses, last->uid);
     } else {
       LOG_INFO("no last given answer in session");
       affected_count = 0;

@@ -1210,6 +1210,30 @@ int save_session(struct session *s) {
 
 /**
  * query a session for a question uid
+ * returns index position in session or -1 if question was not found
+ * #462
+ */
+int session_get_question_index(char *uid, struct session *ses) {
+  if (!uid) {
+    LOG_WARNV("session_get_question_index(): search uid is null", 0);
+    return -1;
+  }
+  if (!ses) {
+    LOG_WARNV("session_get_question_index(): session is null", 0);
+    return -1;
+  }
+
+  for (int i = 0; i < ses->question_count; i++) {
+    if (!strcmp(ses->questions[i]->uid, uid)) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+
+/**
+ * query a session for a question uid
  */
 struct question *session_get_question(char *uid, struct session *ses) {
   if (!uid) {
@@ -1538,19 +1562,25 @@ int pre_add_answer_special_transformations(struct answer *an) {
  * This function also mark system answers!
  * returns 1 if delete flag was set and 0 if deletion was skipped
  */
-int answer_mark_as_deleted(struct answer *a) {
-    if(!a) {
+int answer_mark_as_deleted(struct answer *ans) {
+    if(!ans) {
       LOG_WARNV("answer_mark_as_deleted(): answer is null", 0);
       return 0;
     }
 
-    if (a->flags & ANSWER_DELETED) {
+    // #363, system answers (QTYPE_META or @uid) answers cannot be deleted
+    if (is_system_answer(ans)) {
+      LOG_WARNV("answer_mark_as_deleted(): answer '%s' is a system answer", ans->uid);
       return 0;
     }
 
-    a->flags |= ANSWER_DELETED;
-    a->stored = (long long)time(NULL);
-    LOG_INFOV("Deleted from session answer '%s'.", a->uid);
+    if (ans->flags & ANSWER_DELETED) {
+      return 0;
+    }
+
+    ans->flags |= ANSWER_DELETED;
+    ans->stored = (long long)time(NULL);
+    LOG_INFOV("Deleted from session answer '%s'.", ans->uid);
     return 1;
 }
 
@@ -1754,10 +1784,11 @@ int session_add_answer(struct session *ses, struct answer *a) {
  * Delete any and all answers to a given question from the provided session structure.
  * It is not an error if there were no matching answers to delete
  * #407, #13, improve counting (only answers where deletion flag changed), make use of helper functions
+ * #462 next question consistency: all following questions are now deleted
  *
  * returns number of deleted answers or -1 on (arg validation) error. It is not an error if there were no matching answers to delete
 */
-int session_delete_answers_by_question_uid(struct session *ses, char *uid, int deleteFollowingP) {
+int session_delete_answer(struct session *ses, char *uid) {
   int retVal = 0;
   int deletions = 0;
 
@@ -1779,59 +1810,23 @@ int session_delete_answers_by_question_uid(struct session *ses, char *uid, int d
       break; // leave with 0
     }
 
-    // #363, system answers (QTYPE_META or @uid) answers cannot be deleted
-    if (is_system_answer(ses->answers[index])) {
-      LOG_ERRORV("Delete Answer (by uid): Invalid request to remove private SYSTEM answer '%s' from session '%s'", uid, ses->session_id);
-    }
-
-    deletions += answer_mark_as_deleted(ses->answers[index]);
-
-    // Mark all following answers deleted, if required
-    if (deleteFollowingP) {
-      for (int j = index + 1; j < ses->answer_count; j++) {
-        // #363, system answers (QTYPE_META or @uid) answers cannot be deleted
-        if (is_system_answer(ses->answers[j])) {
-          continue;
-        }
-        deletions += answer_mark_as_deleted(ses->answers[j]);
-      }
-    }
-
-    if (retVal) {
+    deletions = answer_mark_as_deleted(ses->answers[index]);
+    if(!deletions) {
+      // nothing deleted, either it was deleted before or is system answer -  abort here
       break;
     }
 
+    // Mark all following answers deleted
+    for (int j = index + 1; j < ses->answer_count; j++) {
+      deletions += answer_mark_as_deleted(ses->answers[j]);
+    }
+
+  } while (0);
+
+  if (!retVal) {
     ses->given_answer_count -= deletions;
     retVal = deletions;
-  } while (0);
-  return retVal;
-}
-
-/**
- * Delete exactly the provided answer from the provided session,
- * #407, #13 deletion logic becomes too complex, so pipe this function to session_delete_answers_by_question_uid();
- * TODO: this function is currently not used, remove?
- *
- * return the number of answers deleted. If there is no exactly matching answer, it will return 0.
- */
-int session_delete_answer(struct session *ses, struct answer *a, int deleteFollowingP) {
-  int retVal = 0;
-
-  do {
-
-    if (!ses || !ses->session_id) {
-      LOG_ERROR("Delete Answer: Session structure or ses->session_id is NULL");
-    }
-    if (!a || !a->uid) {
-      LOG_ERRORV("Delete Answer: Answer structure or a->uid is null, session '%s'", ses->session_id);
-    }
-    // #363, system answers (QTYPE_META or @uid) answers cannot be deleted
-    if (is_system_answer(a)) {
-      LOG_ERRORV("Delete Answer: Invalid request to remove private SYSTEM answer '%s' from session '%s'", a->uid, ses->session_id);
-    }
-
-    retVal = session_delete_answers_by_question_uid(ses, a->uid, deleteFollowingP);
-  } while (0);
+  }
 
   return retVal;
 }

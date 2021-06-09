@@ -393,10 +393,10 @@ int do_delanswer(char *session_id, char *question_id) {
     }
 
     // #445 count affected answers
-    int affected_count = session_delete_answers_by_question_uid(ses, question_id, 1);
+    int affected_count = session_delete_answer(ses, question_id);
     if (affected_count < 0) {
       fprintf(stderr, "Answer does not match existing session records.\n");
-      LOG_ERROR("session_delete_answers_by_question_uid() failed");
+      LOG_ERROR("session_delete_answer() failed");
     }
 
     nq = get_next_questions(ses, action, affected_count);
@@ -468,7 +468,7 @@ int do_delprevanswer(char *session_id, char *checksum) {
 
     if (last) {
       LOG_INFOV("deleting last given answer '%s'", last->uid);
-      affected_count = session_delete_answer(ses, last, 0);
+      affected_count = session_delete_answer(ses, last->uid);
     } else {
       LOG_INFO("no last given answer in session");
       affected_count = 0;
@@ -693,8 +693,8 @@ int main(int argc, char **argv) {
       }
 
       if (do_delanswer(argv[2], argv[3])) {
-        fprintf(stderr, "Failed to add answer.\n");
-        LOG_ERROR("Failed to add answer");
+        fprintf(stderr, "Failed to delete answer.\n");
+        LOG_ERROR("Failed to delete answer");
       }
 
     } else if (!strcmp(argv[1], "addanswer")) {
