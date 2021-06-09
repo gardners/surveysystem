@@ -148,30 +148,6 @@ int dump_next_questions(FILE *f, struct nextquestions *nq) {
   return retVal;
 }
 
-// #332 initialise nextquestions data struct
-struct nextquestions *init_next_questions() {
-  int retVal = 0;
-  struct nextquestions *nq = NULL;
-
-  do {
-    nq = calloc(sizeof(struct nextquestions), 1);
-    if (!nq) {
-      LOG_ERRORV("calloc(%d,1) failed when loading struct nextquestions", sizeof(struct nextquestions));
-    }
-    nq->status = 0;
-    nq->message = NULL;
-    nq->question_count = 0;
-    // #13 add suport for progress indicator
-    nq->progress[0] = 0;
-    nq->progress[1] = 0;
-  } while (0);
-
-  if (retVal) {
-    nq = NULL;
-  }
-  return nq;
-}
-
 // #332 free nextquestions data struct
 void free_next_questions(struct nextquestions *nq) {
   if (!nq) {
@@ -266,7 +242,7 @@ struct nextquestions *get_next_questions(struct session *s, enum actions action,
       LOG_ERROR("session structure is NULL");
     }
 
-    nq = init_next_questions();
+    nq = calloc(sizeof(struct nextquestions), 1);
     if (!nq) {
       LOG_ERROR("init_next_questions() failed");
     }

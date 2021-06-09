@@ -303,7 +303,6 @@ int session_get_question_index(char *uid, struct session *ses); // #462
 int session_generate_consistency_hash(struct session *ses); // #268
 
 // #332 next_question struct
-struct nextquestions *init_next_questions();
 void free_next_questions(struct nextquestions *nq);
 
 int dump_next_questions(FILE *f, struct nextquestions *nq);
