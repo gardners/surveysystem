@@ -39,7 +39,6 @@ static void fcgi_addanswer(struct kreq *);
 static void fcgi_updateanswer(struct kreq *);
 static void fcgi_nextquestion(struct kreq *);
 static void fcgi_delanswer(struct kreq *);
-static void fcgi_delanswerandfollowing(struct kreq *);
 static void fcgi_delprevanswer(struct kreq *);
 static void fcgi_delsession(struct kreq *);
 static void fcgi_accesstest(struct kreq *);
@@ -55,7 +54,6 @@ static const disp disps[PAGE__MAX] = {
     fcgi_updateanswer,
     fcgi_nextquestion,
     fcgi_delanswer,
-    fcgi_delanswerandfollowing,
     fcgi_delprevanswer,
     fcgi_delsession,
     fcgi_accesstest,
@@ -70,7 +68,6 @@ static const char *const pages[PAGE__MAX] = {
     "updateanswer",
     "nextquestion",
     "delanswer",
-    "delanswerandfollowing",
     "delprevanswer",
     "delsession",
     "accesstest",
@@ -538,85 +535,6 @@ static void fcgi_delanswer(struct kreq *req) {
       http_json_error(req, KHTTP_500, "Could not load next questions for specified session.");
       LOG_ERROR("Could not load next questions for specified session");
     }
-    LOG_INFO("Leaving page handler.");
-
-  } while (0);
-
-  // destruct
-  free_session(ses);
-  free_next_questions(nq);
-
-  (void)retVal;
-  return;
-}
-
-static void fcgi_delanswerandfollowing(struct kreq *req) {
-  int retVal = 0;
-
-  struct session *ses = NULL;
-  struct nextquestions *nq = NULL;
-  enum actions action = ACTION_SESSION_DELETEANSWER;
-
-  do {
-
-    LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
-
-    char *question_id = fcgi_request_get_field_value(KEY_QUESTIONID, req);
-
-    ses = fcgi_request_load_session(req);
-    if (!ses) {
-      http_json_error(req, KHTTP_400, "Could not load specified session. Does it exist?");
-      LOG_ERROR("Could not load session");
-    }
-
-    if (validate_session_delete_answer(question_id, ses)) {
-      http_json_error(req, KHTTP_400, "Could load answer. Does it exist?");
-      LOG_ERRORV("Could not load answer '%s'", question_id);
-    }
-
-    // validate request against session meta (#363)
-    enum khttp status = fcgi_request_validate_meta_session(req, ses);
-    if (status != KHTTP_200) {
-      http_json_error(req, status, "Invalid idendity provider, check app configuration");
-      LOG_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
-    }
-
-    // validate requested action against session current state (#379)
-    char reason[1024];
-    if (validate_session_action(action, ses, reason, 1024)) {
-      http_json_error(req, KHTTP_400, reason);
-      LOG_ERROR("Session action validation failed");
-    }
-
-    // We have a question -- so delete all answers to the given question
-
-    // #445 count affected answers
-    int affected_count = session_delete_answer(ses, question_id);
-    if (affected_count < 0) {
-      // TODO could be both 400 or 500 (storage, serialization, not in session)
-      http_json_error(req, KHTTP_400, "Answer does not match existing session records.");
-      LOG_ERROR("session_delete_answer() failed");
-    }
-
-    // #332 next_questions data struct
-    nq = get_next_questions(ses, action, affected_count);
-    if (!nq) {
-      http_json_error(req, KHTTP_500, "Unable to get next questions.");
-      LOG_ERROR("get_next_questions() failed");
-    }
-
-    if (save_session(ses)) {
-      http_json_error(req, KHTTP_500, "Unable to update session.");
-      LOG_ERROR("save_session() failed");
-    }
-
-    // All ok, so tell the caller the next question to be answered
-    // #373, separate response handler for nextquestions
-    if (fcgi_response_nextquestion(req, ses, nq)) {
-      http_json_error(req, KHTTP_500, "Could not load next questions for specified session.");
-      LOG_ERROR("Could not load next questions for specified session");
-    }
-
     LOG_INFO("Leaving page handler.");
 
   } while (0);
