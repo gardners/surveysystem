@@ -25,7 +25,6 @@ endofsession
 # static void fcgi_updateanswer(struct kreq *);
 # static void fcgi_nextquestion(struct kreq *);
 # static void fcgi_delanswer(struct kreq *);
-# static void fcgi_delanswerandfollowing(struct kreq *);
 # static void fcgi_delprevanswer(struct kreq *);
 # static void fcgi_delsession(struct kreq *);
 # static void fcgi_accesstest(struct kreq *);
@@ -56,11 +55,6 @@ request proxy 502 /nextquestion?sessionid=$SESSION curlargs(--user test:1234 -H 
 #!- endpoint /delanswer [block]
 #!-------
 request proxy 502 /delanswer?sessionid=$SESSION&questionid=question1 curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
-
-#!-------
-#!- endpoint /delanswerandfollowing [block]
-#!-------
-request proxy 502 /delanswerandfollowing?sessionid=$SESSION&questionid=question1 curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
 
 #!-------
 #!- endpoint /delprevanswer [block]

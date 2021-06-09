@@ -6,7 +6,6 @@
 # PAGE_UPDATEANSWER,
 # PAGE_NEXTQUESTION,
 # PAGE_DELANSWER,
-# PAGE_DELANSWERANDFOLLOWING,
 # PAGE_DELPREVANSWER,
 # PAGE_DELSESSION,
 # PAGE_ACCESTEST,
@@ -85,18 +84,6 @@ match_string <empty>
 #! ------
 
 request 200 /delanswer?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&questionid=question1 OPTIONS
-match_string <empty>
-
-verify_session(skip_headers)
-foo/current
-question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
-endofsession
-
-#! ------
-#! - PASS /delanswerandfollowing - no answer deleted
-#! ------
-
-request 200 /delanswerandfollowing?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&questionid=question1 OPTIONS
 match_string <empty>
 
 verify_session(skip_headers)

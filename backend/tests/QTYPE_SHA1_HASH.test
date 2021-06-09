@@ -61,7 +61,7 @@ secret2:SHA1_HASH:84983e441c3bd26ebaae4aa1f95129e5e54670f1:0:0:0:0:0:0:0::1:<UTI
 endofsession
 
 #! ------- test that default_value of question definition is returned
-request 200 /delanswerandfollowing?sessionid=$SESSION&questionid=secret1
+request 200 /delanswer?sessionid=$SESSION&questionid=secret1
 match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "secret1", "name": "secret1", "title": "Secret 1", "description": "Secret 1", "type": "SHA1_HASH", "default_value": "default 1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 # Make sure answer ends up in file

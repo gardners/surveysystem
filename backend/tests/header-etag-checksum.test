@@ -85,23 +85,8 @@ create_checksum(<session_id><SESSION_OPEN>question1:TEXT:Answer1:0:0:0:0:0:0:0::
 verify_response_etag(<custom_checksum>)
 
 #! -------
-#! ------ /delanswerandfollowing
-#! -------
-
-#! ------ 200: hash: YES, required: NO -------
-request 200 /delanswerandfollowing?sessionid=$SESSION&questionid=question1
-verify_response_etag(<hashlike_etag>)
-
-#! - test hash was generated of <session_id><state> (all answers deleted!)
-create_checksum(<session_id><SESSION_OPEN>)
-verify_response_etag(<custom_checksum>)
-
-#! -------
 #! ------ /delprevanswer
 #! -------
-
-# restore
-request 200 /updateanswer?sessionid=$SESSION&answer=question1:Answer1:0:0:0:0:0:0:0:
 
 #! ------ 200: hash: YES, required:YES -------
 # create checksum from last answer

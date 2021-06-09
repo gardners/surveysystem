@@ -24,7 +24,6 @@ endofsession
 # static void fcgi_updateanswer(struct kreq *);
 # static void fcgi_nextquestion(struct kreq *);
 # static void fcgi_delanswer(struct kreq *);
-# static void fcgi_delanswerandfollowing(struct kreq *);
 # static void fcgi_delprevanswer(struct kreq *req);
 # static void fcgi_delsession(struct kreq *);
 # static void fcgi_accesstest(struct kreq *);
@@ -55,11 +54,6 @@ request 502 /nextquestion?sessionid=$SESSION
 #!- endpoint /delanswer [block]
 #!-------
 request 502 /delanswer?sessionid=$SESSION&questionid=question1
-
-#!-------
-#!- endpoint /delanswerandfollowing [block]
-#!-------
-request 502 /delanswerandfollowing?sessionid=$SESSION&questionid=question1
 
 #!-------
 #!- endpoint /delprevanswer [block]
