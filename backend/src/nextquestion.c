@@ -194,19 +194,17 @@ void free_next_questions(struct nextquestions *nq) {
  * #332 next_questions data struct
  * #445 add action, affected_answers_count args (to be used in later development)
  */
-int get_next_questions_generic(struct session *s, struct nextquestions *nq, enum actions action, int affected_answers_count) {
+int get_next_questions_generic(struct session *ses, struct nextquestions *nq, enum actions action, int affected_answers_count) {
   int retVal = 0;
 
   do {
-    int i, j;
-
-    if (!s) {
+    if (!ses) {
       LOG_ERROR("struct session is NULL");
     }
-    if (!s->survey_id) {
+    if (!ses->survey_id) {
       LOG_ERROR("surveyname is NULL");
     }
-    if (!s->session_id) {
+    if (!ses->session_id) {
       LOG_ERROR("session_uuid is NULL");
     }
     if (!nq) {
@@ -216,47 +214,33 @@ int get_next_questions_generic(struct session *s, struct nextquestions *nq, enum
       LOG_ERROR("nextquestions->question_count is > 0");
     }
 
-    LOG_INFOV("Calling get_next_questions_generic()", 0);
+    LOG_INFO("Calling get_next_questions_generic()");
+
+    int index = 0;
+    struct answer *ans = session_get_last_given_answer(ses);
+    if (ans) {
+      index = session_get_question_index(ans->uid, ses);
+      // last question
+      if (index >= ses->question_count - 1) {
+        nq->progress[0] = ses->question_count;
+        nq->progress[1] = ses->question_count;
+        break;
+      }
+      // next question
+      index++;
+    }
+
+    // #373 separate allocated space for questions
+    nq->next_questions[nq->question_count] = copy_question(ses->questions[index]);
+    if (!nq->next_questions[nq->question_count]) {
+      LOG_ERRORV("Copying next question '%s' in list of next questions failed", ses->questions[index]->uid);
+      break;
+    }
+    nq->question_count++;
 
     // #13 add suport for progress indicator, in generic (linear) mode we just copy the session counters
-    nq->progress[0] = s->given_answer_count;
-    nq->progress[1] = s->question_count;
-
-    // Check each question to see if it has been answered already
-    // #363, answer offset, exclude session header
-    // #363, note: system answers (QTYPE_META or @uid) answers are not affected here because they should not have questions
-    //   TODO it might be neccessary to add guards for questions 'abusing' the notation rules for automatted backend answers
-    for (i = 0; i < s->question_count; i++) {
-
-      for (j = s->answer_offset; j < s->answer_count; j++) {
-        if (!(s->answers[j]->flags & ANSWER_DELETED)) {
-          if (!strcmp(s->answers[j]->uid, s->questions[i]->uid)) {
-            break;
-          }
-        }
-      }
-
-      if (j < s->answer_count) {
-        // LOG_INFOV("Answer to question %d exists.", i);
-        continue;
-      } else {
-        if (nq->question_count < MAX_NEXTQUESTIONS) {
-          // #373 separate allocated space for questions
-          nq->next_questions[nq->question_count] = copy_question(s->questions[i]);
-          if (!nq->next_questions[nq->question_count]) {
-            LOG_ERRORV("Copying question '%s' in list of next questions failed", s->questions[i]->uid);
-            break;
-          }
-          nq->question_count++;
-
-          LOG_INFOV("Need answer to question %d.", i);
-
-          // XXX - For now, just return exactly the first unanswered question
-          break;
-        }
-      } // endif
-
-    } // endfor
+    nq->progress[0] = index;
+    nq->progress[1] = ses->question_count;
 
   } while (0);
 
