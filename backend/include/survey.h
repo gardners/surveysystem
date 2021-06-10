@@ -282,7 +282,7 @@ void free_question(struct question *q);
 void free_answer(struct answer *a);
 
 struct answer *copy_answer(struct answer *aa);
-struct question *copy_question(struct question *qq);
+struct question *copy_question(struct question *qq, char *default_value);
 int answer_get_value_raw(struct answer *a, char *out, size_t sz);
 int answer_set_value_raw(struct answer *a, char *in); // #425
 
@@ -304,6 +304,7 @@ int session_generate_consistency_hash(struct session *ses); // #268
 
 // #332 next_question struct
 void free_next_questions(struct nextquestions *nq);
+int add_next_question(struct question *qn, struct nextquestions *nq, struct session *ses);
 
 int dump_next_questions(FILE *f, struct nextquestions *nq);
 int dump_session(FILE *f, struct session *ses);
