@@ -58,56 +58,6 @@ int is_system_answer(struct answer *a) {
   return 0;
 }
 
-/**
- * Given a question uid load the question data and append it to the givven next_questions struct
- */
-int mark_next_question(struct session *ses, struct question *next_questions[], int *next_question_count, const char *uid) {
-  int retVal = 0;
-  do {
-    int qn;
-    if (!ses) {
-      LOG_ERROR("session structure is NULL");
-    }
-    if (!next_questions) {
-      LOG_ERROR("next_questions is null");
-    }
-    if (!next_question_count) {
-      LOG_ERROR("next_question_count is null");
-    }
-    if (!uid) {
-      LOG_ERROR("question UID is null");
-    }
-    if ((*next_question_count) >= MAX_QUESTIONS) {
-      LOG_ERRORV("Too many questions in list when marking question uid='%s'", uid);
-    }
-
-    for (qn = 0; qn < ses->question_count; qn++) {
-      if (!strcmp(ses->questions[qn]->uid, uid)) {
-        break;
-      }
-    }
-
-    if (qn == ses->question_count) {
-      LOG_ERRORV("Asked to mark non-existent question UID '%s'", uid);
-    }
-
-    for (int j = 0; j < (*next_question_count); j++) {
-      if (next_questions[j] == ses->questions[qn]) {
-        LOG_ERRORV("Duplicate question UID '%s' in list of next questions", uid);
-        break;
-      }
-    }
-
-    // #373 separate allocated space for questions
-    next_questions[*next_question_count] = copy_question(ses->questions[qn]);
-    if (!next_questions[*next_question_count]) {
-      LOG_ERRORV("Copying question '%s' in list of next questions failed", uid);
-    }
-    (*next_question_count)++;
-  } while (0);
-  return retVal;
-}
-
 int dump_next_questions(FILE *f, struct nextquestions *nq) {
   int retVal = 0;
   int i;
@@ -166,6 +116,61 @@ void free_next_questions(struct nextquestions *nq) {
 }
 
 /**
+ * Adds a question to a netxtquestion struct and updates session
+ * #462 delete existing answers
+ * #213 handle default values for deleted answers
+ */
+int add_next_question(struct question *qn, struct nextquestions *nq, struct session *ses) {
+  int retVal = 0;
+  struct question *copy = NULL;
+   
+  do {
+    if (!ses) {
+      LOG_ERROR("struct session is NULL");
+    }
+    if (!nq) {
+      LOG_ERROR("nextquestions is NULL");
+    }
+    if (!qn) {
+      LOG_ERROR("question is NULL");
+    }
+    
+    // #373 separate allocated space for questions
+    struct answer *exists = session_get_answer(qn->uid, ses);
+    if (exists) {
+      // 462 delete answer for next question and all following answers
+      if (session_delete_answer(ses, qn->uid)) {
+        LOG_ERRORV("Deleting existing answer for next question '%s' failed", qn->uid);
+      }
+      
+      // #213 default value if answer exists and is deleted
+      char default_value[8192] = { 0 };
+      //# 237 previously deleted sha answers: don't supply default value based on previous answer
+      if(qn->type != QTYPE_SHA1_HASH) {
+        if (answer_get_value_raw(exists, default_value, 8192)) {
+          LOG_ERRORV("Failed to fetch default value from previously deleted answer to next question '%s'", qn->uid);
+        }
+      }
+      
+      copy = copy_question(qn, default_value);
+      if (!copy) {
+        LOG_ERRORV("Copying next question '%s' in list of next questions failed", qn->uid);
+      }
+    } else {
+      copy = copy_question(qn, NULL);
+      if (!copy) {
+        LOG_ERRORV("Copying next question '%s' in list of next questions failed", qn->uid);
+      }
+    }
+    nq->next_questions[nq->question_count] = copy;
+    nq->question_count++;
+    
+  } while (0);
+
+  return retVal;
+}
+
+/**
  * Generic next question selector, which selects the first question lacking an answer.
  * #332 next_questions data struct
  * #445 add action, affected_answers_count args (to be used in later development)
@@ -206,13 +211,9 @@ int get_next_questions_generic(struct session *ses, struct nextquestions *nq, en
       index++;
     }
 
-    // #373 separate allocated space for questions
-    nq->next_questions[nq->question_count] = copy_question(ses->questions[index]);
-    if (!nq->next_questions[nq->question_count]) {
-      LOG_ERRORV("Copying next question '%s' in list of next questions failed", ses->questions[index]->uid);
-      break;
+    if (add_next_question(ses->questions[index], nq, ses)) {
+      LOG_ERRORV("Error adding question '%s' to list of next questions", ses->questions[index]->uid);
     }
-    nq->question_count++;
 
     // #13 add suport for progress indicator, in generic (linear) mode we just copy the session counters
     nq->progress[0] = index;

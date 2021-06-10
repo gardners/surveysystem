@@ -569,11 +569,17 @@ int get_next_question_python(struct session *ses, struct nextquestions *nq, enum
 
         // 6. assign next_questions
         // 7. assign question_count
-        nq->next_questions[i] = NULL; // intialize target pointer to NULL!
-        if (mark_next_question(ses, nq->next_questions, &nq->question_count, uid)) {
+        struct question *qn = session_get_question((char *)uid, ses);
+        if (!qn) {
           is_error = 1;
           Py_DECREF(result);
-          LOG_ERRORV("Error adding question '%s' to list of next questions, question uid valid?", uid);
+          LOG_ERRORV("Error adding question '%s' to list of next questions, question does not exist.", uid);
+        }
+        
+        if (add_next_question(qn, nq, ses)) {
+          is_error = 1;
+          Py_DECREF(result);
+          LOG_ERRORV("Error adding question '%s' to list of next questions", uid);
         }
 
       } else {
