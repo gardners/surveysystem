@@ -1631,7 +1631,11 @@ struct answer *copy_answer(struct answer *aa) {
   }
 }
 
-struct question *copy_question(struct question *qq) {
+/**
+ * Creates a copy of a question. 
+ * The default_value may be overwritten. The copy needs to be freed independently
+ */
+struct question *copy_question(struct question *qq, char *default_value) {
   int retVal = 0;
   struct question *q = NULL;
   do {
@@ -1646,42 +1650,44 @@ struct question *copy_question(struct question *qq) {
     if (q->uid) {
       q->uid = strdup(q->uid);
       if (!q->uid) {
-        LOG_ERROR("Could not copy q->uid");
+        LOG_ERROR("Could not copy uid");
       }
     }
 
     if (q->question_text) {
       q->question_text = strdup(q->question_text);
       if (!q->question_text) {
-        LOG_ERROR("Could not copy q->question_text");
+        LOG_ERROR("Could not copy question_text");
       }
     }
 
     if (q->question_html) {
       q->question_html = strdup(q->question_html);
       if (!q->question_html) {
-        LOG_ERROR("Could not copy q->question_text");
+        LOG_ERROR("Could not copy question_html");
       }
     }
-
-    if (q->default_value) {
-      q->default_value = strdup(q->default_value);
+    
+    // #213 arg default_value (if having content) has predecence over question->default_value
+    char *dv = (default_value && strlen(default_value)) ? default_value : q->default_value;
+    if (dv) {
+      q->default_value = strdup(dv);
       if (!q->default_value) {
-        LOG_ERROR("Could not copy q->question_text");
+        LOG_ERROR("Could not copy default_value");
       }
     }
 
     if (q->choices) {
       q->choices = strdup(q->choices);
       if (!q->choices) {
-        LOG_ERROR("Could not copy q->question_text");
+        LOG_ERROR("Could not copy choices");
       }
     }
 
     if (q->unit) {
       q->unit = strdup(q->unit);
       if (!q->unit) {
-        LOG_ERROR("Could not copy q->question_text");
+        LOG_ERROR("Could not copy unit");
       }
     }
   } while (0);

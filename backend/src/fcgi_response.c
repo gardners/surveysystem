@@ -98,33 +98,6 @@ void http_json_error(struct kreq *req, enum khttp status, const char *msg) {
   return;
 }
 
-/**
- * Provide default value if question not previously answered,
- * else provide the most recent deleted answer for this question. #186
- * #384, refactor, #237 move out in separate unit
- */
-static void response_nextquestion_add_default_value(struct session *ses, struct question *q , struct kjsonreq *resp) {
-
-    //# 237  previously deleted sha answers: don't supply default value based on previous answer
-    if(q->type == QTYPE_SHA1_HASH) {
-      kjson_putstringp(resp, "default_value", q->default_value);
-      return;
-    }
-
-    struct answer *exists = session_get_answer(q->uid, ses);
-    if (exists && (exists->flags & ANSWER_DELETED)) {
-      char default_value[8192] = { 0 };
-      if (answer_get_value_raw(exists, default_value, 8192)) {
-        LOG_WARNV("Failed to fetch default value from previously deleted answer to question '%s'", q->uid);
-        default_value[0] = 0;
-      }
-      kjson_putstringp(resp, "default_value", default_value);
-      return;
-    }
-
-    kjson_putstringp(resp, "default_value", q->default_value);
-}
-
 static void response_nextquestion_add_choices(struct question *q , struct kjsonreq *resp) {
   // open "choices"
   kjson_arrayp_open(resp, "choices");
@@ -226,15 +199,12 @@ int fcgi_response_nextquestion(struct kreq *req, struct session *ses, struct nex
     for (int i = 0; i < nq->question_count; i++) {
       // Output each question
       kjson_obj_open(&resp);
-      kjson_putstringp(&resp, "id",          nq->next_questions[i]->uid);
-      kjson_putstringp(&resp, "name",        nq->next_questions[i]->uid);
-      kjson_putstringp(&resp, "title",       nq->next_questions[i]->question_text);
-      kjson_putstringp(&resp, "description", nq->next_questions[i]->question_html);
-      kjson_putstringp(&resp, "type",        question_type_names[nq->next_questions[i]->type]);
-
-      // Provide default value if question not previously answered,
-      // else provide the most recent deleted answer for this question. #186
-      response_nextquestion_add_default_value(ses, nq->next_questions[i], &resp);
+      kjson_putstringp(&resp, "id",            nq->next_questions[i]->uid);
+      kjson_putstringp(&resp, "name",          nq->next_questions[i]->uid);
+      kjson_putstringp(&resp, "title",         nq->next_questions[i]->question_text);
+      kjson_putstringp(&resp, "description",   nq->next_questions[i]->question_html);
+      kjson_putstringp(&resp, "type",          question_type_names[nq->next_questions[i]->type]);
+      kjson_putstringp(&resp, "default_value", nq->next_questions[i]->default_value);
 
       // #341 add min/max values, man kjson_putintp
       kjson_putintp(&resp, "min_value", (int64_t) nq->next_questions[i]->min_value);
