@@ -120,10 +120,10 @@ void free_next_questions(struct nextquestions *nq) {
  * #462 delete existing answers
  * #213 handle default values for deleted answers
  */
-int add_next_question(struct question *qn, struct nextquestions *nq, struct session *ses) {
+int add_next_question(enum actions action, struct question *qn, struct nextquestions *nq, struct session *ses) {
   int retVal = 0;
   struct question *copy = NULL;
-   
+
   do {
     if (!ses) {
       LOG_ERROR("struct session is NULL");
@@ -134,37 +134,44 @@ int add_next_question(struct question *qn, struct nextquestions *nq, struct sess
     if (!qn) {
       LOG_ERROR("question is NULL");
     }
-    
+
     // #373 separate allocated space for questions
     struct answer *exists = session_get_answer(qn->uid, ses);
     if (exists) {
-      // 462 delete answer for next question and all following answers
-      if (session_delete_answer(ses, qn->uid)) {
-        LOG_ERRORV("Deleting existing answer for next question '%s' failed", qn->uid);
-      }
-      
-      // #213 default value if answer exists and is deleted
-      char default_value[8192] = { 0 };
-      //# 237 previously deleted sha answers: don't supply default value based on previous answer
-      if(qn->type != QTYPE_SHA1_HASH) {
-        if (answer_get_value_raw(exists, default_value, 8192)) {
-          LOG_ERRORV("Failed to fetch default value from previously deleted answer to next question '%s'", qn->uid);
+
+      if (action == ACTION_SESSION_DELETEANSWER) {
+        // #462 if SESSION_DELETEANSWER: delete answer for next question and all following answers
+        if (session_delete_answer(ses, qn->uid) < 0) {
+          LOG_ERRORV("add_next_question(): Deleting existing answer for next question '%s' failed", qn->uid);
         }
       }
-      
+
+      // #213 default value if answer exists and is deleted
+      // # 237 previously deleted sha answers: don't supply default value based on previous answer
+      char default_value[8192] = { 0 };
+
+      if (exists->flags & ANSWER_DELETED) {
+        if (qn->type != QTYPE_SHA1_HASH) {
+          if (answer_get_value_raw(exists, default_value, 8192)) {
+            LOG_ERRORV("add_next_question(): Failed to fetch default value from previously deleted answer to next question '%s'", qn->uid);
+          }
+        }
+      }
+
       copy = copy_question(qn, default_value);
       if (!copy) {
-        LOG_ERRORV("Copying next question '%s' in list of next questions failed", qn->uid);
+        LOG_ERRORV("add_next_question(): Copying next question '%s' in list of next questions failed", qn->uid);
       }
+
     } else {
       copy = copy_question(qn, NULL);
       if (!copy) {
-        LOG_ERRORV("Copying next question '%s' in list of next questions failed", qn->uid);
+        LOG_ERRORV("add_next_question(): Copying next question '%s' in list of next questions failed", qn->uid);
       }
     }
     nq->next_questions[nq->question_count] = copy;
     nq->question_count++;
-    
+
   } while (0);
 
   return retVal;
@@ -211,7 +218,7 @@ int get_next_questions_generic(struct session *ses, struct nextquestions *nq, en
       index++;
     }
 
-    if (add_next_question(ses->questions[index], nq, ses)) {
+    if (add_next_question(action, ses->questions[index], nq, ses)) {
       LOG_ERRORV("Error adding question '%s' to list of next questions", ses->questions[index]->uid);
     }
 

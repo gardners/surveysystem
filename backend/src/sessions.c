@@ -950,17 +950,9 @@ struct session *load_session(char *session_id) {
     }
 
     char session_path[1024];
-    char session_path_suffix[1024];
-    char session_prefix[5];
 
-    for (int i = 0; i < 4; i++) {
-      session_prefix[i] = session_id[i];
-    }
-    session_prefix[4] = 0;
-
-    snprintf(session_path_suffix, 1024, "sessions/%s/%s", session_prefix, session_id);
-    if (generate_path(session_path_suffix, session_path, 1024)) {
-      LOG_ERRORV("generate_path('%s') failed to build path for loading session '%s'", session_path_suffix, session_id);
+    if (generate_session_path(session_id, session_id, session_path, 1024)) {
+      LOG_ERRORV("generate_session_path() failed to build path for loading session '%s'", session_id);
     }
 
     FILE *s = fopen(session_path, "r");
@@ -1632,7 +1624,7 @@ struct answer *copy_answer(struct answer *aa) {
 }
 
 /**
- * Creates a copy of a question. 
+ * Creates a copy of a question.
  * The default_value may be overwritten. The copy needs to be freed independently
  */
 struct question *copy_question(struct question *qq, char *default_value) {
@@ -1667,7 +1659,7 @@ struct question *copy_question(struct question *qq, char *default_value) {
         LOG_ERROR("Could not copy question_html");
       }
     }
-    
+
     // #213 arg default_value (if having content) has predecence over question->default_value
     char *dv = (default_value && strlen(default_value)) ? default_value : q->default_value;
     if (dv) {

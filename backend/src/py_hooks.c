@@ -446,6 +446,7 @@ static int py_nextquestions_handle_progress(PyObject *result, struct nextquestio
 int get_next_question_python(struct session *ses, struct nextquestions *nq, enum actions action, int affected_answers_count) {
   int retVal = 0;
   int is_error = 0;
+  PyObject *result = NULL;
 
   do {
     if (!ses) {
@@ -480,34 +481,26 @@ int get_next_question_python(struct session *ses, struct nextquestions *nq, enum
     }
 
     // Okay, we have the function object, so build the argument list and call it.
-    PyObject *result = py_invoke_hook_function(function_reference, function_name, ses, action, affected_answers_count);
+    result = py_invoke_hook_function(function_reference, function_name, ses, action, affected_answers_count);
 
     if (!result) {
-      is_error = 1;
-      py_log_error(NULL);
       LOG_ERRORV("Python function '%s' did not return anything. Check Python error message above", function_name);
     }
 
     // #332 add instance check for exported Python class 'NextQuestions'
 
     if(!PyDict_Check(result)) {
-      is_error = 1;
-      Py_DECREF(result);
       LOG_ERRORV("Reply from Python function '%s' is of invalid type (not a dict)", function_name);
     }
 
     // 1. extract status
     PyObject *py_status = PyDict_GetItemString(result, "status");
     if (!py_status) {
-      is_error = 1;
-      Py_DECREF(result);
       LOG_ERRORV("Reply from Python function '%s' has no member 'status'", function_name);
     }
 
     long int status = PyLong_AsLong(py_status);
     if(status == -1) {
-      is_error = 1;
-      Py_DECREF(result);
       LOG_ERRORV("Reply from Python function '%s': invalid member 'status' (int)", function_name);
     }
 
@@ -517,15 +510,11 @@ int get_next_question_python(struct session *ses, struct nextquestions *nq, enum
     // 3. extract message
     PyObject *py_message = PyDict_GetItemString(result, "message");
     if (!py_message) {
-      is_error = 1;
-      Py_DECREF(result);
       LOG_ERRORV("Reply from Python function '%s' has no member 'message'", function_name);
     }
 
     const char *message = PyUnicode_AsUTF8(py_message);
     if(!message) {
-      is_error = 1;
-      Py_DECREF(result);
       LOG_ERRORV("Reply from Python function '%s': invalid member 'message' (str)", function_name);
     }
 
@@ -534,22 +523,16 @@ int get_next_question_python(struct session *ses, struct nextquestions *nq, enum
 
     // 5. progress values
     if (py_nextquestions_handle_progress(result, nq)) {
-      is_error = 1;
-      Py_DECREF(result);
       LOG_ERRORV("Reply from Python function '%s': progess handler failed", function_name);
     }
 
     // 6. extract nextquestions
     PyObject *py_next_questions = PyDict_GetItemString(result, "next_questions");
     if (!py_next_questions) {
-      is_error = 1;
-      Py_DECREF(result);
       LOG_ERRORV("Reply from Python function '%s' has no member 'next_questions'", function_name);
     }
 
     if(!PyList_Check(py_next_questions)) {
-      is_error = 1;
-      Py_DECREF(result);
       LOG_ERRORV("Reply from Python function '%s': invalid member 'next_questions' (list(str))", function_name);
     }
 
@@ -563,7 +546,6 @@ int get_next_question_python(struct session *ses, struct nextquestions *nq, enum
         const char *uid = PyUnicode_AsUTF8(item);
         if (!uid) {
           is_error = 1;
-          Py_DECREF(result);
           LOG_ERRORV("String in reply from Python function '%s' is null", function_name);
         }
 
@@ -572,32 +554,30 @@ int get_next_question_python(struct session *ses, struct nextquestions *nq, enum
         struct question *qn = session_get_question((char *)uid, ses);
         if (!qn) {
           is_error = 1;
-          Py_DECREF(result);
           LOG_ERRORV("Error adding question '%s' to list of next questions, question does not exist.", uid);
         }
-        
-        if (add_next_question(qn, nq, ses)) {
+
+        if (add_next_question(action, qn, nq, ses)) {
           is_error = 1;
-          Py_DECREF(result);
           LOG_ERRORV("Error adding question '%s' to list of next questions", uid);
         }
 
       } else {
-        Py_DECREF(result);
-        LOG_ERRORV(
-            "result.next_questions[%d] item is not a string in response from Python function '%s'", i, function_name);
+        is_error = 1;
+        LOG_ERRORV("result.next_questions[%d] item is not a string in response from Python function '%s'", i, function_name);
       }
 
     } // endfor
 
-    Py_DECREF(result);
     LOG_INFO("call python next question(s) finished.");
+
   } while (0);
 
-
+  Py_XDECREF(result);
   if (is_error) {
     retVal = -99;
   }
+
   return retVal;
 }
 
@@ -608,7 +588,8 @@ int get_next_question_python(struct session *ses, struct nextquestions *nq, enum
  */
 int get_analysis_python(struct session *ses, const char **output) {
   int retVal = 0;
-  int is_error = 0;
+  PyObject *result = NULL;
+
   do {
     if (!ses) {
       LOG_ERROR("session is null");
@@ -636,10 +617,9 @@ int get_analysis_python(struct session *ses, const char **output) {
     }
 
     // Okay, we have the function object, so build the argument list and call it.
-    PyObject *result = py_invoke_hook_function(function_reference, function_name, ses, ACTION_SESSION_ANALYSIS, 0);
+    result = py_invoke_hook_function(function_reference, function_name, ses, ACTION_SESSION_ANALYSIS, 0);
 
     if (!result) {
-      is_error = 1;
       py_log_error(NULL);
       LOG_ERRORV("Python function '%s' did not return anything. Check Python error message above", function_name);
     }
@@ -653,8 +633,6 @@ int get_analysis_python(struct session *ses, const char **output) {
       const char *return_string = PyUnicode_AsUTF8AndSize(result, &size);
 
       if (!return_string) {
-        is_error = 1;
-        Py_DECREF(result);
         LOG_ERRORV("String in reply from Python function '%s' is null", function_name);
       }
 
@@ -662,16 +640,12 @@ int get_analysis_python(struct session *ses, const char **output) {
       *output = strndup(return_string, (size_t)size);
       // TODO should issues occur then consider hard-setting a \0 token at the last position of *output
     } else {
-      Py_DECREF(result);
       LOG_ERRORV("Return value from Python function '%s' is not a string.", function_name);
     }
 
-    Py_DECREF(result);
     LOG_INFO("call python next question(s) finished.");
   } while (0);
 
-  if (is_error) {
-    retVal = -99;
-  }
+  Py_XDECREF(result);
   return retVal;
 }
