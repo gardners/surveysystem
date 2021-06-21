@@ -42,6 +42,10 @@ Use this only for *testing* or *development* environments, as this substantially
 
 Register a trusted authentication middleware source. For details see [authorisation-and-middleware.md](docs/authorisation-and-middleware.md)
 
+**SS_LOG_FILE**
+
+Path to a writable custom log file
+
 # Installation (backend)
 
 This system requires Python >= 3.8 and clang. Additionally, `zlib and bmake` is required for compiling [kcgi](https://kristaps.bsd.lv/kcgi/index.html). To install on Ubuntu:
