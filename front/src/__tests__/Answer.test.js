@@ -393,7 +393,6 @@ describe('Answer.setValue()', () => {
     run_questiontype_answer__text('HIDDEN');
     run_questiontype_answer__text('TEXTAREA');
     run_questiontype_answer__text('EMAIL');
-    run_questiontype_answer__text('PASSWORD');
     run_questiontype_answer__text('CHECKBOX');
     run_questiontype_answer__text('SINGLECHOICE');
     run_questiontype_answer__text('SINGLESELECT');
@@ -509,9 +508,6 @@ describe('Answer.serialize()', () => {
 
         a = Answer.setValue({ id: 'email', type: 'EMAIL', unit: 'u' }, 'T');
         expect(Answer.serialize(a)).toBe('email:T:0:0:0:0:0:0:0:u');
-
-        a = Answer.setValue({ id: 'password', type: 'PASSWORD', unit: 'u' }, 'T');
-        expect(Answer.serialize(a)).toBe('password:T:0:0:0:0:0:0:0:u');
 
         a = Answer.setValue({ id: 'singlechoice', type: 'SINGLECHOICE', unit: 'u' }, 'T');
         expect(Answer.serialize(a)).toBe('singlechoice:T:0:0:0:0:0:0:0:u');

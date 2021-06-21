@@ -27,7 +27,6 @@ const { isFinite, isInteger } = Number;
 #define QTYPE_HIDDEN              13 // answer->text: instruction for hidden input (pure textslide) answer is default value or default value. (unit: *)
 #define QTYPE_TEXTAREA            14 // answer->text: instruction for textarea. (unit: *)
 #define QTYPE_EMAIL               15 // answer->text: instruction for email input. (unit: *)
-#define QTYPE_PASSWORD            16 // answer->text: instruction for (html) password input, this type can be used to mask any user input. (unit: *)
 #define QTYPE_SINGLECHOICE        17 // answer->text: instruction for single choice inputs (checkbox, radios), answer is a single choice. (unit: *)
 #define QTYPE_SINGLESELECT        18 // answer->text: instruction for single choice inputs (select), answer is a single choice. (unit: *)
 #define QTYPE_FIXEDPOINT_SEQUENCE 19 // answer->text (comma separated): instruction an ascending sequence of FIXEDPOINT values, labels are defined in q.choices. (unit: *)
@@ -439,7 +438,6 @@ const setValue = function(question, value) {
         case 'HIDDEN':
         case 'TEXTAREA':
         case 'EMAIL':
-        case 'PASSWORD':
         case 'CHECKBOX':
         case 'SINGLECHOICE':
         case 'SINGLESELECT':
