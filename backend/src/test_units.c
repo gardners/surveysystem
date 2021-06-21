@@ -1040,10 +1040,6 @@ int main(int argc, char **argv) {
 
       SKIP("%s is an alias of %s", "QTYPE_EMAIL", "QTYPE_TEXT");
 
-      // QTYPE_PASSWORD
-
-      SKIP("%s is deprecated", "QTYPE_PASSWORD");
-
       //  QTYPE_SINGLECHOICE
 
       SKIP("%s is an alias of %s", "QTYPE_SINGLECHOICE", "QTYPE_TEXT");
@@ -1081,40 +1077,40 @@ int main(int argc, char **argv) {
       SKIP("%s is currently an alias of %s, see #414 for planned changes (length)", "QTYPE_UUID", "QTYPE_TEXT");
 
     }
-    
+
     ////
     // copy question
     ////
-    
+
     SECTION("copy question default value overwrite, #463, #213");
-    
+
     {
       struct question *src = calloc(sizeof(struct question), 1);
       deserialise_question("question1:Question 1::TEXT:0:DEFAULT:-1:-1:0:0::", src);
       struct question *cpy = copy_question(src, NULL);
-      
+
       ASSERT_STR_EQ(src->default_value, "DEFAULT", "source qn default value");
       ASSERT_STR_EQ(cpy->default_value, "DEFAULT", "copy qn default value == src (NULL POINTER)");
       free_question(src);
       free_question(cpy);
     }
-    
+
     {
       struct question *src = calloc(sizeof(struct question), 1);
       deserialise_question("question1:Question 1::TEXT:0:DEFAULT:-1:-1:0:0::", src);
       struct question *cpy = copy_question(src, "");
-      
+
       ASSERT_STR_EQ(src->default_value, "DEFAULT", "source qn default value");
       ASSERT_STR_EQ(cpy->default_value, "DEFAULT", "copy qn default value == src (EMPTY STRING)");
       free_question(src);
       free_question(cpy);
     }
-    
+
     {
       struct question *src = calloc(sizeof(struct question), 1);
       deserialise_question("question1:Question 1::TEXT:0:DEFAULT:-1:-1:0:0::", src);
       struct question *cpy = copy_question(src, "OVERWRITE");
-      
+
       ASSERT_STR_EQ(src->default_value, "DEFAULT", "source qn default value");
       ASSERT_STR_EQ(cpy->default_value, "OVERWRITE", "copy qn default value != src (OVERWRITE)");
       free_question(src);

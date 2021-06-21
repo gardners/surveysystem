@@ -43,16 +43,15 @@ struct question {
 #define QTYPE_HIDDEN              13 // answer->text: instruction for hidden input (pure textslide) answer is default value or default value. (unit: *)
 #define QTYPE_TEXTAREA            14 // answer->text: instruction for textarea. (unit: *)
 #define QTYPE_EMAIL               15 // answer->text: instruction for email input. (unit: *)
-#define QTYPE_PASSWORD            16 // answer->text: instruction for (html) password input, this type can be used to mask any user input. (unit: *)
-#define QTYPE_SINGLECHOICE        17 // answer->text: instruction for single choice inputs (checkbox, radios), answer is a single choice. (unit: *)
-#define QTYPE_SINGLESELECT        18 // answer->text: instruction for single choice inputs (select), answer is a single choice. (unit: *)
-#define QTYPE_FIXEDPOINT_SEQUENCE 19 // answer->text (comma separated): instruction an ascending sequence of FIXEDPOINT values, labels are defined in q.choices. (unit: *)
-#define QTYPE_DAYTIME_SEQUENCE    20 // answer->text (comma separated): instruction an ascending sequence of DAYTIME values (comma separated), labels are defined in q.choices. (unit: seconds)
-#define QTYPE_DATETIME_SEQUENCE   21 // answer->text (comma separated): instruction an ascending sequence of DATETIME values (comma separated), labels are defined in q.choices (unit: seconds)
-#define QTYPE_DURATION24          22 // answer->value: instruction time period in seconds maximum 24 hours (86400 seconds), TODO enable min_value and max_value support, which would make this type redundant in favour of a more generic QTYPE_DURATION type.
-#define QTYPE_DIALOG_DATA_CRAWLER 23 // answer->text: instruction for a dialog to give consent to accessing external data requires two defined choices in the following order: [DENIED, GRANTED], (unit: id of the data crawler module)
-#define QTYPE_SHA1_HASH           24 // submitted answer->text is converted and stored as sha1 hash
-#define QTYPE_UUID                25
+#define QTYPE_SINGLECHOICE        16 // answer->text: instruction for single choice inputs (checkbox, radios), answer is a single choice. (unit: *)
+#define QTYPE_SINGLESELECT        17 // answer->text: instruction for single choice inputs (select), answer is a single choice. (unit: *)
+#define QTYPE_FIXEDPOINT_SEQUENCE 18 // answer->text (comma separated): instruction an ascending sequence of FIXEDPOINT values, labels are defined in q.choices. (unit: *)
+#define QTYPE_DAYTIME_SEQUENCE    19 // answer->text (comma separated): instruction an ascending sequence of DAYTIME values (comma separated), labels are defined in q.choices. (unit: seconds)
+#define QTYPE_DATETIME_SEQUENCE   20 // answer->text (comma separated): instruction an ascending sequence of DATETIME values (comma separated), labels are defined in q.choices (unit: seconds)
+#define QTYPE_DURATION24          21 // answer->value: instruction time period in seconds maximum 24 hours (86400 seconds), TODO enable min_value and max_value support, which would make this type redundant in favour of a more generic QTYPE_DURATION type.
+#define QTYPE_DIALOG_DATA_CRAWLER 22 // answer->text: instruction for a dialog to give consent to accessing external data requires two defined choices in the following order: [DENIED, GRANTED], (unit: id of the data crawler module)
+#define QTYPE_SHA1_HASH           23 // submitted answer->text is converted and stored as sha1 hash
+#define QTYPE_UUID                24
   // Formatting and other flags
   int flags;
   // Format integer input as times for questions like
