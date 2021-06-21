@@ -217,9 +217,6 @@ def get_answer_value(answer, question_type=None):
     if qtype == 'EMAIL':
         return answer['text']
 
-    if qtype == 'PASSWORD':
-        return answer['text']
-
     if qtype == 'SINGLECHOICE':
         return answer['text']
 
@@ -342,10 +339,6 @@ def set_answer_value(answer, value, question_type=None):
         return answer
 
     if qtype == 'EMAIL':
-        answer['text'] = str(value)
-        return answer
-
-    if qtype == 'PASSWORD':
         answer['text'] = str(value)
         return answer
 
