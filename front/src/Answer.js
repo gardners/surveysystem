@@ -50,7 +50,6 @@ const { isFinite, isInteger } = Number;
  * @property {number} time_end - timeperiod answer (end) in seconds, type: number (INT)
  * @property {number} time_zone_delta - timeperiod timzone offset in seconds, type: number (INT)
  * @property {number} dst_delta - distance(?), type: number (INT)
- * @property {string} unit - answer unit
 
  * @see backend/src/question_types.c
  * @see backend/src/deserialise_parse_field.c
@@ -248,6 +247,7 @@ const sanitizeValue = function(value) {
 
 /**
  * Provides default Model object
+ * #448 remove 'unit' from public answer
  * @returns {AnswerModel}
  */
 const model = function() {
@@ -261,7 +261,6 @@ const model = function() {
         time_end : 0,           // type: number (INT) UNIX timestamp in seconds
         time_zone_delta : 0,    // type: number (INT) seconds
         dst_delta : 0,          // type: number (INT) => unit
-        unit: '',               // type: text
     };
 };
 
@@ -278,12 +277,12 @@ const create = function(question) {
 
     return Object.assign(model(), {
         uid : question.id,
-        unit: question.unit,
     });
 };
 
 /**
 * Get Proptypes schema
+* #448 remove 'unit' from public answer
 * @returns {PropTypes}
 */
 const propTypes = function () {
@@ -297,7 +296,6 @@ const propTypes = function () {
         time_end: PropTypes.number,
         time_zone_delta: PropTypes.number,
         dst_delta: PropTypes.number,
-        unit: PropTypes.string,
     });
 };
 
@@ -321,7 +319,7 @@ const serialize = function(answer) {
 };
 
 /**
- * Deserializes a answer string, public properties only!, see player
+ * Deserializes a answer string, public properties only!
  * @returns {Answer}
  */
 const deserialize = function(fragment) {
@@ -351,7 +349,6 @@ const deserialize = function(fragment) {
     answer.time_end         = _number(parts[6]);
     answer.time_zone_delta  = _number(parts[7]);
     answer.dst_delta        = _number(parts[8]);
-    answer.unit             = _text(parts[9]);
 
     const errors = Object.keys(answer).filter(key => answer[key] instanceof Error);
     if(errors.length) {
@@ -382,7 +379,6 @@ const setValue = function(question, value) {
 
     const answer = model();
     answer.uid = question.id;
-    answer.unit = question.unit || ''; // might be overwritten below
 
     switch(type) {
         case 'INT':
@@ -408,19 +404,16 @@ const setValue = function(question, value) {
             }
             answer.lat = _latitude(value[0]);
             answer.lon = _longitude(value[1]);
-            answer.unit = 'degrees';
         break;
 
         case 'DATETIME':
             // UNIX timestamp in seconds
             answer.time_begin = _timestamp(value);
-            answer.unit = 'seconds';
         break;
 
         case 'DAYTIME':
             // number in seconds
             answer.time_begin = _timestamp(value);
-            answer.unit = 'seconds';
         break;
 
         case 'TIMERANGE':
@@ -431,7 +424,6 @@ const setValue = function(question, value) {
             } else {
                 answer.time_begin = _timestamp(value[0]);
                 answer.time_end = _timestamp(value[1]);
-                answer.unit = 'seconds';
             }
         break;
 
@@ -444,13 +436,11 @@ const setValue = function(question, value) {
         case 'DATETIME_SEQUENCE':
             // #336, array of numbers in seconds
             answer.text = _serializedNumberArraySequence(value);
-            answer.unit = 'seconds';
         break;
 
         case 'DURATION24':
             // #336, number (seconds)
             answer.value = _number(value);
-            answer.unit = 'seconds';
         break;
 
         case 'TEXT':
