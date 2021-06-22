@@ -431,7 +431,8 @@ int deserialise_question_type(char *field, int *s) {
   do {
     int qt;
 
-    for (qt = 1; qt < NUM_QUESTION_TYPES; qt++) {
+    for (qt = 1; qt <= NUM_QUESTION_TYPES; qt++) {
+      printf(" --> '%s' %d\n", question_type_names[qt], qt);
       if (!strcasecmp(field, question_type_names[qt])) {
         retVal = 0;
         *s = qt;
@@ -439,7 +440,7 @@ int deserialise_question_type(char *field, int *s) {
       }
     }
 
-    if (qt == NUM_QUESTION_TYPES)
+    if (qt > NUM_QUESTION_TYPES)
       LOG_ERRORV("invalid question type name '%s'", field);
   } while (0);
 

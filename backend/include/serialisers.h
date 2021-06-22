@@ -17,6 +17,7 @@ int deserialise_answer(char *in, answer_scope scope, struct answer *a);
 int deserialise_int(char *field, int *s);
 int deserialise_string(char *field, char **s);
 int deserialise_longlong(char *field, long long *s);
+int deserialise_question_type(char *field, int *s); // #451
 int serialise_question_type(int qt, char *out, int out_max_len); // #358
 int escape_string(char *in, char *out, int max_len);
 
