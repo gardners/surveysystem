@@ -189,8 +189,8 @@ describe('Session', () => {
 
         const answers = ses.getDefaultAnswers();
         expect(answers['test1']).toBe(undefined);
-        expect(answers['test2']).toBe('test2:default2:0:0:0:0:0:0:0:');
-        expect(answers['test3']).toBe('test3:default3:0:0:0:0:0:0:0:');
+        expect(answers['test2']).toBe('test2:default2:0:0:0:0:0:0:0');
+        expect(answers['test3']).toBe('test3:default3:0:0:0:0:0:0:0');
     });
 
     test('getQuestionIds()', () => {
@@ -318,6 +318,26 @@ describe ('Session session_state and status methods', () => {
         expect(ses.isOpen()).toBe(false);
         expect(ses.isFinished()).toBe(false);
         expect(ses.isClosed()).toBe(true);
+    });
+
+    test('SESSION_CLOSED cannot regress (#408)', () => {
+
+        const ses = new Session();
+        ses.merge({
+            survey_id: 'surveyid',
+            session_id: 'sessionid',
+            next_questions: [],
+        });
+        ses.close(); // !!
+        expect(ses.session_state).toBe(SESSION_CLOSED);
+
+        ses.merge({
+            survey_id: 'surveyid',
+            session_id: 'sessionid',
+            next_questions: [],
+        });
+        expect(ses.session_state).toBe(SESSION_CLOSED);
+
     });
 
     test('close({vals}) SESSION_CLOSED', () => {
