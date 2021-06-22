@@ -155,10 +155,9 @@ int validate_session_add_answer(struct session *ses, struct answer *ans, char *r
     if (!qn) {
       LOG_ERRORV("No question defined for answer '%s'", ans->uid);
     }
-LOG_INFOV("---------> '%s': %d", ans->uid, ans->type);
+
     switch(qn->type) {
       case QTYPE_UUID:
-LOG_INFO("----------> UUID");
         if(validate_session_id(ans->text)) {
           LOG_ERRORV("not a valid uuid: '%s'\n", ans->text);
         }
