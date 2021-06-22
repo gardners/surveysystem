@@ -144,14 +144,33 @@ const _text = function(val) {
     if (val === null || !isScalar(val)) {
         return new Error ('CSV serializer: Invalid text value: is either null or undefined.');
     }
-    return (val === null) ? '' : val;
+    return val;
+};
+
+/**
+ * Parse and validate a uuid pattern
+ * valid uuids must be lowercase (see backend validator.c -> validate_session_id())
+ * @param {any} val
+ *
+ * @returns {(string|Error)}
+ */
+const _uuid = function(val) {
+    if (typeof val !== 'string'|| !val) {
+        return new Error ('CSV serializer: Invalid text value: not a string or empty.');
+    }
+
+    const ex = new RegExp('^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$');
+    if (!ex.test(val)) {
+        return new Error ('CSV serializer: Invalid uuid value');
+    }
+    return val;
 };
 
 /**
  * Parse, validate and serialize an array of strings
  * @param {any} val
  *
- * @returns {(number|Error)}
+ * @returns {(string|Error)}
  */
 const _serializedStringArray = function(val) {
     if (!isArray(val)) {
@@ -176,7 +195,7 @@ const _serializedStringArray = function(val) {
  * Parse and validate an ascending sequence of numbers
  * @param {any} val
  *
- * @returns {(number|Error)}
+ * @returns {(string|Error)}
  */
 const _serializedNumberArraySequence = function(val) {
     if (!isArray(val)) {
@@ -445,6 +464,11 @@ const setValue = function(question, value) {
         case 'SHA1_HASH':
             // string
             answer.text = _text(value);
+        break;
+
+        case 'UUID':
+            // uuid
+            answer.text = _uuid(value);
         break;
 
         default:
