@@ -344,6 +344,11 @@ static void fcgi_addanswer(struct kreq *req) {
       LOG_ERROR("Could not load answer");
     }
 
+    if (validate_session_add_answer(ses, ans)) {
+      http_json_error(req, KHTTP_400, "Answer is invalid");
+      LOG_ERROR("Answer validation failed");
+    }
+
     // #445 count affected answers
     int affected_count = session_add_answer(ses, ans);
     if (affected_count < 0) {
@@ -420,6 +425,11 @@ static void fcgi_updateanswer(struct kreq *req) {
     if (!ans) {
       http_json_error(req, KHTTP_400, "Could not load answer");
       LOG_ERROR("Could not load answer");
+    }
+
+    if (validate_session_add_answer(ses, ans)) {
+      http_json_error(req, KHTTP_400, "Answer is invalid");
+      LOG_ERROR("Answer validation failed");
     }
 
     // #445 count affected answers

@@ -217,9 +217,6 @@ def get_answer_value(answer, question_type=None):
     if qtype == 'EMAIL':
         return answer['text']
 
-    if qtype == 'PASSWORD':
-        return answer['text']
-
     if qtype == 'SINGLECHOICE':
         return answer['text']
 
@@ -257,6 +254,12 @@ def get_answer_value(answer, question_type=None):
         return answer['value']
 
     if qtype == 'QTYPE_DIALOG_DATA_CRAWLER':
+        return answer['text']
+
+    if qtype == 'QTYPE_SHA1_HASH':
+        return answer['text']
+
+    if qtype == 'QTYPE_UUID':
         return answer['text']
 
     raise ValueError('Unkown or unsupported question type "{}"'.format(qtype))
@@ -345,10 +348,6 @@ def set_answer_value(answer, value, question_type=None):
         answer['text'] = str(value)
         return answer
 
-    if qtype == 'PASSWORD':
-        answer['text'] = str(value)
-        return answer
-
     if qtype == 'SINGLECHOICE':
         answer['text'] = str(value)
         return answer
@@ -399,6 +398,16 @@ def set_answer_value(answer, value, question_type=None):
         return answer
 
     if qtype == 'DIALOG_DATA_CRAWLER':
+        answer['text'] = str(value)
+        return answer
+
+    if qtype == 'QTYPE_SHA1_HASH':
+        # TODO validate?
+        answer['text'] = str(value)
+        return answer
+
+    if qtype == 'QTYPE_UUID':
+        # TODO validate?
         answer['text'] = str(value)
         return answer
 

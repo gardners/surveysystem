@@ -394,7 +394,6 @@ const Demo = function(props){
                         ] }
                     />
                     <Row selected={ selected } type={ 'EMAIL' }             componentName="EmailInput" />
-                    <Row selected={ selected } type={ 'PASSWORD' }          componentName="PasswordInput" />
                     <Row selected={ selected } type={ 'DAYTIME_SEQUENCE' }  componentName="DaytimeSequence"
                         choices={ ['Breakfast', 'Lunch', 'Afternoon Tea' , ' Late Snack'] }
                         default_value={ [
@@ -445,7 +444,8 @@ const Demo = function(props){
                         unit="fitbit-module"
                         session_id="demosession"
                     />
-                    <Row selected={ selected } type={ 'SHA1_HASH' }       componentName="Sha1Hash"  />
+                    <Row selected={ selected } type={ 'SHA1_HASH' }           componentName="TextInput"  />
+                    <Row selected={ selected } type={ 'UUID' }                componentName="TextInput"  />
                 </div>
             </section>
         </SurveyContext.Provider>

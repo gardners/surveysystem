@@ -1374,7 +1374,6 @@ int answer_set_value_raw(struct answer *a, char *in) {
         case QTYPE_HIDDEN:
         case QTYPE_TEXTAREA:
         case QTYPE_EMAIL:
-        case QTYPE_PASSWORD:
         case QTYPE_SINGLECHOICE:
         case QTYPE_SINGLESELECT:
         case QTYPE_DIALOG_DATA_CRAWLER:
@@ -1472,7 +1471,6 @@ int answer_get_value_raw(struct answer *a, char *out, size_t sz) {
         case QTYPE_HIDDEN:
         case QTYPE_TEXTAREA:
         case QTYPE_EMAIL:
-        case QTYPE_PASSWORD:
         case QTYPE_SINGLECHOICE:
         case QTYPE_SINGLESELECT:
         case QTYPE_DIALOG_DATA_CRAWLER:

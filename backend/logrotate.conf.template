@@ -1,5 +1,5 @@
 # ------------
-# - check logrotate configuration if external confs enabled: 'cat /etc/logrotate.conf' -> uncommented line 'include /etc/logrotate.d'
+# - check logrotate configuration if external confs enabled: `cat /etc/logrotate.conf | grep /etc/logrotate.d`, line is not commented?
 # - mkdir -p /etc/logrotate.d
 # - cp ./logrotate.conf.template /etc/logrotate.d/surveysystem.conf
 # - make your changes (path!): vim /etc/logrotate.d/surveysystem.conf
@@ -12,4 +12,5 @@
     size 1M
     compress
     delaycompress
+    notifempty
 }

@@ -27,7 +27,6 @@ const { isFinite, isInteger } = Number;
 #define QTYPE_HIDDEN              13 // answer->text: instruction for hidden input (pure textslide) answer is default value or default value. (unit: *)
 #define QTYPE_TEXTAREA            14 // answer->text: instruction for textarea. (unit: *)
 #define QTYPE_EMAIL               15 // answer->text: instruction for email input. (unit: *)
-#define QTYPE_PASSWORD            16 // answer->text: instruction for (html) password input, this type can be used to mask any user input. (unit: *)
 #define QTYPE_SINGLECHOICE        17 // answer->text: instruction for single choice inputs (checkbox, radios), answer is a single choice. (unit: *)
 #define QTYPE_SINGLESELECT        18 // answer->text: instruction for single choice inputs (select), answer is a single choice. (unit: *)
 #define QTYPE_FIXEDPOINT_SEQUENCE 19 // answer->text (comma separated): instruction an ascending sequence of FIXEDPOINT values, labels are defined in q.choices. (unit: *)
@@ -145,14 +144,33 @@ const _text = function(val) {
     if (val === null || !isScalar(val)) {
         return new Error ('CSV serializer: Invalid text value: is either null or undefined.');
     }
-    return (val === null) ? '' : val;
+    return val;
+};
+
+/**
+ * Parse and validate a uuid pattern
+ * valid uuids must be lowercase (see backend validator.c -> validate_session_id())
+ * @param {any} val
+ *
+ * @returns {(string|Error)}
+ */
+const _uuid = function(val) {
+    if (typeof val !== 'string'|| !val) {
+        return new Error ('CSV serializer: Invalid text value: not a string or empty.');
+    }
+
+    const ex = new RegExp('^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$');
+    if (!ex.test(val)) {
+        return new Error ('CSV serializer: Invalid uuid value');
+    }
+    return val;
 };
 
 /**
  * Parse, validate and serialize an array of strings
  * @param {any} val
  *
- * @returns {(number|Error)}
+ * @returns {(string|Error)}
  */
 const _serializedStringArray = function(val) {
     if (!isArray(val)) {
@@ -177,7 +195,7 @@ const _serializedStringArray = function(val) {
  * Parse and validate an ascending sequence of numbers
  * @param {any} val
  *
- * @returns {(number|Error)}
+ * @returns {(string|Error)}
  */
 const _serializedNumberArraySequence = function(val) {
     if (!isArray(val)) {
@@ -439,7 +457,6 @@ const setValue = function(question, value) {
         case 'HIDDEN':
         case 'TEXTAREA':
         case 'EMAIL':
-        case 'PASSWORD':
         case 'CHECKBOX':
         case 'SINGLECHOICE':
         case 'SINGLESELECT':
@@ -447,6 +464,11 @@ const setValue = function(question, value) {
         case 'SHA1_HASH':
             // string
             answer.text = _text(value);
+        break;
+
+        case 'UUID':
+            // uuid
+            answer.text = _uuid(value);
         break;
 
         default:

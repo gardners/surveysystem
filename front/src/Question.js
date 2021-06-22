@@ -238,9 +238,9 @@ const mapQuestionGroups = function(questions) {
 const findQuestionGroupCommons = function(group) {
     const { length } = group;
 
-    // if(length < 2) {
-    //     return 'NONE';
-    // }
+    if(!length) {
+        return 'NONE';
+    }
 
     let start = (group[0].type === 'HIDDEN') ? 1 : 0;
     let type = group[start].type;

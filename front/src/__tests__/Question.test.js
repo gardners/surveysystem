@@ -131,7 +131,7 @@ describe('findQuestionGroupCommons', () => {
         qc = findQuestionGroupCommons([
             makeQuestion('test1', 'TEXT'),
         ]);
-        expect(qc).toBe('NONE');
+        expect(qc).toBe('TYPE');
 
         qc = findQuestionGroupCommons([
             makeQuestion('test1', 'TEXT'),

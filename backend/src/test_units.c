@@ -4,10 +4,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
+
 #include "errorlog.h"
 #include "serialisers.h"
 #include "survey.h"
 #include "sha1.h"
+#include "question_types.h"
 
 struct answer* create_answer(char *uid, int type, char *text, char *unit) {
   struct answer *ans = calloc(sizeof(struct answer), 1);
@@ -347,6 +349,7 @@ int main(int argc, char **argv) {
   do {
 
     setenv("SURVEY_HOME", ".", 0);
+    setenv("SS_LOG_FILE", "./logs/test_units.log", 0);
 
     SECTION("question serialisation tests");
 
@@ -423,6 +426,114 @@ int main(int argc, char **argv) {
 
       escape_string("\t\r\n:(9000)", str, 1024);
       ASSERT_STR_EQ(str, "\\t\\r\\n\\:(9000)", "escape_string()");
+    }
+
+    /*
+     * tests for #451
+     * includes testing boundary types ("start of list", "end of list"):
+     * see question_types.h  question_type_names[1+NUM_QUESTION_TYPES+1];
+     */
+
+    SECTION("deserialise_question_type() tests, issue #451");
+
+    {
+      int index = -99;
+      int invalid = 0;
+      char *name = question_type_names[invalid];
+
+      int ret = deserialise_question_type(name, &index);
+      ASSERT(ret == -1, "(type '%s', question_type_names[%d]) returns -1 (out of bounds)", name, invalid);
+      ASSERT(index == -99, "(type '%s') index written (%d > 0)", name, index);
+    }
+
+    {
+      int index = -99;
+      int first = 1;
+      char *name = question_type_names[first];
+
+      int ret = deserialise_question_type(name, &index);
+      ASSERT(ret == 0, "first type ('%s'): retval == 0", name);
+      ASSERT(index == first, "first type ('%s'): index written (%d == %d)", name, index, first);
+      ASSERT_STR_EQ(question_type_names[index], name, "");
+    }
+
+    {
+      int index = -99;
+      int last = NUM_QUESTION_TYPES;
+      char *name = question_type_names[last];
+
+      int ret = deserialise_question_type(name, &index);
+      ASSERT(ret == 0, "last type ('%s'): retval == 0", name);
+      ASSERT(index == last, "flast type ('%s'): index written (%d == %d)", name, index, last);
+      ASSERT_STR_EQ(question_type_names[index], name, "");
+    }
+
+    {
+      int index = -99;
+      int invalid = NUM_QUESTION_TYPES + 1;
+      char *name = question_type_names[invalid];
+
+      int ret = deserialise_question_type(name, &index);
+      ASSERT(ret == -1, "(type '%s', question_type_names[%d]) returns -1 (out of bounds)", name, invalid);
+      ASSERT(index == -99, "(type '%s') index written (%d > 0)", name, index);
+    }
+
+    {
+      int index = -99;
+      char *name = "UNKNOWN";
+
+      int ret = deserialise_question_type(name, &index);
+      ASSERT(ret == -1, "(type '%s') returns -1", name);
+      ASSERT(index == -99, "(type '%s') index written (%d > 0)", name, index);
+    }
+
+    /*
+     * tests for #451
+     * includes testing boundary types ("start of list", "end of list"):
+     * see question_types.h  question_type_names[1+NUM_QUESTION_TYPES+1];
+     */
+
+    SECTION("serialise_question_type() tests, issue #451");
+
+    {
+      char out [256];
+
+      {
+        out[0] = 0;
+        int invalid = 0;
+        int ret = serialise_question_type(invalid, out, 256);
+
+        ASSERT(ret == -1, "(type '%s', question_type_names[%d]) returns -1 (out of bounds)", question_type_names[invalid], invalid);
+        ASSERT(out[0] == 0, "(type '%s') nothing written into 'out'", question_type_names[invalid]);
+      }
+
+      {
+        int first = 1;
+        int ret = serialise_question_type(first, out, 256);
+
+        ASSERT(ret > 0, " (first type: %d) returns > 0", first);
+        ASSERT_STR_EQ(out, question_type_names[first], "");
+        ASSERT(ret == strlen(out), "(first type: %d) returns strlen(name)", first);
+      }
+
+      {
+        int last = NUM_QUESTION_TYPES;
+        int ret = serialise_question_type(last, out, 256);
+
+        ASSERT(ret > 0, " (last type: %d) returns > 0", last);
+        ASSERT_STR_EQ(out, question_type_names[last], "");
+        ASSERT(ret == strlen(out), "(last type: %d) returns strlen(name)", last);
+      }
+
+      {
+        out[0] = 0;
+        int invalid = NUM_QUESTION_TYPES + 1;
+        int ret = serialise_question_type(invalid, out, 256);
+
+        ASSERT(ret == -1, "(type '%s', question_type_names[%d]) returns -1 (out of bounds)", question_type_names[invalid], invalid);
+        ASSERT(out[0] == 0, "(type '%s') nothing written into 'out'", question_type_names[invalid]);
+      }
+
     }
 
     SECTION("serialiser_count_columns(':', ), #413");
@@ -1040,10 +1151,6 @@ int main(int argc, char **argv) {
 
       SKIP("%s is an alias of %s", "QTYPE_EMAIL", "QTYPE_TEXT");
 
-      // QTYPE_PASSWORD
-
-      SKIP("%s is deprecated", "QTYPE_PASSWORD");
-
       //  QTYPE_SINGLECHOICE
 
       SKIP("%s is an alias of %s", "QTYPE_SINGLECHOICE", "QTYPE_TEXT");
@@ -1078,43 +1185,43 @@ int main(int argc, char **argv) {
 
       // QTYPE_UUID
 
-      SKIP("%s is currently an alias of %s, see #414 for planned changes (length)", "QTYPE_UUID", "QTYPE_TEXT");
+      SKIP("%s is an alias of %s", "QTYPE_UUID", "QTYPE_TEXT");
 
     }
-    
+
     ////
     // copy question
     ////
-    
+
     SECTION("copy question default value overwrite, #463, #213");
-    
+
     {
       struct question *src = calloc(sizeof(struct question), 1);
       deserialise_question("question1:Question 1::TEXT:0:DEFAULT:-1:-1:0:0::", src);
       struct question *cpy = copy_question(src, NULL);
-      
+
       ASSERT_STR_EQ(src->default_value, "DEFAULT", "source qn default value");
       ASSERT_STR_EQ(cpy->default_value, "DEFAULT", "copy qn default value == src (NULL POINTER)");
       free_question(src);
       free_question(cpy);
     }
-    
+
     {
       struct question *src = calloc(sizeof(struct question), 1);
       deserialise_question("question1:Question 1::TEXT:0:DEFAULT:-1:-1:0:0::", src);
       struct question *cpy = copy_question(src, "");
-      
+
       ASSERT_STR_EQ(src->default_value, "DEFAULT", "source qn default value");
       ASSERT_STR_EQ(cpy->default_value, "DEFAULT", "copy qn default value == src (EMPTY STRING)");
       free_question(src);
       free_question(cpy);
     }
-    
+
     {
       struct question *src = calloc(sizeof(struct question), 1);
       deserialise_question("question1:Question 1::TEXT:0:DEFAULT:-1:-1:0:0::", src);
       struct question *cpy = copy_question(src, "OVERWRITE");
-      
+
       ASSERT_STR_EQ(src->default_value, "DEFAULT", "source qn default value");
       ASSERT_STR_EQ(cpy->default_value, "OVERWRITE", "copy qn default value != src (OVERWRITE)");
       free_question(src);

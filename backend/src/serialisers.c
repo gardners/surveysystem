@@ -411,12 +411,15 @@ int deserialise_string(char *field, char **s) {
 int serialise_question_type(int qt, char *out, int out_max_len) {
   int retVal = 0;
   do {
-    if (qt < 1)
+    if (qt < 1) {
       LOG_ERRORV("was asked to serialise an illegal question type #%d", qt);
-    if (qt > NUM_QUESTION_TYPES)
+    }
+    if (qt > NUM_QUESTION_TYPES) {
       LOG_ERRORV("was asked to serialise an illegal question type #%d", qt);
-    if (strlen(question_type_names[qt]) >= out_max_len)
+    }
+    if (strlen(question_type_names[qt]) >= out_max_len) {
       LOG_ERRORV("question type '%s' name too long", question_type_names[qt]);
+    }
 
     strcpy(out, question_type_names[qt]);
     retVal = strlen(out);
@@ -431,7 +434,7 @@ int deserialise_question_type(char *field, int *s) {
   do {
     int qt;
 
-    for (qt = 1; qt < NUM_QUESTION_TYPES; qt++) {
+    for (qt = 1; qt <= NUM_QUESTION_TYPES; qt++) {
       if (!strcasecmp(field, question_type_names[qt])) {
         retVal = 0;
         *s = qt;
@@ -439,8 +442,9 @@ int deserialise_question_type(char *field, int *s) {
       }
     }
 
-    if (qt == NUM_QUESTION_TYPES)
+    if (qt > NUM_QUESTION_TYPES) {
       LOG_ERRORV("invalid question type name '%s'", field);
+    }
   } while (0);
 
   return retVal;

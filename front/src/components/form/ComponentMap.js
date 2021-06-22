@@ -18,7 +18,6 @@ import TimePicker from './TimePicker';
 import RadioMatrix from './RadioMatrix';
 import HiddenInput from './HiddenInput';
 import EmailInput from './EmailInput';
-import PasswordInput from './PasswordInput';
 import DaytimeSequence from './DaytimeSequence';
 import DaytimeQuestionGroup from './DaytimeQuestionGroup';
 import Duration24Input from './Duration24Input';
@@ -40,7 +39,6 @@ export default {
     'RadioMatrix': RadioMatrix,
     'HiddenInput': HiddenInput,
     'EmailInput': EmailInput,
-    'PasswordInput': PasswordInput,
     'DaytimeSequence': DaytimeSequence,
     'DaytimeQuestionGroup': DaytimeQuestionGroup,
     'Duration24Input': Duration24Input,

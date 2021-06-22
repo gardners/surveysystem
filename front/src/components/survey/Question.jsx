@@ -14,7 +14,6 @@ import NumberInput from '../form/NumberInput';
 import Textarea from '../form/Textarea';
 import HiddenInput from '../form/HiddenInput';
 import EmailInput from '../form/EmailInput';
-import PasswordInput from '../form/PasswordInput';
 import Select from '../form/Select';
 import MultiSelect from '../form/MultiSelect';
 import DaytimeSequence from '../form/DaytimeSequence';
@@ -91,9 +90,6 @@ const getComponentByType = function(questionType = 'TEXT') {
 
         case 'EMAIL':
             return EmailInput;
-
-        case 'PASSWORD':
-            return PasswordInput;
 
         // TODO SINGLECHOICE
         case 'SINGLECHOICE':
