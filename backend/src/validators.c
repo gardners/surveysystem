@@ -142,7 +142,7 @@ int validate_session_delete_answer(char *question_id, struct session *ses) {
 /**
  * Verify that an answer exists in a given session and can be deleted
  */
-int validate_session_add_answer(struct session *ses, struct answer *ans, char *reason, size_t sz) {
+int validate_session_add_answer(struct session *ses, struct answer *ans) {
   int retVal = 0;
   do {
 
@@ -159,7 +159,7 @@ int validate_session_add_answer(struct session *ses, struct answer *ans, char *r
     switch(qn->type) {
       case QTYPE_UUID:
         if(validate_session_id(ans->text)) {
-          LOG_ERRORV("not a valid uuid: '%s'\n", ans->text);
+          LOG_ERRORV("not a valid uuid: '%s'", ans->text);
         }
       break;
     }

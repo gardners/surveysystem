@@ -10,5 +10,5 @@ int validate_survey_id(char *survey_id);
 int validate_session_id(char *session_id);
 
 int validate_session_delete_answer(char *question_id, struct session *ses);
-int validate_session_add_answer(struct session *ses, struct answer *ans, char *reason, size_t sz);
+int validate_session_add_answer(struct session *ses, struct answer *ans);
 #endif

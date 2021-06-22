@@ -9,6 +9,7 @@
 #include "survey.h"
 #include "sha1.h"
 #include "utils.h"
+#include "validators.h"
 
 void usage(void) {
   fprintf(
@@ -263,6 +264,11 @@ int do_addanswer(char *session_id, char *serialised_answer) {
       LOG_ERROR("deserialise_answer() failed.");
     }
 
+    if (validate_session_add_answer(ses, ans)) {
+      fprintf(stderr, "Answer is invalid\n");
+      LOG_ERROR("Answer validation failed");
+    }
+
     // #445 count affected answers
     int affected_count = session_add_answer(ses, ans);
     if (affected_count < 0) {
@@ -333,6 +339,11 @@ int do_addanswervalue(char *session_id, char *uid, char *value) {
     }
     ans->uid = strdup(uid);
     ans->type = qn->type;
+
+    if (validate_session_add_answer(ses, ans)) {
+      fprintf(stderr, "Answer is invalid\n");
+      LOG_ERROR("Answer validation failed");
+    }
 
     if (answer_set_value_raw(ans, value)) {
       fprintf(stderr, "answer format is invalid.\n");
