@@ -444,7 +444,8 @@ const Demo = function(props){
                         unit="fitbit-module"
                         session_id="demosession"
                     />
-                    <Row selected={ selected } type={ 'SHA1_HASH' }       componentName="TextInput"  />
+                    <Row selected={ selected } type={ 'SHA1_HASH' }           componentName="TextInput"  />
+                    <Row selected={ selected } type={ 'UUID' }                componentName="TextInput"  />
                 </div>
             </section>
         </SurveyContext.Provider>

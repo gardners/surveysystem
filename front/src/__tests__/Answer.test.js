@@ -372,6 +372,33 @@ const run_questiontype__LATLON = function() {
 
 };
 
+
+const run_questiontype__UUID = function() {
+
+    test(`question type: UUID`, () => {
+        const uid = 'uid';
+        const type = 'UUID';
+        const q = { id: uid, type };
+        const unit = '';
+
+        //positive
+        expect(Answer.setValue(q, 'a5764857-ae35-34dc-8f25-a9c9e73aa898')).toMatchObject({ uid, text: 'a5764857-ae35-34dc-8f25-a9c9e73aa898', unit });
+
+        // negative
+        expect(Answer.setValue(q, null)).toBeInstanceOf(Error);
+        expect(Answer.setValue(q, undefined)).toBeInstanceOf(Error);
+        expect(Answer.setValue(q, {})).toBeInstanceOf(Error);
+        expect(Answer.setValue(q, [])) .toBeInstanceOf(Error);
+        expect(Answer.setValue(q, Symbol(1))).toBeInstanceOf(Error);
+        expect(Answer.setValue(q, '')).toBeInstanceOf(Error);
+        expect(Answer.setValue(q, 'INVALID')).toBeInstanceOf(Error);
+        expect(Answer.setValue(q, 'A5764857-AE35-34DC-8F25-A9C9E73AA898')).toBeInstanceOf(Error);
+
+        expect(Answer.setValue(q, new String('T'))).toBeInstanceOf(Error);
+    });
+
+};
+
 describe('Answer.setValue()', () => {
 
     test('question object requirements', () => {
@@ -413,8 +440,11 @@ describe('Answer.setValue()', () => {
     run_questiontype_answer__time_end('DAYTIME');
 
     // #336, sequences
-    run_questiontype__sequencetypes('DAYTIME_SEQUENCE')
-    run_questiontype__sequencetypes('DATETIME_SEQUENCE')
+    run_questiontype__sequencetypes('DAYTIME_SEQUENCE');
+    run_questiontype__sequencetypes('DATETIME_SEQUENCE');
+
+    run_questiontype_answer__text('SHA1_HASH'); // TODO validate
+    run_questiontype__UUID();
 });
 
 describe('Answer.serialize()', () => {
