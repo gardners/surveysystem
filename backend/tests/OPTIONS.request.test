@@ -52,7 +52,7 @@ verify_sessionfiles_count 1
 #! - PASS /addanswer - no answer added
 #! ------
 
-request 200 /addanswer?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&answer=question2:Answer+2:0:0:0:0:0:0:0: OPTIONS
+request 200 /addanswer?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&answer=question2:Answer+2:0:0:0:0:0:0:0 OPTIONS
 match_string <empty>
 
 verify_session(skip_headers)
@@ -64,7 +64,7 @@ endofsession
 #! - PASS /updateanswer - no answer added
 #! ------
 
-request 200 /updateanswer?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&answer=question2:Answer+2:0:0:0:0:0:0:0: OPTIONS
+request 200 /updateanswer?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&answer=question2:Answer+2:0:0:0:0:0:0:0 OPTIONS
 match_string <empty>
 
 verify_session(skip_headers)
@@ -76,7 +76,7 @@ endofsession
 #! - PASS /nextquestion
 #! ------
 
-request 200 /nextquestion?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&answer=question2:Answer+2:0:0:0:0:0:0:0: OPTIONS
+request 200 /nextquestion?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901 OPTIONS
 match_string <empty>
 
 #! ------

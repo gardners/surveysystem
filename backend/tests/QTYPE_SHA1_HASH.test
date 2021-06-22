@@ -32,10 +32,10 @@ endofsession
 request 200 /nextquestion?sessionid=$SESSION
 match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "secret1", "name": "secret1", "title": "Secret 1", "description": "Secret 1", "type": "SHA1_HASH", "default_value": "default 1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
-request 200 /addanswer?sessionid=$SESSION&answer=secret1:abc:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=secret1:abc:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "secret2", "name": "secret2", "title": "Secret 2", "description": "Secret 2", "type": "SHA1_HASH", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
-request 200 /addanswer?sessionid=$SESSION&answer=secret2:abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=secret2:abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": []}
 
 # Make sure answer ends up in file

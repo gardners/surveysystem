@@ -39,12 +39,12 @@ endofsession
 #!-------
 #!- endpoint /addanswer [block]
 #!-------
-request proxy 502 /addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0: curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 502 /addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0 curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
 
 #!-------
 #!- endpoint /updateanswer [block]
 #!-------
-request proxy 502 /updateanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0: curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 502 /updateanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0 curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
 
 #!-------
 #!- endpoint /nextquestion [block]

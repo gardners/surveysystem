@@ -609,6 +609,7 @@ int deserialise_question(char *in, struct question *q) {
 * #274, add visibility scope
 * #358, add question type
 * #413, add pre-validation (column count)
+* #448 remove 'unit' from public answer
  */
 int serialise_answer(struct answer *a, enum answer_scope scope, char *out, int max_len) {
   int retVal = 0;
@@ -628,7 +629,6 @@ int serialise_answer(struct answer *a, enum answer_scope scope, char *out, int m
         SERIALISE_LONGLONG(a->time_end);
         SERIALISE_INT(a->time_zone_delta);
         SERIALISE_INT(a->dst_delta);
-        SERIALISE_STRING(a->unit);
         SERIALISE_COMPLETE(out, len, max_len);
         break;
 
@@ -685,7 +685,8 @@ int serialise_answer(struct answer *a, enum answer_scope scope, char *out, int m
 * #274, add visibility scope
 * #358, add question type
 * #413, add pre-validation (column count)
- */
+* #448 remove 'unit' from public answer
+*/
 int deserialise_answer(char *in, enum answer_scope scope, struct answer *a) {
   int retVal = 0;
 
@@ -712,7 +713,6 @@ int deserialise_answer(char *in, enum answer_scope scope, struct answer *a) {
         DESERIALISE_LONGLONG(a->time_end);
         DESERIALISE_INT(a->time_zone_delta);
         DESERIALISE_INT(a->dst_delta);
-        DESERIALISE_STRING(a->unit);
         DESERIALISE_COMPLETE(out, len, max_len);
         break;
 

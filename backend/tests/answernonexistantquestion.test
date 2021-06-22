@@ -21,7 +21,7 @@ verify_session(skip_headers)
 foo/d7ab1e207abe98dad5985a1ec18c96da8bed01a4
 endofsession
 
-request 400 /addanswer?sessionid=$SESSION&answer=nosuchquestion:Hello+World:0:0:0:0:0:0:0:
+request 400 /addanswer?sessionid=$SESSION&answer=nosuchquestion:Hello+World:0:0:0:0:0:0:0
 
 # Check that we are offered the next question to answer
 

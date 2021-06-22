@@ -38,12 +38,12 @@ endofsession
 #!-------
 #!- endpoint /addanswer [block]
 #!-------
-request 502 /addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0:
+request 502 /addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0
 
 #!-------
 #!- endpoint /updateanswer [block]
 #!-------
-request 502 /updateanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0:
+request 502 /updateanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0
 
 #!-------
 #!- endpoint /nextquestion [block]

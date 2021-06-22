@@ -78,13 +78,13 @@ endofsession
 request 200 /nextquestion?sessionid=$SESSION
 match_string {"status": 0, "message": "INFO", "progress": [0, 4], "next_questions": [{"id": "question0", "name": "question0", "title": "Question INFO", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
-request 200 /updateanswer?sessionid=$SESSION&answer=question0:Answer+0:0:0:0:0:0:0:0:
+request 200 /updateanswer?sessionid=$SESSION&answer=question0:Answer+0:0:0:0:0:0:0:0
 match_string {"status": 1, "message": "WARN", "progress": [1, 4], "next_questions": [{"id": "question1", "name": "question1", "title": "Question WARN", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
-request 200 /updateanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0:
+request 200 /updateanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0
 match_string {"status": 2, "message": "ERROR", "progress": [2, 4], "next_questions": [{"id": "question2", "name": "question2", "title": "Question ERROR", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
-request 200 /updateanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0:
+request 200 /updateanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0
 match_string {"status": 99, "message": "UNKNOWN", "progress": [3, 4], "next_questions": [{"id": "question99", "name": "question99", "title": "Question UNKNOWN", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #!---------------------
@@ -140,4 +140,4 @@ endofsession
 request 200 /nextquestion?sessionid=$SESSION
 match_string {"status": 0, "message": "INFO", "progress": [0, 2], "next_questions": [{"id": "question0", "name": "question0", "title": "Question OK", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
-request 500 /updateanswer?sessionid=$SESSION&answer=question0:Answer+0:0:0:0:0:0:0:0:
+request 500 /updateanswer?sessionid=$SESSION&answer=question0:Answer+0:0:0:0:0:0:0:0

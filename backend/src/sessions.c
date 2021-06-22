@@ -1725,8 +1725,14 @@ int session_add_answer(struct session *ses, struct answer *a) {
     }
 
     // #162 add/update stored timestamp,#358 set question type (for both, adding and deleting)
+    // #448 remove overwriting of question 'unit' by answers: merge unit into session answer
     a->stored = (long long)time(NULL);
     a->type = qn->type;
+    if (a->unit) { // should not be the case, except maybe in tests
+      freez(a->unit);
+    }
+    a->unit = strdup(qn->unit);
+
     if (pre_add_answer_special_transformations(a)) {
       LOG_ERRORV("pre-addanswer hook failed for answer '%s', session '%s'", a->uid, ses->session_id);
     }

@@ -26,7 +26,7 @@ match_string {"status": 0, "message": "", "progress": [0, 3], "next_questions": 
 
 ## q1
 
-request 200 /addanswer?sessionid=$SESSION&answer=q1:answer+1:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=q1:answer+1:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [1, 3], "next_questions": [{"id": "q2", "name": "q2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 request 200 /nextquestion?sessionid=$SESSION
@@ -34,7 +34,7 @@ match_string {"status": 0, "message": "", "progress": [1, 3], "next_questions": 
 
 ## q2
 
-request 200 /addanswer?sessionid=$SESSION&answer=q2:answer+2:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=q2:answer+2:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [2, 3], "next_questions": [{"id": "q3", "name": "q3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 request 200 /nextquestion?sessionid=$SESSION
@@ -42,7 +42,7 @@ match_string {"status": 0, "message": "", "progress": [2, 3], "next_questions": 
 
 ## q3
 
-request 200 /addanswer?sessionid=$SESSION&answer=q3:answer+3:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=q3:answer+3:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [3, 3], "next_questions": []}
 
 request 200 /nextquestion?sessionid=$SESSION

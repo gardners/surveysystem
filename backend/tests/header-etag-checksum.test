@@ -41,7 +41,7 @@ verify_response_etag(<custom_checksum>)
 #! -------
 
 #! ------ 200: hash: YES, required: NO -------
-request 200 /addanswer?sessionid=$SESSION&answer=question1:Answer1:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=question1:Answer1:0:0:0:0:0:0:0
 verify_response_etag(<hashlike_etag>)
 
 #! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
@@ -53,7 +53,7 @@ verify_response_etag(<custom_checksum>)
 #! -------
 
 #! ------ 200: hash: YES, required: NO -------
-request 200 /updateanswer?sessionid=$SESSION&answer=question2:Answer2:0:0:0:0:0:0:0:
+request 200 /updateanswer?sessionid=$SESSION&answer=question2:Answer2:0:0:0:0:0:0:0
 verify_response_etag(<hashlike_etag>)
 
 #! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
@@ -138,9 +138,9 @@ verify_response_etag()
 #! -------
 
 # re-fill session
-request 200 /addanswer?sessionid=$SESSION&answer=question1:Answer1:0:0:0:0:0:0:0:
-request 200 /addanswer?sessionid=$SESSION&answer=question2:Answer2:0:0:0:0:0:0:0:
-request 200 /addanswer?sessionid=$SESSION&answer=question3:Answer3:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=question1:Answer1:0:0:0:0:0:0:0
+request 200 /addanswer?sessionid=$SESSION&answer=question2:Answer2:0:0:0:0:0:0:0
+request 200 /addanswer?sessionid=$SESSION&answer=question3:Answer3:0:0:0:0:0:0:0
 
 #! ------ 200 : hash: Yes, required: NO -------
 request 200 /analyse?sessionid=$SESSION&questionid=question1

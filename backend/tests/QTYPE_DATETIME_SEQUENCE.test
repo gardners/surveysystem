@@ -25,7 +25,7 @@ match_string {"status": 0, "message": "", "progress": [0, 1], "next_questions": 
 
 #! ------- answer question -------
 
-request 200 /addanswer?sessionid=$SESSION&answer=dates:-26258313,171165687,345171687:0:0:0:0:0:0:0:seconds
+request 200 /addanswer?sessionid=$SESSION&answer=dates:-26258313,171165687,345171687:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [1, 1], "next_questions": []}
 
 # Make sure answer ends up in file

@@ -163,10 +163,11 @@ struct answer {
  * - You need to update the values  when adding new members to struct *answer
  * #274, add visibility scopes, #358 add 'type' to answer and protect it
  * #413 set values based on column count
+ * #448 remove 'unit' from public answer
  */
 
 typedef enum answer_scope {
-  ANSWER_SCOPE_PUBLIC = 10,
+  ANSWER_SCOPE_PUBLIC = 9,
   ANSWER_SCOPE_CHECKSUM  = 11,
   ANSWER_SCOPE_FULL = 13
 } answer_scope;

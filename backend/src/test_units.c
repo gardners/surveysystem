@@ -591,10 +591,11 @@ int main(int argc, char **argv) {
       ASSERT(ret == 5, "escaped inner endline serialiser_count_columns(':', '%s') %d", "1:1:1\\\\n1:1:1", ret);
 
       ret = serialiser_count_columns(':', "uid:META:\\:\\n\r\b\tutext:0:0:0:0:0:0:0:unit:0:0", 1024);
-      ASSERT(ret == ANSWER_SCOPE_FULL, "anwswer ANSWER_FIELDS_PROTECTED with escapes passing serialiser_count_columns(':', '%s') %d", "uid:META:\\:\\n\\r\\b\\tutext:0:0:0:0:0:0:0:unit:0:0", ret);
+      ASSERT(ret == ANSWER_SCOPE_FULL, "answer ANSWER_FIELDS_PROTECTED with escapes passing serialiser_count_columns(':', '%s') %d", "uid:META:\\:\\n\\r\\b\\tutext:0:0:0:0:0:0:0:unit:0:0", ret);
 
-      ret = serialiser_count_columns(':', "uid:\\:\\n\r\b\tutext:0:0:0:0:0:0:0:", 1024);
-      ASSERT(ret == ANSWER_SCOPE_PUBLIC, "anwswer ANSWER_FIELDS_PUBLIC with escapes passing serialiser_count_columns(':', '%s') %d", "uid:META:\\:\\n\\r\\b\\tutext:0:0:0:0:0:0:0:unit:0:0", ret);
+      // #448 remove 'unit' from public answer
+      ret = serialiser_count_columns(':', "uid:\\:\\n\r\b\tutext:0:0:0:0:0:0:0", 1024);
+      ASSERT(ret == ANSWER_SCOPE_PUBLIC, "answer ANSWER_FIELDS_PUBLIC with escapes passing serialiser_count_columns(':', '%s') %d", "uid:META:\\:\\n\\r\\b\\tutext:0:0:0:0:0:0:0:unit:0:0", ret);
     }
 
     ////
@@ -707,12 +708,12 @@ int main(int argc, char **argv) {
     {
       char str[1024];
       int ret;
-
+      // #448 remove 'unit' from public answer
       struct answer *in = create_answer("serialise-public", QTYPE_TEXT, "something", "unit");
       in->stored = 123;
       ret = serialise_answer(in, ANSWER_SCOPE_PUBLIC, str, 1024);
       ASSERT(ret == 0, "answer '%s' serialised %d", in->uid, ret);
-      ASSERT_STR_EQ(str, "serialise-public:something:0:0:0:0:0:0:0:unit", "");
+      ASSERT_STR_EQ(str, "serialise-public:something:0:0:0:0:0:0:0", "");
     }
 
     LOG_UNMUTE();

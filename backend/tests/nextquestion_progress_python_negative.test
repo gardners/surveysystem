@@ -73,26 +73,26 @@ match_string {"status": 0, "message": "", "progress": [0, 5], "next_questions": 
 #! -- note: the progress values to test are passed on to def nextquestions() via the answer text (json array)
 
 #! ------- Flag as UNSUPPORTED: [-1, -1] -------
-request 200 /addanswer?sessionid=$SESSION&answer=question0:[-1,-1]:0:0:0:0:0:0:0: curlargs(--globoff)
+request 200 /addanswer?sessionid=$SESSION&answer=question0:[-1,-1]:0:0:0:0:0:0:0 curlargs(--globoff)
 match_string {"status": 0, "message": "", "progress": [-1, -1], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #! ------- Flag as UNSUPPORTED: [-1, 1] -------
-request 200 /addanswer?sessionid=$SESSION&answer=question1:[-1,1]:0:0:0:0:0:0:0: curlargs(--globoff)
+request 200 /addanswer?sessionid=$SESSION&answer=question1:[-1,1]:0:0:0:0:0:0:0 curlargs(--globoff)
 match_string {"status": 0, "message": "", "progress": [-1, 1], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #! ------- Flag as UNSUPPORTED: [1, -1] -------
-request 200 /addanswer?sessionid=$SESSION&answer=question2:[1,-1]:0:0:0:0:0:0:0: curlargs(--globoff)
+request 200 /addanswer?sessionid=$SESSION&answer=question2:[1,-1]:0:0:0:0:0:0:0 curlargs(--globoff)
 match_string {"status": 0, "message": "", "progress": [1, -1], "next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #! ------- INVALID: [] -------
-request 500 /addanswer?sessionid=$SESSION&answer=question3:[]:0:0:0:0:0:0:0: curlargs(--globoff)
+request 500 /addanswer?sessionid=$SESSION&answer=question3:[]:0:0:0:0:0:0:0 curlargs(--globoff)
 
 #! ------- INVALID: [1] -------
-request 500 /addanswer?sessionid=$SESSION&answer=question3:[1]:0:0:0:0:0:0:0: curlargs(--globoff)
+request 500 /addanswer?sessionid=$SESSION&answer=question3:[1]:0:0:0:0:0:0:0 curlargs(--globoff)
 
 #! ------- INVALID: [1,2,3] -------
-request 500 /addanswer?sessionid=$SESSION&answer=question3:[1,2,3]:0:0:0:0:0:0:0: curlargs(--globoff)
+request 500 /addanswer?sessionid=$SESSION&answer=question3:[1,2,3]:0:0:0:0:0:0:0 curlargs(--globoff)
 
 #! ------- INVALID: "invalid" -------
-request 500 /addanswer?sessionid=$SESSION&answer=question3:"invalid":0:0:0:0:0:0:0: curlargs(--globoff)
+request 500 /addanswer?sessionid=$SESSION&answer=question3:"invalid":0:0:0:0:0:0:0 curlargs(--globoff)
 

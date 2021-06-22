@@ -93,26 +93,26 @@ request 400 /nextquestion?sessionid=21c00c79-0000-0000-1a30-e98476f71b42
 #!---------------------
 
 #!-- PASS:
-request 200 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question1:Answer1:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question1:Answer1:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [2, 4], "next_questions": [{"id": "question2", "name": "question2", "title": "Question2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #!-- FAIL: missing sessionid and answer
 request 400 /addanswer
 
 #!-- FAIL: missing sessionid
-request 400 /addanswer?answer=question2:Answer3:0:0:0:0:0:0:0:
+request 400 /addanswer?answer=question2:Answer3:0:0:0:0:0:0:0
 
 #!-- FAIL: empty sessionid
-request 400 /addanswer?sessionid=&answer=question2:Answer3:0:0:0:0:0:0:0:
+request 400 /addanswer?sessionid=&answer=question2:Answer3:0:0:0:0:0:0:0
 
 #!-- FAIL: invalid sessionid
-request 400 /addanswer?sessionid=aaa&answer=question2:Answer3:0:0:0:0:0:0:0:
+request 400 /addanswer?sessionid=aaa&answer=question2:Answer3:0:0:0:0:0:0:0
 
 #!-- FAIL: uppercased sessionid
-request 400 /addanswer?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA&answer=question2:Answer3:0:0:0:0:0:0:0:
+request 400 /addanswer?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA&answer=question2:Answer3:0:0:0:0:0:0:0
 
 #!-- FAIL: unknown sessionid
-request 400 /addanswer?sessionid=21c00c79-0000-0000-1a30-e98476f71b42&answer=question2:Answer3:0:0:0:0:0:0:0:
+request 400 /addanswer?sessionid=21c00c79-0000-0000-1a30-e98476f71b42&answer=question2:Answer3:0:0:0:0:0:0:0
 
 #!-- FAIL: missing answer
 request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
@@ -124,45 +124,48 @@ request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=
 request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=invalid
 
 #!-- FAIL: backend answer string
-request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question2:TEXT:Answer3:0:0:0:0:0:0:0:
+request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question2:TEXT:Answer3:0:0:0:0:0:0:0
+
+#!-- FAIL: answer string with unit (#448)
+request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question1:Answer1:0:0:0:0:0:0:0:
 
 #!-- FAIL: unknown answer
-request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=unknown:UUNKNOWN:0:0:0:0:0:0:0:
+request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=unknown:UUNKNOWN:0:0:0:0:0:0:0
 
 #!-- FAIL: header answer
 request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@user:NOTALLOWED:0:0:0:0:0:0:0:
 
 #!-- FAIL: META answer
-request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=meta:NOTALLOWED:0:0:0:0:0:0:0:
+request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=meta:NOTALLOWED:0:0:0:0:0:0:0
 
 #!-- FAIL: system answer
-request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@system:NOTALLOWED:0:0:0:0:0:0:0:
+request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@system:NOTALLOWED:0:0:0:0:0:0:0
 
 #!---------------------
 #! GET /updateanswer
 #!---------------------
 
 #!-- PASS:
-request 200 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question2:Answer2:0:0:0:0:0:0:0:
+request 200 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question2:Answer2:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [3, 4], "next_questions": [{"id": "question3", "name": "question3", "title": "Question3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #!-- FAIL: missing sessionid and answer
 request 400 /updateanswer
 
 #!-- FAIL: missing sessionid
-request 400 /updateanswer?answer=question3:Answer3:0:0:0:0:0:0:0:
+request 400 /updateanswer?answer=question3:Answer3:0:0:0:0:0:0:0
 
 #!-- FAIL: empty sessionid
-request 400 /updateanswer?sessionid=&answer=question3:Answer3:0:0:0:0:0:0:0:
+request 400 /updateanswer?sessionid=&answer=question3:Answer3:0:0:0:0:0:0:0
 
 #!-- FAIL: invalid sessionid
-request 400 /updateanswer?sessionid=aaa&answer=question3:Answer3:0:0:0:0:0:0:0:
+request 400 /updateanswer?sessionid=aaa&answer=question3:Answer3:0:0:0:0:0:0:0
 
 #!-- FAIL: uppercased sessionid
-request 400 /updateanswer?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA&answer=question3:Answer3:0:0:0:0:0:0:0:
+request 400 /updateanswer?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA&answer=question3:Answer3:0:0:0:0:0:0:0
 
 #!-- FAIL: unknown sessionid
-request 400 /updateanswer?sessionid=21c00c79-0000-0000-1a30-e98476f71b42&answer=question3:Answer3:0:0:0:0:0:0:0:
+request 400 /updateanswer?sessionid=21c00c79-0000-0000-1a30-e98476f71b42&answer=question3:Answer3:0:0:0:0:0:0:0
 
 #!-- FAIL: missing answer
 request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
@@ -173,20 +176,23 @@ request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=
 #!-- FAIL: invalid answer
 request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=invalid
 
-#!-- backend answer
-request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question3:TEXT:Answer3:0:0:0:0:0:0:0:
+#!-- FAIL: backend answer string
+request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question2:TEXT:Answer3:0:0:0:0:0:0:0
+
+#!-- FAIL: answer string with unit (#448)
+request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question1:Answer1:0:0:0:0:0:0:0:
 
 #!-- FAIL: unknown answer
-request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=unknown:UNKNOWN:0:0:0:0:0:0:0:
+request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=unknown:UNKNOWN:0:0:0:0:0:0:0
 
 #!-- FAIL: header answer
-request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@user:NOTALLOWED:0:0:0:0:0:0:0:
+request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@user:NOTALLOWED:0:0:0:0:0:0:0
 
 #!-- FAIL: META answer
-request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=meta:NOTALLOWED:0:0:0:0:0:0:0:
+request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=meta:NOTALLOWED:0:0:0:0:0:0:0
 
 #!-- FAIL: system answer
-request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@system:NOTALLOWED:0:0:0:0:0:0:0:
+request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@system:NOTALLOWED:0:0:0:0:0:0:0
 
 #!---------------------
 #! GET /delanswer
@@ -243,7 +249,7 @@ request 400 /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@sy
 #!---------------------
 
 #!-- prepare test: re-answer question deleted before
-request 200 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question2:Answer2:0:0:0:0:0:0:0:
+request 200 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question2:Answer2:0:0:0:0:0:0:0
 verify_response_etag(<hashlike_etag>)
 
 #!-- PASS:
@@ -282,8 +288,8 @@ request 400 /delprevanswer?sessionid=21c00c79-0000-0000-1a30-e98476f71b42 curlar
 #!---------------------
 
 #!-- prepare test: re-answer question deleted before
-request 200 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question2:Answer2:0:0:0:0:0:0:0:
-request 200 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question3:Answer3:0:0:0:0:0:0:0:
+request 200 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question2:Answer2:0:0:0:0:0:0:0
+request 200 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question3:Answer3:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [4, 4], "next_questions": []}
 
 #!-- PASS:
