@@ -1185,7 +1185,7 @@ int main(int argc, char **argv) {
 
       // QTYPE_UUID
 
-      SKIP("%s is currently an alias of %s, see #414 for planned changes (length)", "QTYPE_UUID", "QTYPE_TEXT");
+      SKIP("%s is an alias of %s", "QTYPE_UUID", "QTYPE_TEXT");
 
     }
 
