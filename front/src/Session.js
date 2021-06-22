@@ -183,14 +183,17 @@ class Session {
                 return;
             }
             if (key === 'next_questions') {
-                this[key] = normalizeQuestions(values[key]);
 
-                // an empty next_questions array means that the survey is closed
+                // an empty next_questions array means that the survey is finished
                 if(!values[key].length) {
-                    this.session_state = SESSION_FINISHED;
+                    // do not regress above SESION_FINISHED
+                    if (this.session_state < SESSION_FINISHED) {
+                        this.session_state = SESSION_FINISHED;
+                    }
                 } else {
                     this.session_state = SESSION_OPEN;
                 }
+                this[key] = normalizeQuestions(values[key]);
 
                 count++;
                 return;
