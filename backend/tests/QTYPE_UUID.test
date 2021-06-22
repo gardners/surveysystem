@@ -26,7 +26,7 @@ request 200 /nextquestion?sessionid=$SESSION
 match_string {"status": 0, "message": "", "progress": [0, 3], "next_questions": [{"id": "q1", "name": "q1", "title": "Q1", "description": "", "type": "UUID", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #! -- PASS valid uuid /addanswer
-request 200 /addanswer?sessionid=$SESSION&answer=q1:8d170bd1-0000-0000-5d61-cd00bf51f8fe:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=q1:1e601ec7-fb00-4deb-a8bb-d9da5147d878:0:0:0:0:0:0:0:
 match_string {"status": 0, "message": "", "progress": [1, 3], "next_questions": [{"id": "q2", "name": "q2", "title": "Q2", "description": "", "type": "UUID", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #! -- PASS valid uuid /updateanswer
@@ -44,6 +44,6 @@ request 400 /updateanswer?sessionid=$SESSION&answer=q3:INVALID0-THIR-TYSI-XCHA-R
 # Make sure answers end up in file
 verify_session(skip_headers)
 qtype_uuid/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
-q1:UUID:8d170bd1-0000-0000-5d61-cd00bf51f8fe:0:0:0:0:0:0:0::0:<UTIME>
+q1:UUID:1e601ec7-fb00-4deb-a8bb-d9da5147d878:0:0:0:0:0:0:0::0:<UTIME>
 q2:UUID:8d170bd1-0000-0000-5d61-cd00bf51f8fe:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
