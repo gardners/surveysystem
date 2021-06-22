@@ -26,20 +26,20 @@ request 200 /nextquestion?sessionid=$SESSION
 match_string {"status": 0, "message": "", "progress": [0, 3], "next_questions": [{"id": "q1", "name": "q1", "title": "Q1", "description": "", "type": "UUID", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #! -- PASS valid uuid /addanswer
-request 200 /addanswer?sessionid=$SESSION&answer=q1:1e601ec7-fb00-4deb-a8bb-d9da5147d878:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=q1:1e601ec7-fb00-4deb-a8bb-d9da5147d878:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [1, 3], "next_questions": [{"id": "q2", "name": "q2", "title": "Q2", "description": "", "type": "UUID", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #! -- PASS valid uuid /updateanswer
-request 200 /updateanswer?sessionid=$SESSION&answer=q2:8d170bd1-0000-0000-5d61-cd00bf51f8fe:0:0:0:0:0:0:0:
+request 200 /updateanswer?sessionid=$SESSION&answer=q2:8d170bd1-0000-0000-5d61-cd00bf51f8fe:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [2, 3], "next_questions": [{"id": "q3", "name": "q3", "title": "Q3", "description": "", "type": "UUID", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #! -- FAIL invalid uuids /addanswer
-request 400 /addanswer?sessionid=$SESSION&answer=q3:INVALID:0:0:0:0:0:0:0:
-request 400 /addanswer?sessionid=$SESSION&answer=q3:INVALID0-THIR-TYSI-XCHA-RSLONGSTRING:0:0:0:0:0:0:0:
+request 400 /addanswer?sessionid=$SESSION&answer=q3:INVALID:0:0:0:0:0:0:0
+request 400 /addanswer?sessionid=$SESSION&answer=q3:INVALID0-THIR-TYSI-XCHA-RSLONGSTRING:0:0:0:0:0:0:0
 
 #! -- FAIL invalid uuids /updateanswer
-request 400 /updateanswer?sessionid=$SESSION&answer=q3:INVALID:0:0:0:0:0:0:0:
-request 400 /updateanswer?sessionid=$SESSION&answer=q3:INVALID0-THIR-TYSI-XCHA-RSLONGSTRING:0:0:0:0:0:0:0:
+request 400 /updateanswer?sessionid=$SESSION&answer=q3:INVALID:0:0:0:0:0:0:0
+request 400 /updateanswer?sessionid=$SESSION&answer=q3:INVALID0-THIR-TYSI-XCHA-RSLONGSTRING:0:0:0:0:0:0:0
 
 # Make sure answers end up in file
 verify_session(skip_headers)

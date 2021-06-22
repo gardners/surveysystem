@@ -20,7 +20,7 @@ request 200 /newsession?surveyid=delanswerandfollowing
 extract_sessionid
 
 #! ------- answer 1 questions -------
-request 200 /addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #! ------- delanswer question 1 -------

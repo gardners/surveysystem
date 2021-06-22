@@ -27,7 +27,7 @@ without_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 endofsession
 
 # should not invoke python and return 500 misconfiguration error
-request 500 /addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0:
+request 500 /addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0
 
 # Check that we are offered the next question to answer
 
@@ -94,11 +94,11 @@ request 200 /nextquestion?sessionid=$SESSION
 match_string {"status": 0, "message": "0", "progress": [0, 3], "next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 # answer first question - should return question1
-request 200 /addanswer?sessionid=$SESSION&answer=question3:Answer+3:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=question3:Answer+3:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "1", "progress": [1, 3], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 # answer second question - should complete survey
-request 200 /addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0:
+request 200 /addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "2", "progress": [2, 3], "next_questions": []}
 
 # Check that we are offered the next question to answer
