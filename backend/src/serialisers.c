@@ -432,7 +432,6 @@ int deserialise_question_type(char *field, int *s) {
     int qt;
 
     for (qt = 1; qt <= NUM_QUESTION_TYPES; qt++) {
-      printf(" --> '%s' %d\n", question_type_names[qt], qt);
       if (!strcasecmp(field, question_type_names[qt])) {
         retVal = 0;
         *s = qt;
