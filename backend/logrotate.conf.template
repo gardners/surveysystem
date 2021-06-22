@@ -1,11 +1,11 @@
 # ------------
-# - check logrotate configuration if external confs enabled: `cat /etc/logrotate.conf | grep /etc/logrotate.d`, line is not commented out?
+# - check logrotate configuration if external confs enabled: `cat /etc/logrotate.conf | grep /etc/logrotate.d`, line is not commented?
 # - mkdir -p /etc/logrotate.d
 # - cp ./logrotate.conf.template /etc/logrotate.d/surveysystem.conf
 # - test: logrotate -d /etc/logrotate.d/surveysystem.conf
 # ------------
 
-/var/log/jrc/* {
+/my/path/to/backend/logs/* {
     daily
     rotate 14
     size 1M
