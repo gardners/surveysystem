@@ -191,6 +191,8 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
         url_sub[o] = 0;
 
         if (strlen(data)) {
+          test_replace_str(data, "$SESSION", last_sessionid, TEST_MAX_BUFFER);
+          test_replace_str(data, "<session_id>", last_sessionid, TEST_MAX_BUFFER);
           strncpy(tmp, data, TEST_MAX_BUFFER);
           snprintf(data, TEST_MAX_BUFFER, " -d %s", tmp);
         }
@@ -201,6 +203,7 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
         }
 
         if (strlen(curl_args)) {
+          test_replace_str(data, "$SESSION", last_sessionid, TEST_MAX_BUFFER);
           test_replace_str(curl_args, "<session_id>", last_sessionid, TEST_MAX_BUFFER);
           test_replace_str(curl_args, "<custom_checksum>", custom_checksum, TEST_MAX_BUFFER);
           test_replace_str(curl_args, "<response_etag>", prev->eTag, TEST_MAX_BUFFER);
