@@ -66,7 +66,6 @@ int dump_next_questions(FILE *f, struct nextquestions *nq) {
       LOG_ERROR("dump_next_questions(): invalid file pointer.");
     }
 
-    fprintf(f, "{\n");
     if (!nq) {
       fprintf(f, "nextquestions { <NULL> }\n");
       break;
@@ -333,6 +332,7 @@ int get_analysis(struct session *s, const char **output) {
   // If not, then return the list of all not-yet-answered questions
   int retVal = 0;
   int fail = 0;
+
   do {
     if (!s) {
       LOG_ERROR("session structure is NULL");

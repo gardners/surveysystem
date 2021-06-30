@@ -42,7 +42,11 @@
  *
  * verify_response_etag(<string and/or token>)
  *
- * python\n (code) endofpython\n
+ * open_file(<path>)\n <contents> close_file()\n
+ * - writes content into file '<path>'
+ * - path replacements: <TEST_DIR>: path to current test
+ *
+ * python\n (code)\n endofpython\n
  *  - block for executing Python nextquestion() and analyse() hook functions>
  *  - traceback and logging core modules are available and pre-configured
  *
@@ -107,7 +111,7 @@ char *py_module_head =
 /**
  * parses a 'request' directive line for defined patterns and creates a curl command
  */
-int parse_request(char *line, char *out, int *expected_http_status, char *last_sessionid, struct HttpResponse *prev, char *custom_checksum, char *dir, FILE *log) {
+int parse_request(struct Test *test, char *line, char *out, int *expected_http_status, char *last_sessionid, struct HttpResponse *prev, char *custom_checksum, char *dir, FILE *log) {
     int retVal = 0;
 
     do {
@@ -188,9 +192,10 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
             break;
         }
 
-        url_sub[o] = 0;
-
         if (strlen(data)) {
+          test_replace_str(data, "$SESSION", last_sessionid, TEST_MAX_BUFFER);
+          test_replace_str(data, "<session_id>", last_sessionid, TEST_MAX_BUFFER);
+          test_replace_tokens(test, data, TEST_MAX_BUFFER);
           strncpy(tmp, data, TEST_MAX_BUFFER);
           snprintf(data, TEST_MAX_BUFFER, " -d %s", tmp);
         }
@@ -201,9 +206,12 @@ int parse_request(char *line, char *out, int *expected_http_status, char *last_s
         }
 
         if (strlen(curl_args)) {
+          test_replace_str(data, "$SESSION", last_sessionid, TEST_MAX_BUFFER);
           test_replace_str(curl_args, "<session_id>", last_sessionid, TEST_MAX_BUFFER);
           test_replace_str(curl_args, "<custom_checksum>", custom_checksum, TEST_MAX_BUFFER);
           test_replace_str(curl_args, "<response_etag>", prev->eTag, TEST_MAX_BUFFER);
+          test_replace_tokens(test, curl_args, TEST_MAX_BUFFER);
+
           strncpy(tmp, curl_args, TEST_MAX_BUFFER);
           snprintf(curl_args, TEST_MAX_BUFFER, " %s", tmp);
         }
@@ -328,6 +336,8 @@ int run_test(struct Test *test) {
   FILE *log = NULL;
   char line[TEST_MAX_LINE];
   char log_dir[1024];
+
+  // writables for processing keywords
   char tmp[1024];
   char cmd[1024];
 
@@ -842,7 +852,7 @@ int run_test(struct Test *test) {
           goto fatal;
         }
 
-        if (parse_request(line, cmd, &expected_http_status, last_sessionid, &response, custom_checksum, test->dir, log)) {
+        if (parse_request(test, line, cmd, &expected_http_status, last_sessionid, &response, custom_checksum, test->dir, log)) {
           fprintf(log, "T+%4.3fms : FATAL: Could not parse args in declaration \"%s\"'", test_time_delta(start_time), line);
           goto fatal;
         }
@@ -921,6 +931,47 @@ int run_test(struct Test *test) {
         strncpy(custom_checksum, strtok(csout, " "), 1024);
         fprintf(log, "T+%4.3fms : generated custom_checksum: '%s', from string '%s' (return code %d).\n", test_time_delta(start_time), custom_checksum, tmp, cstat);
         tmp[0] =0;
+
+      } else if (test_parse_fn_notation(line, "open_file", tmp, 1024) == 0) {
+
+        ////
+        // keyword: "open_file(%s)"\n ...contents\n close_file
+        ////
+
+
+        test_replace_tokens(test, tmp, 2048); // parse optional tokens
+        FILE *df = fopen(tmp, "w");
+        if(!df) {
+          fprintf(log, "T+%4.3fms : ERROR : open_file: failed! could  not open file '%s' for write\n", test_time_delta(start_time), tmp);
+          goto fail;
+        }
+
+        // write following lines into file
+        int clines = 0;
+
+        line[0] = 0;
+        fgets(line, TEST_MAX_LINE, in);
+
+        while (line[0]) {
+          trim_crlf(line);
+
+          test_replace_tokens(test, line, TEST_MAX_LINE);
+
+          if (!strcmp(line, "close_file()")) {
+            break;
+          }
+
+          fprintf(df, "%s\n", line);
+          line[0] = 0;
+          clines++;
+          fgets(line, TEST_MAX_LINE, in);
+        }
+
+        fclose(df);
+        fprintf(log, "::: %d lines written to file '%s'\n", clines, tmp);
+
+        tmp[0] = 0;
+
 
       } else if (test_parse_fn_notation(line, "verify_response_etag", tmp, 1024) == 0) {
 
