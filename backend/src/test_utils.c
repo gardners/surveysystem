@@ -880,6 +880,9 @@ void test_replace_tokens(struct Test *test, char *line, size_t len) {
     test_replace_int(line, "<SESSION_OPEN>", SESSION_OPEN, len);
     test_replace_int(line, "<SESSION_FINISHED>", SESSION_FINISHED, len);
     test_replace_int(line, "<SESSION_CLOSED>", SESSION_CLOSED, len);
+
+    // paths
+    test_replace_str(line, "<TEST_DIR>", test->dir, len);
 }
 
 /**
