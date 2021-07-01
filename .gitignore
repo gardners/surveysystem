@@ -6,3 +6,9 @@
 # static files
 static/*
 !static/.gitkeep
+
+# backup, development
+*.tar
+*.gz
+*.tar.*
+*.zip

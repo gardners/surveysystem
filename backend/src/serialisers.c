@@ -693,7 +693,11 @@ int deserialise_answer(char *in, enum answer_scope scope, struct answer *a) {
   do {
     int len = 0;
 
-    int cols = serialiser_count_columns(':', in, 65536);
+    if (!in) {
+      LOG_ERROR("answer string is null");
+    }
+
+    int cols = serialiser_count_columns(':', in, strlen(in));
     if (cols < 0) {
       LOG_ERROR("invalid answer line");
     }

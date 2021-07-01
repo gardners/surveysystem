@@ -117,12 +117,12 @@ int parse_request(struct Test *test, char *line, char *out, int *expected_http_s
     do {
         char tmp[TEST_MAX_BUFFER];
 
-        char args[TEST_MAX_BUFFER];
-        char url[TEST_MAX_BUFFER];
+        char args[TEST_MAX_BUFFER] = {'\0'};
+        char url[TEST_MAX_BUFFER] = {'\0'};
         char data[TEST_MAX_BUFFER] = {'\0'};
         char method[TEST_MAX_BUFFER] = {'\0'};
         char curl_args[TEST_MAX_BUFFER]= {'\0'};
-        char url_sub[TEST_MAX_BUFFER];
+        char url_sub[TEST_MAX_BUFFER] = { '\0' };
 
         // flags
         int done = 0;
@@ -266,60 +266,6 @@ FILE *open_session_file_copy(char *session_id, struct Test *test) {
   }
 
   return copy;
-}
-
-/**
- * set up a sandboxed file system for each test
- */
-void init_test_filesystem(struct Test *test) {
-
-  // remove old test records
-  if (!access(test->dir, F_OK)) {
-    if(test_recursive_delete(test->dir)) {
-      fprintf(stderr, "FATAL: cannot remove old test dir '%s'\n", test->dir);
-      exit(-3);
-    }
-  }
-
-  // create test root
-  test_require_directory(test->dir, 0755);
-
-  // Make surveys, sessions and lock directories
-  // Also make sure the survey directory is writable when running tests
-  // (this is so accesstest will succeed.  For production, this can be
-  // avoided by making sure to use the commandline tool to create a single
-  // session in a survey after the survey has been modified, to make sure
-  // all the necessary hash files get created.)
-  char path[2048];
-
-  snprintf(path, 2048, "%s/surveys", test->dir);
-  test_require_directory(path, 0777);
-
-  snprintf(path, 2048, "%s/sessions", test->dir);
-  test_require_directory(path, 0777);
-
-  snprintf(path, 2048, "%s/logs", test->dir);
-  test_require_directory(path, 0777);
-
-  snprintf(path, 2048, "%s/locks", test->dir);
-  test_require_directory(path, 0777);
-
-  snprintf(path, 2048, "%s/lighttpd-access.log", test->dir);
-  test_require_file(path, 0777);
-
-  snprintf(path, 2048, "%s/lighttpd-error.log", test->dir);
-  test_require_file(path, 0777);
-
-  snprintf(path, 2048, "%s/breakage.log", test->dir);
-  test_require_file(path, 0777);
-
-  // point python dir ALWAYS to test dir
-  snprintf(path, 2048, "%s/python", test->dir);
-  test_require_directory(path, 0775);
-
-  // create docroot for lighttpd, we do not use it, but it is required by lighttpd
-  snprintf(path, 2048, "%s/www", test->dir);
-  test_require_directory(path, 0775);
 }
 
 /**
@@ -1152,8 +1098,6 @@ int run_test(struct Test *test) {
     } // endwhile line[0]
 
     //    pass:
-
-    test_set_ownership(test->dir, LIGHTY_USER, LIGHTY_GROUP);
     if (log) {
       test_dump_logs(log_dir, log);
     }
@@ -1164,15 +1108,12 @@ int run_test(struct Test *test) {
 
   skip:
 
-    test_set_ownership(test->dir, LIGHTY_USER, LIGHTY_GROUP);
-
     fprintf(stderr, "\r\033[39m[\033[33mSKIP\033[39m] \033[37m(%d/%d)\033[39m %s : %s\n", test->index, test->count, test->name, test->description);
     fflush(stderr);
     break;
 
   fail:
 
-    test_set_ownership(test->dir, LIGHTY_USER, LIGHTY_GROUP);
     if (log) {
       test_dump_logs(log_dir, log);
     }
@@ -1184,7 +1125,6 @@ int run_test(struct Test *test) {
 
   error:
 
-    test_set_ownership(test->dir, LIGHTY_USER, LIGHTY_GROUP);
     if (log) {
       test_dump_logs(log_dir, log);
     }
@@ -1196,7 +1136,6 @@ int run_test(struct Test *test) {
 
   fatal:
 
-    test_set_ownership(test->dir, LIGHTY_USER, LIGHTY_GROUP);
     if (log) {
       test_dump_logs(log_dir, log);
     }
@@ -1257,8 +1196,11 @@ int main(int argc, char **argv) {
 
     struct Test test = test_config_create(SERVER_PORT);
     test_load_test_file(argc - 1, i, argv[i], &test);
+
     // test_config_print(stderr, &test);
-    init_test_filesystem(&test);
+    test_init_filesystem(test.dir, TEST_MODE_HTTP);
+    test_require_ownership(test.dir, LIGHTY_USER, LIGHTY_GROUP);
+
     test_start_lighttpd(&test, LIGHTY_PIDFILE, LIGHTY_USER, LIGHTY_GROUP, SERVER_PORT, SURVEYFCGI_PORT);
 
     switch (run_test(&test)) {

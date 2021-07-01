@@ -73,8 +73,9 @@ src/question_types.c
 python/*
 !python/example.*
 
-# sandbox
+# sandbox file systems
 sandbox/*
+sandbox-*
 
 # libs
 kcgi/*
@@ -123,3 +124,4 @@ TODO.*
 # deploy scripts and configs
 deploy
 deploy.*
+
