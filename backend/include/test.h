@@ -5,6 +5,10 @@
 #define TEST_MAX_BUFFER 65536
 #define TEST_MAX_LINE_COUNT 100
 
+#define TEST_MODE_CLI 0
+#define TEST_MODE_HTTP 1
+#define TEST_MODE_UNIT 2
+
 // test configuration
 struct Test {
     int skip;                      // (optional)skip! header directive
@@ -41,6 +45,12 @@ struct HttpResponse {
 };
 
 ////
+// bootsrap environment
+////
+
+void test_init_filesystem(char *sandbox_dir, int mode);
+
+////
 // string replacement
 ////
 
@@ -66,8 +76,8 @@ void test_stop_lighttpd(int verbose, int server_port, int fcgi_port);
 ////
 
 int test_get_current_path(int argc, char **argv, char *path_out, size_t max_len);
-int test_set_ownership(char *dir, char *user, char *group);
-void test_require_file(char *path, int perm);
+void test_require_ownership(char *dir, char *user, char *group);
+void test_require_file(char *path, int perm, char *data);
 void test_require_directory(char *path, int perm);
 int test_recursive_delete(const char *dir);
 

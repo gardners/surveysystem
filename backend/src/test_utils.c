@@ -16,6 +16,69 @@
 #include "test.h"
 
 ////
+// bootsrap environment
+////
+
+
+/**
+ * set up a sandboxed file system for each test
+ */
+void test_init_filesystem(char *sandbox_dir, int mode) {
+
+  // remove old test records
+  if (!access(sandbox_dir, F_OK)) {
+    if(test_recursive_delete(sandbox_dir)) {
+      fprintf(stderr, "FATAL: cannot remove old test dir '%s'\n", sandbox_dir);
+      exit(-3);
+    }
+  }
+
+  // create test root
+  test_require_directory(sandbox_dir, 0755);
+
+  // Make surveys, sessions and lock directories
+  // Also make sure the survey directory is writable when running tests
+  // (this is so accesstest will succeed.  For production, this can be
+  // avoided by making sure to use the commandline tool to create a single
+  // session in a survey after the survey has been modified, to make sure
+  // all the necessary hash files get created.)
+  char path[2048];
+
+  snprintf(path, 2048, "%s/surveys", sandbox_dir);
+  test_require_directory(path, 0775);
+
+  snprintf(path, 2048, "%s/sessions", sandbox_dir);
+  test_require_directory(path, 0775);
+
+  snprintf(path, 2048, "%s/logs", sandbox_dir);
+  test_require_directory(path, 0775);
+
+  snprintf(path, 2048, "%s/locks", sandbox_dir);
+  test_require_directory(path, 0775);
+
+  // point python dir ALWAYS to test dir
+  snprintf(path, 2048, "%s/python", sandbox_dir);
+  test_require_directory(path, 0775);
+
+  if(mode == TEST_MODE_HTTP) {
+    snprintf(path, 2048, "%s/lighttpd-access.log", sandbox_dir);
+    test_require_file(path, 0664, NULL);
+
+    snprintf(path, 2048, "%s/lighttpd-error.log", sandbox_dir);
+    test_require_file(path, 0664, NULL);
+
+    snprintf(path, 2048, "%s/breakage.log", sandbox_dir);
+    test_require_file(path, 0664, NULL);
+
+    // create docroot for lighttpd, we do not use it, but it is required by lighttpd
+    snprintf(path, 2048, "%s/www", sandbox_dir);
+    test_require_directory(path, 0775);
+  }
+
+}
+
+
+////
 // local helpers
 ////
 
@@ -54,23 +117,43 @@ double test_time_delta(long long start_time) {
 /**
  * Replace pattern with string.
  */
-void test_replace_str(char *str, char *pattern, char *replacement, size_t sz) {
-    char *pos;
-    char tmp[sz];
-    int index = 0;
-    int plen;
+void test_replace_str(char *src, char *search, char *replace, size_t sz) {
+    char buffer[sz];
+    char *p = src;
 
-    plen = strlen(pattern);
+    size_t slen = strlen(search);
+    size_t rlen = strlen(replace);
 
-    while ((pos = strstr(str, pattern)) != NULL) {
-        strcpy(tmp, str);
-        index = pos - str;
-        str[index] = '\0';
-        strcat(str, replacement);
-
-        // cat str with remainder
-        strcat(str, tmp + index + plen);
+    int hits = 0;
+    while ((p = strstr(p, search))) {
+        hits++;
+        p++;
     }
+
+    if(!hits) {
+        return;
+    }
+
+    // calculate new len
+    p = src;
+    size_t nlen = strlen(src) - (hits * slen);
+    nlen += (hits * rlen) + 1;
+
+    // trunc result if it exceeds sz
+    nlen = (nlen > sz) ? sz : nlen;
+
+    int prev;
+    while ((p = strstr(p, search))) {
+        prev = p - src;
+        strncpy(buffer, src, prev);
+        buffer[prev] = '\0';
+
+        strncat(buffer, replace, rlen);
+        strncat(buffer, p + slen, strlen(p) + slen);
+        strncpy(src, buffer, nlen);
+        p++;
+    }
+    src[nlen] = '\0';
 }
 
 /**
@@ -474,23 +557,27 @@ int test_get_current_path(int argc, char **argv, char *path_out, size_t max_len)
   return retVal;
 }
 
-int test_set_ownership(char *dir, char *user, char *group) {
-  int retVal = 0;
-  do {
-    char cmd[TEST_MAX_LINE];
-    snprintf(cmd, TEST_MAX_LINE, "sudo chown -R %s:%s %s\n", user, group, dir);
-    system(cmd);
-  } while (0);
-  return retVal;
+void test_require_ownership(char *dir, char *user, char *group) {
+  char cmd[TEST_MAX_LINE];
+  snprintf(cmd, TEST_MAX_LINE, "sudo chown -R %s:%s %s\n", user, group, dir);
+  if (system(cmd)) {
+    fprintf(stderr, "command '%s' failed.\n", cmd);
+    exit(-3);
+  }
 }
 
-void test_require_file(char *path, int perm) {
-  FILE *f = fopen(path, "w");
-  if (!f) {
+void test_require_file(char *path, int perm, char *data) {
+  FILE *fp = fopen(path, (data) ? "w+" : "w");
+  if (!fp) {
     fprintf(stderr, "test_require_file() fopen(%s) failed.", path);
     exit(-3);
   }
-  fclose(f);
+
+  if (data) {
+    fputs(data, fp);
+  }
+
+  fclose(fp);
 
   if (chmod(path, perm)) {
     fprintf(stderr, "test_require_file() chmod(%s) failed.", path);
@@ -501,7 +588,7 @@ void test_require_file(char *path, int perm) {
 void test_require_directory(char *path, int perm) {
   if (mkdir(path, perm)) {
     if (errno != EEXIST) {
-      fprintf(stderr, "mkpath(%s, %o) failed.", path, perm);
+      fprintf(stderr, "mkdir(%s, %o) failed.", path, perm);
       exit(-3);
     }
   }
