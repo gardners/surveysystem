@@ -6,9 +6,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "utils.h"
 #include "errorlog.h"
 #include "question_types.h"
 #include "survey.h"
+#include "serialisers.h"
 
 // #366, set retVal condition to < 0
 #define REPORT_IF_FAILED()                                                     \
@@ -845,4 +847,107 @@ int compare_answers(struct answer *q1, struct answer *q2, int mismatchIsError) {
     COMPARE_LONGLONG(stored);
   } while (0);
   return retVal;
+}
+
+
+int dump_answer_list(FILE *fp, struct answer_list *list) {
+  int retVal = 0;
+
+  do {
+    if (!fp) {
+      LOG_ERROR("dump_next_questions(): invalid file pointer.");
+    }
+
+    if (!list) {
+      fprintf(fp, "answers { <NULL> }\n");
+      break;
+    }
+
+    fprintf(
+      fp,
+      "answers {\n"
+      "  len: %zu\n"
+      "  answers: [\n",
+      list->len
+    );
+
+    for (size_t i = 0; i < list->len; i++) {
+      fprintf(fp, "    %s%s\n", list->answers[i]->uid, (i < list->len - 1) ? ",": "");
+    }
+
+    fprintf(fp , "  ]\n}\n");
+  } while (0);
+
+  return retVal;
+}
+
+
+void free_answer_list(struct answer_list *list) {
+  if (!list) {
+    return;
+  }
+  for(size_t i = 0; i < list->len; i++) {
+    free_answer(list->answers[i]);
+  }
+  list->len = 0;
+
+  free(list);
+}
+
+/**
+ * deserialise a sequence of answers
+ *
+ */
+struct answer_list *deserialise_answers(const char *body, enum answer_scope scope) {
+  int retVal = 0;
+
+  struct answer_list *list = NULL;
+  do {
+    if (!body) {
+      LOG_ERROR("body to parse is null");
+    }
+
+    list = calloc(1, sizeof(struct answer_list));
+    if (!list) {
+      LOG_ERROR("error allocating memory for answer list");
+    }
+
+    int i = 0;
+    char *sav;
+    char *line = parse_line(body, '\n', &sav);
+
+    while(line != NULL) {
+
+      // initialise answer
+      list->len++; // placed here for comlete free_answer_list on retVal > 0
+      list->answers[i] = calloc(1, sizeof(struct answer));
+      if (list->answers[i] == NULL) {
+        LOG_ERRORV("error allocating memory for answer in line %d", i);
+        break;
+      }
+
+      // deserialise answer
+      if (deserialise_answer(line, scope, list->answers[i])) {
+        LOG_ERRORV("failed to deserialise answer for line %d, starting with '%.20s'", i, line);
+        break;
+      }
+      freez(line);
+      line = NULL;
+
+      LOG_INFOV("parsed answer '%s' from line %d", list->answers[i]->uid, i);
+
+      // next
+      i++;
+      line = parse_line(NULL, '\n', &sav);
+
+    } // while(line)
+
+  } while(0);
+
+  if (retVal) {
+    free_answer_list(list);
+    return NULL;
+  }
+
+  return list;
 }

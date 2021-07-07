@@ -769,6 +769,7 @@ int main(int argc, char **argv) {
     }
 
     SECTION("answer serialisation (NULL pointer for text), #421");
+
     {
       char str[1024];
       int ret;
@@ -786,6 +787,133 @@ int main(int argc, char **argv) {
       ASSERT_STR_EQ(str, ":TEXT::0:0:0:0:0:0:0::0:0", "(no uid!)");
       free_answer(a);
     }
+
+    ////
+    // multiline answers deserialisation
+    ////
+
+    SECTION("multiline answers: deserialise_answers(ANSWER_SCOPE_PUBLIC)");
+
+    {
+      char body[] = "q1:a1:0:0:0:0:0:0:0\n"
+                    "q2:a2:0:0:0:0:0:0:0\n";
+      struct answer_list *list = deserialise_answers(body, ANSWER_SCOPE_PUBLIC);
+
+      // dump_answer_list(stderr, list);
+      ASSERT(list != NULL, "did succeed", "");
+      ASSERT(list->len == 2, "list length", "");
+      ASSERT(list->answers[0] != NULL, "parsed answer 1", "");
+      ASSERT(list->answers[1] != NULL, "parsed answer 2", "");
+      ASSERT_STR_EQ(list->answers[0]->uid, "q1", "answer 1 uid");
+      ASSERT_STR_EQ(list->answers[1]->uid, "q2", "answer 2 uid");
+
+      free_answer_list(list);
+    }
+
+    {
+      char body[] = "q1:a1:0:0:0:0:0:0:0\n"
+                    "q2:a2:0:0:0:0:0:0:0";
+      struct answer_list *list = deserialise_answers(body, ANSWER_SCOPE_PUBLIC);
+
+      // dump_answer_list(stderr, list);
+      ASSERT(list != NULL, "did succeed", "");
+      ASSERT(list->len == 2, "list length", "");
+      ASSERT(list->answers[0] != NULL, "parsed answer 1", "");
+      ASSERT(list->answers[1] != NULL, "parsed answer 2", "");
+      ASSERT_STR_EQ(list->answers[0]->uid, "q1", "answer 1 uid");
+      ASSERT_STR_EQ(list->answers[1]->uid, "q2", "answer 2 uid");
+
+      free_answer_list(list);
+    }
+
+    {
+      char body[] = "single:Single:0:0:0:0:0:0:0";
+      struct answer_list *list = deserialise_answers(body, ANSWER_SCOPE_PUBLIC);
+
+      ASSERT(list != NULL, "did succeed", "");
+      ASSERT(list->len == 1, "list length", "");
+      ASSERT(list->answers[0] != NULL, "parsed answer 1 (no trailing line break)", "");
+      ASSERT_STR_EQ(list->answers[0]->uid, "single", "answer 1 uid");
+
+      free_answer_list(list);
+    }
+
+    {
+      char body[] = "q1:a\\n1:0:0:0:0:0:0:0";
+      struct answer_list *list = deserialise_answers(body, ANSWER_SCOPE_PUBLIC);
+
+      ASSERT(list != NULL, "did succeed", "");
+      ASSERT(list->len == 1, "list length", "");
+      ASSERT(list->answers[0] != NULL, "parsed answer 1", "");
+      ASSERT(strcmp(list->answers[0]->text, "a\n1") == 0, "answer 1 text escaped lb", "");
+
+      free_answer_list(list);
+    }
+
+    {
+      char body[] = "q1:a1:0:0:0:0:0:0:0\n\n";
+      struct answer_list *list = deserialise_answers(body, ANSWER_SCOPE_PUBLIC);
+
+      ASSERT(list != NULL, "did succeed", "");
+      ASSERT(list->len == 1, "list length", "");
+      ASSERT(list->answers[0] != NULL, "parsed answer 1 (trailing line break)", "");
+      ASSERT_STR_EQ(list->answers[0]->uid, "q1", "answer 1 uid");
+
+      free_answer_list(list);
+    }
+
+    {
+      char body[] = "q1:a1:0:0:0:0:0:0:0\n"
+                    "q2:a2:0:0:0:0:0:0\n";
+      struct answer_list *list = deserialise_answers(body, ANSWER_SCOPE_PUBLIC);
+
+      ASSERT(list == NULL, "invalid answer string in body", "");
+      free_answer_list(list);
+    }
+
+    // checking only answer properties for full answers, for other checks see above section
+    SECTION("multiline answers: deserialise_answers(ANSWER_SCOPE_FULL) - completeness");
+
+    {
+      char body[] = "q1:TEXT:a1:0:0:0:0:0:0:0::0:123\n"
+                    "q2:TEXT:a2:0:0:0:0:0:0:0::0:123\n";
+      struct answer_list *list = deserialise_answers(body, ANSWER_SCOPE_FULL);
+
+      // dump_answer_list(stderr, list);
+      ASSERT(list != NULL, "did succeed", "");
+      ASSERT(list->len == 2, "list length", "");
+      ASSERT(list->answers[0] != NULL, "parsed answer 1", "");
+      ASSERT(list->answers[1] != NULL, "parsed answer 2", "");
+      ASSERT_STR_EQ(list->answers[0]->uid, "q1", "answer 1 uid");
+      ASSERT_STR_EQ(list->answers[1]->uid, "q2", "answer 2 uid");
+      ASSERT(list->answers[0]->type == QTYPE_TEXT, "answer 1 type = %d", QTYPE_TEXT);
+      ASSERT(list->answers[1]->type == QTYPE_TEXT, "answer 2 type = %d", QTYPE_TEXT);
+      ASSERT(list->answers[0]->stored == 123, "answer 1 timestamp = %d", 123);
+      ASSERT(list->answers[1]->stored == 123, "answer 2 timestamp = %d", 123);
+
+      free_answer_list(list);
+    }
+
+    SECTION("multiline answers: deserialise_answers() - non-destructive");
+
+    {
+      char body[] = "q1:TEXT:a1:0:0:0:0:0:0:0::0:123\n"
+                    "q2:TEXT:a2:0:0:0:0:0:0:0::0:123\n";
+      char *copy = strdup(body);
+
+      struct answer_list *list = deserialise_answers(body, ANSWER_SCOPE_FULL);
+      ASSERT(list != NULL, "did succeed", "");
+      ASSERT(list->len == 2, "list length", "");
+
+      ASSERT(strcmp(body, copy) == 0, "non-destructive parsing: copy = body", "");
+
+      free(copy);
+      free_answer_list(list);
+    }
+
+    ////
+    // SHA
+    ////
 
     SECTION("sha1 tests: sha1_string(), #268, #237");
 

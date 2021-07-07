@@ -25,4 +25,14 @@ int dump_question(FILE *f, struct question *q);
 int dump_answer(FILE *f, struct answer *a);
 
 int serialiser_count_columns(char separator, char *line, size_t max_len);
+
+// #461 deserialise a sequence of answers
+struct answer_list {
+  struct answer *answers[MAX_ANSWERS];
+  size_t len;
+};
+
+int dump_answer_list(FILE *fp, struct answer_list *list);
+void free_answer_list(struct answer_list *list);
+struct answer_list *deserialise_answers(const char *body, enum answer_scope scope);
 #endif
