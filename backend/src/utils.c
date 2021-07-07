@@ -1,6 +1,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 /*
   Various functions for freeing data structures.
@@ -37,4 +38,43 @@ struct tm *format_time_ISO8601(time_t t, char *buf, size_t len) {
   strftime(buf, len, "%FT%T%z", lt);
   // 2019-07-24T11:49:20+09:30
   return lt;
+}
+
+
+/**
+ * non-destructive line parsing from a string
+ * The returned char *line needs to be deallocated by the callee
+ *
+ * #461 deserialise a sequence of answers
+ */
+char *parse_line(const char *body, char separator, char **saveptr) {
+  int len;
+  char *str = (body) ? (char*)body : *saveptr;
+  char *line;
+
+  if(!str) {
+    return NULL;
+  }
+
+  char *sep = strchr(str, separator);
+  if (sep == NULL) {
+      sep = strchr(str, '\0');
+  }
+
+  len = sep - str;
+  if (!len) {
+      return NULL;
+  }
+
+  line = malloc(len + 1);
+  memmove (line, str, len);
+  line[len] = '\0';
+
+  if (*sep == '\0') {
+    *saveptr = NULL; // prevent overflow on eventual next call
+    return line;
+  }
+
+  *saveptr = sep + 1;
+  return line;
 }

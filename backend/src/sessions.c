@@ -32,7 +32,6 @@ char *session_action_names[NUM_SESSION_ACTIONS] = {
   "SESSION_ANALYSIS"
 };
 
-
 /**
  * #379 validate requested action against current session
  */
@@ -449,7 +448,6 @@ int create_survey_snapshot(char *survey_id, char *sha1, int sha1_len) {
 
   return retVal;
 }
-
 
 /**
  * #239
@@ -1223,7 +1221,6 @@ int session_get_question_index(char *uid, struct session *ses) {
   return -1;
 }
 
-
 /**
  * query a session for a question uid
  */
@@ -1833,10 +1830,10 @@ int session_delete_answer(struct session *ses, char *uid) {
   return retVal;
 }
 
-/*
-  Store a data file close to the session answers
-  Should the logging fail, the process will not break and issue warnings to the log
-  Note that the session needed to be created previously, otherwise the session dir would not be accessible!
+/**
+ * Store a data file close to the session answers
+ * Should the logging fail, the process will not break and issue warnings to the log
+ * Note that the session needed to be created previously, otherwise the session dir would not be accessible!
  */
 int session_add_datafile(char *session_id, char *filename_suffix,
                          const char *data) {
@@ -1879,7 +1876,6 @@ int session_add_datafile(char *session_id, char *filename_suffix,
 
   return retVal;
 }
-
 
 /**
  * find the last given answer (conditions: no system answer && not deleted) within a session
