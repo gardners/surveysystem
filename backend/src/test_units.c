@@ -11,6 +11,16 @@
 #include "sha1.h"
 #include "question_types.h"
 
+#define MAX_TEST_BUFFER 2048
+
+struct question *create_question(char *uid, int type, char *title) {
+    struct question *qn = calloc(1, sizeof(struct question));
+    qn->uid = strdup(uid);
+    qn->type = type;
+    qn->question_text = strdup(title);
+    return qn;
+}
+
 struct answer* create_answer(char *uid, int type, char *text, char *unit) {
   struct answer *ans = calloc(sizeof(struct answer), 1);
   assert(ans != NULL); // exit
@@ -27,7 +37,7 @@ struct answer* create_answer(char *uid, int type, char *text, char *unit) {
 
   return ans;
 }
-#define MAX_TEST_BUFFER 2048
+
 
 enum {
   FORMAT_FAIL, FORMAT_PASS, FORMAT_SKIP, FORMAT_SECTION, FORMAT_NONE
@@ -409,7 +419,93 @@ int main(int argc, char **argv) {
 
     DEBUG("\nSummary: %d tests passed, %d failed and %d encountered internal errors.\n", pass, fail, errors);
 
-    /*tests for #392 */
+    /* tests for #482" */
+
+    SECTION("serialise_list_append_alloc() tests");
+
+    {
+      char *text = serialise_list_append_alloc(NULL, "test", ',');
+
+      ASSERT(text[strlen(text)] == 0, "null terminator", "");
+      ASSERT_STR_EQ(text, "test", "initial append");
+
+      free(text);
+    }
+
+    {
+      struct nextquestions  *nq = calloc(1, sizeof(struct nextquestions));
+      nq->question_count = 3;
+      nq->next_questions[0] = create_question("uid1", QTYPE_TEXT, "Q1");
+      nq->next_questions[1] = create_question("uid2", QTYPE_TEXT, "Q2");
+      nq->next_questions[2] = create_question("uid3", QTYPE_TEXT, "Q3");
+
+      char *text = NULL;
+      for (int i = 0; i < nq->question_count; i++) {
+          text = serialise_list_append_alloc(text, nq->next_questions[i]->uid, ',');
+      }
+
+      ASSERT(text[strlen(text)] == 0, "null terminator", "");
+      ASSERT_STR_EQ(text, "uid1,uid2,uid3", "sequence of THREE fragments");
+
+      free_next_questions(nq);
+      free(text);
+    }
+
+    {
+      struct nextquestions  *nq = calloc(1, sizeof(struct nextquestions));
+      nq->question_count = 1;
+      nq->next_questions[0] = create_question("uid1", QTYPE_TEXT, "Q1");
+
+      char *text = NULL;
+      for (int i = 0; i < nq->question_count; i++) {
+          text = serialise_list_append_alloc(text, nq->next_questions[i]->uid, ',');
+      }
+
+      ASSERT(text[strlen(text)] == 0, "null terminator", "");
+      ASSERT_STR_EQ(text, "uid1", "ONE fragment (no separator)");
+
+      free_next_questions(nq);
+      free(text);
+    }
+
+    {
+      char *text = strdup("test");
+      text = serialise_list_append_alloc(text, NULL, ',');
+
+      ASSERT_STR_EQ(text, "test", "NULL fragment (do nothing)");
+
+      free(text);
+    }
+
+
+    {
+      char *text = serialise_list_append_alloc(NULL, NULL, ',');
+
+      ASSERT(text == NULL, "NULL src and NULL fragment", "");
+    }
+
+
+    {
+      char *text = strdup("test");
+      text = serialise_list_append_alloc(text, "", ',');
+
+      ASSERT(text[strlen(text)] == 0, "null terminator", "");
+      ASSERT_STR_EQ(text, "test,", "EMPTY fragment string (append separator)");
+
+      free(text);
+    }
+
+    {
+      char *text = strdup("test");
+      text = serialise_list_append_alloc(text, "test", '\0');
+
+      ASSERT(text[strlen(text)] == 0, "null terminator", "");
+      ASSERT_STR_EQ(text, "testtest", "NUL byte as separator just concatenates the framgent");
+
+      free(text);
+    }
+
+    /* tests for #392 */
     SECTION("escape_string() tests, issue #392");
 
     {
@@ -542,59 +638,53 @@ int main(int argc, char **argv) {
       LOG_UNMUTE();
       int ret;
 
-      ret = serialiser_count_columns(':', "", 1024);
+      ret = serialiser_count_columns(':', "");
       ASSERT(ret == 1, "serialiser_count_columns(':', '%s')", "");
 
-      ret = serialiser_count_columns(':', NULL, 1024);
+      ret = serialiser_count_columns(':', NULL);
       ASSERT(ret == -1, "error: serialiser_count_columns(':', NULL)", "");
 
-      ret = serialiser_count_columns(':', "hello", 1024);
+      ret = serialiser_count_columns(':', "hello");
       ASSERT(ret == 1, "serialiser_count_columns(':', '%s')", "hello");
 
-      ret = serialiser_count_columns(':', "hello", 2);
-      ASSERT(ret == -1, "error: serialiser_count_columns(':', '%s') out of bounds", "hello");
-
-      ret = serialiser_count_columns(':', ":", 1024);
+      ret = serialiser_count_columns(':', ":");
       ASSERT(ret == 2, "serialiser_count_columns(':', '%s')", ":");
 
-      ret = serialiser_count_columns(':', "\\:", 1024);
+      ret = serialiser_count_columns(':', "\\:");
       ASSERT(ret == 1, "escape: serialiser_count_columns(':', '%s')", "\\:");
 
-      ret = serialiser_count_columns(':', "\\\\:", 1024);
+      ret = serialiser_count_columns(':', "\\\\:");
       ASSERT(ret == 1, "double escape: serialiser_count_columns(':', '%s')", "\\\\:");
 
-      ret = serialiser_count_columns(':', ":\\:", 1024);
+      ret = serialiser_count_columns(':', ":\\:");
       ASSERT(ret == 2, "escape inner: serialiser_count_columns(':', '%s')", ":\\:");
 
-      ret = serialiser_count_columns(':', "::1", 1024);
+      ret = serialiser_count_columns(':', "::1");
       ASSERT(ret == 3, "serialiser_count_columns(':', '%s')", "::1");
 
-      ret = serialiser_count_columns(':', "::", 1024);
+      ret = serialiser_count_columns(':', "::");
       ASSERT(ret == 3, "serialiser_count_columns(':', '%s')", ":::");
 
-      ret = serialiser_count_columns(':', "1:1:1", 1024);
+      ret = serialiser_count_columns(':', "1:1:1");
       ASSERT(ret == 3, "serialiser_count_columns(':', '%s')", "1:1:1");
 
-      ret = serialiser_count_columns(':', "1:1:1", 2);
-      ASSERT(ret == -1, "error serialiser_count_columns(':', '%s') out of bounds", "1:1:1");
-
-      ret = serialiser_count_columns(':', "\n:1:1:1", 1024);
+      ret = serialiser_count_columns(':', "\n:1:1:1");
       ASSERT(ret == -1, "error starting endline serialiser_count_columns(':', '%s') %d", "\\n:1:1:1", ret);
 
-      ret = serialiser_count_columns(':', ":1:1:1\n", 1024);
+      ret = serialiser_count_columns(':', ":1:1:1\n");
       ASSERT(ret == -1, "error ending endline serialiser_count_columns(':', '%s') %d", ":1:1:1\\n", ret);
 
-      ret = serialiser_count_columns(':', "1:1:1\n1:1:1", 1024);
+      ret = serialiser_count_columns(':', "1:1:1\n1:1:1");
       ASSERT(ret == -1, "error inner endline serialiser_count_columns(':', '%s') %d", "1:1:1\\n1:1:1", ret);
 
-      ret = serialiser_count_columns(':', "1:1:1\\n1:1:1", 1024);
+      ret = serialiser_count_columns(':', "1:1:1\\n1:1:1");
       ASSERT(ret == 5, "escaped inner endline serialiser_count_columns(':', '%s') %d", "1:1:1\\\\n1:1:1", ret);
 
-      ret = serialiser_count_columns(':', "uid:META:\\:\\n\r\b\tutext:0:0:0:0:0:0:0:unit:0:0", 1024);
+      ret = serialiser_count_columns(':', "uid:META:\\:\\n\r\b\tutext:0:0:0:0:0:0:0:unit:0:0");
       ASSERT(ret == ANSWER_SCOPE_FULL, "answer ANSWER_FIELDS_PROTECTED with escapes passing serialiser_count_columns(':', '%s') %d", "uid:META:\\:\\n\\r\\b\\tutext:0:0:0:0:0:0:0:unit:0:0", ret);
 
       // #448 remove 'unit' from public answer
-      ret = serialiser_count_columns(':', "uid:\\:\\n\r\b\tutext:0:0:0:0:0:0:0", 1024);
+      ret = serialiser_count_columns(':', "uid:\\:\\n\r\b\tutext:0:0:0:0:0:0:0");
       ASSERT(ret == ANSWER_SCOPE_PUBLIC, "answer ANSWER_FIELDS_PUBLIC with escapes passing serialiser_count_columns(':', '%s') %d", "uid:META:\\:\\n\\r\\b\\tutext:0:0:0:0:0:0:0:unit:0:0", ret);
     }
 
