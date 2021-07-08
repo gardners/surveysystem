@@ -222,6 +222,10 @@ struct session {
   char *session_id;
   char *consistency_hash; // #268 sha1 generated of session id, session state and serialised last given answer
 
+  // #461 comma separated list of question uids,
+  //  populated form @state->text in load_session(), updated in get_nextquestions() and stored in @state->text on save_session()
+  char *next_questions;
+
   // #184, add nextquestion provider mode flag
   unsigned int nextquestions_flag;
 #define NEXTQUESTIONS_FLAG_GENERIC 1
@@ -229,13 +233,12 @@ struct session {
 
   // #363, update limit, offset for meta answers
   struct question *questions[MAX_QUESTIONS];
-  struct answer *answers[MAX_ANSWERS];
+  int question_count;
 
-  // #363, add offset for header answers
-  int answer_offset;
+  struct answer *answers[MAX_ANSWERS];
+  int answer_offset;  // #363, add offset for header answers
   int answer_count;
   int given_answer_count; // #13 count given answers
-  int question_count;
 
   // #379 session state, set on loading, updated during session actions, saved to session file if changed
   enum session_state state;
@@ -277,7 +280,7 @@ int save_session(struct session *s);
 int session_add_answer(struct session *s, struct answer *a);
 int session_delete_answer(struct session *s, char *uid);
 
-void free_session(struct session *s);
+void free_session(struct session *ses);
 void free_question(struct question *q);
 void free_answer(struct answer *a);
 
