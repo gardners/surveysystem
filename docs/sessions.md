@@ -72,7 +72,11 @@ Header META answers
 * **@user**: records username (if supplied) in column `text`
 * **@group**: records groupname (if supplied) in column `text`
 * **@authority**: records authority source in column `<text>` (if applicable), authority type is recorded in column `<value>` (see `struct session_meta`)
-* **@state**: records current session state in column `<value>` (see `enum session_state`), The time of session creation is recorded in column `time_begin`, The time a sesson was closed is recorded in `time_end`
+* **@state** records:
+  - `<text>`: a comma-separated list of question ids returned by the last [next_questions response](next-questions-response.md)
+  - `<value>`: current session state in column `<value>` (see `enum session_state`)
+  - `<time_begin>` time of session creation
+  - `<time_end>` The time a sesson was closed is recorded in `time_end`
 
 # System answers
 
@@ -134,6 +138,7 @@ Notes:
 
 * /addanswer?sessionid=381544dc-0000-0000-0d04-01123f06e306&answer=question1:Answer+1:0:0:0:0:0:0:0:
 
+We assume a simple gneric question logic where just the next question  (`question2`) is returned by our next_questions response
 Answering the first question records the answer into the session and progresses the session to "open".
 
 ```
@@ -141,11 +146,12 @@ foo/b884bcb19954b245d8be53db2b266c4798dc742d
 @user:META::0:0:0:0:0:0:0::0:1596163402
 @group:META::0:0:0:0:0:0:0::0:1596163402
 @authority:META:127.0.0.1(8099):1:0:0:0:0:0:0::0:1596163402
-@state:META::2:0:0:1596163402:0:0:0::0:1596163402
+@state:META:question2:2:0:0:1596163402:0:0:0::0:1596163402
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:1596163402
 ```
 
 The `<value>` field in `@state` header has progressed to `SESSION_OPEN`
+The `<text>` field in `@state` contains the expected question id of the next answer
 
 Notes:
 
@@ -171,6 +177,8 @@ question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:1596163402
 The `<value>` field in `@state` header has progressed to `SESSION_FINISHED`.
 Finished sessions can still be accessed by "next questions" and delete requests
 
+The `<text>` field in `@state` is empty
+
 ### 3.1 Reopen Session (`SESSION_OPEN`)
 
 * /delanswer?sessionid=sessionid=381544dc-0000-0000-0d04-01123f06e306&questionid=question2
@@ -182,7 +190,7 @@ foo/b884bcb19954b245d8be53db2b266c4798dc742d
 @user:META::0:0:0:0:0:0:0::0:1596163402
 @group:META::0:0:0:0:0:0:0::0:1596163402
 @authority:META:127.0.0.1(8099):1:0:0:0:0:0:0::0:1596163402
-@state:META::2:0:0:1596163402:0:0:0::0:1596163402
+@state:META:question2:2:0:0:1596163402:0:0:0::0:1596163402
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:1596163402
 question2:TEXT:Answer 2:0:0:0:0:0:0:0::1:1596163402
 ```
@@ -190,6 +198,7 @@ question2:TEXT:Answer 2:0:0:0:0:0:0:0::1:1596163402
 The `<value>` field in `@state` header has progressed to `SESSION_OPEN`
 
 Note that the old answer to `question2` still exists in the record however the `<flags>` field is moved to `ANSWER_DELETED` (byte flag)
+The `<text>` field in `@state` contains the expected question id of the next answer
 
 ### 3.2. Finish Session again (`SESSION_FINISHED`)
 
@@ -209,6 +218,8 @@ question2:TEXT:Answer 2 Again:0:0:0:0:0:0:0::0:1596163402
 ```
 
 The `<value>` field in `@state` header has progressed again to `SESSION_FINISHED`. Our 'deleted' answer has been updated.
+
+The `<text>` field in `@state` is empty
 
 ## 4. Close Session (`SESSION_CLOSED`)
 
@@ -231,3 +242,5 @@ The `<value>` field in `@state` header has progressed again to `SESSION_CLOSED`.
 
 * This state is **final** and cannot be changed.
 * Any session request other than *analyse* will be **rejected**
+
+The `<text>` field in `@state` is empty

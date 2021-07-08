@@ -73,7 +73,7 @@ int escape_string(char *in, char *out, int max_len) {
   return out_len;
 }
 
-int serialiser_count_columns(char separator, char *line, size_t max_len) {
+int serialiser_count_columns(char separator, char *line) {
   int retVal = 0;
   int count = 1;
 
@@ -84,11 +84,6 @@ int serialiser_count_columns(char separator, char *line, size_t max_len) {
 
     char prev = ' ';
     for(int i = 0; line[i] != '\0'; i++) {
-      if (i > max_len) {
-        LOG_ERROR("line max_len exceeded with out a null terminator");
-        break;
-      }
-
       if(prev != '\\' && line[i] == '\n') {
         LOG_ERROR("multi line string: not allowed. line break detected");
         break;
@@ -452,6 +447,59 @@ int deserialise_question_type(char *field, int *s) {
   return retVal;
 }
 
+/**
+ * appends fragment to a char* pointer, divided by a given separator
+ * - this function allocates all required memory, for starting a list pass in an unallocated NULL pointer
+ * - the callee is required to free the allocated memory himself
+ * - the separator can be disabled by using the NULL byte, the fragment will then be appended without separator
+ *
+ * #482, #461
+ */
+char *serialise_list_append_alloc(char *src, char *in, const char separator) {
+  int retVal = 0;
+
+  do {
+    if (!in) {
+      LOG_WARNV("fragment to append is NULL, skipping", 0);
+      break;
+    }
+
+    size_t slen = (src) ? strlen(src) : 0;
+    size_t ilen = (in) ? strlen(in) : 0;
+
+    size_t cap = slen + ilen;
+    cap += 2; // separator + NUL (we are wasting one byte if !src)
+
+    src = realloc(src, cap * sizeof(char));
+    if(!src) {
+        LOG_ERROR("error reallocating memory for src char*");
+    }
+
+    // add separator if in is not first element
+    if(slen && slen) {
+        src[slen] = separator;
+        if(separator) {
+            slen++;
+        }
+    }
+
+    size_t i = 0;
+    while (i < ilen) {
+        src[slen + i] = in[i];
+        i++;
+    }
+    src[slen + i] = '\0';
+
+
+  } while (0);
+
+  if (retVal) {
+      LOG_WARNV("error appending fragment '%s'", in);
+  }
+
+  return src;
+}
+
 /*
   Top-level function for serialising a question that has been passed in
   in a struct question.  It uses the various macros defined above to
@@ -699,7 +747,7 @@ int deserialise_answer(char *in, enum answer_scope scope, struct answer *a) {
       LOG_ERROR("answer string is null");
     }
 
-    int cols = serialiser_count_columns(':', in, strlen(in));
+    int cols = serialiser_count_columns(':', in);
     if (cols < 0) {
       LOG_ERROR("invalid answer line");
     }
@@ -881,7 +929,6 @@ int dump_answer_list(FILE *fp, struct answer_list *list) {
   return retVal;
 }
 
-
 void free_answer_list(struct answer_list *list) {
   if (!list) {
     return;
@@ -896,7 +943,6 @@ void free_answer_list(struct answer_list *list) {
 
 /**
  * deserialise a sequence of answers
- *
  */
 struct answer_list *deserialise_answers(const char *body, enum answer_scope scope) {
   int retVal = 0;

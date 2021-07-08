@@ -664,30 +664,31 @@ void free_question(struct question *q) {
   return;
 }
 
-void free_session(struct session *s) {
-  if (!s) {
+void free_session(struct session *ses) {
+  if (!ses) {
     return;
   }
 
-  freez(s->survey_id);
-  freez(s->survey_description);
-  freez(s->session_id);
-  freez(s->consistency_hash); // #268
+  freez(ses->survey_id);
+  freez(ses->survey_description);
+  freez(ses->session_id);
+  freez(ses->consistency_hash);
+  freez(ses->next_questions);
 
-  for (int i = 0; i < s->question_count; i++) {
-    free_question(s->questions[i]);
+  for (int i = 0; i < ses->question_count; i++) {
+    free_question(ses->questions[i]);
   }
 
-  for (int i = 0; i < s->answer_count; i++) {
-    free_answer(s->answers[i]);
+  for (int i = 0; i < ses->answer_count; i++) {
+    free_answer(ses->answers[i]);
   }
 
-  s->answer_count = 0;
-  s->question_count = 0;
-  s->given_answer_count = 0; // #13 count given answers
-  s->state = SESSION_NULL; // #379 reset state
+  ses->answer_count = 0;
+  ses->question_count = 0;
+  ses->given_answer_count = 0;
+  ses->state = SESSION_NULL;
 
-  free(s);
+  free(ses);
   return;
 }
 
@@ -727,6 +728,7 @@ int dump_session(FILE *fp, struct session *ses) {
       "  survey_description: \"%s\"\n"
       "  session_id: \"%s\"\n"
       "  consistency_hash: \"%s\"\n"
+      "  next_questions: \"%s\""
       "  nextquestions_flag: %u\n"
       "  answer_offset: %d\n"
       "  answer_count: %d\n"
@@ -738,6 +740,7 @@ int dump_session(FILE *fp, struct session *ses) {
       ses->survey_description,
       ses->session_id,
       (ses->consistency_hash) ? "<private>" : "(null)",
+      (ses->next_questions) ? ses->next_questions : "(null)",
       ses->nextquestions_flag,
 
       ses->answer_offset,
@@ -1076,6 +1079,11 @@ struct session *load_session(char *session_id) {
     }
     ses->state = current_state->value;
 
+    // #461 load previous next_question uids
+    if (current_state->text) {
+      ses->next_questions = strdup(current_state->text); // always separately allocate
+    }
+
     // #268 finally generate current sha1 checksum
     if (session_generate_consistency_hash(ses)) {
       fclose(s);
@@ -1131,6 +1139,13 @@ int save_session(struct session *s) {
       header->time_end = (s->state == SESSION_CLOSED) ? (long long)time(NULL) : 0;
       header->stored = (long long)time(NULL);
       LOG_INFOV("pre-save: Updated state header, old state: %d, new state: %d", old, s->state);
+    }
+
+    // #461 purge previous next_questions from @state->text and set current next_question_uids
+    freez(header->text);
+    header->text = NULL;
+    if (s->next_questions) {
+      header->text = strdup(s->next_questions); // always separately allocate
     }
 
     // write session
@@ -1394,7 +1409,7 @@ int answer_set_value_raw(struct answer *a, char *in) {
 
         // [lat,lon]
         case QTYPE_LATLON:
-          if (serialiser_count_columns(',', in, 65536) != 2) {
+          if (serialiser_count_columns(',', in) != 2) {
             LOG_ERRORV("(count) input '%s' for LATLON type must be a comma separated string of two floats (answer '%s')", in, a->uid);
           }
           if (sscanf(in, "%lld,%lld", &lat, &lon) != 2) {
@@ -1415,7 +1430,7 @@ int answer_set_value_raw(struct answer *a, char *in) {
 
         // [time_begin,time_end]
         case QTYPE_TIMERANGE:
-          if (serialiser_count_columns(',', in, 65536) != 2) {
+          if (serialiser_count_columns(',', in) != 2) {
             LOG_ERRORV("(count) input '%s' for TIMERANGE type must be a comma separated string of two floats (answer '%s')", in, a->uid);
           }
           if (sscanf(in, "%lld,%lld", &time_begin, &time_end) != 2) {

@@ -15,7 +15,7 @@ changed_type/current
 @user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
 @group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
 @authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_BASIC>:0:0:0:0:0:0::0:<UTIME>
-@state:META::<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
+@state:META:question2:<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
 question1:TEXT:ANSWER 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 

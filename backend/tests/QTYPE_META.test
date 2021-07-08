@@ -15,7 +15,7 @@ endofsurvey
 definesession 18530e05-0000-0000-7288-7d0d602be5b6
 qtype_meta/current
 @user:META::0:0:0:0:0:0:0::0:<UTIME>
-@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META:question2:0:0:0:0:0:0:0::0:<UTIME>
 @authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
 @state:META::<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
@@ -73,28 +73,12 @@ endofsession
 #!-------
 
 # simultating existing session with meta answer outside header
-definesession 381544dc-0000-0000-0d04-01123f06e306
-qtype_meta/current
-@user:META::0:0:0:0:0:0:0::0:<UTIME>
-@group:META::0:0:0:0:0:0:0::0:<UTIME>
-@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
-@state:META::<SESSION_FINISHED>:0:0:<UTIME>:0:0:0::0:<UTIME>
-question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
-QMETA:META:Meta Answer 1:0:0:0:0:0:0:0::0:<UTIME>
-question2:TEXT:Answer 2:0:0:0:0:0:0:0::1:<UTIME>
-endofsession
-
-#!-------
-#!- create new session for next test
-#!-------
-
-# simultating existing session with meta answer outside header
 definesession 21c00c79-0000-0000-1a30-e98476f71b42
 qtype_meta/current
 @user:META::0:0:0:0:0:0:0::0:<UTIME>
 @group:META::0:0:0:0:0:0:0::0:<UTIME>
 @authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
-@state:META::<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
+@state:META:question2:<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 QMETA:META:Meta Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession

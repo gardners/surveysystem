@@ -287,6 +287,14 @@ struct nextquestions *get_next_questions(struct session *s, enum actions action,
       LOG_INFO("Set session state to SESSION_FINISHED");
     }
 
+    // #461 purge previous next_questions from @ses->next_questions and set current next_question_uids
+    freez(s->next_questions);
+    s->next_questions = NULL;
+
+    for (int i = 0; i < nq->question_count; i++) {
+      s->next_questions = serialise_list_append_alloc(s->next_questions, nq->next_questions[i]->uid, ',');
+    }
+
     // #379 update state (re-open finished session)
     if (nq->question_count > 0) {
       if (s->state == SESSION_FINISHED) {

@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "errorlog.h"
+
 /*
   Various functions for freeing data structures.
   freez() is the same as free(), but just checks to make sure that it hasn't been
@@ -67,6 +69,10 @@ char *parse_line(const char *body, char separator, char **saveptr) {
   }
 
   line = malloc(len + 1);
+  if (!line) {
+    LOG_WARNV("Error allocating memory for parsing line", 0);
+    return NULL;
+  }
   memmove (line, str, len);
   line[len] = '\0';
 

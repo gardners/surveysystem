@@ -83,7 +83,7 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 @user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
 @group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
 @authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_TRUSTED>:0:0:0:0:0:0::0:<UTIME>
-@state:META::<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
+@state:META:question2:<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
@@ -97,7 +97,7 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 @user:META:user1:0:0:0:0:0:0:0::0:<UTIME>
 @group:META:group1:0:0:0:0:0:0:0::0:<UTIME>
 @authority:META:<FCGIENV_MIDDLEWARE>:<IDENDITY_HTTP_TRUSTED>:0:0:0:0:0:0::0:<UTIME>
-@state:META::<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
+@state:META:question2:<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 @question:TEXT:@answer:0:0:0:0:0:0:0::0:<UTIME>
 metaquestion:META:@answer:0:0:0:0:0:0:0::0:<UTIME>

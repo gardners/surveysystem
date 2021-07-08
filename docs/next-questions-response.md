@@ -1,10 +1,5 @@
 # Next questions response format
 
-PR #96 added `next_questions { unit }` (> v0.0.3)
-PR #334 added context fields (> v0.2.2)
-since PR #343 `next_questions { min_value, max_value, choices }` properties are included by default (> v0.2.2)
-PR #405 add `progress[]` property
-
 ```javascript
 {
 
@@ -29,6 +24,10 @@ PR #405 add `progress[]` property
 }
 ```
 
+## Session
+
+Every time next questions are being processed, a comma separated list of the next question ids will be stored inside the session header, see [**@state** header](sessions.md)
+
 ## nextQuestions Context (Python)
 
 The next_questions context allows the (python) controller to convey custom messages to the frontend.
@@ -51,8 +50,6 @@ def nextquestion(questions, answers, , **kwargs):
 ```
 
 ### Session context args (kwargs)
-
- (since #447)
 
  * `survey_id`: (str) survey id and hashed version - pattern: '<survey_id>/<hash>'
  * `session_id` (str) current session id

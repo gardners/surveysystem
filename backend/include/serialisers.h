@@ -21,10 +21,12 @@ int deserialise_question_type(char *field, int *s); // #451
 int serialise_question_type(int qt, char *out, int out_max_len); // #358
 int escape_string(char *in, char *out, int max_len);
 
+char *serialise_list_append_alloc(char *src, char *in, const char separator); // #482
+
 int dump_question(FILE *f, struct question *q);
 int dump_answer(FILE *f, struct answer *a);
 
-int serialiser_count_columns(char separator, char *line, size_t max_len);
+int serialiser_count_columns(char separator, char *line);
 
 // #461 deserialise a sequence of answers
 struct answer_list {
