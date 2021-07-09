@@ -952,6 +952,9 @@ struct answer_list *deserialise_answers(const char *body, enum answer_scope scop
     if (!body) {
       LOG_ERROR("body to parse is null");
     }
+    if (!strlen(body)) {
+      LOG_ERROR("body to parse is empty");
+    }
 
     list = calloc(1, sizeof(struct answer_list));
     if (!list) {

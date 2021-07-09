@@ -1001,6 +1001,18 @@ int main(int argc, char **argv) {
       free_answer_list(list);
     }
 
+    SECTION("multiline answers: deserialise_answers() - edge cases");
+
+    {
+      struct answer_list *list = deserialise_answers(NULL, ANSWER_SCOPE_FULL);
+      ASSERT(list == NULL, "NULL body: did not succeed", "");
+    }
+
+    {
+      struct answer_list *list = deserialise_answers("", ANSWER_SCOPE_FULL);
+      ASSERT(list == NULL, "EMPTY body: did not succeed", "");
+    }
+
     ////
     // SHA
     ////

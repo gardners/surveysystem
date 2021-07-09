@@ -5,9 +5,7 @@ definesurvey foo
 version 2
 Silly test survey updated
 without python
-multichoice:Select one of the following:Select one of the following:MULTICHOICE:0::-1:-1:-1:3:Yes,No,Maybe:
-question1:What is the answer to question 1?:What is the answer to question 1?:TEXT:0:I don't know:-1:-1:0:0::
-question2:How boring was question 1?:How boring was question 1?:TEXT:0:I don't know:-1:-1:0:0::
+question1:Question 1::TEXT:0::-1:-1:0:0::
 endofsurvey
 
 # Request creation of a  new session
@@ -17,16 +15,37 @@ request 200 /newsession?surveyid=foo
 extract_sessionid
 
 # Check that we have an empty session file created
-verify_session(skip_headers)
-foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
+verify_session
+foo/current
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@state:META:question1:<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
+endofsession
+
+request 200 /nextquestion?sessionid=$SESSION
+match_string {"status": 0, "message": "", "progress": [0, 1], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+# Check that we have open/nextquestions registered in @state
+verify_session
+foo/current
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@state:META:question1:<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
 endofsession
 
 request 200 /addanswer?sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0
+match_string {"status": 0, "message": "", "progress": [1, 1], "next_questions": []}
 
 # Check that we are offered the next question to answer
 
 # Make sure answer ends up in file
-verify_session(skip_headers)
-foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
+verify_session
+foo/current
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_FINISHED>:0:0:<UTIME>:0:0:0::0:<UTIME>
 question1:TEXT:Hello World:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
