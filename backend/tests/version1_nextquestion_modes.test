@@ -1,7 +1,8 @@
 @description Version 1 requires python nextquestion module
 
 #!---------------------
-#!Survey WITHOUT python
+#! Survey WITHOUT python
+#! #484 changed behaviour, next_questions are now queried already in /newsession
 #!---------------------
 
 # Create a dummy survey
@@ -16,25 +17,9 @@ endofsurvey
 # NO Python module
 
 # Request creation of a  new session
-request 200 /newsession?surveyid=without_python
+request 500 /newsession?surveyid=without_python
 
-# Get the session ID that newsession should have returned
-extract_sessionid
-
-# Check that we have an empty session file created
-verify_session(skip_headers)
-without_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
-endofsession
-
-# should not invoke python and return 500 misconfiguration error
-request 500 /addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0
-
-# Check that we are offered the next question to answer
-
-# Make sure answer ends up in file
-verify_session(skip_headers)
-without_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
-endofsession
+#! -- #484 removed request 500 /nextquestions test
 
 #!---------------------
 #!Survey WITH python

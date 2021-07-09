@@ -2,8 +2,9 @@
 
 # Create a dummy survey
 definesurvey foo
-version 1
+version 2
 Silly test survey updated
+without python
 question1:Question 1::TEXT:0::-1:-1:0:0::
 endofsurvey
 

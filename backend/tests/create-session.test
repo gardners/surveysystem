@@ -2,9 +2,10 @@
 
 # Create a dummy survey
 definesurvey foo
-version 1
+version 2
 Silly test survey updated
-question1:What is the answer to question 1?::TEXT:0:I don't know:-1:-1:0:0:
+without python
+question1:Question 1::TEXT:0::-1:-1:0:0::
 endofsurvey
 
 # Request creation of a  new session
@@ -14,6 +15,10 @@ request 200 /newsession?surveyid=foo
 extract_sessionid
 
 # Check that we have an empty session file created
-verify_session(skip_headers)
-foo/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+verify_session
+foo/current
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@state:META:question1:<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
 endofsession

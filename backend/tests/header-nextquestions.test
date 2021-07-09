@@ -26,7 +26,7 @@ foo/current
 @user:META::0:0:0:0:0:0:0::0:<UTIME>
 @group:META::0:0:0:0:0:0:0::0:<UTIME>
 @authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
-@state:META::<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
+@state:META:question1:<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
 endofsession
 
 #! -------

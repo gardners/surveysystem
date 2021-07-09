@@ -3,6 +3,7 @@
 # Create a dummy survey
 # XXX - In any test where we use python, we need to make sure we don't reuse any survey name
 # that appears in any othe test, else our python functions will be hanging around and will get used.
+
 definesurvey invalid_next_question_python
 version 1
 Silly test survey updated
@@ -25,21 +26,7 @@ def nextquestion(questions, answers, **kwargs):
 """
 endofpython
 
-# Request creation of a  new session
-request 200 /newsession?surveyid=invalid_next_question_python
+#! -- FAIL Request creation of a  new session (since #484 get_nextquestions() is queried)
+request 500 /newsession?surveyid=invalid_next_question_python
 
-# Get the session ID that newsession should have returned
-extract_sessionid
-
-# Check that we have an empty session file created
-verify_session(skip_headers)
-invalid_next_question_python/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
-endofsession
-
-# Ask for next question
-request 500 /nextquestion?sessionid=$SESSION
-
-# Check that we have not changed the session file
-verify_session(skip_headers)
-invalid_next_question_python/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
-endofsession
+#! -- #484 removed request 500 /nextquestions test
