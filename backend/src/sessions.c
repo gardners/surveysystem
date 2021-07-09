@@ -567,25 +567,29 @@ struct session *create_session(char *survey_id, char *session_id, struct session
     ses->state = SESSION_NEW;
 
     if (session_new_add_meta(ses, meta)) {
-      free_session(ses);
       LOG_ERRORV("Cannot write session meta '%s'", session_path);
     }
 
+    // #484 load survey into session so the callee can perform get_next_questions()
+    if(session_load_survey(ses)) {
+      LOG_ERRORV("Failed to load questions from survey '%s'", survey_id);
+    }
+
+    // save updated session
     if (save_session(ses)) {
-      free_session(ses);
       LOG_ERROR("save_session() failed");
     }
 
-
     LOG_INFOV("Created new session file '%s' for survey '%s'", session_path, survey_id);
+
   } while (0);
 
   if (retVal) {
     free_session(ses); // if not done before
     ses = NULL;
   }
-  return ses;
 
+  return ses;
 }
 
 /*
@@ -768,11 +772,13 @@ int dump_session(FILE *fp, struct session *ses) {
   return retVal;
 }
 
-/*
-  Load and deserialise the set of questions for the form corresponding to
-  this session.
+/**
+  * Load and deserialise the set of questions for the form corresponding to
+  * this session.
+  *
+  * #484 renamed and exposed to survey.h (load_survey_questions())
  */
-int load_survey_questions(struct session *ses) {
+int session_load_survey(struct session *ses) {
   int retVal = 0;
   FILE *f = NULL;
 
@@ -1002,7 +1008,7 @@ struct session *load_session(char *session_id) {
     }
 
     // Load survey
-    if (load_survey_questions(ses)) {
+    if (session_load_survey(ses)) {
       fclose(s);
       LOG_ERRORV("Failed to load questions from survey '%s'", survey_id);
     }
