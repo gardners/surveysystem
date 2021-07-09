@@ -275,7 +275,7 @@ struct nextquestions *get_next_questions(struct session *s, enum actions action,
       }
 
     } else {
-      LOG_ERRORV("Could not identify nextquestion mode, session contains unknown next_questions_flag. %d", s->nextquestions_flag);
+      LOG_ERRORV("Could not identify nextquestion mode, session contains unknown next_questions_flag '%d'", s->nextquestions_flag);
     }
 
     // #379 update state (finished)
