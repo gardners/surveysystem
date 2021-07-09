@@ -125,10 +125,12 @@ foo/b884bcb19954b245d8be53db2b266c4798dc742d
 @user:META::0:0:0:0:0:0:0::0:1596163402
 @group:META::0:0:0:0:0:0:0::0:1596163402
 @authority:META:127.0.0.1(8099):1:0:0:0:0:0:0::0:1596163402
-@state:META::1:0:0:1596163402:0:0:0::0:1596163402
+@state:META:question1:1:0:0:1596163402:0:0:0::0:1596163402
 ```
 
 The `<value>` field in `@state` header is set to `SESSION_NEW`, the session creation is recorded in field `time_begin`.
+
+An internal nextquestion query is performed (since #484) and the next_questions uid are stored in  the `<text>` field.
 
 Notes:
 
