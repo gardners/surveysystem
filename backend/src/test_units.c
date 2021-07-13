@@ -484,7 +484,6 @@ int main(int argc, char **argv) {
       ASSERT(text == NULL, "NULL src and NULL fragment", "");
     }
 
-
     {
       char *text = strdup("test");
       text = serialise_list_append_alloc(text, "", ',');
@@ -505,6 +504,45 @@ int main(int argc, char **argv) {
       free(text);
     }
 
+    SECTION("deserialise char* array: deserialise_list_alloc()");
+
+    {
+      char *line = "uid1,uid2,uid3";
+      size_t len;
+      char **list = deserialise_list_alloc(line, ',', &len);
+
+      ASSERT(len == 3, "list length 3 == %ld", len);
+      ASSERT_STR_EQ(list[0], "uid1", "list item 1");
+      ASSERT_STR_EQ(list[1], "uid2", "list item 2");
+      ASSERT_STR_EQ(list[2], "uid3", "list item 3");
+
+      for (size_t i = 0; i < len; i++) {
+          free(list[i]);
+      }
+      free(list);
+    }
+
+    {
+      char *line = "uid1";
+      size_t len;
+      char **list = deserialise_list_alloc(line, ',', &len);
+
+      ASSERT(len == 1, "list length 1 == %ld", len);
+      ASSERT_STR_EQ(list[0], "uid1", "list item 1");
+
+      free(list[0]);
+      free(list);
+    }
+
+    {
+      char *line = NULL;
+      size_t len;
+      char **list = deserialise_list_alloc(line, ',', &len);
+printf(" * computed len=%ld\n", len);
+      ASSERT(len == 0, "list length 0 == %ld", len);
+      ASSERT(list == NULL, "list is NULL", "");
+
+    }
     /* tests for #392 */
     SECTION("escape_string() tests, issue #392");
 
