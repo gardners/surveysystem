@@ -35,6 +35,7 @@ typedef void (*disp)(struct kreq *);
 
 static void fcgi_index(struct kreq *);
 static void fcgi_newsession(struct kreq *);
+static void fcgi_page_answers(struct kreq *);
 static void fcgi_addanswer(struct kreq *);
 static void fcgi_updateanswer(struct kreq *);
 static void fcgi_nextquestion(struct kreq *);
@@ -50,6 +51,7 @@ static enum khttp sanitise_page_request(const struct kreq *req);
 static const disp disps[PAGE__MAX] = {
     fcgi_index,
     fcgi_newsession,
+    fcgi_page_answers,
     fcgi_addanswer,
     fcgi_updateanswer,
     fcgi_nextquestion,
@@ -64,6 +66,7 @@ static const disp disps[PAGE__MAX] = {
 static const char *const pages[PAGE__MAX] = {
     "index",
     "newsession",
+    "answers",
     "addanswer",
     "updateanswer",
     "nextquestion",
@@ -209,6 +212,8 @@ static void fcgi_newsession(struct kreq *req) {
 
   struct session_meta *meta = NULL;
   struct session *ses = NULL;
+  struct nextquestions *nq = NULL;
+  enum actions action = ACTION_SESSION_NEW;
 
   do {
 
@@ -216,6 +221,7 @@ static void fcgi_newsession(struct kreq *req) {
 
     char *survey_id = fcgi_request_get_field_value(KEY_SURVEYID, req);
     char *session_id = fcgi_request_get_field_value(KEY_SESSIONID, req); // POST only!
+
     char created_sessid[40] = { '\0' };
 
     if (validate_survey_id(survey_id)) {
@@ -282,6 +288,18 @@ static void fcgi_newsession(struct kreq *req) {
       LOG_ERROR("create_session() failed");
     }
 
+    // # 461 store nextquestions after creating session
+    nq = get_next_questions(ses, action, 0);
+    if (!nq) {
+      http_json_error(req, KHTTP_500, "Unable to get next questions.");
+      LOG_ERROR("get_next_questions() failed");
+    }
+
+    if (save_session(ses)) {
+      http_json_error(req, KHTTP_500, "Unable to update session.");
+      LOG_ERROR("save_session() failed");
+    }
+
     // reply
     http_open(req, KHTTP_200, KMIME_TEXT_PLAIN, ses->consistency_hash);
     enum kcgi_err er = khttp_puts(req, session_id);
@@ -296,6 +314,141 @@ static void fcgi_newsession(struct kreq *req) {
   // destruct
   free_session_meta(meta);
   free_session(ses);
+  free_next_questions(nq);
+
+  (void)retVal;
+  return;
+}
+
+/**
+ * #260, #461
+ */
+static void fcgi_page_answers(struct kreq *req) {
+  int retVal = 0;
+  enum khttp status;
+
+  struct session *ses = NULL;
+  struct answer *ans = NULL;
+  struct nextquestions *nq = NULL;
+  char *uids = NULL;
+
+  enum actions action = ACTION_SESSION_ADDANSWER;
+  enum kmethod methods[2] = { KMETHOD_POST, KMETHOD_PUT };
+
+  do {
+
+    LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
+
+    // validate allowed methods #260, #461
+    status = fcgi_request_validate_method(req, methods, 1);
+    if (status != KHTTP_200) {
+      http_open(req, status, KMIME_TEXT_PLAIN, NULL);
+      LOG_ERRORV("validating request method (KMETHOD: %d) failed, status %d != KHTTP_200", req->method, KHTTP_200, status);
+    }
+
+    ses = fcgi_request_load_session(req);
+    if (!ses) {
+      http_json_error(req, KHTTP_400, "Could not load specified session. Does it exist?");
+      LOG_ERROR("Could not load session");
+    }
+
+    /*
+     FILE *fp = open_log("session.log");
+     dump_session(fp, ses);
+    */
+
+    // validate request against session meta (#363)
+    status = fcgi_request_validate_meta_session(req, ses);
+    if (status != KHTTP_200) {
+      http_json_error(req, status, "Invalid idendity provider, check app configuration");
+      LOG_ERRORV("validate_session_meta() returned status %d != (%d)", KHTTP_200, status);
+    }
+
+    // validate requested action against session current state (#379)
+    char reason[1024];
+    if (validate_session_action(action, ses, reason, 1024)) {
+      http_json_error(req, KHTTP_400, reason);
+      LOG_ERROR("Session action validation failed");
+    }
+
+    // see kcgi/child.c fn kworker_child_body()
+    char *value = NULL;
+    value = fcgi_request_get_field_value(KEY_ANSWER, req);
+    if (!value) {
+      LOG_INFO("No key 'answer' found, checking for anonymous data body");
+      value = fcgi_request_get_field_value(KEY__MAX, req);
+    }
+
+    if(!value) {
+      LOG_ERROR("Could find answers value (empty)");
+    }
+
+    struct answer_list *list = deserialise_answers(value, ANSWER_SCOPE_PUBLIC);
+    if (!list) {
+      http_json_error(req, KHTTP_400, "Could not load answers");
+      LOG_ERROR("Could not load answers");
+    }
+
+    for (size_t i = 0; i < list->len; i++) {
+      uids = serialise_list_append_alloc(uids, list->answers[i]->uid, ',');
+    }
+
+    int match = strcmp(
+      (uids) ? uids : "<null answers>",
+      (ses->next_questions) ? ses->next_questions : "<null next_questions>"
+    );
+
+    if (match != 0) {
+        http_json_error(req, KHTTP_400, "Answers don't match previous questions (extact order). Retrieve required questions by querying /nextquestions");
+        LOG_ERRORV("Answers don't match next_questions: '%.50s' != '%.50s'", uids, ses->next_questions);
+    }
+
+    int affected_count = 0;
+    for (int i = 0; i < list->len; i++) {
+      if (validate_session_add_answer(ses, list->answers[i])) {
+        http_json_error(req, KHTTP_400, "Answer is invalid");
+        LOG_ERROR("Answer validation failed");
+        break;
+      }
+
+      // #445 count affected answers
+      affected_count += session_add_answer(ses, list->answers[i]);
+      if (affected_count < 0) {
+        http_json_error(req, KHTTP_400, "Invalid answer, could not add to session.");
+        LOG_ERROR("session_add_answer() failed.");
+        break;
+      }
+    } // end for
+
+    // #332 next_questions data struct
+    nq = get_next_questions(ses, action, affected_count);
+    if (!nq) {
+      http_json_error(req, KHTTP_500, "Unable to get next questions.");
+      LOG_ERROR("get_next_questions() failed");
+    }
+
+    // joerg: break if session could not be updated
+    if (save_session(ses)) {
+      http_json_error(req, KHTTP_500, "Unable to update session.");
+      LOG_ERROR("save_session failed()");
+    }
+
+    // All ok, so tell the caller the next question to be answered
+    // #373, separate response handler for nextquestions
+    if (fcgi_response_nextquestion(req, ses, nq)) {
+      http_json_error(req, KHTTP_500, "Could not load next questions for specified session.");
+      LOG_ERROR("Could not load next questions for specified session");
+    }
+
+    LOG_INFO("Leaving page handler.");
+
+  } while (0);
+
+  // destruct
+  freez(uids);
+  free_session(ses);
+  free_answer(ans);
+  free_next_questions(nq);
 
   (void)retVal;
   return;

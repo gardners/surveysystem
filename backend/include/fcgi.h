@@ -8,13 +8,13 @@
 #define X_HEADER_MW_GROUP "X-SurveyProxy-Auth-Group"
 
 // fcgi_main.c
-
 enum key { KEY_SURVEYID, KEY_SESSIONID, KEY_QUESTIONID, KEY_ANSWER, KEY__MAX };
 
 enum page {
   PAGE_INDEX, // #389 add root page
   PAGE_NEWSESSION,
   PAGE_ADDANSWER,
+  PAGE_ANSWERS, // #260, #461
   PAGE_UPDATEANSWER,
   PAGE_NEXTQUESTION,
   PAGE_DELANSWER,
@@ -31,6 +31,7 @@ enum page {
 struct session_meta *fcgi_request_parse_meta(struct kreq *req);
 enum khttp fcgi_request_validate_meta_kreq(struct kreq *req, struct session_meta *meta);
 enum khttp fcgi_request_validate_meta_session(struct kreq *req, struct session *ses);
+enum khttp fcgi_request_validate_method(struct kreq *req, enum kmethod allowed[], size_t length); // #260, #461
 
 char *fcgi_request_get_field_value(enum key field, struct kreq *req);
 struct answer *fcgi_request_load_answer(struct kreq *req);

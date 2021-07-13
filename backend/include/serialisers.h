@@ -22,6 +22,7 @@ int serialise_question_type(int qt, char *out, int out_max_len); // #358
 int escape_string(char *in, char *out, int max_len);
 
 char *serialise_list_append_alloc(char *src, char *in, const char separator); // #482
+char **deserialise_list_alloc(char *in, const char separator, size_t *len); // #482
 
 int dump_question(FILE *f, struct question *q);
 int dump_answer(FILE *f, struct answer *a);
