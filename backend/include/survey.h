@@ -275,6 +275,7 @@ int get_analysis(struct session *s, const char **output);
 int create_session_id(char *session_id_out, int max_len);
 struct session *create_session(char *survey_id, char *session_id, struct session_meta *meta);
 struct session *load_session(char *session_id);
+int session_load_survey(struct session *ses);
 int delete_session(char *session_id);
 int save_session(struct session *s);
 int session_add_answer(struct session *s, struct answer *a);

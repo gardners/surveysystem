@@ -773,10 +773,10 @@ int dump_session(FILE *fp, struct session *ses) {
 }
 
 /**
-  * Load and deserialise the set of questions for the form corresponding to
-  * this session.
-  *
-  * #484 renamed and exposed to survey.h (load_survey_questions())
+ * Load and deserialise the set of questions for the form corresponding to
+ * this session.
+ *
+ * #484 renamed and exposed to survey.h (load_survey_questions())
  */
 int session_load_survey(struct session *ses) {
   int retVal = 0;
