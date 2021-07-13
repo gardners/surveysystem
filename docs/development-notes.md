@@ -1,6 +1,6 @@
-# Backed development notes
+# Development notes
 
-## Adding a new question type
+## 1. Adding a new question type
 
 ### Backend
 
@@ -19,4 +19,18 @@
 2. parser: Answer.js: `Answer.getValue()`
 3. add component
 4. register component: Question.jsx  `getComponentByType()`
+
+## 2. Adding answers workflow
+
+* (fcgi) validate req->method
+* load session
+* validate session->meta against request (user)
+* validate session against request action (state checks)
+* deserialise request answer data
+* validate answer against session->next_questions
+* add answers to session
+* get next questions and store in session
+* save session
+* return next questions
+
 
