@@ -153,6 +153,7 @@ def serialise_answer(answer, isBackend=True):
         model.pop('type')
         model.pop('flags')
         model.pop('stored')
+        model.pop('unit') # unit removed from public scope in #448
 
     for key in model:
         model[key] = answer[key]
