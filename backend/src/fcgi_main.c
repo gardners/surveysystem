@@ -383,6 +383,7 @@ static void fcgi_page_answers(struct kreq *req) {
       LOG_ERROR("Could find answers value (empty)");
     }
 
+    // load answers from request
     struct answer_list *list = deserialise_answers(value, ANSWER_SCOPE_PUBLIC);
     if (!list) {
       http_json_error(req, KHTTP_400, "Could not load answers");
@@ -399,8 +400,8 @@ static void fcgi_page_answers(struct kreq *req) {
     );
 
     if (match != 0) {
-        http_json_error(req, KHTTP_400, "Answers don't match previous questions (extact order). Retrieve required questions by querying /nextquestions");
-        LOG_ERRORV("Answers don't match next_questions: '%.50s' != '%.50s'", uids, ses->next_questions);
+      http_json_error(req, KHTTP_400, "Answers don't match previous questions (extact order). Retrieve required questions by querying /nextquestions");
+      LOG_ERRORV("Answers don't match next_questions: '%.50s' != '%.50s'", uids, ses->next_questions);
     }
 
     int affected_count = 0;
