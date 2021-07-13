@@ -119,6 +119,8 @@ int do_newsession(char *survey_id) {
   int retVal = 0;
 
   struct session *ses = NULL;
+  struct nextquestions *nq = NULL;
+  enum actions action = ACTION_SESSION_NEW;
 
   do {
     LOG_INFO("Entering newsession handler.");
@@ -140,6 +142,16 @@ int do_newsession(char *survey_id) {
     if (!ses) {
       fprintf(stderr, "failed to create session.\n");
       LOG_ERROR("Create session failed.");
+    }
+
+    // # 461 store nextquestions after creating session
+    nq = get_next_questions(ses, action, 0);
+    if (!nq) {
+      LOG_ERROR("get_next_questions() failed");
+    }
+
+    if (save_session(ses)) {
+      LOG_ERROR("save_session() failed");
     }
 
     printf("%s\n", session_id);
