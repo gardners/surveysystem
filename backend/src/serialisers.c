@@ -500,6 +500,45 @@ char *serialise_list_append_alloc(char *src, char *in, const char separator) {
   return src;
 }
 
+
+/**
+ * deserialises a string into a char** array by a given separator.
+ */
+char **deserialise_list_alloc(char *in, const char separator, size_t *len) {
+  int retVal = 0;
+  char **list = NULL;
+
+  do {
+    *(len) = 0; // set length to zero before handling input
+
+    if(!in) {
+      break;
+    }
+
+    int count = serialiser_count_columns(',', in);
+
+    list = malloc(count * sizeof(char*));
+    if (!list) {
+      LOG_ERROR("error allocating memory for char** list ptr");
+    }
+    char *sav;
+    char *line = parse_line(in, separator, &sav);
+
+    while(line != NULL) {
+      list[*(len)] = line; // allocated already
+      // next
+      *(len)= *(len) + 1;
+      line = parse_line(NULL, separator, &sav);
+    }
+  } while (0);
+
+  if (retVal) {
+      return NULL;
+  }
+  return list;
+}
+
+
 /*
   Top-level function for serialising a question that has been passed in
   in a struct question.  It uses the various macros defined above to
