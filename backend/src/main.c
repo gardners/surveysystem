@@ -276,6 +276,16 @@ int do_addanswer(char *session_id, char *serialised_answer) {
       LOG_ERROR("deserialise_answer() failed.");
     }
 
+    // #482 validate against ses->next_questions
+    int match = strcmp(
+      (ans->uid) ?  ans->uid : "<null answers>",
+      (ses->next_questions) ? ses->next_questions : "<null next_questions>"
+    );
+
+    if (match != 0) {
+      LOG_ERRORV("Answers don't match next_questions: '%.50s' != '%.50s'", ans->uid, ses->next_questions);
+    }
+
     if (validate_session_add_answer(ses, ans)) {
       fprintf(stderr, "Answer is invalid\n");
       LOG_ERROR("Answer validation failed");
