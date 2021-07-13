@@ -169,6 +169,26 @@ struct session_meta *fcgi_request_parse_meta(struct kreq *req) {
 }
 
 /**
+ * Validates incoming kcgi request against a set of allowed methods
+ * pass [KMETHOD__MAX]  for allowing all
+ */
+enum khttp fcgi_request_validate_method(struct kreq *req, enum kmethod allowed[], size_t length) {
+
+  for (size_t i = 0; i < length; i++) {
+    if (allowed[i] == KMETHOD__MAX) {
+      // allow all
+      return KHTTP_200;
+    }
+
+    if (allowed[i] == req->method) {
+      return KHTTP_200;
+    }
+  }
+
+  return KHTTP_405;
+}
+
+/**
  * Validates incoming kcgi request against server config, using previously parsed session meta
  * #363
  */
@@ -287,14 +307,17 @@ enum khttp fcgi_request_validate_meta_session(struct kreq *req, struct session *
 }
 
 /**
- *  fetch the field value (param) for a given key from kreq.fieldmap
+ * Fetch the field value (param) for a given key from kreq.fieldmap or
+ * fetch anonymous body from req.fields if field is KEY__MAX (since #461)
  */
 char *fcgi_request_get_field_value(enum key field, struct kreq *req) {
-    struct kpair *pair = req->fieldmap[field];
-    if (!pair) {
-      return NULL;
-    }
-    return pair->val;
+  // man khttp_parse: struct kpair struct kpair *fields
+  if (field == KEY__MAX) {
+    return (req->fieldsz) ? req->fields[0].val : NULL;
+  }
+  // man khttp_parse: struct kpair **fieldmap
+  struct kpair *pair = req->fieldmap[field];
+  return (pair) ? pair->val : NULL;
 }
 
 /**
