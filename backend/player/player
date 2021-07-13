@@ -166,7 +166,7 @@ def response(res, json=True):
     return res.text
 
 
-def newsession(survey_id):
+def req_newsession(survey_id):
     params = {
         'surveyid': survey_id
     }
@@ -175,7 +175,7 @@ def newsession(survey_id):
     return response(res, False)
 
 
-def nextquestion(session_id):
+def req_nextquestion(session_id):
     params = {
         'sessionid': session_id,
     }
@@ -184,17 +184,22 @@ def nextquestion(session_id):
     return response(res)
 
 
-def addanswer(session_id, answer):
+def req_answers(session_id, answers):
     params = {
         'sessionid': session_id,
-        'answer': answer,
     }
+    headers= {
+        'Content-Type': 'text/csv',
+    }
+    data = '\n'.join(answers)
 
-    res = requests.get('{}/addanswer'.format(Config['uri']), params=params)
+    res = requests.post('{}/answers'.format(Config['uri']), params=params, headers=headers, data=data)
+    print(res.request.headers)
+    print(res.request.body)
     return response(res)
 
 
-def delprevanswer(session_id, etag):
+def req_delprevanswer(session_id, etag):
     params = {
         'sessionid': session_id,
     }
@@ -207,7 +212,7 @@ def delprevanswer(session_id, etag):
     return response(res)
 
 
-def analyse(session_id):
+def req_analyse(session_id):
     params = {
         'sessionid': session_id,
     }
@@ -224,7 +229,7 @@ def nextquestions(prev):
     res = None
 
     State['step'] += 1
-
+    answers = []
     for question in prev['next_questions']:
 
         qid = question['id']
@@ -232,11 +237,12 @@ def nextquestions(prev):
         value = Scenario.get(normalise_uid(qid))
         answer = set_answer(qid, qtype, value)
         serialised = serialise_answer(answer, False)
+        answers.append(serialised)
 
         log_answer(serialised)
         State['count'] += 1
 
-        res = addanswer(State['session_id'], serialised)
+    res = req_answers(State['session_id'], answers)
 
     log_nextquestions(','.join(map(lambda q: q['id'], res['next_questions'])))
 
@@ -253,7 +259,7 @@ def delprevanswers(prev):
     State['step'] -= 1
 
     etag = State['etag']
-    res = delprevanswer(State['session_id'], etag)
+    res = req_delprevanswer(State['session_id'], etag)
 
     log_delprevanswers(','.join(map(lambda q: q['id'], res['next_questions'])), etag)
 
@@ -270,14 +276,15 @@ def delprevanswers(prev):
 
 
 # create session
-State['session_id'] = newsession(Config['survey_id'])
+State['session_id'] = req_newsession(Config['survey_id'])
+State['session_id'] = req_newsession(Config['survey_id'])
 State['session_state'] = 'SESSION_NEW'
 
 print('START: session \'{}\''.format(State['session_id']))
 print('------------\n')
 
 # initialise
-res = nextquestion(State['session_id'])
+res = req_nextquestion(State['session_id'])
 State['session_state'] = 'SESSION_RUNNING'
 State['first_next_questions'] = str(get_ids(res)) # mark first response for revere run
 
@@ -329,7 +336,7 @@ while choice not in options.keys():
 if choice.lower() == 'a':
 
     # analyse
-    analysis = analyse(State['session_id'])
+    analysis = req_analyse(State['session_id'])
     State['session_state'] = 'SESSION_ANALYSE'
     log_analysis(analysis)
 
@@ -342,7 +349,7 @@ if choice.lower() == 'a':
 elif choice.lower() == 'd':
 
     # delprevanswer
-    res = delprevanswer(State['session_id'], State['etag'])  # initialise
+    res = req_delprevanswer(State['session_id'], State['etag'])  # initialise
     State['session_state'] = 'SESSION_RUNNING'
     res = delprevanswers(res)  # run
 
