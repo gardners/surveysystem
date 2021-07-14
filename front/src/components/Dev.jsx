@@ -135,9 +135,11 @@ Auth.propTypes = {
     className: PropTypes.string,
 };
 
-export default {
+// @see eslint import/no-anonymous-default-export
+const ex = {
     Pretty,
     SurveyBar,
     Question,
     Auth,
 };
+export default ex;

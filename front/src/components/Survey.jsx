@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { Redirect } from 'react-router';
 
 // data
 import Api from '../Api';
@@ -312,7 +311,6 @@ class Survey extends Component {
         const hasAnswers = answersCount > 0;
         const hasAllAnswers = (answersCount === next_questions.length);
 
-        const isFirst = session.isFirst();
         const isCompleted = session.isCompleted();
 
         return (

@@ -62,4 +62,6 @@ const itemPropTypes = function () {
     });
 };
 
-export default { getAll, getById, itemPropTypes };
+// @see eslint import/no-anonymous-default-export
+const ex = { getAll, getById, itemPropTypes };
+export default ex;

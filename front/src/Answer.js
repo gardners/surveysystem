@@ -527,7 +527,6 @@ const getValue = function(question, answer) {
         case 'SINGLESELECT':
         case 'DIALOG_DATA_CRAWLER':
         case 'SHA1_HASH':
-        case 'DIALOG_DATA_CRAWLER':
         case 'UUID': // TODO no component
             return answer.text;
         default:
