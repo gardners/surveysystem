@@ -207,7 +207,7 @@ class Survey extends Component {
      * @param {Event}
      * @returns {void}
      */
-    handleUpdateAnswers(e) {
+    handleAddAnswers(e) {
         e && e.preventDefault();
 
         const { session, answers, errors } = this.state;
@@ -231,8 +231,7 @@ class Survey extends Component {
 
         const csvFragments = question_ids.map(id => answers[id]);
 
-        Api.updateAnswers_SEQUENTIAL(session.session_id, csvFragments)
-        .then(responses => responses.pop()) // last next_questions
+        Api.addAnswers(session.session_id, csvFragments)
         .then(response => session.merge(response))
         .then(() => save_cached_session(session))
         .then(() => this.setState({
@@ -393,7 +392,7 @@ class Survey extends Component {
                             <SurveyButtons
                                 className="list-group-item pt-4 pb-4"
                                 handlePrev={ this.handleDelAnswer.bind(this) }
-                                handleNext={ this.handleUpdateAnswers.bind(this) }
+                                handleNext={ this.handleAddAnswers.bind(this) }
 
                                 hasQuestions={ hasQuestions }
                                 hasErrors={ hasErrors }
