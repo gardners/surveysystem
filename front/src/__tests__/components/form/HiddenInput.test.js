@@ -16,9 +16,14 @@ const question = {
     default_value: 'teststring',
 };
 
-const mockCallback = jest.fn((element, question, value) => {
-    return value;
-});
+let _callbacks = 0;
+let _args = [];
+
+const mockCallback = (element, question, value) => {
+    _args = [element, question, value];
+    _callbacks++;
+    return question.default_value;
+};
 
 beforeAll(() => {
     component = renderer.create(
@@ -35,13 +40,14 @@ it('renders without crashing', () => {
 
 it('handleChange callback is invoked on mount', () => {
     // is called once
-    expect(mockCallback.mock.calls.length).toBe(1);
+    expect(_callbacks).toBe(1);
+    // args
+    expect(_args.length).toBe(3);
+
     // first argument is the question
-    expect(mockCallback.mock.calls[0][1]).toEqual(expect.objectContaining(question));
+    expect(_args[1]).toEqual(expect.objectContaining(question));
     // second argument is the defaultValue as value
-    expect(mockCallback.mock.calls[0][2]).toBe("teststring");
-    // returns defaultValue as value
-    expect(mockCallback.mock.results[0].value).toBe("teststring");
+    expect(_args[2]).toBe("teststring");
 });
 
 it('form element renders default value', () => {

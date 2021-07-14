@@ -15,14 +15,14 @@ class HiddenInput extends Component {
     }
 
     componentDidMount() {
-        const { question } = this.props;
+        const { question, handleChange } = this.props;
         const value = question.default_value || 'visited';
         this.setState({
             value,
         });
 
         // ! immediately invoke answer callback, no value and validation! handleChange is invoked immediately with defaultvalue
-        this.props.handleChange(null, question, value);
+        handleChange(null, question, value);
     }
 
     render() {

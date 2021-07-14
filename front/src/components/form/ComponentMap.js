@@ -23,7 +23,8 @@ import DaytimeQuestionGroup from './DaytimeQuestionGroup';
 import Duration24Input from './Duration24Input';
 import DialogDataCrawler from '../form/DialogDataCrawler';
 
-export default {
+// @see eslint import/no-anonymous-default-export
+const ex = {
     'DeviceLocation': DeviceLocation,
     'PeriodRangeSlider': PeriodRangeSlider,
     'DayTimeSlider': DayTimeSlider,
@@ -44,3 +45,4 @@ export default {
     'Duration24Input': Duration24Input,
     'DialogDataCrawler': DialogDataCrawler,
 };
+export default ex;

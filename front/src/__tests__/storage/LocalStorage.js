@@ -1,5 +1,4 @@
 import Storage from '../../storage/LocalStorage';
-import 'jest-localstorage-mock';
 
 const KEY = '__test__';
 

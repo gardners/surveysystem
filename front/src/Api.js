@@ -32,12 +32,14 @@ class ApiError extends Error {
  * Constructs default request headers
  * @returns {object}
  */
-const requestHeaders = function() {
-    const headers = {};
+const requestHeaders = function(headers) {
+    headers = headers || {};
+
     // add consistency header
-    headers['If-Match'] = localStorage.getItem('ss_consinstency_hash');
-    // merge in oauth headers
-    request_headers(headers);
+    Object.assign(headers, {
+        'If-Match': localStorage.getItem('ss_consinstency_hash')
+    }, request_headers());
+
     return headers;
 };
 
@@ -288,32 +290,38 @@ const Api = {
     },
 
     /**
-     * Send multiple answers to current questions and receive next question(s)
+     * Delete answer for a specified question id and receive next question(s)
      * @param {string} session_id
-     * @param {[string]} array of serialized answers
+     * @param {string} question_id
      * @returns {Promise} deserialized json including next questions
      */
-    updateAnswers: function(session_id, answers) {
-        return Promise.all(
-            answers.map(fragment => Api.updateAnswer(session_id, fragment))
-        )
-    },
+    addAnswers: function(session_id, answers) {
+        const uri = url('/answers', {
+            'sessionid': session_id,
+        });
 
-    /**
-     * Send multiple answers to current questions and receive next question(s)
-     * @param {string} session_id
-     * @param {[string]} array of serialized answers
-     * @returns {Promise} deserialized json including next questions
-     */
-    updateAnswers_SEQUENTIAL: function(session_id, answers, responses = []) {
-        const next = responses.length;
-        return Api.updateAnswer(session_id, answers[next])
+        const opts =  {
+            method: 'POST',
+            headers: requestHeaders({
+                'Content-Type': 'text/csv',
+            }),
+            signal,
+            body: answers.join('\n'),
+        };
+
+        return fetch(uri, opts)
             .then((response) => {
-                responses.push(response);
-                if (responses.length < answers.length) {
-                    return Api.updateAnswers_SEQUENTIAL(session_id, answers, responses);
+                if (!response.ok) {
+                    return responseError(response);
                 }
-                return responses;
+                cacheResponse(response);
+                return response.json();
+            })
+            .catch((error) => {
+                if(error && error.name === 'AbortError') {
+                    return;
+                }
+                throw error;
             });
     },
 
