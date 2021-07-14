@@ -139,11 +139,9 @@ const exit_authorize = function() {
  * Should the access token verification fail the function will trigger authorization workflow and exits
  * @returns {object}
  */
-const request_headers = function(headers) {
-    headers = headers || {};
-
+const request_headers = function() {
     if(!is_protected()) {
-        return headers;
+        return {};
     }
 
     if(!verify_token()) {
@@ -152,11 +150,9 @@ const request_headers = function(headers) {
     }
 
     const access_token = LocalStorage.get('ss_access_token');
-    Object.assign(headers, {
+    return  {
         Authorization: `Bearer ${access_token}`,
-    });
-
-    return headers;
+    };
 };
 
 /**
