@@ -211,7 +211,7 @@ int get_next_questions_generic(struct session *ses, struct nextquestions *nq, en
       if (index >= ses->question_count - 1) {
         nq->progress[0] = ses->question_count;
         nq->progress[1] = ses->question_count;
-        break;
+        break; // jumps to return
       }
       // next question
       index++;

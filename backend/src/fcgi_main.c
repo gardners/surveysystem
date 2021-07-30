@@ -405,21 +405,27 @@ static void fcgi_page_answers(struct kreq *req) {
     }
 
     int affected_count = 0;
+    int error = 0;
+
     for (int i = 0; i < list->len; i++) {
       if (validate_session_add_answer(ses, list->answers[i])) {
+        error = 1;
         http_json_error(req, KHTTP_400, "Answer is invalid");
         LOG_ERROR("Answer validation failed");
-        break;
       }
 
       // #445 count affected answers
       affected_count += session_add_answer(ses, list->answers[i]);
       if (affected_count < 0) {
+        error = 1;
         http_json_error(req, KHTTP_400, "Invalid answer, could not add to session.");
         LOG_ERROR("session_add_answer() failed.");
-        break;
       }
     } // end for
+
+    if (error) {
+      break;
+    }
 
     // #332 next_questions data struct
     nq = get_next_questions(ses, action, affected_count);
@@ -1067,7 +1073,6 @@ static void fcgi_analyse(struct kreq *req) {
     if (!ses) {
       http_json_error(req, KHTTP_400, "Could not load specified session. Does it exist?");
       LOG_ERROR("Could not load session");
-      break;
     }
 
     // validate request against session meta (#363)

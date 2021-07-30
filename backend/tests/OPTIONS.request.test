@@ -24,14 +24,14 @@ endofsurvey
 #! - PASS /index
 #! ------
 
-request 200 /index OPTIONS
+request 200 OPTIONS /index
 match_string <empty>
 
 #! ------
 #! - PASS /newsession - no session created
 #! ------
 
-request 200 /newsession?surveyid=foo OPTIONS
+request 200 OPTIONS /newsession?surveyid=foo
 match_string <empty>
 verify_sessionfiles_count 0
 
@@ -49,22 +49,10 @@ endofsession
 verify_sessionfiles_count 1
 
 #! ------
-#! - PASS /addanswer - no answer added
+#! - PASS /answers - no answer added
 #! ------
 
-request 200 /addanswer?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&answer=question2:Answer+2:0:0:0:0:0:0:0 OPTIONS
-match_string <empty>
-
-verify_session(skip_headers)
-foo/current
-question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
-endofsession
-
-#! ------
-#! - PASS /updateanswer - no answer added
-#! ------
-
-request 200 /updateanswer?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&answer=question2:Answer+2:0:0:0:0:0:0:0 OPTIONS
+request 200 OPTIONS /answers?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&answer=question2:Answer+2:0:0:0:0:0:0:0
 match_string <empty>
 
 verify_session(skip_headers)
@@ -76,14 +64,14 @@ endofsession
 #! - PASS /nextquestion
 #! ------
 
-request 200 /nextquestion?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901 OPTIONS
+request 200 OPTIONS /nextquestion?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
 match_string <empty>
 
 #! ------
 #! - PASS /delanswer - no answer deleted
 #! ------
 
-request 200 /delanswer?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&questionid=question1 OPTIONS
+request 200 OPTIONS /delanswer?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&questionid=question1
 match_string <empty>
 
 verify_session(skip_headers)
@@ -95,7 +83,7 @@ endofsession
 #! - PASS /delprevanswer - no answer deleted, no checksum required
 #! ------
 
-request 200 /delprevanswer?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901 OPTIONS
+request 200 OPTIONS /delprevanswer?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
 match_string <empty>
 
 verify_session(skip_headers)
@@ -107,7 +95,7 @@ endofsession
 #! - PASS /delsession - no session deleted
 #! ------
 
-request 200 /delsession?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901 OPTIONS
+request 200 OPTIONS /delsession?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
 match_string <empty>
 
 verify_session(skip_headers)
@@ -119,19 +107,19 @@ endofsession
 #! - PASS /accesstest
 #! ------
 
-request 200 /accesstest OPTIONS
+request 200 OPTIONS /accesstest
 match_string <empty>
 
 #! ------
 #! - PASS /fastcgitest
 #! ------
 
-request 200 /fastcgitest OPTIONS
+request 200 OPTIONS /fastcgitest
 match_string <empty>
 
 #! ------
 #! - PASS /analyse
 #! ------
 
-request 200 /analyse?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901 OPTIONS
+request 200 OPTIONS /analyse?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
 match_string <empty>

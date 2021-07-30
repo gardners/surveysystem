@@ -9,7 +9,7 @@ question1:Question 1::TEXT:0::-1:-1:0:0::
 endofsurvey
 
 # Request creation of a  new session
-request 200 /newsession?surveyid=foo
+request 200 GET /newsession?surveyid=foo
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -23,7 +23,7 @@ foo/current
 @state:META:question1:<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
 endofsession
 
-request 200 /nextquestion?sessionid=$SESSION
+request 200 GET /nextquestion?sessionid=<session_id>
 match_string {"status": 0, "message": "", "progress": [0, 1], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 # Check that we have open/nextquestions registered in @state
@@ -35,7 +35,7 @@ foo/current
 @state:META:question1:<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
 endofsession
 
-request 200 /addanswer?sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0
+request 200 POST /answers?sessionid=<session_id>&answer=question1:Hello+World:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [1, 1], "next_questions": []}
 
 # Check that we are offered the next question to answer

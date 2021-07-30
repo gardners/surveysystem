@@ -13,7 +13,7 @@ question2:Question 2::TEXT:0::-1:-1:0:0::
 question3:Question 3::TEXT:0::-1:-1:0:0::
 endofsurvey
 
-request proxy 200 /newsession?surveyid=foo curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 200 GET /newsession?surveyid=foo --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 extract_sessionid
 
 # ... internal check if prev directive worked
@@ -25,12 +25,12 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 @state:META:question1:<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
 endofsession
 
-#!------- nextquestion  does not care about headers and returns first question
-request proxy 200 /nextquestion?sessionid=$SESSION curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+#!------- /nextquestion  does not care about headers and returns first question
+request proxy 200 GET /nextquestion?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 match_string {"status": 0, "message": "", "progress": [0, 3], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
-#!------- addanswer adds answer to first question and leaves headers untouched
-request proxy 200 /addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0 curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+#!------- /answers adds answer to first question and leaves headers untouched
+request proxy 200 POST /answers?sessionid=<session_id>&answer=question1:Answer+1:0:0:0:0:0:0:0 --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 match_string {"status": 0, "message": "", "progress": [1, 3], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 verify_session
@@ -42,17 +42,11 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
-#!------- trying to add header question should fail (/addanswer)
-request proxy 400 /addanswer?sessionid=$SESSION&answer=@user:overwriting:0:0:0:0:0:0:0 curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
-request proxy 400 /addanswer?sessionid=$SESSION&answer=@group:overwriting:0:0:0:0:0:0:0 curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
-request proxy 400 /addanswer?sessionid=$SESSION&answer=@authority:overwriting:0:0:0:0:0:0:0 curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
-request proxy 400 /addanswer?sessionid=$SESSION&answer=@aclosed::1:0:0:0:0:0:0 curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
-
-#!------- trying to add header question should fail (/updateanswer)
-request proxy 400 /updateanswer?sessionid=$SESSION&answer=@user:overwriting:0:0:0:0:0:0:0 curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
-request proxy 400 /updateanswer?sessionid=$SESSION&answer=@group:overwriting:0:0:0:0:0:0:0 curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
-request proxy 400 /updateanswer?sessionid=$SESSION&answer=@authority:overwriting:0:0:0:0:0:0:0 curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
-request proxy 400 /updateanswer?sessionid=$SESSION&answer=@aclosed::1:0:0:0:0:0:0 curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+#!------- trying to add header question should fail (/answers)
+request proxy 400 POST /answers?sessionid=<session_id>&answer=@user:overwriting:0:0:0:0:0:0:0 --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 400 POST /answers?sessionid=<session_id>&answer=@group:overwriting:0:0:0:0:0:0:0 --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 400 POST /answers?sessionid=<session_id>&answer=@authority:overwriting:0:0:0:0:0:0:0 --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 400 POST /answers?sessionid=<session_id>&answer=@aclosed::1:0:0:0:0:0:0 --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 
 verify_session
 foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
@@ -63,11 +57,11 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
-#!------- trying to delanswer header question should fail
-request proxy 400 /delanswer?sessionid=$SESSION&questionid=@state curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
-request proxy 400 /delanswer?sessionid=$SESSION&questionid=@authority curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
-request proxy 400 /delanswer?sessionid=$SESSION&questionid=@group curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
-request proxy 400 /delanswer?sessionid=$SESSION&questionid=@user curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+#!------- trying to /delanswer header question should fail
+request proxy 400 GET /delanswer?sessionid=<session_id>&questionid=@state --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 400 GET /delanswer?sessionid=<session_id>&questionid=@authority --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 400 GET /delanswer?sessionid=<session_id>&questionid=@group --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 400 GET /delanswer?sessionid=<session_id>&questionid=@user --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 
 verify_session
 foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
@@ -78,13 +72,13 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
-#!------- !!! PASS delprevanswer ignores header questions
+#!------- !!! PASS /delprevanswer ignores header questions
 # create a valid checksum
 create_checksum(<session_id><SESSION_OPEN>question1:TEXT:Answer 1:0:0:0:0:0:0:0::0)
-request proxy 200 /delprevanswer?sessionid=$SESSION curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <custom_checksum>")
-request proxy 200 /delprevanswer?sessionid=$SESSION curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>")
-request proxy 200 /delprevanswer?sessionid=$SESSION curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>")
-request proxy 200 /delprevanswer?sessionid=$SESSION curlargs(--user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>")
+request proxy 200 GET /delprevanswer?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <custom_checksum>"
+request proxy 200 GET /delprevanswer?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>"
+request proxy 200 GET /delprevanswer?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>"
+request proxy 200 GET /delprevanswer?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>"
 
 verify_session
 foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b

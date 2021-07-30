@@ -12,8 +12,8 @@
  * <questions in normal question format>
  * endofsurvey
  *
- * request <expected response code> /<url path and query>
- * request proxy <expected response code> /<url path and query> curlargs(`man curl`)
+ * request <expected_status> <method> /<url_path?query> <curl_args>
+ * request proxy <expected_status> <method> /<url_path?query> <curl_args>
  *
  * extract_sessionid
  *
@@ -110,129 +110,144 @@ char *py_module_head =
 
 /**
  * parses a 'request' directive line for defined patterns and creates a curl command
+ * returns expected http status
  */
-int parse_request(struct Test *test, char *line, char *out, int *expected_http_status, char *last_sessionid, struct HttpResponse *prev, char *custom_checksum, char *dir, FILE *log) {
-    int retVal = 0;
+int parse_request(char *line, char *out_file, char *result, size_t sz, FILE *log) {
 
-    do {
-        char tmp[TEST_MAX_BUFFER];
+  enum { REQ__START, REQ_PROXY, REQ_STATUS, REQ_METHOD, REQ_URI, REQ__REST };
 
-        char args[TEST_MAX_BUFFER] = {'\0'};
-        char url[TEST_MAX_BUFFER] = {'\0'};
-        char data[TEST_MAX_BUFFER] = {'\0'};
-        char method[TEST_MAX_BUFFER] = {'\0'};
-        char curl_args[TEST_MAX_BUFFER]= {'\0'};
-        char url_sub[TEST_MAX_BUFFER] = { '\0' };
+  int proxy = 0;
+  int status = 0;
 
-        // flags
-        int done = 0;
-        int proxy =0;
+  char method[256] = { 0 };
+  char uri[2048] = { 0 };
+  char rest[TEST_MAX_BUFFER] = "";
 
-        // parse out arguments
-        if (sscanf(line, "request %[^\r\n]", args) != 1) {
-            fprintf(log, "FATAL: invalid directive '%s'", line);
-            retVal = -1;
-            break;
-        }
+  if (sz < TEST_MAX_BUFFER) {
+    fprintf(log, "Error: allocated size for result string to small %ld < TEST_MAX_BUFFER'\n", sz);
+    return 0;
+  }
 
-        // check if proxy
-        // example: request proxy 200 addanswer curlargs(--user name:password) POST "sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0:"
-        if (sscanf(args, "proxy %[^\r\n]", tmp) == 1) {
-            proxy = 1;
-            strncpy(args, tmp, TEST_MAX_BUFFER);
-            tmp[0] = 0;
-        }
+  if (!line) {
+    fprintf(log, "Error: directive line is NULL'\n");
+    return 0;
+  }
 
-        // with code + url + curlargs + method + data
-        // example: request 200 addanswer curlargs(--user name:password) POST "sessionid=$SESSION&answer=question1:Hello+World:0:0:0:0:0:0:0:"
-        if(!done && sscanf(args, "%d %s curlargs(%[^)]) %s %s", expected_http_status, url, curl_args, method, data) == 5) {
-            done = 1;
-        }
+  fprintf(log, "  * ");
 
-        // with code + url + curlargs
-        // example: request 200 newsession curlargs(--user name:password)
-        if(!done && sscanf(args, "%d %s curlargs(%[^)])", expected_http_status, url, curl_args) == 3) {
-            done = 1;
-        }
+  int key = REQ__START;
+  char *ctx = line;
+  char *tok = strtok_r(line, " ", &ctx);
 
-        // with code + url + optional( method + data)
-        // example: request 200 newsession?surveyid=mysurvey
-        if(!done && sscanf(args, "%d %s %s %s", expected_http_status, url, method, data) == 4) {
-            done = 1;
-        }
+  while (tok != NULL) {
 
-        int o = 0;
-        for (int i = 0; url[i]; i++) {
+    if (key > REQ_URI) {
+      break;
+    }
 
-          if (url[i] != '$') {
-            url_sub[o++] = url[i];
-          } else {
+    // trim multiple whitespaces
+    while(*tok && *tok == ' ') {
+      tok++;
+    }
 
-            // $$ substitutes for $
-            if (url[i + 1] == '\"') {
-              // Escape quotes
-              url_sub[o++] = '\\';
-              url_sub[o++] = '\"';
-            } else if (url[i + 1] == '$') {
-              url_sub[o++] = '$';
-            } else if (!strncmp("$SESSION", &url[i], 8)) {
-              snprintf(&url_sub[o], TEST_MAX_BUFFER - o, "%s", last_sessionid);
-              o = strlen(url_sub);
-              i += 7;
-            } else {
-              fprintf(log, "FATAL: Unknown $ substitution in URL");
-              retVal = -1;
-            } // endif
+    // validate
+    if (key == REQ__START) {
+      fprintf(log, "REQ_START: '%s', ", tok);
+      if(strcmp(tok, "request")) {
+        strncpy(result, "Error parsing REQ_DIRECTIVE: expected 'request'\n", sz);
+        return 0;
+      }
+    }
 
-          } // endif
+    // optional
+    if (key == REQ_PROXY) {
+      if(strcmp(tok, "proxy") == 0) {
+        proxy = 1;
+      } else {
+        key++; // optional, advance
+      }
+      fprintf(log, "REQ_PROXY: '%s', ", (proxy) ? "yes": "no");
+    }
 
-        } // endfor
+    // validate int
+    if (key == REQ_STATUS) {
+      fprintf(log, "REQ_STATUS: '%s', ", tok);
+      status = atoi(tok);
+      if(!status) {
+        strncpy(result, "Error parsing REQ_STATUS: is not an int\n", sz);
+        return 0;
+      }
+    }
 
-        if(retVal) {
-            break;
-        }
+    if (key == REQ_METHOD) {
+      fprintf(log, "REQ_METHOD: '%s', ", tok);
+      strncpy(method, tok, 256);
+    }
 
-        if (strlen(data)) {
-          test_replace_str(data, "$SESSION", last_sessionid, TEST_MAX_BUFFER);
-          test_replace_str(data, "<session_id>", last_sessionid, TEST_MAX_BUFFER);
-          test_replace_tokens(test, data, TEST_MAX_BUFFER);
-          strncpy(tmp, data, TEST_MAX_BUFFER);
-          snprintf(data, TEST_MAX_BUFFER, " -d %s", tmp);
-        }
+    if (key == REQ_URI) {
+      fprintf(log, "REQ_URI: '%s', ", tok);
+      if(tok[0] != '/') {
+        strncpy(result, "Error parsing REQ_URI: 'not starting starting with '/'\n", sz);
+        return 0;
+      }
+      strncpy(uri, tok, 2048);
+      break; // LAST!
+    }
 
-        if (strlen(method)) {
-          strncpy(tmp, method, TEST_MAX_BUFFER);
-          snprintf(method, TEST_MAX_BUFFER, " -X %s", tmp);
-        }
+    key++;
+    tok = strtok_r(NULL, " ", &ctx);
 
-        if (strlen(curl_args)) {
-          test_replace_str(data, "$SESSION", last_sessionid, TEST_MAX_BUFFER);
-          test_replace_str(curl_args, "<session_id>", last_sessionid, TEST_MAX_BUFFER);
-          test_replace_str(curl_args, "<custom_checksum>", custom_checksum, TEST_MAX_BUFFER);
-          test_replace_str(curl_args, "<response_etag>", prev->eTag, TEST_MAX_BUFFER);
-          test_replace_tokens(test, curl_args, TEST_MAX_BUFFER);
+  } // while
 
-          strncpy(tmp, curl_args, TEST_MAX_BUFFER);
-          snprintf(curl_args, TEST_MAX_BUFFER, " %s", tmp);
-        }
+  if (ctx) {
+    fprintf(log, "REQ_REST: '%s'", ctx);
+    strncpy(rest, ctx, TEST_MAX_BUFFER);
+  }
 
-        // build curl cmd
-        snprintf(
-          out, TEST_MAX_BUFFER,
-          "curl -s -i"
-          "%s%s%s"
-          " -o %s/request.out"
-          " \"http://localhost:%d/%s%s\"",
-          curl_args, method, data,
-          dir,
-          SERVER_PORT,
-          "surveyapi",
-          url_sub
-        );
+  if (!strlen(method))  {
+    strncpy(result, "Error parsing REQ_METHOD: not found\n", sz);
+    return 0;
+  }
 
-    } while(0);
+  if (!strlen(uri))  {
+    strncpy(result, "Error parsing REQ_URI: not found\n", sz);
+    return 0;
+  }
 
-    return retVal;
+  // workaround for Lighttpd quirk for data requests with empty bodys: "HTTP/1.1 411 Length Required"
+  //  - lighttpd:request.c, seee: https://github.com/lighttpd/lighttpd1.4/blob/80848d370807f2f8253ed5622d9f6585a02068c8/src/request.c#L1125
+  if (!strcmp(method, "POST") || !strcmp(method, "PUT") || !strcmp(method, "DELETE") || !strcmp(method, "PATCH")) {
+
+    int fix_411 = 1;
+
+    // has data curlargs or content length header
+    if (strstr(rest, "Content-Length:") || strstr(rest, "-d ") || strstr(rest, "--data ") || strstr(rest, "--data-binary ")) {
+      fix_411 = 0;
+    }
+
+    // inserting -d "" arg will trigger curl to insert content length header (0)
+    if (fix_411) {
+      strncat(rest, " -d \"\"", TEST_MAX_BUFFER);
+    }
+
+  }
+
+  fprintf(log, "\n");
+
+  // build curl command
+  int len = snprintf(result, sz, "curl --include --silent --request %s %s \"http://localhost:%d/surveyapi%s\" --output %s",
+    method,
+    rest,
+    SERVER_PORT,
+    uri,
+    out_file
+  );
+
+  if (len < 0) {
+    strncpy(result, "Error parsing REQ_URI: snprintf failed\n", sz);
+    return 0;
+  }
+  return status;
 }
 
 /**
@@ -276,6 +291,7 @@ int run_test(struct Test *test) {
   clear_errors();
 
   struct HttpResponse response;
+  memset(&response, 0, sizeof(response));
 
   int retVal = 0;
   FILE *in = NULL;
@@ -770,7 +786,7 @@ int run_test(struct Test *test) {
 
         arg[0] = 0;
 
-      } else if (strncmp("request", line, strlen("request")) == 0) {
+      } else if (strncmp("request", line, 7) == 0) {
 
         ////
         // keyword: "request"
@@ -780,61 +796,46 @@ int run_test(struct Test *test) {
         // We also log the returned data from the request, so that we can look at that
         // as well, if required.
         char cmd[TEST_MAX_BUFFER];
-        char tmp[TEST_MAX_BUFFER];
-        int expected_http_status = 0;
+        char out_file[1024];
+        int http_status = 0;
 
         // Delete any old version of files laying around
-        snprintf(tmp, TEST_MAX_BUFFER, "%s/request.out", test->dir);
+        snprintf(out_file, 1024, "%s/request.out", test->dir);
         unlink(tmp);
-        if (!access(tmp, F_OK)) {
-          fprintf(log, "T+%4.3fms : FATAL: Could not unlink file '%s'", test_time_delta(start_time), tmp);
+
+        http_status = parse_request(line, out_file, cmd, TEST_MAX_BUFFER, log);
+
+        if (!http_status) {
+          fprintf(log, "T+%4.3fms : FATAL: failed parsing directive '%s', code: %d, error: '%s'\n", test_time_delta(start_time), line, http_status, cmd);
           goto fatal;
         }
 
-        snprintf(tmp, TEST_MAX_BUFFER, "%s/request.code", test->dir);
-        unlink(tmp);
-        if (!access(tmp, F_OK)) {
-          fprintf(log, "T+%4.3fms : FATAL: Could not unlink file '%s'", test_time_delta(start_time), tmp);
-          goto fatal;
-        }
+        test_replace_str(cmd, "<session_id>", last_sessionid, TEST_MAX_BUFFER);
+        test_replace_str(cmd, "<custom_checksum>", custom_checksum, TEST_MAX_BUFFER);
+        test_replace_str(cmd, "<response_etag>", response.eTag, TEST_MAX_BUFFER);
+        test_replace_tokens(cmd, test, TEST_MAX_BUFFER);
 
-        if (parse_request(test, line, cmd, &expected_http_status, last_sessionid, &response, custom_checksum, test->dir, log)) {
-          fprintf(log, "T+%4.3fms : FATAL: Could not parse args in declaration \"%s\"'", test_time_delta(start_time), line);
-          goto fatal;
-        }
-        fprintf(log, "T+%4.3fms : HTTP API request command: '%s'\n", test_time_delta(start_time), cmd);
+        fprintf(log, "  * curl command: '%s'\n", cmd);
 
         /*
-         * clear previous response !
+         * now clear previous response !
          */
         memset(&response, 0, sizeof(response));
 
         int shell_result = system(cmd);
         if (shell_result) {
-          fprintf(log,
-                  "T+%4.3fms : HTTP API request command returned with non-zero "
-                  "status %d.\n",
-                  test_time_delta(start_time), shell_result);
+          fprintf(log, "T+%4.3fms : HTTP API request command (curl) returned error %d.\n", test_time_delta(start_time), shell_result);
         }
-
-        // handle  response
         fprintf(log, "T+%4.3fms : HTTP API request command completed.\n", test_time_delta(start_time));
-        FILE *rc;
-
-        snprintf(cmd, TEST_MAX_BUFFER, "%s/request.out", test->dir);
-        rc = fopen(cmd, "r");
 
         // load and parse request.out file
+        FILE * rc = fopen(out_file, "r");
         if (!rc) {
           // not going to fatal, this might be a test case
-          fprintf(log,
-                  "T+%4.3fms : NOTE : Could not open '%s/request.out'. No "
-                  "response from web page?\n",
-                  test_time_delta(start_time), test->dir);
-
+          fprintf(log, "T+%4.3fms : NOTE : Could not open '%s/request.out'. No response from server ?\n", test_time_delta(start_time), test->dir);
         } else {
           if (test_parse_http_response(rc, &response)) {
-            fprintf(log, "T+%4.3fms : FATAL: Could not HttpResponse from '%s/request.out'", test_time_delta(start_time), cmd);
+            fprintf(log, "T+%4.3fms : FATAL: Could not parse HttpResponse from '%s/request.out'\n", test_time_delta(start_time), cmd);
             fclose(rc);
             goto fatal;
           }
@@ -848,10 +849,8 @@ int run_test(struct Test *test) {
         }
         fprintf(log, "T+%4.3fms : HTTP response status %d\n", test_time_delta(start_time), response.status);
 
-        if (response.status != expected_http_status) {
-          fprintf(log,
-                  "T+%4.3fms : ERROR : Expected HTTP response code %d, but got %d.\n",
-                  test_time_delta(start_time), expected_http_status, response.status);
+        if (response.status != http_status) {
+          fprintf(log, "T+%4.3fms : ERROR : Expected HTTP response code %d, but got %d.\n", test_time_delta(start_time), http_status, response.status);
           goto fail;
         }
 
@@ -862,7 +861,7 @@ int run_test(struct Test *test) {
         ////
 
         test_replace_str(tmp, "<session_id>", last_sessionid, 1024); // parse optional $SESSION
-        test_replace_tokens(test, tmp, 1024); // parse optional tokens
+        test_replace_tokens(tmp, test, 1024); // parse optional tokens
 
         snprintf(cmd, 1024, "echo -n '%s' | sha1sum", tmp);
 
@@ -885,7 +884,7 @@ int run_test(struct Test *test) {
         ////
 
 
-        test_replace_tokens(test, tmp, 2048); // parse optional tokens
+        test_replace_tokens(tmp, test, 2048); // parse optional tokens
         FILE *df = fopen(tmp, "w");
         if(!df) {
           fprintf(log, "T+%4.3fms : ERROR : open_file: failed! could  not open file '%s' for write\n", test_time_delta(start_time), tmp);
@@ -901,7 +900,7 @@ int run_test(struct Test *test) {
         while (line[0]) {
           trim_crlf(line);
 
-          test_replace_tokens(test, line, TEST_MAX_LINE);
+          test_replace_tokens(line, test, TEST_MAX_LINE);
 
           if (!strcmp(line, "close_file()")) {
             break;

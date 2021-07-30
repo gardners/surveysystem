@@ -14,7 +14,7 @@ endofsurvey
 #! ------
 
 # Request creation of a  new session
-request 200 /newsession?surveyid=sessionlifetime
+request 200 GET /newsession?surveyid=sessionlifetime
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -31,10 +31,10 @@ endofsession
 #! - SESSION_CLOSED: requesting analysis for a finished session closes session
 #! ------
 
-request 200 /addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0
+request 200 POST /answers?sessionid=<session_id>&answer=question1:Answer+1:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
-request 200 /addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0
+request 200 POST /answers?sessionid=<session_id>&answer=question2:Answer+2:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": []}
 
 verify_session
@@ -47,7 +47,7 @@ question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
-request 200 /analyse?sessionid=$SESSION
+request 200 GET /analyse?sessionid=<session_id>
 match_string "NOT IMPLEMENTED"
 
 verify_session
@@ -64,7 +64,7 @@ endofsession
 #! - SESSION_CLOSED: requesting analysis AGAIN for a finished session passes
 #! ------
 
-request 200 /analyse?sessionid=$SESSION
+request 200 GET /analyse?sessionid=<session_id>
 match_string "NOT IMPLEMENTED"
 
 verify_session
@@ -83,7 +83,7 @@ endofsession
 
 # #408, changed behaviour for nextquestions: let pass
 # request 400 /nextquestion?sessionid=$SESSION
-request 200 /nextquestion?sessionid=$SESSION
+request 200 GET /nextquestion?sessionid=<session_id>
 match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": []}
 
 verify_session
@@ -100,7 +100,7 @@ endofsession
 #! - SESSION_CLOSED: adding an answer fails (400)
 #! ------
 
-request 400 /addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0
+request 400 POST /answers?sessionid=<session_id>&answer=question2:Answer+2:0:0:0:0:0:0:0
 
 verify_session
 sessionlifetime/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
@@ -116,7 +116,7 @@ endofsession
 #! - SESSION_CLOSED: deleting an answer fails (400)
 #! ------
 
-request 400 /delanswer?sessionid=$SESSION&questionid=question2
+request 400 GET /delanswer?sessionid=<session_id>&questionid=question2
 
 verify_session
 sessionlifetime/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
@@ -134,7 +134,7 @@ endofsession
 
 # create a valid checksum
 create_checksum(<session_id><SESSION_CLOSED>question2:TEXT:Answer 2:0:0:0:0:0:0:0::0)
-request 400 /delprevanswer?sessionid=$SESSION curlargs(-H "If-Match: <response_etag>")
+request 400 GET /delprevanswer?sessionid=<session_id> -H "If-Match: <response_etag>"
 
 verify_session
 sessionlifetime/0a7caf5b02adad7583c7bfae30f6f119cb3581cc

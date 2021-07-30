@@ -109,7 +109,7 @@ int test_copy_session(char *session_id, char *targ, struct Test *test);
 // test file parsing
 ////
 
-void test_replace_tokens(struct Test *test, char *line, size_t len);
+void test_replace_tokens(char *line, struct Test *test, size_t len);
 int test_compile_session_definition(FILE *in, char *session_id, struct Test *test);
 int test_compare_session(FILE *sess, int skip_s, FILE *comp, int skip_c, struct Test *test, int server_port, FILE *log, long long start_time);
 

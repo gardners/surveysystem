@@ -9,7 +9,7 @@ question1:How many days are in February?:How many days are in February?:INT:0::-
 endofsurvey
 
 # Request creation of a  new session
-request 200 /newsession?surveyid=field_unit
+request 200 GET /newsession?surveyid=field_unit
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -20,14 +20,14 @@ field_unit/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 
 # Ask for next question
-request 200 /nextquestion?sessionid=$SESSION
+request 200 GET /nextquestion?sessionid=<session_id>
 match_string {"status": 0, "message": "", "progress": [0, 1], "next_questions": [{"id": "question1", "name": "question1", "title": "How many days are in February?", "description": "How many days are in February?", "type": "INT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": "days"}]}
 
 #!-- FAIL: with unit (BEHAVIOURAL CHANGE: #448 remove 'unit' from public answer)
-request 400 /addanswer?sessionid=$SESSION&answer=question1::28:0:0:0:0:0:0:days
+request 400 POST /answers?sessionid=<session_id>&answer=question1::28:0:0:0:0:0:0:days
 
 #!-- PASS: with unit (BEHAVIOURAL CHANGE: #448 remove 'unit' from public answer)
-request 200 /addanswer?sessionid=$SESSION&answer=question1::28:0:0:0:0:0:0
+request 200 POST /answers?sessionid=<session_id>&answer=question1::28:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [1, 1], "next_questions": []}
 
 

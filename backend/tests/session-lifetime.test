@@ -14,7 +14,7 @@ endofsurvey
 #! -------
 
 # Request creation of a  new session
-request 200 /newsession?surveyid=sessionlifetime
+request 200 GET /newsession?surveyid=sessionlifetime
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -33,7 +33,7 @@ endofsession
 #! - SESSION_OPEN: progessed by answering first question
 #! -------
 
-request 200 /addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0
+request 200 POST /answers?sessionid=<session_id>&answer=question1:Answer+1:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 verify_session
@@ -51,7 +51,7 @@ endofsession
 #! - SESSION_FINISHED: progessed by answering last question
 #! -------
 
-request 200 /addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0
+request 200 POST /answers?sessionid=<session_id>&answer=question2:Answer+2:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": []}
 
 verify_session
@@ -70,7 +70,7 @@ endofsession
 #! - SESSION_OPEN AGAIN: session re-opened by deleting last answer
 #! -------
 
-request 200 /delanswer?sessionid=$SESSION&questionid=question2
+request 200 GET /delanswer?sessionid=<session_id>&questionid=question2
 match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "Answer 2", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 verify_session
@@ -89,7 +89,7 @@ endofsession
 #! - SESSION_FINISHED AGAIN: close re-opened session by answering last question again
 #! -------
 
-request 200 /addanswer?sessionid=$SESSION&answer=question2:Answer+2+Again:0:0:0:0:0:0:0
+request 200 POST /answers?sessionid=<session_id>&answer=question2:Answer+2+Again:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": []}
 
 verify_session
@@ -108,7 +108,7 @@ endofsession
 #! - SESSION_CLOSED: requesting analysis closes session
 #! -------
 
-request 200 /analyse?sessionid=$SESSION
+request 200 GET /analyse?sessionid=<session_id>
 match_string "NOT IMPLEMENTED"
 
 verify_session
@@ -127,7 +127,7 @@ endofsession
 #! - SESSION_CLOSED: requesting analysis again
 #! -------
 
-request 200 /analyse?sessionid=$SESSION
+request 200 GET /analyse?sessionid=<session_id>
 match_string "NOT IMPLEMENTED"
 
 verify_session

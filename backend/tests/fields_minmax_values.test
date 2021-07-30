@@ -10,7 +10,7 @@ q2:Question 2::INT:0::-50:50:0:0::
 endofsurvey
 
 # Request creation of a  new session
-request 200 /newsession?surveyid=field_minmax_values
+request 200 GET /newsession?surveyid=field_minmax_values
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -21,12 +21,12 @@ field_minmax_values/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 
 # Ask for next question
-request 200 /nextquestion?sessionid=$SESSION
+request 200 GET /nextquestion?sessionid=<session_id>
 match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "q1", "name": "q1", "title": "Question 1", "description": "", "type": "INT", "default_value": "", "min_value": 0, "max_value": 0, "choices": [], "unit": ""}]}
 
 #! NOTE that we set an answer value out of bounds here!
 #! This test should fail after backend validation is implemented.
-request 200 /addanswer?sessionid=$SESSION&answer=q1::99:0:0:0:0:0:0
+request 200 POST /answers?sessionid=<session_id>&answer=q1::99:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "q2", "name": "q2", "title": "Question 2", "description": "", "type": "INT", "default_value": "", "min_value": -50, "max_value": 50, "choices": [], "unit": ""}]}
 
 # Make sure answer ends up in file

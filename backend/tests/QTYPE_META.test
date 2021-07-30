@@ -23,15 +23,15 @@ QMETA:META:Meta Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #!-------
-#!- nextquestion is skipping over META question
+#!- /nextquestion is skipping over META question
 #!-------
-request 200 /nextquestion?sessionid=$SESSION
+request 200 GET /nextquestion?sessionid=<session_id>
 match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #!-------
-#!- addanswer is skipping over META question
+#!- /answers is skipping over META question
 #!-------
-request 200 /addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0
+request 200 POST /answers?sessionid=<session_id>&answer=question2:Answer+2:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": []}
 
 # Make sure answer ends up in file
@@ -43,11 +43,11 @@ question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #!-------
-#!- delanswer is skipping over META question
+#!- /delanswer is skipping over META question
 #!-------
 
 # the first deletion is not relevant here
-request 200 /delanswer?sessionid=$SESSION&questionid=question2
+request 200 GET /delanswer?sessionid=<session_id>&questionid=question2
 match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "Answer 2", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 verify_session(skip_headers)
@@ -58,7 +58,7 @@ question2:TEXT:Answer 2:0:0:0:0:0:0:0::1:<UTIME>
 endofsession
 
 # META should not be touched
-request 200 /delanswer?sessionid=$SESSION&questionid=question1
+request 200 GET /delanswer?sessionid=<session_id>&questionid=question1
 match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "Answer 1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 verify_session(skip_headers)
@@ -84,16 +84,16 @@ QMETA:META:Meta Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #!-------
-#!- addanswer META is rejected
+#!- /answers META is rejected
 #!-------
-request 400 /addanswer?sessionid=$SESSION&answer=QMETA:Answer+2:0:0:0:0:0:0:0
+request 400 POST /answers?sessionid=<session_id>&answer=QMETA:Answer+2:0:0:0:0:0:0:0
 
 verify_session(skip_headers)
 qtype_meta/current
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 QMETA:META:Meta Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
-request 400 /addanswer?sessionid=$SESSION&answer=QMETA:Answer+2:0:0:0:0:0:0:0
+request 400 POST /answers?sessionid=<session_id>&answer=QMETA:Answer+2:0:0:0:0:0:0:0
 
 verify_session(skip_headers)
 qtype_meta/current
@@ -102,9 +102,9 @@ QMETA:META:Meta Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #!-------
-#!- delanswer META is rejected
+#!- /delanswer META is rejected
 #!-------
-request 400 /delanswer?sessionid=$SESSION&questionid=QMETA
+request 400 GET /delanswer?sessionid=<session_id>&questionid=QMETA
 
 verify_session(skip_headers)
 qtype_meta/current
