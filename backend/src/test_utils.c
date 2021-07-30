@@ -948,7 +948,7 @@ int test_copy_session(char *session_id, char *targ, struct Test *test) {
 /**
  * Replaces dedefined tokens with struct test values or survey.h variables
  */
-void test_replace_tokens(struct Test *test, char *line, size_t len) {
+void test_replace_tokens(char *line, struct Test *test, size_t len) {
     if (!test || !line) {
       fprintf(stderr, "test_replace_tokens(): one or all required args are NULL\n");
       return;
@@ -1010,7 +1010,7 @@ int test_compile_session_definition(FILE *in, char *session_id, struct Test *tes
   while (line[0]) {
     trim_crlf(line);
 
-    test_replace_tokens(test, line, TEST_MAX_LINE);
+    test_replace_tokens(line, test, TEST_MAX_LINE);
 
     if (!strcmp(line, "endofsession")) {
       break;
@@ -1349,6 +1349,10 @@ int parse_http_status(FILE *fp, struct HttpResponse *resp) {
     char *token = NULL;
 
     char *line = fgets(buffer, TEST_MAX_LINE, fp);
+    if (!line) {
+      return -1;
+    }
+
     token = strtok(line, " ");
     if(!token) {
         return -1;
