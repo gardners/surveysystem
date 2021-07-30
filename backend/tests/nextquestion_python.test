@@ -23,7 +23,7 @@ def nextquestion_nextquestion_python(questions, answers, **kwargs):
 endofpython
 
 # Request creation of a  new session
-request 200 /newsession?surveyid=nextquestion_python
+request 200 GET /newsession?surveyid=nextquestion_python
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -34,6 +34,6 @@ nextquestion_python/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 
 # Ask for next question
-request 200 /nextquestion?sessionid=$SESSION
+request 200 GET /nextquestion?sessionid=<session_id>
 match_string {"status": 1, "message": "warning!", "progress": [0, 3], "next_questions": [{"id": "question2", "name": "question2", "title": "How boring was question 1?", "description": "How boring was question 1?", "type": "TEXT", "default_value": "I don't know", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 

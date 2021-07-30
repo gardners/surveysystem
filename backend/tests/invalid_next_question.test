@@ -27,6 +27,6 @@ def nextquestion(questions, answers, **kwargs):
 endofpython
 
 #! -- FAIL Request creation of a  new session (since #484 get_nextquestions() is queried)
-request 500 /newsession?surveyid=invalid_next_question_python
+request 500 GET /newsession?surveyid=invalid_next_question_python
 
 #! -- #484 removed request 500 /nextquestions test

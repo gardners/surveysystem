@@ -57,7 +57,7 @@ def nextquestion(questions, answers, **kwargs):
 endofpython
 
 # Request creation of a  new session
-request 200 /newsession?surveyid=foo
+request 200 GET /newsession?surveyid=foo
 extract_sessionid
 
 verify_session
@@ -72,7 +72,7 @@ endofsession
 #! -- PASS query initial nextquestions (session: open, nextquestions)
 #! ------------
 
-request 200 /nextquestion?sessionid=$SESSION
+request 200 GET /nextquestion?sessionid=<session_id>
 match_string {"status": 0, "message": "", "progress": [0, 4], "next_questions": [{"id": "single1", "name": "single1", "title": "Question1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 verify_session
@@ -92,7 +92,7 @@ open_file(<TEST_DIR>/request.data)
 single1:Answer1:0:0:0:0:0:0:0
 close_file()
 
-request 200 /answers?sessionid=$SESSION curlargs(-X POST -H "Content-Type: text/csv" --data-binary @<TEST_DIR>/request.data)
+request 200 POST /answers?sessionid=<session_id> -H "Content-Type: text/csv" --data-binary @<TEST_DIR>/request.data
 match_string {"status": 0, "message": "", "progress": [1, 4], "next_questions": [{"id": "grouped2", "name": "grouped2", "title": "Grouped2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}, {"id": "grouped3", "name": "grouped3", "title": "Grouped3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 verify_session
@@ -113,7 +113,7 @@ open_file(<TEST_DIR>/request.data)
 grouped2:Answer2:0:0:0:0:0:0:0
 close_file()
 
-request 400 /answers?sessionid=$SESSION curlargs(-X POST -H "Content-Type: text/csv" --data-binary @<TEST_DIR>/request.data)
+request 400 POST /answers?sessionid=<session_id> -H "Content-Type: text/csv" --data-binary @<TEST_DIR>/request.data
 
 #! ------------
 #! -- PASS add two answers (complete batch)
@@ -125,7 +125,7 @@ grouped2:Answer2:0:0:0:0:0:0:0
 grouped3:Answer3:0:0:0:0:0:0:0
 close_file()
 
-request 200 /answers?sessionid=$SESSION curlargs(-X POST -H "Content-Type: text/csv" --data-binary @<TEST_DIR>/request.data)
+request 200 POST /answers?sessionid=<session_id> -H "Content-Type: text/csv" --data-binary @<TEST_DIR>/request.data
 match_string {"status": 0, "message": "", "progress": [3, 4], "next_questions": [{"id": "single4", "name": "single4", "title": "Question4", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 verify_session
@@ -147,7 +147,7 @@ open_file(<TEST_DIR>/request.data)
 single1:Overwrite1:0:0:0:0:0:0:0
 close_file()
 
-request 400 /answers?sessionid=$SESSION curlargs(-X POST -H "Content-Type: text/csv" --data-binary @<TEST_DIR>/request.data)
+request 400 POST /answers?sessionid=<session_id> -H "Content-Type: text/csv" --data-binary @<TEST_DIR>/request.data
 
 #! ------------
 #! -- FAIL overwrite multiple answers (open session)
@@ -158,7 +158,7 @@ grouped2:Overwrite2:0:0:0:0:0:0:0
 grouped3:Overwrite3:0:0:0:0:0:0:0
 close_file()
 
-request 400 /answers?sessionid=$SESSION curlargs(-X POST -H "Content-Type: text/csv" --data-binary @<TEST_DIR>/request.data)
+request 400 POST /answers?sessionid=<session_id> -H "Content-Type: text/csv" --data-binary @<TEST_DIR>/request.data
 
 #! ------------
 #! -- PASS finish session
@@ -168,7 +168,7 @@ open_file(<TEST_DIR>/request.data)
 single4:Answer4:0:0:0:0:0:0:0
 close_file()
 
-request 200 /answers?sessionid=$SESSION curlargs(-X POST -H "Content-Type: text/csv" --data-binary @<TEST_DIR>/request.data)
+request 200 POST /answers?sessionid=<session_id> -H "Content-Type: text/csv" --data-binary @<TEST_DIR>/request.data
 
 verify_session
 foo/current
@@ -190,4 +190,4 @@ open_file(<TEST_DIR>/request.data)
 single4:Overwrite4:0:0:0:0:0:0:0
 close_file()
 
-request 400 /answers?sessionid=$SESSION curlargs(-X POST -H "Content-Type: text/csv" --data-binary @<TEST_DIR>/request.data)
+request 400 POST /answers?sessionid=<session_id> -H "Content-Type: text/csv" --data-binary @<TEST_DIR>/request.data

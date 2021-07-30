@@ -46,19 +46,19 @@ endofsession
 #!---------------------
 
 #!-- PASS:
-request 200 /newsession?surveyid=httpquery
+request 200 GET /newsession?surveyid=httpquery
 
 #!-- FAIL: missing surveyid
-request 400 /newsession
+request 400 GET /newsession
 
 #!-- FAIL: empty surveyid
-request 400 /newsession?surveyid=
+request 400 GET /newsession?surveyid=
 
 #!-- FAIL: invalid chars surveyid
-request 400 /newsession?surveyid=#httpquery
+request 400 GET /newsession?surveyid=
 
 #!-- FAIL: unknown surveyid
-request 500 /newsession?surveyid=invalid
+request 500 GET /newsession?surveyid=invalid
 
 #!---------------------
 #! POST /newsession >>> run createsession-managed-id.test
@@ -69,247 +69,197 @@ request 500 /newsession?surveyid=invalid
 #!---------------------
 
 #!-- PASS:
-request 200 /nextquestion?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+request 200 GET /nextquestion?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 # not a system answer
 match_string {"status": 0, "message": "", "progress": [1, 4], "next_questions": [{"id": "question1", "name": "question1", "title": "Question1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #!-- FAIL: missing sessionid
-request 400 /nextquestion
+request 400 GET /nextquestion
 
 #!-- FAIL: empty sessionid
-request 400 /nextquestion?sessionid=
+request 400 GET /nextquestion?sessionid=
 
 #!-- FAIL: invalid sessionid
-request 400 /nextquestion?sessionid=aaa
+request 400 GET /nextquestion?sessionid=aaa
 
 #!-- FAIL: uppercased sessionid
-request 400 /nextquestion?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA
+request 400 GET /nextquestion?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA
 
 #!-- FAIL: unknownsessionid
-request 400 /nextquestion?sessionid=21c00c79-0000-0000-1a30-e98476f71b42
+request 400 GET /nextquestion?sessionid=21c00c79-0000-0000-1a30-e98476f71b42
 
 #!---------------------
-#! GET /addanswer
+#! POST /answers
 #!---------------------
 
 #!-- PASS:
-request 200 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question1:Answer1:0:0:0:0:0:0:0
+request 200 POST /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question1:Answer1:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [2, 4], "next_questions": [{"id": "question2", "name": "question2", "title": "Question2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #!-- FAIL: missing sessionid and answer
-request 400 /addanswer
+request 400 POST /answers
 
 #!-- FAIL: missing sessionid
-request 400 /addanswer?answer=question2:Answer3:0:0:0:0:0:0:0
+request 400 POST /answers?answer=question2:Answer3:0:0:0:0:0:0:0
 
 #!-- FAIL: empty sessionid
-request 400 /addanswer?sessionid=&answer=question2:Answer3:0:0:0:0:0:0:0
+request 400 POST /answers?sessionid=&answer=question2:Answer3:0:0:0:0:0:0:0
 
 #!-- FAIL: invalid sessionid
-request 400 /addanswer?sessionid=aaa&answer=question2:Answer3:0:0:0:0:0:0:0
+request 400 POST /answers?sessionid=aaa&answer=question2:Answer3:0:0:0:0:0:0:0
 
 #!-- FAIL: uppercased sessionid
-request 400 /addanswer?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA&answer=question2:Answer3:0:0:0:0:0:0:0
+request 400 POST /answers?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA&answer=question2:Answer3:0:0:0:0:0:0:0
 
 #!-- FAIL: unknown sessionid
-request 400 /addanswer?sessionid=21c00c79-0000-0000-1a30-e98476f71b42&answer=question2:Answer3:0:0:0:0:0:0:0
+request 400 POST /answers?sessionid=21c00c79-0000-0000-1a30-e98476f71b42&answer=question2:Answer3:0:0:0:0:0:0:0
 
 #!-- FAIL: missing answer
-request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+request 400 POST /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 
 #!-- FAIL: empty answer
-request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=
+request 400 POST /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=
 
 #!-- FAIL: invalid answer
-request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=invalid
+request 400 POST /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=invalid
 
 #!-- FAIL: backend answer string
-request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question2:TEXT:Answer3:0:0:0:0:0:0:0
+request 400 POST /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question2:TEXT:Answer3:0:0:0:0:0:0:0
 
 #!-- FAIL: answer string with unit (#448)
-request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question1:Answer1:0:0:0:0:0:0:0:
+request 400 POST /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question1:Answer1:0:0:0:0:0:0:0:
 
 #!-- FAIL: unknown answer
-request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=unknown:UUNKNOWN:0:0:0:0:0:0:0
+request 400 POST /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=unknown:UUNKNOWN:0:0:0:0:0:0:0
 
 #!-- FAIL: header answer
-request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@user:NOTALLOWED:0:0:0:0:0:0:0:
+request 400 POST /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@user:NOTALLOWED:0:0:0:0:0:0:0:
 
 #!-- FAIL: META answer
-request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=meta:NOTALLOWED:0:0:0:0:0:0:0
+request 400 POST /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=meta:NOTALLOWED:0:0:0:0:0:0:0
 
 #!-- FAIL: system answer
-request 400 /addanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@system:NOTALLOWED:0:0:0:0:0:0:0
-
-#!---------------------
-#! GET /updateanswer
-#!---------------------
-
-#!-- PASS:
-request 200 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question2:Answer2:0:0:0:0:0:0:0
-match_string {"status": 0, "message": "", "progress": [3, 4], "next_questions": [{"id": "question3", "name": "question3", "title": "Question3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
-
-#!-- FAIL: missing sessionid and answer
-request 400 /updateanswer
-
-#!-- FAIL: missing sessionid
-request 400 /updateanswer?answer=question3:Answer3:0:0:0:0:0:0:0
-
-#!-- FAIL: empty sessionid
-request 400 /updateanswer?sessionid=&answer=question3:Answer3:0:0:0:0:0:0:0
-
-#!-- FAIL: invalid sessionid
-request 400 /updateanswer?sessionid=aaa&answer=question3:Answer3:0:0:0:0:0:0:0
-
-#!-- FAIL: uppercased sessionid
-request 400 /updateanswer?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA&answer=question3:Answer3:0:0:0:0:0:0:0
-
-#!-- FAIL: unknown sessionid
-request 400 /updateanswer?sessionid=21c00c79-0000-0000-1a30-e98476f71b42&answer=question3:Answer3:0:0:0:0:0:0:0
-
-#!-- FAIL: missing answer
-request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
-
-#!-- FAIL: empty answer
-request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=
-
-#!-- FAIL: invalid answer
-request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=invalid
-
-#!-- FAIL: backend answer string
-request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question2:TEXT:Answer3:0:0:0:0:0:0:0
-
-#!-- FAIL: answer string with unit (#448)
-request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question1:Answer1:0:0:0:0:0:0:0:
-
-#!-- FAIL: unknown answer
-request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=unknown:UNKNOWN:0:0:0:0:0:0:0
-
-#!-- FAIL: header answer
-request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@user:NOTALLOWED:0:0:0:0:0:0:0
-
-#!-- FAIL: META answer
-request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=meta:NOTALLOWED:0:0:0:0:0:0:0
-
-#!-- FAIL: system answer
-request 400 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@system:NOTALLOWED:0:0:0:0:0:0:0
+request 400 POST /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@system:NOTALLOWED:0:0:0:0:0:0:0
 
 #!---------------------
 #! GET /delanswer
 #!---------------------
 
+#!-- prepare test: progress a question (for deletion)
+request 200 POST /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question2:Answer2:0:0:0:0:0:0:0
+
 #!-- PASS:
-request 200 /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=question2
+request 200 GET /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=question2
 match_string {"status": 0, "message": "", "progress": [2, 4], "next_questions": [{"id": "question2", "name": "question2", "title": "Question2", "description": "", "type": "TEXT", "default_value": "Answer2", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #!-- FAIL: missing sessionid and answer
-request 400 /delanswer
+request 400 GET /delanswer
 
 #!-- FAIL: missing sessionid
-request 400 /delanswer?questionid=question2
+request 400 GET /delanswer?questionid=question2
 
 #!-- FAIL: empty sessionid
-request 400 /delanswer?sessionid=&questionid=question2
+request 400 GET /delanswer?sessionid=&questionid=question2
 
 #!-- FAIL: invalid sessionid
-request 400 /delanswer?sessionid=aaa&questionid=question2
+request 400 GET /delanswer?sessionid=aaa&questionid=question2
 
 #!-- FAIL: uppercased sessionid
-request 400 /delanswer?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA&questionid=question2
+request 400 GET /delanswer?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA&questionid=question2
 
 #!-- FAIL: unknown sessionid
-request 400 /delanswer?sessionid=21c00c79-0000-0000-1a30-e98476f71b42&questionid=question2
+request 400 GET /delanswer?sessionid=21c00c79-0000-0000-1a30-e98476f71b42&questionid=question2
 
 #!-- FAIL: missing answer
-request 400 /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+request 400 GET /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 
 #!-- FAIL: empty answer
-request 400 /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=
+request 400 GET /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=
 
 #!-- FAIL: invalid answer
-request 400 /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=invalid
+request 400 GET /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=invalid
 
 #!-- FAIL: already deleted answer
-request 400 /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=question3
+request 400 GET /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=question3
 
 #!-- FAIL: unknown answer
-request 400 /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=question4
+request 400 GET /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=question4
 
 #!-- FAIL: header answer
-request 400 /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@user:NOTALLOWED:0:0:0:0:0:0:0:
+request 400 GET /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@user:NOTALLOWED:0:0:0:0:0:0:0:
 
 #!-- FAIL: META answer
-request 400 /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=meta:NOTALLOWED:0:0:0:0:0:0:0:
+request 400 GET /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=meta:NOTALLOWED:0:0:0:0:0:0:0:
 
 #!-- FAIL: system answer
-request 400 /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@system:NOTALLOWED:0:0:0:0:0:0:0:
+request 400 GET /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@system:NOTALLOWED:0:0:0:0:0:0:0:
 
 #!---------------------
 #! GET /delprevanswer: not testing checksum validity here
 #!---------------------
 
 #!-- prepare test: re-answer question deleted before
-request 200 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question2:Answer2:0:0:0:0:0:0:0
+request 200 POST /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question2:Answer2:0:0:0:0:0:0:0
 verify_response_etag(<hashlike_etag>)
 
 #!-- PASS:
-request 200 /delprevanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa curlargs(-H "If-Match: <response_etag>")
+request 200 GET /delprevanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa -H "If-Match: <response_etag>"
 match_string {"status": 0, "message": "", "progress": [2, 4], "next_questions": [{"id": "question2", "name": "question2", "title": "Question2", "description": "", "type": "TEXT", "default_value": "Answer2", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #!-- FAIL: missing sessionid
-request 400 /delprevanswer curlargs(-H "If-Match: <response_etag>")
+request 400 GET /delprevanswer -H "If-Match: <response_etag>"
 
 #!-- (prepare next, get valid etag)
-request 200 /nextquestion?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+request 200 GET /nextquestion?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 
 #!-- FAIL: empty sessionid
-request 400 /delprevanswer?sessionid= curlargs(-H "If-Match: <response_etag>")
+request 400 GET /delprevanswer?sessionid= -H "If-Match: <response_etag>"
 
 #!-- (prepare next, get valid etag)
-request 200 /nextquestion?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+request 200 GET /nextquestion?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 
 #!-- FAIL: invalid sessionid
-request 400 /delprevanswer?sessionid=aaa curlargs(-H "If-Match: <response_etag>")
+request 400 GET /delprevanswer?sessionid=aaa -H "If-Match: <response_etag>"
 
 #!-- (prepare next, get valid etag)
-request 200 /nextquestion?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+request 200 GET /nextquestion?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 
 #!-- FAIL: uppercased sessionid
-request 400 /delprevanswer?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA curlargs(-H "If-Match: <response_etag>")
+request 400 GET /delprevanswer?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA -H "If-Match: <response_etag>"
 
 #!-- (prepare next, get valid etag)
-request 200 /nextquestion?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+request 200 GET /nextquestion?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 
 #!-- FAIL: unknown sessionid
-request 400 /delprevanswer?sessionid=21c00c79-0000-0000-1a30-e98476f71b42 curlargs(-H "If-Match: <response_etag>")
+request 400 GET /delprevanswer?sessionid=21c00c79-0000-0000-1a30-e98476f71b42 -H "If-Match: <response_etag>"
 
 #!---------------------
 #! GET /analyse
 #!---------------------
 
 #!-- prepare test: re-answer question deleted before
-request 200 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question2:Answer2:0:0:0:0:0:0:0
-request 200 /updateanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question3:Answer3:0:0:0:0:0:0:0
+request 200 POST /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question2:Answer2:0:0:0:0:0:0:0
+request 200 POST /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question3:Answer3:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [4, 4], "next_questions": []}
 
 #!-- PASS:
-request 200 /analyse?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+request 200 GET /analyse?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 match_string "NOT IMPLEMENTED"
 
 #!-- FAIL: missing sessionid
-request 400 /analyse
+request 400 GET /analyse
 
 #!-- FAIL: empty sessionid
-request 400 /analyse?sessionid=
+request 400 GET /analyse?sessionid=
 
 #!-- FAIL: invalid sessionid
-request 400 /analyse?sessionid=aaa
+request 400 GET /analyse?sessionid=aaa
 
 #!-- FAIL: uppercased sessionid
-request 400 /analyse?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA
+request 400 GET /analyse?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA
 
 #!-- FAIL: unknown sessionid
-request 400 /analyse?sessionid=21c00c79-0000-0000-1a30-e98476f71b42
+request 400 GET /analyse?sessionid=21c00c79-0000-0000-1a30-e98476f71b42
 
 
 #!---------------------
@@ -322,17 +272,17 @@ request 400 /analyse?sessionid=21c00c79-0000-0000-1a30-e98476f71b42
 #!-- PASS: not implemented!
 
 #!-- FAIL: missing sessionid
-request 400 /delsession
+request 400 GET /delsession
 
 #!-- FAIL: empty sessionid
-request 400 /delsession?sessionid=
+request 400 GET /delsession?sessionid=
 
 #!-- FAIL: invalid sessionid
-request 400 /delsession?sessionid=aaa
+request 400 GET /delsession?sessionid=aaa
 
 #!-- FAIL: uppercased sessionid
-request 400 /delsession?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA
+request 400 GET /delsession?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA
 
 #!-- FAIL: unknown sessionid
-request 400 /delsession?sessionid=21c00c79-0000-0000-1a30-e98476f71b42
+request 400 GET /delsession?sessionid=21c00c79-0000-0000-1a30-e98476f71b42
 

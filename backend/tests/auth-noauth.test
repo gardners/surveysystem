@@ -15,7 +15,7 @@ endofsurvey
 #!passes
 #!---------------------
 
-request 200 /newsession?surveyid=authnoauth
+request 200 GET /newsession?surveyid=authnoauth
 
 extract_sessionid
 verify_session
@@ -30,7 +30,7 @@ endofsession
 #! x-surveyproxy-* headers are being ignored
 #!---------------------
 
-request 200 /newsession?surveyid=authnoauth curlargs(--user test:1234 -H "x-surveyproxy-auth-user: user1" -H "x-surveyproxy-auth-group: group1")
+request 200 GET /newsession?surveyid=authnoauth --user test:1234 -H "x-surveyproxy-auth-user: user1" -H "x-surveyproxy-auth-group: group1"
 
 extract_sessionid
 verify_session

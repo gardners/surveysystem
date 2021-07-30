@@ -9,7 +9,7 @@ duration24:How long do you brush your teeth?::DURATION24:0::0:86400:-1:0::second
 endofsurvey
 
 # Request creation of a  new session
-request 200 /newsession?surveyid=qtype_duration24
+request 200 GET /newsession?surveyid=qtype_duration24
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -20,10 +20,10 @@ qtype_duration24/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 
 # Ask for next question
-request 200 /nextquestion?sessionid=$SESSION
+request 200 GET /nextquestion?sessionid=<session_id>
 match_string {"status": 0, "message": "", "progress": [0, 1], "next_questions": [{"id": "duration24", "name": "duration24", "title": "How long do you brush your teeth?", "description": "", "type": "DURATION24", "default_value": "", "min_value": 0, "max_value": 86400, "choices": [], "unit": "seconds"}]}
 
-request 200 /addanswer?sessionid=$SESSION&answer=duration24::3600:0:0:0:0:0:0
+request 200 POST /answers?sessionid=<session_id>&answer=duration24::3600:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [1, 1], "next_questions": []}
 
 # Make sure answer ends up in file

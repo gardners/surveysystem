@@ -28,14 +28,14 @@ endofsession
 #! -- fetch checksum
 
 # create checksum of last answer
-request 200 /nextquestion?sessionid=$SESSION
+request 200 GET /nextquestion?sessionid=<session_id>
 match_string {"status": 0, "message": "", "progress": [2, 3], "next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 verify_response_etag(<hashlike_etag>)
 
 #! -- del Answer 2
 
 # create checksum of last answer
-request 200 /delprevanswer?sessionid=$SESSION curlargs(-H "If-Match: <response_etag>")
+request 200 GET /delprevanswer?sessionid=<session_id> -H "If-Match: <response_etag>"
 match_string {"status": 0, "message": "", "progress": [1, 3], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "Answer2", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 verify_response_etag(<hashlike_etag>)
 
@@ -48,7 +48,7 @@ endofsession
 #! -- del Answer 1
 
 # create checksum of last answer
-request 200 /delprevanswer?sessionid=$SESSION curlargs(-H "If-Match: <response_etag>")
+request 200 GET /delprevanswer?sessionid=<session_id> -H "If-Match: <response_etag>"
 match_string {"status": 0, "message": "", "progress": [0, 3], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "Answer1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 verify_response_etag(<hashlike_etag>)
 
@@ -61,7 +61,7 @@ endofsession
 #! -- del Answer (no last answer) passes
 
 # create checksum of last answer
-request 200 /delprevanswer?sessionid=$SESSION curlargs(-H "If-Match: <response_etag>")
+request 200 GET /delprevanswer?sessionid=<session_id> -H "If-Match: <response_etag>"
 match_string {"status": 0, "message": "", "progress": [0, 3], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "Answer1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 verify_response_etag(<hashlike_etag>)
 
@@ -90,7 +90,7 @@ endofsession
 
 # create checksum of last answer
 create_checksum(<session_id><SESSION_OPEN>question2:TEXT:Answer2:0:0:0:0:0:0:0::0)
-request 200 /delprevanswer?sessionid=$SESSION curlargs(-H "If-Match: <custom_checksum>")
+request 200 GET /delprevanswer?sessionid=<session_id> -H "If-Match: <custom_checksum>"
 
 match_string {"status": 0, "message": "", "progress": [1, 3], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "Answer2", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 create_checksum(<session_id><SESSION_OPEN>question1:TEXT:Answer1:0:0:0:0:0:0:0::0)
@@ -106,7 +106,7 @@ endofsession
 
 # create checksum of last answer
 create_checksum(<session_id><SESSION_OPEN>question1:TEXT:Answer1:0:0:0:0:0:0:0::0)
-request 200 /delprevanswer?sessionid=$SESSION curlargs(-H "If-Match: <custom_checksum>")
+request 200 GET /delprevanswer?sessionid=<session_id> -H "If-Match: <custom_checksum>"
 
 match_string {"status": 0, "message": "", "progress": [0, 3], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "Answer1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 create_checksum(<session_id><SESSION_OPEN>)
@@ -122,7 +122,7 @@ endofsession
 
 # create checksum of last answer
 create_checksum(<session_id><SESSION_OPEN>)
-request 200 /delprevanswer?sessionid=$SESSION curlargs(-H "If-Match: <custom_checksum>")
+request 200 GET /delprevanswer?sessionid=<session_id> -H "If-Match: <custom_checksum>"
 
 match_string {"status": 0, "message": "", "progress": [0, 3], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "Answer1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 create_checksum(<session_id><SESSION_OPEN>)

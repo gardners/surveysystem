@@ -13,8 +13,8 @@ endofsurvey
 #! ------
 
 # new session
-request proxy 400 /newsession?surveyid=foo curlargs(-X POST --data sessionid=431afa6d-8a4f-47fe-8096-dd404328c81d)
+request proxy 400 POST /newsession?surveyid=foo --data sessionid=431afa6d-8a4f-47fe-8096-dd404328c81d
 # malicious attempt
-request proxy 400 /newsession?surveyid=foo curlargs(-X POST --data sessionid=431afa6d-8a4f-47fe-8096-dd404328c81d --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1")
+request proxy 400 POST /newsession?surveyid=foo --data sessionid=431afa6d-8a4f-47fe-8096-dd404328c81d --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 
 verify_sessionfiles_count 0

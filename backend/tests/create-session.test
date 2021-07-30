@@ -9,7 +9,7 @@ question1:Question 1::TEXT:0::-1:-1:0:0::
 endofsurvey
 
 # Request creation of a  new session
-request 200 /newsession?surveyid=foo
+request 200 GET /newsession?surveyid=foo
 
 # Get the session ID that newsession should have returned
 extract_sessionid

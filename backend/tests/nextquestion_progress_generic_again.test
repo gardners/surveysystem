@@ -13,7 +13,7 @@ question1:Question 1::TEXT:0::-1:-1:0:0::
 endofsurvey
 
 # Request creation of a  new session
-request 200 /newsession?surveyid=nextquestions_generic
+request 200 GET /newsession?surveyid=nextquestions_generic
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -28,7 +28,7 @@ endofsession
 #! -------
 
 for i = 1 to 10
-request 200 /nextquestion?sessionid=$SESSION
+request 200 GET /nextquestion?sessionid=<session_id>
 match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "question0", "name": "question0", "title": "Question 0", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 next
 
@@ -36,11 +36,11 @@ next
 #! ------- run 10 x /nextquestion on un-empty session
 #! -------
 
-request 200 /addanswer?sessionid=$SESSION&answer=question0:Answer+0:0:0:0:0:0:0:0
+request 200 POST /answers?sessionid=<session_id>&answer=question0:Answer+0:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 for i = 1 to 10
-request 200 /nextquestion?sessionid=$SESSION
+request 200 GET /nextquestion?sessionid=<session_id>
 match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 next
 
@@ -48,11 +48,11 @@ next
 #! ------- run 10 x /nextquestion on finished session
 #! -------
 
-request 200 /addanswer?sessionid=$SESSION&answer=question1:Answer+1:0:0:0:0:0:0:0
+request 200 POST /answers?sessionid=<session_id>&answer=question1:Answer+1:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": []}
 
 for i = 1 to 10
-request 200 /nextquestion?sessionid=$SESSION
+request 200 GET /nextquestion?sessionid=<session_id>
 match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": []}
 next
 

@@ -1,7 +1,7 @@
 @description index page returns 405 (issue #389)
 
-request 405 /
-request 405 /index
+request 405 GET /
+request 405 GET /index
 
 #! -- everyting else works
-request 200 /accesstest
+request 200 GET /accesstest

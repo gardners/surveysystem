@@ -10,7 +10,7 @@ question2:This is the second title:This is the <strong>second HTML description</
 endofsurvey
 
 # Request creation of a  new session
-request 200 /newsession?surveyid=field_description
+request 200 GET /newsession?surveyid=field_description
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -21,14 +21,14 @@ field_description/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 
 # Ask for next question
-request 200 /nextquestion?sessionid=$SESSION
+request 200 GET /nextquestion?sessionid=<session_id>
 match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "question1", "name": "question1", "title": "This is the first title", "description": "This is the first description", "type": "INT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 # answer question
-request 200 /addanswer?sessionid=$SESSION&answer=question1::5:0:0:0:0:0:0
+request 200 POST /answers?sessionid=<session_id>&answer=question1::5:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question2", "name": "question2", "title": "This is the second title", "description": "This is the <strong>second HTML description<\/strong>", "type": "INT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
-request 200 /addanswer?sessionid=$SESSION&answer=question2::-5:0:0:0:0:0:0
+request 200 POST /answers?sessionid=<session_id>&answer=question2::-5:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": []}
 
 

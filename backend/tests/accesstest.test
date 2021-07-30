@@ -1,4 +1,4 @@
 @description FastCGI binary can access required paths
 
-request 200 /accesstest
-request 200 /accesstest
+request 200 GET /accesstest
+request 200 GET /accesstest

@@ -7,7 +7,6 @@ Silly test survey updated
 without python
 question1:Question 1::TEXT:0::-1:-1:0:0::
 question2:Question 2::TEXT:0::-1:-1:0:0::
-question3:Question 3::TEXT:0::-1:-1:0:0::
 endofsurvey
 
 # simultating existing session with different @authority ip address
@@ -20,65 +19,51 @@ changed_ip/current
 question1:TEXT:ANSWER 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
-# static void fcgi_newsession(struct kreq *);
-# static void fcgi_addanswer(struct kreq *);
-# static void fcgi_updateanswer(struct kreq *);
-# static void fcgi_nextquestion(struct kreq *);
-# static void fcgi_delanswer(struct kreq *);
-# static void fcgi_delprevanswer(struct kreq *);
-# static void fcgi_delsession(struct kreq *);
-# static void fcgi_accesstest(struct kreq *);
-# static void fcgi_fastcgitest(struct kreq *);
-# static void fcgi_analyse(struct kreq *);
-
 #!-------
 #!- endpoint /newsession [omit]
 #!-------
 #! ...n/a, skipping
 
 #!-------
-#!- endpoint /addanswer [pass]
+#!- endpoint /answers [pass]
 #!-------
-request 200 /addanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0
 
-#!-------
-#!- endpoint /updateanswer [pass]
-#!-------
-request 200 /updateanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0
+request 200 POST /answers?sessionid=<session_id>&answer=question2:Answer+2:0:0:0:0:0:0:0
 
 #!-------
 #!- endpoint /nextquestion [pass]
 #!-------
-request 200 /nextquestion?sessionid=$SESSION
+
+request 200 GET /nextquestion?sessionid=<session_id>
 
 #!-------
 #!- endpoint /delanswer [pass]
 #!-------
-request 200 /delanswer?sessionid=$SESSION&questionid=question2
+
+request 200 GET /delanswer?sessionid=<session_id>&questionid=question2
 
 #!-------
 #!- endpoint /delprevanswer [pass]
 #!-------
 
-# reanswer last question
-request 200 /updateanswer?sessionid=$SESSION&answer=question2:Answer+2:0:0:0:0:0:0:0
-# test
-request 200 /delprevanswer?sessionid=$SESSION curlargs(-H "If-Match: <response_etag>")
+request 200 GET /delprevanswer?sessionid=<session_id> -H "If-Match: <response_etag>"
 
 #!-------
 #!- endpoint /delsession [pass](400 - currently blocked by default)
 #!-------
-request 400 /delsession?sessionid=$SESSION
+
+request 400 GET /delsession?sessionid=<session_id>
 
 #!-------
 #!- endpoint /accesstest [pass]
 #!-------
-request proxy 200 /accesstest
+
+request proxy 200 GET /accesstest
 
 #!-------
 #!- endpoint /fastcgitest [pass]
 #!-------
-request proxy 200 /fastcgitest
+request proxy 200 GET /fastcgitest
 
 #!-------
 #!- endpoint /analyse [pass]
@@ -93,9 +78,8 @@ changed_ip/current
 @state:META::<SESSION_CLOSED>:0:0:<UTIME>:<UTIME>:0:0::0:<UTIME>
 question1:TEXT:ANSWER 1:0:0:0:0:0:0:0::0:<UTIME>
 question2:TEXT:ANSWER 2:0:0:0:0:0:0:0::0:<UTIME>
-question3:TEXT:ANSWER 3:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
-request proxy 200 /analyse?sessionid=$SESSION
+request proxy 200 GET /analyse?sessionid=<session_id>
 
 
