@@ -23,16 +23,16 @@ match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": 
 
 #! -- PASS add single answer Content-Type: text/csv
 
-request 200 /answers?sessionid=$SESSION curlargs(-H "Content-Type: text/csv") POST "question1:Answer1:0:0:0:0:0:0:0"
+request 200 /answers?sessionid=$SESSION curlargs(-X POST -H "Content-Type: text/csv" -d "question1:Answer1:0:0:0:0:0:0:0")
 match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question2", "name": "question2", "title": "Question2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #! -- FAIL overwrite single answer (open session)
 
-request 400 /answers?sessionid=$SESSION curlargs(-H "Content-Type: text/csv") POST "question1:Answer1:0:0:0:0:0:0:0"
+request 400 /answers?sessionid=$SESSION curlargs(-X POST -H "Content-Type: text/csv" -d question1:Answer1:0:0:0:0:0:0:0")
 
 #! -- PASS add single answer Content-Type: application/x-www-form-urlencoded
 
-request 200 /answers?sessionid=$SESSION curlargs(-H "Content-Type: application/x-www-form-urlencoded") POST "answer=question2:Answer2:0:0:0:0:0:0:0"
+request 200 /answers?sessionid=$SESSION curlargs(-X POST -H "Content-Type: application/x-www-form-urlencoded" -d "answer=question2:Answer2:0:0:0:0:0:0:0")
 match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": []}
 
 # Make sure answer ends up in file
