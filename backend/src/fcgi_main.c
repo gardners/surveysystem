@@ -322,6 +322,8 @@ static void fcgi_newsession(struct kreq *req) {
 
 /**
  * #260, #461
+ * POST /answers: add answer(s)
+ * HEAD /answers prevalidate adding answer(s)
  */
 static void fcgi_page_answers(struct kreq *req) {
   int retVal = 0;
@@ -333,14 +335,14 @@ static void fcgi_page_answers(struct kreq *req) {
   char *uids = NULL;
 
   enum actions action = ACTION_SESSION_ADDANSWER;
-  enum kmethod methods[2] = { KMETHOD_POST, KMETHOD_PUT };
+  enum kmethod methods[3] = { KMETHOD_HEAD, KMETHOD_POST, KMETHOD_PUT };
 
   do {
 
     LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
 
     // validate allowed methods #260, #461
-    status = fcgi_request_validate_method(req, methods, 1);
+    status = fcgi_request_validate_method(req, methods, 3);
     if (status != KHTTP_200) {
       http_open(req, status, KMIME_TEXT_PLAIN, NULL);
       LOG_ERRORV("validating request method (KMETHOD: %d) failed, status %d != KHTTP_200", req->method, KHTTP_200, status);
@@ -414,6 +416,11 @@ static void fcgi_page_answers(struct kreq *req) {
         LOG_ERROR("Answer validation failed");
       }
 
+      // HEAD: do not add answers to session
+      if (req->method == KMETHOD_HEAD) {
+        continue;
+      }
+
       // #445 count affected answers
       affected_count += session_add_answer(ses, list->answers[i]);
       if (affected_count < 0) {
@@ -424,6 +431,12 @@ static void fcgi_page_answers(struct kreq *req) {
     } // end for
 
     if (error) {
+      break;
+    }
+
+    // HEAD: wexit with empty json body
+    if (req->method == KMETHOD_HEAD) {
+      http_open(req, KHTTP_200, KMIME_APP_JSON, ses->consistency_hash);
       break;
     }
 
