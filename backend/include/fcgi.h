@@ -39,7 +39,7 @@ struct session *fcgi_request_load_session(struct kreq *req);
 
 // fcgi_response.c
 
-void http_open(struct kreq *req, enum khttp status, enum kmime mime, char *etag);
+int http_open(struct kreq *req, enum khttp status, enum kmime mime, char *etag);
 void http_json_error(struct kreq *req, enum khttp status, const char *msg);
 
 int fcgi_response_nextquestion(struct kreq *req, struct session *ses, struct nextquestions *nq);

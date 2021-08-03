@@ -141,13 +141,19 @@ int main(int argc, char **argv) {
       enum khttp valid = sanitise_page_request(&req);
       if (valid != KHTTP_200) {
 
-        http_open(&req, valid, req.mime, NULL);
+        er = http_open(&req, valid, req.mime, NULL);
+        if (KCGI_HUP == er) {
+          continue;
+        }
 
       } else {
 
         if (KMETHOD_OPTIONS == req.method) {
             khttp_head(&req, kresps[KRESP_ALLOW], "OPTIONS HEAD GET POST");
-            http_open(&req, KHTTP_200, req.mime, NULL);
+            er = http_open(&req, KHTTP_200, req.mime, NULL);
+            if (KCGI_HUP == er) {
+              continue;
+            }
         } else {
             // Call page dispatcher
             (*disps[req.page])(&req);
@@ -416,7 +422,6 @@ static void fcgi_page_answers(struct kreq *req) {
         LOG_ERROR("Answer validation failed");
       }
 
-      // HEAD: do not add answers to session
       if (req->method == KMETHOD_HEAD) {
         continue;
       }
@@ -434,9 +439,11 @@ static void fcgi_page_answers(struct kreq *req) {
       break;
     }
 
-    // HEAD: wexit with empty json body
+    // HEAD: do not save and exit with empty json body
     if (req->method == KMETHOD_HEAD) {
       http_open(req, KHTTP_200, KMIME_APP_JSON, ses->consistency_hash);
+      khttp_puts(req, NULL);
+      LOG_INFO("Leaving page handler.");
       break;
     }
 

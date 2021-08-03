@@ -16,51 +16,38 @@
  * Open an HTTP response with a status code, a content-type and a mime type, then open the HTTP content body.
  * #268: add optional consistency sha1 - if passing session->consistency_hash: you need to free the session after this call :)
  */
-void http_open(struct kreq *req, enum khttp status, enum kmime mime, char *etag) {
-  enum kcgi_err er;
+int http_open(struct kreq *req, enum khttp status, enum kmime mime, char *etag) {
+  enum kcgi_err err = KCGI_OK;
+  int retVal = 0;
 
   do {
     // Emit 200 response
-    er = khttp_head(req, kresps[KRESP_STATUS], "%s", khttps[status]);
-    if (KCGI_HUP == er) {
-      fprintf(stderr, "khttp_head: interrupt\n");
-      continue;
-    } else if (KCGI_OK != er) {
-      fprintf(stderr, "khttp_head: error: %d\n", er);
-      break;
+    err = khttp_head(req, kresps[KRESP_STATUS], "%s", khttps[status]);
+    if (KCGI_OK != err) {
+      LOG_ERRORV("khttp_head: error: %d\n", kcgi_strerror(err));
     }
 
     // Emit mime-type
-    er = khttp_head(req, kresps[KRESP_CONTENT_TYPE], "%s", kmimetypes[mime]);
-    if (KCGI_HUP == er) {
-      fprintf(stderr, "khttp_head: interrupt\n");
-      continue;
-    } else if (KCGI_OK != er) {
-      fprintf(stderr, "khttp_head: error: %d\n", er);
-      break;
+    err = khttp_head(req, kresps[KRESP_CONTENT_TYPE], "%s", kmimetypes[mime]);
+    if (KCGI_OK != err) {
+      LOG_ERRORV("khttp_head: error: %d\n", kcgi_strerror(err));
     }
 
     // #268, Emit session consistency_sha as Etag header
-    er = khttp_head(req, kresps[KRESP_ETAG], "%s", (etag) ? etag : "");
-    if (KCGI_HUP == er) {
-      fprintf(stderr, "khttp_head: interrupt\n");
-      continue;
-    } else if (KCGI_OK != er) {
-      fprintf(stderr, "khttp_head: error: %d\n", er);
-      break;
+    err = khttp_head(req, kresps[KRESP_ETAG], "%s", (etag) ? etag : "");
+    if (KCGI_OK != err) {
+      LOG_ERRORV("khttp_head: error: %d\n", kcgi_strerror(err));
     }
 
     // Begin sending body
-    er = khttp_body(req);
-    if (KCGI_HUP == er) {
-      fprintf(stderr, "khttp_body: interrupt\n");
-      continue;
-    } else if (KCGI_OK != er) {
-      fprintf(stderr, "khttp_body: error: %d\n", er);
-      break;
+    err = khttp_body(req);
+    if (KCGI_OK != err) {
+      LOG_ERRORV("khttp_body: error: %d\n", kcgi_strerror(err));
     }
 
   } while (0);
+
+  return err;
 }
 
 /**
@@ -70,7 +57,9 @@ void http_json_error(struct kreq *req, enum khttp status, const char *msg) {
   int retVal = 0;
 
   do {
-    http_open(req, status, KMIME_APP_JSON, NULL);
+    if(http_open(req, status, KMIME_APP_JSON, NULL)) {
+      LOG_ERROR("http_json_error(): unable to initialise http response");
+    }
 
     struct kjsonreq jsonreq;
     kjson_open(&jsonreq, req);
@@ -176,9 +165,11 @@ int fcgi_response_nextquestion(struct kreq *req, struct session *ses, struct nex
     }
 
     // json response
+    if (http_open(req, KHTTP_200, KMIME_APP_JSON, ses->consistency_hash)) {
+      LOG_ERROR("response_nextquestion(): unable to initialise http response");
+    }
 
     struct kjsonreq resp;
-    http_open(req, KHTTP_200, KMIME_APP_JSON, ses->consistency_hash);
     kjson_open(&resp, req);
     kcgi_writer_disable(req);
 
