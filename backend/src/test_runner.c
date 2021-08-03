@@ -42,6 +42,8 @@
  *
  * verify_response_etag(<string and/or token>)
  *
+ * verify_response_content_type(<strng>)
+ *
  * open_file(<path>)\n <contents> close_file()\n
  * - writes content into file '<path>'
  * - path replacements: <TEST_DIR>: path to current test
@@ -917,6 +919,19 @@ int run_test(struct Test *test) {
 
         tmp[0] = 0;
 
+      } else if (test_parse_fn_notation(line, "verify_response_content_type", tmp, 1024) == 0) {
+
+        ////
+        // keyword: "verify_response_content_type(%s)"
+        ////
+
+        if (strncmp(tmp, response.contentType, 1024)) {
+            fprintf(log, "T+%4.3fms : ERROR :  verify_response_content_type() failed: '%s' != '%s'\n", test_time_delta(start_time), response.contentType, tmp);
+            goto fail;
+        }
+
+        fprintf(log, "T+%4.3fms : verify_response_etag('%s' == '%s') passed,  (response.eTag)\n", test_time_delta(start_time), tmp, response.eTag);
+        tmp[0] = 0;
 
       } else if (test_parse_fn_notation(line, "verify_response_etag", tmp, 1024) == 0) {
 
@@ -931,7 +946,7 @@ int run_test(struct Test *test) {
             goto fail;
           }
 
-        } else  if (!strncmp(tmp, "<hashlike_etag>", 1024)) {
+        } else if (!strncmp(tmp, "<hashlike_etag>", 1024)) {
 
           if (sha1_validate_string_hashlike(response.eTag)) {
             fprintf(log, "T+%4.3fms : ERROR :  validate etag hashlike: verify_response_etag(has hash) '%s'failed\n", test_time_delta(start_time), response.eTag);
@@ -948,6 +963,7 @@ int run_test(struct Test *test) {
 
         fprintf(log, "T+%4.3fms : verify_response_etag('%s' == '%s') passed,  (response.eTag)\n", test_time_delta(start_time), tmp, response.eTag);
         tmp[0] = 0;
+
 
       } else if (sscanf(line, "session_add_answer %[^\r\n]", arg) == 1) {
 
