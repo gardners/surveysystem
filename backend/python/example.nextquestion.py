@@ -49,10 +49,10 @@ Hook arguments supplied from backend:
  * survey_id: (str) survey id and hashed version - pattern: '<survey_id>/<hash>'
  * session_id: (str) current session id
  * action: (str) text representation of current (performed) session action (see survey.h enum actions) - one of:
-   - 'SESSION_NEXTQUESTIONS',
-   - 'SESSION_ADDANSWER',
-   - 'SESSION_DELETEANSWER',
-   - 'SESSION_ANALYSIS',
+   - 'ACTION_SESSION_NEXTQUESTIONS',
+   - 'ACTION_SESSION_ADDANSWER',
+   - 'ACTION_SESSION_DELETEANSWER',
+   - 'ACTION_SESSION_ANALYSIS',
  * affected_count: (int) count of affected answers by above action, additions are positive and deletions are negative
 
 """

@@ -19,17 +19,28 @@
 #include "utils.h"
 
 /**
- * see: survey.h enum actions
+ * @see: survey.h enum actions
  * #455
  */
 char *session_action_names[NUM_SESSION_ACTIONS] = {
-  "NONE",
+  "ACTION_NONE",
+  "ACTION_SESSION_NEW",
+  "ACTION_SESSION_DELETE",
+  "ACTION_SESSION_NEXTQUESTIONS",
+  "ACTION_SESSION_ADDANSWER",
+  "ACTION_SESSION_DELETEANSWER",
+  "ACTION_SESSION_ANALYSIS"
+};
+
+/**
+ * @see: survey.h enum session_state
+ */
+char *session_state_names[NUM_SESSION_STATES] = {
+  "SESSION_NULL",
   "SESSION_NEW",
-  "SESSION_DELETE",
-  "SESSION_NEXTQUESTIONS",
-  "SESSION_ADDANSWER",
-  "SESSION_DELETEANSWER",
-  "SESSION_ANALYSIS"
+  "SESSION_OPEN",
+  "SESSION_FINISHED",
+  "SESSION_CLOSED",
 };
 
 /**
