@@ -39,7 +39,7 @@ int log_recursed = 0;
   return lf;
 }
 
-int log_message(const char *file, const char *function, const int line, char *format, ...) {
+int log_message(const char *severity, const char *file, const char *function, const int line, char *format, ...) {
 
   int retVal = 0;
 
@@ -64,8 +64,7 @@ int log_message(const char *file, const char *function, const int line, char *fo
       if (!tm) {
         snprintf(log_name, 1024, "logs/surveysystem-UNKNOWNTIME.log");
       } else {
-        snprintf(log_name, 1024, "logs/surveysystem-%04d%02d%02d.%02d.log",
-                1900 + tm->tm_year, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour);
+        snprintf(log_name, 1024, "logs/surveysystem-%04d%02d%02d.%02d.log", 1900 + tm->tm_year, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour);
       }
       lf = open_log(log_name);
 
@@ -83,12 +82,11 @@ int log_message(const char *file, const char *function, const int line, char *fo
     va_end(argp);
 
     if (tm) {
-      fprintf(lf, "%04d/%02d/%02d.%02d:%02d.%d:%s:%d:%s():%s\n",
+      fprintf(lf, "%04d/%02d/%02d.%02d:%02d.%d:[%s] %s:%d:%s():%s\n",
               1900 + tm->tm_year, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour,
-              tm->tm_min, tm->tm_sec, file, line, function, message);
+              tm->tm_min, tm->tm_sec, severity, file, line, function, message);
     } else {
-      fprintf(lf, "\?\?\?\?/\?\?/\?\?.\?\?:\?\?.\?:%s:%d:%s():%s\n", file, line,
-              function, message);
+      fprintf(lf, "\?\?\?\?/\?\?/\?\?.\?\?:\?\?.\?:%s:%d:%s():%s\n", file, line, function, message);
     }
 
     fclose(lf);
