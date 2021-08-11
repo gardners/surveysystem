@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-// #428 enable logging removed: #include "code_instrumentation.h"
 
 #ifdef __BIG_ENDIAN__
 #define SHA_BIG_ENDIAN
@@ -39,7 +38,7 @@ void sha1_init(sha1nfo *s) {
 
   do {
     if (!s) {
-      LOG_ERROR("s is null");
+      BREAK_ERROR("s is null");
     }
 
     s->state[0] = 0x67452301;
@@ -65,7 +64,7 @@ void sha1_hashBlock(sha1nfo *s) {
 
   do {
     if (!s) {
-      LOG_ERROR("s is null");
+      BREAK_ERROR("s is null");
     }
 
     uint8_t i;
@@ -112,7 +111,7 @@ void sha1_addUncounted(sha1nfo *s, uint8_t data) {
 
   do {
     if (!s) {
-      LOG_ERROR("s is null");
+      BREAK_ERROR("s is null");
     }
 
     uint8_t *const b = (uint8_t *)s->buffer;
@@ -123,7 +122,7 @@ void sha1_addUncounted(sha1nfo *s, uint8_t data) {
     int endianBufferOffset = s->bufferOffset ^ 3;
 #endif
     if (endianBufferOffset >= sizeof(s->buffer)) {
-      LOG_ERROR("endianBufferOffset past buffer end");
+      BREAK_ERROR("endianBufferOffset past buffer end");
     }
     b[endianBufferOffset] = data;
 
@@ -143,7 +142,7 @@ void sha1_writebyte(sha1nfo *s, uint8_t data) {
   do {
 
     if (!s) {
-      LOG_ERROR("s is null");
+      BREAK_ERROR("s is null");
     }
 
     ++s->byteCount;
@@ -158,11 +157,11 @@ void sha1_write(sha1nfo *s, const char *data, size_t len) {
   do {
 
     if (!s) {
-      LOG_ERROR("s is null");
+      BREAK_ERROR("s is null");
     }
 
     if (!data) {
-      LOG_ERROR("data is null");
+      BREAK_ERROR("data is null");
     }
 
     if ((int)len <= 0) {
@@ -181,7 +180,7 @@ void sha1_pad(sha1nfo *s) {
   do {
 
     if (!s) {
-      LOG_ERROR("s is null");
+      BREAK_ERROR("s is null");
     }
 
     // Implement SHA-1 padding (fips180-2 Â§5.1.1)
@@ -212,7 +211,7 @@ uint8_t *sha1_result(sha1nfo *s) {
   do {
 
     if (!s) {
-      LOG_ERROR("s is null");
+      BREAK_ERROR("s is null");
     }
 
     // Pad to complete the last block
@@ -231,7 +230,7 @@ uint8_t *sha1_result(sha1nfo *s) {
 
     res = (uint8_t *)s->state;
     if (!res) {
-      LOG_ERROR("result is null");
+      BREAK_ERROR("result is null");
     }
 
   } while (0);
@@ -249,11 +248,11 @@ void sha1_initHmac(sha1nfo *s, const uint8_t *key, int keyLength) {
   do {
 
     if (!s) {
-      LOG_ERROR("s is null");
+      BREAK_ERROR("s is null");
     }
 
     if (!key) {
-      LOG_ERROR("key is null");
+      BREAK_ERROR("key is null");
     }
 
     uint8_t i;
@@ -286,7 +285,7 @@ uint8_t *sha1_resultHmac(sha1nfo *s) {
   do {
 
     if (!s) {
-      LOG_ERROR("s is null");
+      BREAK_ERROR("s is null");
     }
 
     uint8_t i;
@@ -303,7 +302,7 @@ uint8_t *sha1_resultHmac(sha1nfo *s) {
 
     res = sha1_result(s);
     if (!res) {
-      LOG_ERROR("res is null");
+      BREAK_ERROR("res is null");
     }
   } while (0);
 
@@ -315,7 +314,7 @@ int sha1_hash(sha1nfo *s, char *hash) {
 
   do {
     if (!hash) {
-      LOG_ERROR("hash out is NULL");
+      BREAK_ERROR("hash out is NULL");
     }
     unsigned char *bytes = sha1_result(s);
     int len = snprintf(hash, HASHSTRING_LENGTH + 1,
@@ -327,7 +326,7 @@ int sha1_hash(sha1nfo *s, char *hash) {
               bytes[18], bytes[19]);
 
     if (len < 0) {
-      LOG_ERROR("Failed to generate sha1 hash string");
+      BREAK_ERROR("Failed to generate sha1 hash string");
     }
   } while (0);
 
@@ -339,15 +338,15 @@ int sha1_file(const char *filename, char *hash) {
 
   do {
     if (!filename) {
-      LOG_ERROR("filename is NULL");
+      BREAK_ERROR("filename is NULL");
     }
     if (!hash) {
-      LOG_ERROR("hash is NULL");
+      BREAK_ERROR("hash is NULL");
     }
 
     FILE *f = fopen(filename, "r");
     if (!f) {
-      LOG_ERRORV("Could not open file for hashing", filename);
+      BREAK_ERRORV("Could not open file for hashing", filename);
     }
     char buffer[8192];
     int count;
@@ -356,7 +355,7 @@ int sha1_file(const char *filename, char *hash) {
     do {
       count = fread(buffer, 1, 8192, f);
       if (count < 0) {
-        LOG_ERRORV("Error hashing file", filename);
+        BREAK_ERRORV("Error hashing file", filename);
       }
       if (count > 0) {
         sha1_write(&s, buffer, count);
@@ -366,7 +365,7 @@ int sha1_file(const char *filename, char *hash) {
     fclose(f);
 
     if (sha1_hash(&s, hash)) {
-      LOG_ERRORV("Failed to generate sha1 hash string for file '%s'", filename);
+      BREAK_ERRORV("Failed to generate sha1 hash string for file '%s'", filename);
     }
 
   } while (0);
@@ -383,15 +382,15 @@ int sha1_string(char *src, char *hash) {
 
   do {
     if (!src) {
-      LOG_ERROR("input string src is NULL");
+      BREAK_ERROR("input string src is NULL");
     }
     if (!hash) {
-      LOG_ERROR("output hash string is NULL");
+      BREAK_ERROR("output hash string is NULL");
     }
 
     size_t src_len = strlen(src);
     if (!src_len) {
-      LOG_ERROR("input string src is empty");
+      BREAK_ERROR("input string src is empty");
     }
 
     sha1nfo s;
@@ -399,7 +398,7 @@ int sha1_string(char *src, char *hash) {
     sha1_write(&s, src, src_len);
 
     if (sha1_hash(&s, hash)) {
-      LOG_ERROR("Failed to generate sha1 hash string for string");
+      BREAK_ERROR("Failed to generate sha1 hash string for string");
     }
 
   } while (0);
@@ -416,22 +415,22 @@ int sha1_validate_string(char *src, char *hash) {
 
   do {
     if (!src) {
-      LOG_ERROR("input string src is NULL");
+      BREAK_ERROR("input string src is NULL");
     }
     if (!hash) {
-      LOG_ERROR("input hash string is NULL");
+      BREAK_ERROR("input hash string is NULL");
     }
     if (strlen(hash) != HASHSTRING_LENGTH) {
-      LOG_ERROR("input hash string is invalid (length)");
+      BREAK_ERROR("input hash string is invalid (length)");
     }
 
     char new_hash[HASHSTRING_LENGTH];
     if (sha1_string(src, new_hash)) {
-      LOG_ERROR("generating sha1 hash from input string src failed");
+      BREAK_ERROR("generating sha1 hash from input string src failed");
     }
 
     if (strncmp(hash, new_hash, HASHSTRING_LENGTH)) {
-      LOG_ERROR("compare sha1_string(src) == hash failed");
+      BREAK_ERROR("compare sha1_string(src) == hash failed");
     }
   } while (0);
 
@@ -446,13 +445,13 @@ int sha1_validate_string_hashlike(char *str) {
 
   do {
     if (!str) {
-      LOG_ERROR("string is null");
+      BREAK_ERROR("string is null");
     }
 
     int i = 0;
     while (i < HASHSTRING_LENGTH) {
       if (!isdigit(str[i]) && !isalpha(str[i])) {
-        LOG_ERROR("sha1 hash contains invalid characters");
+        BREAK_ERROR("sha1 hash contains invalid characters");
         break;
       }
       i++;
@@ -463,10 +462,10 @@ int sha1_validate_string_hashlike(char *str) {
     }
 
     if (i != HASHSTRING_LENGTH) {
-      LOG_ERROR("sha1 hash too short");
+      BREAK_ERROR("sha1 hash too short");
     }
     if (str[HASHSTRING_LENGTH] != 0) {
-      LOG_ERROR("sha1 hash too long");
+      BREAK_ERROR("sha1 hash too long");
     }
   } while(0);
 

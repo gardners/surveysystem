@@ -31,21 +31,21 @@ int lock_session(char *session_id) {
     struct tm *tm = localtime(&now);
 
     if (!tm)
-      LOG_ERROR("localtime() failed. Cannot acquire lock.");
+      BREAK_ERROR("localtime() failed. Cannot acquire lock.");
     struct timeval nowtv;
 
     // If gettimeofday() fails or returns an invalid value, all else is lost!
     if (gettimeofday(&nowtv, NULL) == -1)
-      LOG_ERROR("gettimeofday() failed");
+      BREAK_ERROR("gettimeofday() failed");
 
     char session_prefix[5];
     char session_path_suffix[1024];
     char lock_path[1024];
 
     if (!session_id)
-      LOG_ERROR("session_id is NULL");
+      BREAK_ERROR("session_id is NULL");
     if (validate_session_id(session_id))
-      LOG_ERRORV("Session ID '%s' is malformed", session_id);
+      BREAK_ERRORV("Session ID '%s' is malformed", session_id);
 
     for (int i = 0; i < 4; i++) {
       session_prefix[i] = session_id[i];
@@ -55,14 +55,14 @@ int lock_session(char *session_id) {
     // Create subdirectory in locks directory if required
     snprintf(session_path_suffix, 1024, "locks");
     if (generate_path(session_path_suffix, lock_path, 1024))
-      LOG_ERRORV("generate_path('%s') failed to build path for lock path when "
+      BREAK_ERRORV("generate_path('%s') failed to build path for lock path when "
                  "locking session '%s'",
                  session_path_suffix, session_id);
     mkdir(lock_path, 0750);
 
     snprintf(session_path_suffix, 1024, "locks/%s", session_prefix);
     if (generate_path(session_path_suffix, lock_path, 1024))
-      LOG_ERRORV("generate_path('%s') failed to build path for lock path when "
+      BREAK_ERRORV("generate_path('%s') failed to build path for lock path when "
                  "locking session '%s'",
                  session_path_suffix, session_id);
     mkdir(lock_path, 0750);
@@ -70,7 +70,7 @@ int lock_session(char *session_id) {
     snprintf(session_path_suffix, 1024, "locks/%s/lock.%s", session_prefix,
              session_id);
     if (generate_path(session_path_suffix, lock_path, 1024))
-      LOG_ERRORV(
+      BREAK_ERRORV(
           "generate_path('%s') failed to build path while locking session '%s'",
           session_path_suffix, session_id);
 
@@ -91,13 +91,13 @@ int lock_session(char *session_id) {
     // No existing lock, so acquire one
 
     if (lock_count >= MAX_LOCKS)
-      LOG_ERROR("Too many file locks open. Bug or increase MAX_LOCKS?");
+      BREAK_ERROR("Too many file locks open. Bug or increase MAX_LOCKS?");
 
     FILE *f = fopen(lock_path, "a");
     if (!f)
-      LOG_ERRORV("Could not open lock file '%s' for append.", lock_path);
+      BREAK_ERRORV("Could not open lock file '%s' for append.", lock_path);
     if (flock(fileno(f), LOCK_EX))
-      LOG_ERRORV("flock('%s',LOCK_EX) failed", lock_path);
+      BREAK_ERRORV("flock('%s',LOCK_EX) failed", lock_path);
     fprintf(f,
             "%04d/%02d/%02d"
             ".%02d:%02d.%d"
@@ -111,7 +111,7 @@ int lock_session(char *session_id) {
     locks[lock_count].file_handle = f;
     locks[lock_count].path = strdup(lock_path);
     if (!locks[lock_count].path)
-      LOG_ERROR("strdup() failed when remembering file lock");
+      BREAK_ERROR("strdup() failed when remembering file lock");
     lock_count++;
 
   } while (0);
@@ -126,7 +126,7 @@ int release_my_session_locks(void) {
     // Release locks and flush lock list
     for (int i = 0; i < lock_count; i++) {
       if (flock(fileno(locks[i].file_handle), LOCK_UN))
-        LOG_ERRORV("flock('%s',LOCK_UN) failed", locks[i].path);
+        BREAK_ERRORV("flock('%s',LOCK_UN) failed", locks[i].path);
 
       // #284 close file handle
       if (locks[i].file_handle) {

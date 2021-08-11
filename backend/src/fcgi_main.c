@@ -108,11 +108,11 @@ int main(int argc, char **argv) {
                                    KEY__MAX, // CGI variable parse definitions
                                    pages, PAGE__MAX, // Pages for parsing
                                    PAGE_INDEX)) {
-      LOG_ERROR("khttp_fcgi_init() failed.");
+      BREAK_ERROR("khttp_fcgi_init() failed.");
     }
 
     if (!fcgi) {
-      LOG_ERROR("fcgi==NULL after call to khttp_fcgi_init()");
+      BREAK_ERROR("fcgi==NULL after call to khttp_fcgi_init()");
     }
 
     // For each request
@@ -232,21 +232,21 @@ static void fcgi_newsession(struct kreq *req) {
 
     if (validate_survey_id(survey_id)) {
       http_json_error(req, KHTTP_400, "Surveyid is invalid.");
-      LOG_ERROR("Invalid survey id");
+      BREAK_ERROR("Invalid survey id");
     }
 
     // #363 parse session meta
     meta = fcgi_request_parse_meta(req);
     if (!meta) {
       http_json_error(req, KHTTP_500, "Session could not be created (parse request meta).");
-      LOG_ERROR("fcgi_request_parse_meta() failed");
+      BREAK_ERROR("fcgi_request_parse_meta() failed");
     }
 
     // #363 validate session meta
     enum khttp status = fcgi_request_validate_meta_kreq(req, meta);
     if (status >= KHTTP_400) {
       http_json_error(req, status, "Invalid idendity provider check app configuration");
-      LOG_ERRORV("fcgi_request_validate_meta_kreq() returned status %d >= KHTTP_400 (%d)", KHTTP_400, status);
+      BREAK_ERRORV("fcgi_request_validate_meta_kreq() returned status %d >= KHTTP_400 (%d)", KHTTP_400, status);
     }
 
     if (KMETHOD_POST == req->method) {
@@ -254,25 +254,25 @@ static void fcgi_newsession(struct kreq *req) {
       if (meta->provider != IDENDITY_HTTP_TRUSTED) {
         // only allowed for trusted middleware, so return 400
         http_json_error(req, KHTTP_400, "POST session_id only allowed in a managed system.");
-        LOG_ERRORV("POST /newsession with invalid provider %d", meta->provider);
+        BREAK_ERRORV("POST /newsession with invalid provider %d", meta->provider);
       }
 
       if (validate_session_id(session_id)) {
         // valid uid or return 400
         http_json_error(req, KHTTP_400, "Invalid session_id");
-        LOG_ERROR("Invalid session_id");
+        BREAK_ERROR("Invalid session_id");
       }
 
       char sess_path[1024];
       if(generate_session_path(session_id, session_id, sess_path, 1024)) {
         http_json_error(req, KHTTP_500, "Failed to create session path");
-        LOG_ERROR("Failed to create session path");
+        BREAK_ERROR("Failed to create session path");
       }
 
       if(!access(sess_path, F_OK)) {
         // valid uid or return 400
         http_json_error(req, KHTTP_400, "Session exists already");
-        LOG_ERRORV("Session '%s' exists already", session_id);
+        BREAK_ERRORV("Session '%s' exists already", session_id);
       }
 
     } else {
@@ -280,7 +280,7 @@ static void fcgi_newsession(struct kreq *req) {
       // #239, create new session id (separated out)
       if(create_session_id(created_sessid, 40)) {
         http_json_error(req, KHTTP_500, "Session could not be created (create session id).");
-        LOG_ERROR("create session id failed");
+        BREAK_ERROR("create session id failed");
       }
       session_id = created_sessid;
 
@@ -291,26 +291,26 @@ static void fcgi_newsession(struct kreq *req) {
     ses = create_session(survey_id, session_id, meta);
     if (!ses) {
       http_json_error(req, KHTTP_500, "Session could not be created (create session).");
-      LOG_ERROR("create_session() failed");
+      BREAK_ERROR("create_session() failed");
     }
 
     // # 461 store nextquestions after creating session
     nq = get_next_questions(ses, action, 0);
     if (!nq) {
       http_json_error(req, KHTTP_500, "Unable to get next questions.");
-      LOG_ERROR("get_next_questions() failed");
+      BREAK_ERROR("get_next_questions() failed");
     }
 
     if (save_session(ses)) {
       http_json_error(req, KHTTP_500, "Unable to update session.");
-      LOG_ERROR("save_session() failed");
+      BREAK_ERROR("save_session() failed");
     }
 
     // reply
     http_open(req, KHTTP_200, KMIME_TEXT_PLAIN, ses->consistency_hash);
     enum kcgi_err er = khttp_puts(req, session_id);
     if (er != KCGI_OK) {
-      LOG_ERROR("khttp_puts() failed");
+      BREAK_ERROR("khttp_puts() failed");
     }
 
     LOG_INFO("Leaving page handler");
@@ -351,13 +351,13 @@ static void fcgi_page_answers(struct kreq *req) {
     status = fcgi_request_validate_method(req, methods, 3);
     if (status != KHTTP_200) {
       http_open(req, status, KMIME_TEXT_PLAIN, NULL);
-      LOG_ERRORV("validating request method (KMETHOD: %d) failed, status %d != KHTTP_200", req->method, KHTTP_200, status);
+      BREAK_ERRORV("validating request method (KMETHOD: %d) failed, status %d != KHTTP_200", req->method, KHTTP_200, status);
     }
 
     ses = fcgi_request_load_session(req);
     if (!ses) {
       http_json_error(req, KHTTP_400, "Could not load specified session. Does it exist?");
-      LOG_ERROR("Could not load session");
+      BREAK_ERROR("Could not load session");
     }
 
     /*
@@ -369,14 +369,14 @@ static void fcgi_page_answers(struct kreq *req) {
     status = fcgi_request_validate_meta_session(req, ses);
     if (status != KHTTP_200) {
       http_json_error(req, status, "Invalid idendity provider, check app configuration");
-      LOG_ERRORV("validate_session_meta() returned status %d != (%d)", KHTTP_200, status);
+      BREAK_ERRORV("validate_session_meta() returned status %d != (%d)", KHTTP_200, status);
     }
 
     // validate requested action against session current state (#379)
     char reason[1024];
     if (validate_session_action(action, ses, reason, 1024)) {
       http_json_error(req, KHTTP_400, reason);
-      LOG_ERROR("Session action validation failed");
+      BREAK_ERROR("Session action validation failed");
     }
 
     // see kcgi/child.c fn kworker_child_body()
@@ -388,14 +388,14 @@ static void fcgi_page_answers(struct kreq *req) {
     }
 
     if(!value) {
-      LOG_ERROR("Could find answers value (empty)");
+      BREAK_ERROR("Could find answers value (empty)");
     }
 
     // load answers from request
     struct answer_list *list = deserialise_answers(value, ANSWER_SCOPE_PUBLIC);
     if (!list) {
       http_json_error(req, KHTTP_400, "Could not load answers");
-      LOG_ERROR("Could not load answers");
+      BREAK_ERROR("Could not load answers");
     }
 
     for (size_t i = 0; i < list->len; i++) {
@@ -409,7 +409,7 @@ static void fcgi_page_answers(struct kreq *req) {
 
     if (match != 0) {
       http_json_error(req, KHTTP_400, "Answers don't match previous questions (extact order). Retrieve required questions by querying /nextquestions");
-      LOG_ERRORV("Answers don't match next_questions: '%.50s' != '%.50s'", uids, ses->next_questions);
+      BREAK_ERRORV("Answers don't match next_questions: '%.50s' != '%.50s'", uids, ses->next_questions);
     }
 
     int affected_count = 0;
@@ -419,7 +419,7 @@ static void fcgi_page_answers(struct kreq *req) {
       if (validate_session_add_answer(ses, list->answers[i])) {
         error = 1;
         http_json_error(req, KHTTP_400, "Answer is invalid");
-        LOG_ERROR("Answer validation failed");
+        BREAK_ERROR("Answer validation failed");
       }
 
       if (req->method == KMETHOD_HEAD) {
@@ -431,7 +431,7 @@ static void fcgi_page_answers(struct kreq *req) {
       if (affected_count < 0) {
         error = 1;
         http_json_error(req, KHTTP_400, "Invalid answer, could not add to session.");
-        LOG_ERROR("session_add_answer() failed.");
+        BREAK_ERROR("session_add_answer() failed.");
       }
     } // end for
 
@@ -451,20 +451,20 @@ static void fcgi_page_answers(struct kreq *req) {
     nq = get_next_questions(ses, action, affected_count);
     if (!nq) {
       http_json_error(req, KHTTP_500, "Unable to get next questions.");
-      LOG_ERROR("get_next_questions() failed");
+      BREAK_ERROR("get_next_questions() failed");
     }
 
     // joerg: break if session could not be updated
     if (save_session(ses)) {
       http_json_error(req, KHTTP_500, "Unable to update session.");
-      LOG_ERROR("save_session failed()");
+      BREAK_ERROR("save_session failed()");
     }
 
     // All ok, so tell the caller the next question to be answered
     // #373, separate response handler for nextquestions
     if (fcgi_response_nextquestion(req, ses, nq)) {
       http_json_error(req, KHTTP_500, "Could not load next questions for specified session.");
-      LOG_ERROR("Could not load next questions for specified session");
+      BREAK_ERROR("Could not load next questions for specified session");
     }
 
     LOG_INFO("Leaving page handler.");
@@ -496,7 +496,7 @@ static void fcgi_addanswer(struct kreq *req) {
     ses = fcgi_request_load_session(req);
     if (!ses) {
       http_json_error(req, KHTTP_400, "Could not load specified session. Does it exist?");
-      LOG_ERROR("Could not load session");
+      BREAK_ERROR("Could not load session");
     }
 
     /*
@@ -508,52 +508,52 @@ static void fcgi_addanswer(struct kreq *req) {
     enum khttp status = fcgi_request_validate_meta_session(req, ses);
     if (status != KHTTP_200) {
       http_json_error(req, status, "Invalid idendity provider, check app configuration");
-      LOG_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
+      BREAK_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
     }
 
     // validate requested action against session current state (#379)
     char reason[1024];
     if (validate_session_action(action, ses, reason, 1024)) {
       http_json_error(req, KHTTP_400, reason);
-      LOG_ERROR("Session action validation failed");
+      BREAK_ERROR("Session action validation failed");
     }
 
     ans = fcgi_request_load_answer(req);
     if (!ans) {
       http_json_error(req, KHTTP_400, "Could not load answer");
-      LOG_ERROR("Could not load answer");
+      BREAK_ERROR("Could not load answer");
     }
 
     if (validate_session_add_answer(ses, ans)) {
       http_json_error(req, KHTTP_400, "Answer is invalid");
-      LOG_ERROR("Answer validation failed");
+      BREAK_ERROR("Answer validation failed");
     }
 
     // #445 count affected answers
     int affected_count = session_add_answer(ses, ans);
     if (affected_count < 0) {
       http_json_error(req, KHTTP_400, "Invalid answer, could not add to session.");
-      LOG_ERROR("session_add_answer() failed.");
+      BREAK_ERROR("session_add_answer() failed.");
     }
 
     // #332 next_questions data struct
     nq = get_next_questions(ses, action, affected_count);
     if (!nq) {
       http_json_error(req, KHTTP_500, "Unable to get next questions.");
-      LOG_ERROR("get_next_questions() failed");
+      BREAK_ERROR("get_next_questions() failed");
     }
 
     // joerg: break if session could not be updated
     if (save_session(ses)) {
       http_json_error(req, KHTTP_500, "Unable to update session.");
-      LOG_ERROR("save_session failed()");
+      BREAK_ERROR("save_session failed()");
     }
 
     // All ok, so tell the caller the next question to be answered
     // #373, separate response handler for nextquestions
     if (fcgi_response_nextquestion(req, ses, nq)) {
       http_json_error(req, KHTTP_500, "Could not load next questions for specified session.");
-      LOG_ERROR("Could not load next questions for specified session");
+      BREAK_ERROR("Could not load next questions for specified session");
     }
 
     LOG_INFO("Leaving page handler.");
@@ -584,32 +584,32 @@ static void fcgi_updateanswer(struct kreq *req) {
     ses = fcgi_request_load_session(req);
     if (!ses) {
       http_json_error(req, KHTTP_400, "Could not load specified session. Does it exist?");
-      LOG_ERROR("Could not load session");
+      BREAK_ERROR("Could not load session");
     }
 
     // validate request against session meta (#363)
     enum khttp status = fcgi_request_validate_meta_session(req, ses);
     if (status != KHTTP_200) {
       http_json_error(req, status, "Invalid idendity provider, check app configuration");
-      LOG_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
+      BREAK_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
     }
 
     // validate requested action against session current state (#379)
     char reason[1024];
     if (validate_session_action(action, ses, reason, 1024)) {
       http_json_error(req, KHTTP_400, reason);
-      LOG_ERROR("Session action validation failed");
+      BREAK_ERROR("Session action validation failed");
     }
 
     ans = fcgi_request_load_answer(req);
     if (!ans) {
       http_json_error(req, KHTTP_400, "Could not load answer");
-      LOG_ERROR("Could not load answer");
+      BREAK_ERROR("Could not load answer");
     }
 
     if (validate_session_add_answer(ses, ans)) {
       http_json_error(req, KHTTP_400, "Answer is invalid");
-      LOG_ERROR("Answer validation failed");
+      BREAK_ERROR("Answer validation failed");
     }
 
     // #445 count affected answers
@@ -617,33 +617,33 @@ static void fcgi_updateanswer(struct kreq *req) {
     if (deleted < 0) {
       // TODO could be both 400 or 500 (storage, serialization, not in session)
       http_json_error(req, KHTTP_400, "Answer does not match existing session records.");
-      LOG_ERROR("session_delete_answer() failed");
+      BREAK_ERROR("session_delete_answer() failed");
     }
 
     // #445 count affected answers
     int affected_count = session_add_answer(ses, ans);
     if (affected_count < 0) {
       http_json_error(req, KHTTP_400, "Invalid answer, could not add to session.");
-      LOG_ERROR("session_add_answer() failed.");
+      BREAK_ERROR("session_add_answer() failed.");
     }
 
     // #332 next_questions data struct
     nq = get_next_questions(ses, action, affected_count);
     if (!nq) {
       http_json_error(req, KHTTP_500, "Unable to get next questions.");
-      LOG_ERROR("get_next_questions() failed");
+      BREAK_ERROR("get_next_questions() failed");
     }
 
     if (save_session(ses)) {
       http_json_error(req, KHTTP_500, "Unable to update session.");
-      LOG_ERROR("save_session() failed");
+      BREAK_ERROR("save_session() failed");
     }
 
     // All ok, so tell the caller the next question to be answered
     // #373, separate response handler for nextquestions
     if (fcgi_response_nextquestion(req, ses, nq)) {
       http_json_error(req, KHTTP_500, "Could not load next questions for specified session.");
-      LOG_ERROR("Could not load next questions for specified session.");
+      BREAK_ERROR("Could not load next questions for specified session.");
     }
 
     LOG_INFO("Leaving page handler.");
@@ -675,26 +675,26 @@ static void fcgi_delanswer(struct kreq *req) {
     ses = fcgi_request_load_session(req);
     if (!ses) {
       http_json_error(req, KHTTP_400, "Could not load specified session. Does it exist?");
-      LOG_ERROR("Could not load session");
+      BREAK_ERROR("Could not load session");
     }
 
     if (validate_session_delete_answer(question_id, ses)) {
       http_json_error(req, KHTTP_400, "Could load answer. Does it exist?");
-      LOG_ERRORV("Could not load answer '%s'", question_id);
+      BREAK_ERRORV("Could not load answer '%s'", question_id);
     }
 
     // validate request against session meta (#363)
     enum khttp status = fcgi_request_validate_meta_session(req, ses);
     if (status != KHTTP_200) {
       http_json_error(req, status, "Invalid idendity provider, check app configuration");
-      LOG_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
+      BREAK_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
     }
 
     // validate requested action against session current state (#379)
     char reason[1024];
     if (validate_session_action(action, ses, reason, 1024)) {
       http_json_error(req, KHTTP_400, reason);
-      LOG_ERROR("Session action validation failed");
+      BREAK_ERROR("Session action validation failed");
     }
 
     // We have a question -- so delete all answers to the given question
@@ -704,26 +704,26 @@ static void fcgi_delanswer(struct kreq *req) {
     if (affected_count < 0) {
       // TODO could be both 400 or 500 (storage, serialization, not in session)
       http_json_error(req, KHTTP_400, "Answer does not match existing session records.");
-      LOG_ERROR("session_delete_answer() failed");
+      BREAK_ERROR("session_delete_answer() failed");
     }
 
     // #332 next_questions data struct
     nq = get_next_questions(ses, action, affected_count);
     if (!nq) {
       http_json_error(req, KHTTP_500, "Unable to get next questions.");
-      LOG_ERROR("get_next_questions() failed");
+      BREAK_ERROR("get_next_questions() failed");
     }
 
     if (save_session(ses)) {
       http_json_error(req, KHTTP_500, "Unable to update session.");
-      LOG_ERROR("save_session() failed");
+      BREAK_ERROR("save_session() failed");
     }
 
     // All ok, so tell the caller the next question to be answered
     // #373, separate response handler for nextquestions
     if (fcgi_response_nextquestion(req, ses, nq)) {
       http_json_error(req, KHTTP_500, "Could not load next questions for specified session.");
-      LOG_ERROR("Could not load next questions for specified session");
+      BREAK_ERROR("Could not load next questions for specified session");
     }
     LOG_INFO("Leaving page handler.");
 
@@ -752,26 +752,26 @@ static void fcgi_delprevanswer(struct kreq *req) {
 
     if (!header) {
       http_json_error(req, KHTTP_400, "request header 'If-Match' is missing.");
-      LOG_ERROR("request header 'If-Match' is missing.");
+      BREAK_ERROR("request header 'If-Match' is missing.");
     }
 
     // (weak) valiation if header->val is hash like string
     if (sha1_validate_string_hashlike(header->val)) {
       http_json_error(req, KHTTP_400, "request header 'If-Match' is invalid.");
-      LOG_ERROR("request header 'If-Match' is invalid.");
+      BREAK_ERROR("request header 'If-Match' is invalid.");
     }
 
     ses = fcgi_request_load_session(req);
     if (!ses) {
       http_json_error(req, KHTTP_400, "Could not load specified session. Does it exist?");
-      LOG_ERROR("Could not load session");
+      BREAK_ERROR("Could not load session");
     }
 
     // validate request against session meta (#363)
     enum khttp status = fcgi_request_validate_meta_session(req, ses);
     if (status != KHTTP_200) {
       http_json_error(req, status, "Invalid idendity provider, check app configuration");
-      LOG_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
+      BREAK_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
     }
 
     // validate requested action against session current state (#379)
@@ -783,12 +783,12 @@ static void fcgi_delprevanswer(struct kreq *req) {
     char reason[1024];
     if (validate_session_action(validate_action, ses, reason, 1024)) {
       http_json_error(req, KHTTP_400, reason);
-      LOG_ERROR("Session action validation failed");
+      BREAK_ERROR("Session action validation failed");
     }
 
     if (strncmp(header->val, ses->consistency_hash, HASHSTRING_LENGTH)) {
       http_json_error(req, KHTTP_412, "Request header 'If-Match' does not match");
-      LOG_ERROR("checksum does not match session consistency hash!");
+      BREAK_ERROR("checksum does not match session consistency hash!");
     }
 
     LOG_INFOV("checksum match passed for session '%s'", ses->session_id);
@@ -807,26 +807,26 @@ static void fcgi_delprevanswer(struct kreq *req) {
     if (affected_count < 0) {
       // TODO could be both 400 or 500 (storage, serialization, not in session)
       http_json_error(req, KHTTP_400, "Answer does not match existing session records.");
-      LOG_ERROR("session_delete_answer() failed");
+      BREAK_ERROR("session_delete_answer() failed");
     }
 
     // #332 next_questions data struct
     nq = get_next_questions(ses, action, affected_count);
     if (!nq) {
       http_json_error(req, KHTTP_500, "Unable to get next questions.");
-      LOG_ERROR("get_next_questions() failed");
+      BREAK_ERROR("get_next_questions() failed");
     }
 
     if (save_session(ses)) {
       http_json_error(req, KHTTP_500, "Unable to update session.");
-      LOG_ERROR("save_session() failed");
+      BREAK_ERROR("save_session() failed");
     }
 
     // All ok, so tell the caller the next question to be answered
     // #373, separate response handler for nextquestions
     if (fcgi_response_nextquestion(req, ses, nq)) {
       http_json_error(req, KHTTP_500, "Could not load next questions for specified session.");
-      LOG_ERROR("Could not load next questions for specified session");
+      BREAK_ERROR("Could not load next questions for specified session");
     }
 
     LOG_INFO("Leaving page handler.");
@@ -854,33 +854,33 @@ static void fcgi_delsession(struct kreq *req) {
     ses = fcgi_request_load_session(req);
     if (!ses) {
       http_json_error(req, KHTTP_400, "Could not load specified session. Does it exist?");
-      LOG_ERROR("Could not load session");
+      BREAK_ERROR("Could not load session");
     }
 
     // validate request against session meta (#363)
     enum khttp status = fcgi_request_validate_meta_session(req, ses);
     if (status != KHTTP_200) {
       http_json_error(req, status, "Invalid idendity provider, check app configuration");
-      LOG_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
+      BREAK_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
     }
 
     // validate requested action against session current state (#379)
     char reason[1024];
     if (validate_session_action(action, ses, reason, 1024)) {
       http_json_error(req, KHTTP_400, reason);
-      LOG_ERROR("Session action validation failed");
+      BREAK_ERROR("Session action validation failed");
     }
 
     if (delete_session(ses->session_id)) {
       http_json_error(req, KHTTP_400, "Could not delete session. Does it exist?");
-      LOG_ERROR("delete_session() failed");
+      BREAK_ERROR("delete_session() failed");
     }
 
     // reply
     http_open(req, KHTTP_200, KMIME_TEXT_PLAIN, NULL);
     enum kcgi_err er = khttp_puts(req, "Session deleted");
     if (er != KCGI_OK) {
-      LOG_ERROR("khttp_puts() failed");
+      BREAK_ERROR("khttp_puts() failed");
     }
 
     LOG_INFO("Leaving page handler");
@@ -909,40 +909,40 @@ static void fcgi_nextquestion(struct kreq *req) {
     ses = fcgi_request_load_session(req);
     if (!ses) {
       http_json_error(req, KHTTP_400, "Could not load specified session. Does it exist?");
-      LOG_ERROR("Could not load session");
+      BREAK_ERROR("Could not load session");
     }
 
     // validate request against session meta (#363)
     enum khttp status = fcgi_request_validate_meta_session(req, ses);
     if (status != KHTTP_200) {
       http_json_error(req, status, "Invalid idendity provider, check app configuration");
-      LOG_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
+      BREAK_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
     }
 
     // validate requested action against session current state (#379)
     char reason[1024];
     if (validate_session_action(action, ses, reason, 1024)) {
       http_json_error(req, KHTTP_400, reason);
-      LOG_ERROR("Session action validation failed");
+      BREAK_ERROR("Session action validation failed");
     }
 
     // #332 next_questions data struct
     nq = get_next_questions(ses, action, 0);
     if (!nq) {
       http_json_error(req, KHTTP_500, "Unable to get next questions.");
-      LOG_ERROR("get_next_questions() failed");
+      BREAK_ERROR("get_next_questions() failed");
     }
 
     if (save_session(ses)) {
       http_json_error(req, KHTTP_500, "Unable to update session.");
-      LOG_ERROR("save_session() failed");
+      BREAK_ERROR("save_session() failed");
     }
 
     // All ok, so tell the caller the next question to be answered
     // #373, separate response handler for nextquestions
     if (fcgi_response_nextquestion(req, ses, nq)) {
       http_json_error(req, KHTTP_500, "Could not load next questions for specified session.");
-      LOG_ERROR("Could not load next questions for specified session.");
+      BREAK_ERROR("Could not load next questions for specified session.");
     }
 
     LOG_INFO("Leaving page handler.");
@@ -1092,38 +1092,38 @@ static void fcgi_analyse(struct kreq *req) {
     ses = fcgi_request_load_session(req);
     if (!ses) {
       http_json_error(req, KHTTP_400, "Could not load specified session. Does it exist?");
-      LOG_ERROR("Could not load session");
+      BREAK_ERROR("Could not load session");
     }
 
     // validate request against session meta (#363)
     enum khttp status = fcgi_request_validate_meta_session(req, ses);
     if (status != KHTTP_200) {
       http_json_error(req, status, "Invalid idendity provider, check app configuration");
-      LOG_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
+      BREAK_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
     }
 
     // validate requested action against session current state (#379)
     char reason[1024];
     if (validate_session_action(action, ses, reason, 1024)) {
       http_json_error(req, KHTTP_400, reason);
-      LOG_ERROR("Session action validation failed");
+      BREAK_ERROR("Session action validation failed");
     }
 
     // String is allocated into heap to since we have no control over the lifetime of the Python string.
     // You need to free it
     if (get_analysis(ses, &analysis)) {
       http_json_error(req, KHTTP_500, "Could not retrieve analysis.");
-      LOG_ERROR("get_analysis() failed");
+      BREAK_ERROR("get_analysis() failed");
     }
 
     if (!analysis) {
       http_json_error(req, KHTTP_500, "Could not retrieve analysis (NULL).");
-      LOG_ERROR("get_analysis() returned NULL result");
+      BREAK_ERROR("get_analysis() returned NULL result");
     }
 
     if (!analysis[0]) {
       http_json_error(req, KHTTP_500, "Could not retrieve analysis (empty result).");
-      LOG_ERROR("get_analysis() returned empty result");
+      BREAK_ERROR("get_analysis() returned empty result");
     }
 
     // store analysis with session
@@ -1137,7 +1137,7 @@ static void fcgi_analyse(struct kreq *req) {
 
     er = khttp_puts(req, analysis);
     if (er != KCGI_OK) {
-      LOG_ERROR("khttp_puts() failed");
+      BREAK_ERROR("khttp_puts() failed");
     }
 
     LOG_INFO("Leaving page handler");

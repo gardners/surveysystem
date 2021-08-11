@@ -79,13 +79,13 @@ int serialiser_count_columns(char separator, char *line) {
 
   do {
     if (!line) {
-      LOG_ERROR("line is NULL");
+      BREAK_ERROR("line is NULL");
     }
 
     char prev = ' ';
     for(int i = 0; line[i] != '\0'; i++) {
       if(prev != '\\' && line[i] == '\n') {
-        LOG_ERROR("multi line string: not allowed. line break detected");
+        BREAK_ERROR("multi line string: not allowed. line break detected");
         break;
       }
 
@@ -111,7 +111,7 @@ int serialise_int(int in, char *out, int max_len) {
   do {
     snprintf(temp, 16, "%d", in);
     if (strlen(temp) >= max_len) {
-      LOG_ERRORV("integer converts to over-long string '%s...'", temp);
+      BREAK_ERRORV("integer converts to over-long string '%s...'", temp);
     } else {
       strcpy(out, temp);
       retVal = strlen(temp);
@@ -129,7 +129,7 @@ int serialise_longlong(long long in, char *out, int max_len) {
   do {
     snprintf(temp, 32, "%lld", in);
     if (strlen(temp) >= max_len) {
-      LOG_ERRORV("long long converts to over-long string '%s...'", temp);
+      BREAK_ERRORV("long long converts to over-long string '%s...'", temp);
     } else {
       strcpy(out, temp);
       retVal = strlen(temp);
@@ -145,7 +145,7 @@ int space_check(int append_len, int existing_len, int max_len) {
   int retVal = 0;
   do {
     if ((existing_len + append_len) > max_len) {
-      LOG_ERRORV("Insufficient space to append string of %d chars", append_len);
+      BREAK_ERRORV("Insufficient space to append string of %d chars", append_len);
     }
   } while (0);
   return retVal;
@@ -165,7 +165,7 @@ int deserialise_parse_field(char *in, int *in_offset, char *out) {
   do {
     if (offset) {
       if (in[offset] != ':') {
-        LOG_ERRORV("Expected : before next field when deseralising at offset "
+        BREAK_ERRORV("Expected : before next field when deseralising at offset "
                    "%d of '%s'\n",
                    offset, in);
         break;
@@ -176,15 +176,15 @@ int deserialise_parse_field(char *in, int *in_offset, char *out) {
 
     out[olen] = 0;
     if (!in)
-      LOG_ERROR("input string is NULL");
+      BREAK_ERROR("input string is NULL");
     if (!in[0])
-      LOG_ERROR("input string is empty");
+      BREAK_ERROR("input string is empty");
 
     for (; in[offset] && (olen < 16383) && in[offset] != ':'; offset++) {
       // Allow some \ escape characters
       if (in[offset] == '\\') {
         if (!in[offset + 1])
-          LOG_ERRORV("String '%s' ends in \\\n", in);
+          BREAK_ERRORV("String '%s' ends in \\\n", in);
           switch (in[offset + 1]) {
             case ':':
             case '\\':
@@ -203,7 +203,7 @@ int deserialise_parse_field(char *in, int *in_offset, char *out) {
               out[olen++] = '\b';
               break;
             default:
-              LOG_ERRORV("Illegal escape character 0x%02x at offset %d of '%s'\n",
+              BREAK_ERRORV("Illegal escape character 0x%02x at offset %d of '%s'\n",
                         in[offset + 1], offset + 1, in);
               break;
           }
@@ -229,9 +229,9 @@ int deserialise_int(char *field, int *s) {
   int retVal = 0;
   do {
     if (!field)
-      LOG_ERROR("int field '%s' is NULL");
+      BREAK_ERROR("int field '%s' is NULL");
     if (!strlen(field))
-      LOG_ERROR("int field '%s' is empty string");
+      BREAK_ERROR("int field '%s' is empty string");
 
     int offset = 0;
     if (field[offset] == '-') {
@@ -240,7 +240,7 @@ int deserialise_int(char *field, int *s) {
 
     for (int i = offset; field[i]; i++) {
       if (field[i] < '0' || field[i] > '9') {
-        LOG_ERRORV("int field '%s' contains non-digit", field);
+        BREAK_ERRORV("int field '%s' contains non-digit", field);
       }
     }
 
@@ -259,9 +259,9 @@ int deserialise_longlong(char *field, long long *s) {
   int retVal = 0;
   do {
     if (!field)
-      LOG_ERROR("long long field '%s' is NULL");
+      BREAK_ERROR("long long field '%s' is NULL");
     if (!strlen(field))
-      LOG_ERROR("long long field '%s' is empty string");
+      BREAK_ERROR("long long field '%s' is empty string");
 
     int offset = 0;
     if (field[offset] == '-') {
@@ -270,7 +270,7 @@ int deserialise_longlong(char *field, long long *s) {
 
     for (int i = offset; field[i]; i++) {
       if (field[i] < '0' || field[i] > '9') {
-        LOG_ERRORV("long long field '%s' contains non-digit", field);
+        BREAK_ERRORV("long long field '%s' contains non-digit", field);
       }
     }
 
@@ -294,13 +294,13 @@ int deserialise_string(char *field, char **s) {
   do {
     *s = NULL;
     if (!field) {
-      LOG_ERROR("string field is NULL");
+      BREAK_ERROR("string field is NULL");
     } else {
       *s = strdup(field);
     }
 
     if (!*s) {
-      LOG_ERROR("string field is empty string");
+      BREAK_ERROR("string field is empty string");
     }
   } while (0);
   return retVal;
@@ -319,7 +319,7 @@ int deserialise_string(char *field, char **s) {
   common deserialisers as arguments, to make the high-level deserialisation
   code as simple as possible.
 
-  All macros eventually will call LOG_ERROR and break out of the parsing
+  All macros eventually will call BREAK_ERROR and break out of the parsing
   if any error occurs, and will record the specific error, making it much easier
   to debug when things go wrong.
 */
@@ -329,18 +329,18 @@ int deserialise_string(char *field, char **s) {
     char field[16384];
 #define DESERIALISE_COMPLETE(O, L, ML)                                         \
   if (offset < L) {                                                            \
-    LOG_ERROR("Junk at end of serialised object");                             \
+    BREAK_ERROR("Junk at end of serialised object");                             \
   }                                                                            \
   }
 #define DESERIALISE_NEXT_FIELD()                                               \
   if (deserialise_parse_field(in, &offset, field)) {                           \
-    LOG_ERRORV("failed to parse next field '%s' at offset %d", &in[offset],    \
+    BREAK_ERRORV("failed to parse next field '%s' at offset %d", &in[offset],    \
                offset);                                                        \
   }
 #define DESERIALISE_THING(S, DESERIALISER)                                     \
   DESERIALISE_NEXT_FIELD();                                                    \
   if (DESERIALISER(field, &S)) {                                               \
-    LOG_ERRORV("call to " #DESERIALISER " failed with string '%s'", field);    \
+    BREAK_ERRORV("call to " #DESERIALISER " failed with string '%s'", field);    \
   }
 #define DESERIALISE_INT(S) DESERIALISE_THING(S, deserialise_int)
 #define DESERIALISE_STRING(S) DESERIALISE_THING(S, deserialise_string);
@@ -368,7 +368,7 @@ int deserialise_string(char *field, char **s) {
 #define APPEND_COLON(O, L, ML)                                                 \
   {                                                                            \
     if (space_check(1, L, ML)) {                                               \
-      LOG_ERROR("serialised string too long");                                 \
+      BREAK_ERROR("serialised string too long");                                 \
     }                                                                          \
     O[L++] = ':';                                                              \
     O[L] = 0;                                                                  \
@@ -409,13 +409,13 @@ int serialise_question_type(int qt, char *out, int out_max_len) {
   int retVal = 0;
   do {
     if (qt < 1) {
-      LOG_ERRORV("was asked to serialise an illegal question type #%d", qt);
+      BREAK_ERRORV("was asked to serialise an illegal question type #%d", qt);
     }
     if (qt > NUM_QUESTION_TYPES) {
-      LOG_ERRORV("was asked to serialise an illegal question type #%d", qt);
+      BREAK_ERRORV("was asked to serialise an illegal question type #%d", qt);
     }
     if (strlen(question_type_names[qt]) >= out_max_len) {
-      LOG_ERRORV("question type '%s' name too long", question_type_names[qt]);
+      BREAK_ERRORV("question type '%s' name too long", question_type_names[qt]);
     }
 
     strcpy(out, question_type_names[qt]);
@@ -440,7 +440,7 @@ int deserialise_question_type(char *field, int *s) {
     }
 
     if (qt > NUM_QUESTION_TYPES) {
-      LOG_ERRORV("invalid question type name '%s'", field);
+      BREAK_ERRORV("invalid question type name '%s'", field);
     }
   } while (0);
 
@@ -472,7 +472,7 @@ char *serialise_list_append_alloc(char *src, char *in, const char separator) {
 
     src = realloc(src, cap * sizeof(char));
     if(!src) {
-        LOG_ERROR("error reallocating memory for src char*");
+        BREAK_ERROR("error reallocating memory for src char*");
     }
 
     // add separator if in is not first element
@@ -519,7 +519,7 @@ char **deserialise_list_alloc(char *in, const char separator, size_t *len) {
 
     list = malloc(count * sizeof(char*));
     if (!list) {
-      LOG_ERROR("error allocating memory for char** list ptr");
+      BREAK_ERROR("error allocating memory for char** list ptr");
     }
     char *sav;
     char *line = parse_line(in, separator, &sav);
@@ -783,15 +783,15 @@ int deserialise_answer(char *in, enum answer_scope scope, struct answer *a) {
     int len = 0;
 
     if (!in) {
-      LOG_ERROR("answer string is null");
+      BREAK_ERROR("answer string is null");
     }
 
     int cols = serialiser_count_columns(':', in);
     if (cols < 0) {
-      LOG_ERROR("invalid answer line");
+      BREAK_ERROR("invalid answer line");
     }
     if (cols != scope) {
-      LOG_ERRORV("invalid column count in answer line: %d != %d", cols, scope);
+      BREAK_ERRORV("invalid column count in answer line: %d != %d", cols, scope);
     }
 
     switch (scope) {
@@ -853,32 +853,35 @@ int deserialise_answer(char *in, enum answer_scope scope, struct answer *a) {
   The following macros make it easier to compare fields between two instances of
   a structure.
  */
-#define COMPARE_INT(S)                                                         \
-  {                                                                            \
-    if (q1->S > q2->S) {                                                       \
-      LOG_MAYBE_ERRORV(mismatchIsError,                                        \
-                       #S " fields do not match: '%d' vs '%d'", q1->S, q1->S); \
-    } else if (q1->S < q2->S) {                                                \
-      LOG_MAYBE_ERRORV(mismatchIsError, #S " fields do not match", "");        \
-    } else                                                                     \
-      retVal = 0;                                                              \
-    if (retVal)                                                                \
-      break;                                                                   \
+#define COMPARE_INT(S)                                                             \
+  {                                                                                \
+    if (q1->S > q2->S) {                                                           \
+      if (mismatchIsError) {                                                       \
+        BREAK_ERRORV(#S " fields do not match: '%d' vs '%d'", q1->S, q1->S);         \
+      }                                                                            \
+    } else if (q1->S < q2->S) {                                                    \
+      if (mismatchIsError) {                                                       \
+        BREAK_ERROR(#S " fields do not match");                                      \
+      }                                                                            \
+    } else                                                                         \
+      retVal = 0;                                                                  \
+    if (retVal)                                                                    \
+      break;                                                                       \
   }
 #define COMPARE_LONGLONG(S) COMPARE_INT(S)
-#define COMPARE_STRING(S)                                                      \
-  {                                                                            \
-    if ((!q1->S) || (!q2->S)) {                                                \
-      LOG_MAYBE_ERRORV(mismatchIsError,                                        \
-                       #S " fields dot not match '%s' vs '%s'", q1->S, q2->S); \
-    } else {                                                                   \
-      if (strcmp(q1->S, q2->S)) {                                              \
-        fprintf(stderr, #S " fields do not match\n");                          \
-        LOG_MAYBE_ERRORV(mismatchIsError,                                      \
-                         #S " fields do not match '%s' vs '%s'", q1->S,        \
-                         q2->S);                                               \
-      }                                                                        \
-    }                                                                          \
+#define COMPARE_STRING(S)                                                          \
+  {                                                                                \
+    if ((!q1->S) || (!q2->S)) {                                                    \
+      if (q1->S != q2->S && mismatchIsError) {                                     \
+        BREAK_ERRORV(#S " fields dot not match '%s' vs '%s'", q1->S, q2->S);         \
+      }                                                                            \
+    } else {                                                                       \
+      if (strcmp(q1->S, q2->S)) {                                                  \
+        if (mismatchIsError) {                                                     \
+          BREAK_ERRORV( #S " fields do not match '%s' vs '%s'", q1->S, q2->S);       \
+        }                                                                          \
+      }                                                                            \
+    }                                                                              \
   }
 
 /*
@@ -942,7 +945,7 @@ int dump_answer_list(FILE *fp, struct answer_list *list) {
 
   do {
     if (!fp) {
-      LOG_ERROR("dump_next_questions(): invalid file pointer.");
+      BREAK_ERROR("dump_next_questions(): invalid file pointer.");
     }
 
     if (!list) {
@@ -989,15 +992,15 @@ struct answer_list *deserialise_answers(const char *body, enum answer_scope scop
   struct answer_list *list = NULL;
   do {
     if (!body) {
-      LOG_ERROR("body to parse is null");
+      BREAK_ERROR("body to parse is null");
     }
     if (!strlen(body)) {
-      LOG_ERROR("body to parse is empty");
+      BREAK_ERROR("body to parse is empty");
     }
 
     list = calloc(1, sizeof(struct answer_list));
     if (!list) {
-      LOG_ERROR("error allocating memory for answer list");
+      BREAK_ERROR("error allocating memory for answer list");
     }
 
     int i = 0;
@@ -1010,13 +1013,13 @@ struct answer_list *deserialise_answers(const char *body, enum answer_scope scop
       list->len++; // placed here for comlete free_answer_list on retVal > 0
       list->answers[i] = calloc(1, sizeof(struct answer));
       if (list->answers[i] == NULL) {
-        LOG_ERRORV("error allocating memory for answer in line %d", i);
+        BREAK_ERRORV("error allocating memory for answer in line %d", i);
         break;
       }
 
       // deserialise answer
       if (deserialise_answer(line, scope, list->answers[i])) {
-        LOG_ERRORV("failed to deserialise answer for line %d, starting with '%.20s'", i, line);
+        BREAK_ERRORV("failed to deserialise answer for line %d, starting with '%.20s'", i, line);
         break;
       }
       freez(line);

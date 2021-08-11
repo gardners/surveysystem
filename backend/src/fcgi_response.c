@@ -24,25 +24,25 @@ int http_open(struct kreq *req, enum khttp status, enum kmime mime, char *etag) 
     // Emit 200 response
     err = khttp_head(req, kresps[KRESP_STATUS], "%s", khttps[status]);
     if (KCGI_OK != err) {
-      LOG_ERRORV("khttp_head: error: %d\n", kcgi_strerror(err));
+      BREAK_ERRORV("khttp_head: error: %d\n", kcgi_strerror(err));
     }
 
     // Emit mime-type
     err = khttp_head(req, kresps[KRESP_CONTENT_TYPE], "%s", kmimetypes[mime]);
     if (KCGI_OK != err) {
-      LOG_ERRORV("khttp_head: error: %d\n", kcgi_strerror(err));
+      BREAK_ERRORV("khttp_head: error: %d\n", kcgi_strerror(err));
     }
 
     // #268, Emit session consistency_sha as Etag header
     err = khttp_head(req, kresps[KRESP_ETAG], "%s", (etag) ? etag : "");
     if (KCGI_OK != err) {
-      LOG_ERRORV("khttp_head: error: %d\n", kcgi_strerror(err));
+      BREAK_ERRORV("khttp_head: error: %d\n", kcgi_strerror(err));
     }
 
     // Begin sending body
     err = khttp_body(req);
     if (KCGI_OK != err) {
-      LOG_ERRORV("khttp_body: error: %d\n", kcgi_strerror(err));
+      BREAK_ERRORV("khttp_body: error: %d\n", kcgi_strerror(err));
     }
 
   } while (0);
@@ -58,7 +58,7 @@ void http_json_error(struct kreq *req, enum khttp status, const char *msg) {
 
   do {
     if(http_open(req, status, KMIME_APP_JSON, NULL)) {
-      LOG_ERROR("http_json_error(): unable to initialise http response");
+      BREAK_ERROR("http_json_error(): unable to initialise http response");
     }
 
     struct kjsonreq jsonreq;
@@ -154,19 +154,19 @@ int fcgi_response_nextquestion(struct kreq *req, struct session *ses, struct nex
 
   do {
     if (!req) {
-       LOG_ERROR("response_nextquestion(): kreq required (null)");
+       BREAK_ERROR("response_nextquestion(): kreq required (null)");
        break;
     }
     if (!ses) {
-      LOG_ERROR("response_nextquestion(): session required (null)");
+      BREAK_ERROR("response_nextquestion(): session required (null)");
     }
     if (!nq) {
-      LOG_ERROR("response_nextquestion(): nextquestions required (null)");
+      BREAK_ERROR("response_nextquestion(): nextquestions required (null)");
     }
 
     // json response
     if (http_open(req, KHTTP_200, KMIME_APP_JSON, ses->consistency_hash)) {
-      LOG_ERROR("response_nextquestion(): unable to initialise http response");
+      BREAK_ERROR("response_nextquestion(): unable to initialise http response");
     }
 
     struct kjsonreq resp;
