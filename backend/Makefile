@@ -20,7 +20,6 @@ STATICHEADERS=	Makefile \
 		$(INCDIR)/survey.h \
 		$(INCDIR)/validators.h \
 		$(INCDIR)/sha1.h \
-		$(INCDIR)/code_instrumentation.h \
 		$(INCDIR)/serialisers.h \
 		$(INCDIR)/utils.h \
 		$(INCDIR)/py_module.h \
@@ -33,7 +32,6 @@ STATICSRCS=	$(SRCDIR)/serialisers.c \
 		$(SRCDIR)/validators.c \
 		$(SRCDIR)/sessions.c \
 		$(SRCDIR)/nextquestion.c \
-		$(SRCDIR)/code_instrumentation.c \
 		$(SRCDIR)/filelocks.c \
 		$(SRCDIR)/errorlog.c \
 		$(SRCDIR)/utils.c \
@@ -56,7 +54,6 @@ COREOBJS=	$(SRCDIR)/errorlog.o \
 		$(SRCDIR)/sessions.o \
 		$(SRCDIR)/nextquestion.o \
 		$(SRCDIR)/serialisers.o \
-		$(SRCDIR)/code_instrumentation.o \
 		$(SRCDIR)/filelocks.o \
 		$(SRCDIR)/question_types.o \
 		$(SRCDIR)/utils.o \
