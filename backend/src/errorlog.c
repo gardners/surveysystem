@@ -8,7 +8,24 @@
 char error_messages[MAX_ERRORS][1024];
 int error_count = 0;
 
-extern int instrumentation_muted;
+// migrated from code_instrumentation.c/code_instrumentation.h (removed)
+int instrumentation_muted = 0;
+
+void code_instrumentation_mute() {
+  if (instrumentation_muted < 1) {
+    instrumentation_muted = 1;
+  } else {
+    instrumentation_muted++;
+  }
+}
+
+void code_instrumentation_unmute() {
+  if (instrumentation_muted > 0) {
+    instrumentation_muted--;
+  } else {
+    instrumentation_muted = 0;
+  }
+}
 
 void clear_errors(void) {
   error_count = 0;
