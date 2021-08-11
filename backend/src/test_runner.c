@@ -42,7 +42,7 @@
  *
  * verify_response_etag(<string and/or token>)
  *
- * verify_response_content_type(<strng>)
+ * verify_response_content_type(<string>)
  *
  * open_file(<path>)\n <contents> close_file()\n
  * - writes content into file '<path>'
@@ -497,10 +497,7 @@ int run_test(struct Test *test) {
 
         if (chmod(python_dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP |
                                   S_IROTH | S_IXOTH)) {
-          fprintf(log,
-                  "T+%4.3fms : ERROR : Could not set permissions on python "
-                  "directory '%s'\n",
-                  test_time_delta(start_time), python_dir);
+          fprintf(log, "T+%4.3fms : ERROR : Could not set permissions on python directory '%s'\n", test_time_delta(start_time), python_dir);
           goto error;
         }
 
@@ -510,19 +507,13 @@ int run_test(struct Test *test) {
 
         FILE *s = fopen(python_ini, "w");
         if (!s) {
-          fprintf(log,
-                  "T+%4.3fms : ERROR : Could not create python file '%s'\n",
-                  test_time_delta(start_time), python_ini);
+          fprintf(log, "T+%4.3fms : ERROR : Could not create python file '%s'\n", test_time_delta(start_time), python_ini);
           goto error;
         }
         fclose(s);
 
         if (chmod(python_ini, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH)) {
-
-          fprintf(log,
-                  "T+%4.3fms : ERROR : Could not set permissions on python "
-                  "file '%s'\n",
-                  test_time_delta(start_time), python_ini);
+          fprintf(log, "T+%4.3fms : ERROR : Could not set permissions on python  file '%s'\n", test_time_delta(start_time), python_ini);
           goto error;
         }
 
@@ -531,9 +522,7 @@ int run_test(struct Test *test) {
         snprintf(python_module, 2048, "%s/nextquestion.py", python_dir);
         s = fopen(python_module, "w");
         if (!s) {
-          fprintf(log,
-                  "T+%4.3fms : ERROR : Could not create python file '%s'\n",
-                  test_time_delta(start_time), python_module);
+          fprintf(log, "T+%4.3fms : ERROR : Could not create python file '%s'\n", test_time_delta(start_time), python_module);
           goto error;
         }
 
@@ -561,10 +550,7 @@ int run_test(struct Test *test) {
 
         if (chmod(python_module, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH)) {
 
-          fprintf(log,
-                  "T+%4.3fms : ERROR : Could not set permissions on python "
-                  "file '%s'\n",
-                  test_time_delta(start_time), python_module);
+          fprintf(log, "T+%4.3fms : ERROR : Could not set permissions on python file '%s'\n", test_time_delta(start_time), python_module);
           goto error;
         }
 
@@ -575,18 +561,12 @@ int run_test(struct Test *test) {
         int compile_result = system(cmd);
 
         if (compile_result) {
-          fprintf(log,
-                  "T+%4.3fms : FATAL: Failed to compile python module. Does "
-                  "the python have errors?\n",
-                  test_time_delta(start_time));
+          fprintf(log, "T+%4.3fms : FATAL: Failed to compile python module. Does the python have errors?\n", test_time_delta(start_time));
           goto fatal;
         }
 
         // Then restart, to clear out any old python code we had loaded before
-        fprintf(log,
-                "T+%4.3fms : INFO : Restarting backend to clear loaded python "
-                "code\n",
-                test_time_delta(start_time));
+        fprintf(log, "T+%4.3fms : INFO : Restarting backend to clear loaded python code\n",test_time_delta(start_time));
 
         // #361, removed extra call to configure_and_start_lighttpd()
         //  give filesystem and python fs time to cope with newly created python file,
@@ -602,17 +582,13 @@ int run_test(struct Test *test) {
 
         if (response.line_count != 1) {
           fprintf(log,
-                  "T+%4.3fms : FAIL : Could not parse session ID: Last "
-                  "response contained %d lines, instead of exactly 1.\n",
-                  test_time_delta(start_time), response.line_count);
+            "T+%4.3fms : FAIL : Could not parse session ID: Last response contained %d lines, instead of exactly 1.\n",
+              test_time_delta(start_time), response.line_count);
           goto fail;
         }
 
         if (validate_session_id(response.lines[0])) {
-          fprintf(log,
-                  "T+%4.3fms : FAIL : Could not parse session ID: "
-                  "validate_session_id() reported failure.\n",
-                  test_time_delta(start_time));
+          fprintf(log, "T+%4.3fms : FAIL : Could not parse session ID:  validate_session_id() reported failure.\n", test_time_delta(start_time));
           goto fail;
         }
 
@@ -705,10 +681,9 @@ int run_test(struct Test *test) {
 
           if (fseeko(in, for_seek_pos[for_count - 1], SEEK_SET)) {
             fprintf(log,
-                    "T+%4.3fms : ERROR : Could not seek to top of FOR %s loop "
-                    "at offset %lld\n",
-                    test_time_delta(start_time), for_var[for_count - 1],
-                    (long long)for_seek_pos[for_count - 1]);
+              "T+%4.3fms : ERROR : Could not seek to top of FOR %s loop at offset %lld\n",
+              test_time_delta(start_time), for_var[for_count - 1],
+              (long long)for_seek_pos[for_count - 1]);
             goto error;
           }
         }
@@ -727,10 +702,7 @@ int run_test(struct Test *test) {
         if (error_code) {
           char err[TEST_MAX_LINE] = "";
           regerror(error_code, &regex, err, TEST_MAX_LINE);
-          fprintf(
-              log,
-              "T+%4.3fms : FATAL: Could not compile regular expression: %s\n",
-              test_time_delta(start_time), err);
+          fprintf( log, "T+%4.3fms : FATAL: Could not compile regular expression: %s\n", test_time_delta(start_time), err);
           goto fatal;
         }
 
@@ -759,9 +731,7 @@ int run_test(struct Test *test) {
         if (error_code) {
           char err[TEST_MAX_LINE] = "";
           regerror(error_code, &regex, err, TEST_MAX_LINE);
-          fprintf(
-              log,
-              "T+%4.3fms : FATAL: Could not compile regular expression: %s\n", test_time_delta(start_time), err);
+          fprintf(log, "T+%4.3fms : FATAL: Could not compile regular expression: %s\n", test_time_delta(start_time), err);
           goto fatal;
         }
 
@@ -973,8 +943,7 @@ int run_test(struct Test *test) {
 
        if (validate_session_id(last_sessionid)) {
           fprintf(log,
-            "T+%4.3fms : FATAL: (session_add_answer) No session ID has been captured. Use "
-            "extract_sessionid following request directive.\n",
+            "T+%4.3fms : FATAL: (session_add_answer) No session ID has been captured. Use extract_sessionid following request directive.\n",
             test_time_delta(start_time));
           goto fatal;
         }
@@ -1025,8 +994,7 @@ int run_test(struct Test *test) {
 
         if (validate_session_id(last_sessionid)) {
           fprintf(log,
-            "T+%4.3fms : FATAL: (verify_session) No session ID has been captured. Use "
-            "extract_sessionid following request directive.\n",
+            "T+%4.3fms : FATAL: (verify_session) No session ID has been captured. Use extract_sessionid following request directive.\n",
             test_time_delta(start_time));
           goto fatal;
         }

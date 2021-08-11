@@ -103,7 +103,7 @@ int py_destroy() {
     py_func_traceback = NULL;
 
     if (Py_FinalizeEx()) {
-        LOG_ERROR("Py_FinalizeEx() FAILED. Memory has been leaked!");
+        BREAK_ERROR("Py_FinalizeEx() FAILED. Memory has been leaked!");
     }
   } while(0);
 
@@ -148,7 +148,7 @@ static int py_module_init() {
     wchar_t *program = Py_DecodeLocale("nextquestion", NULL);
     // program need?
     if (!program) {
-      LOG_ERROR("cannot decode program name to wchar_t");
+      BREAK_ERROR("cannot decode program name to wchar_t");
     }
     Py_SetProgramName(program);
     PyMem_RawFree(program);
@@ -158,14 +158,14 @@ static int py_module_init() {
     // main
     py_module = PyImport_AddModule("__main__");
     if (!py_module) {
-      LOG_ERROR("cannot add main module");
+      BREAK_ERROR("cannot add main module");
     }
 
     py_globals = PyModule_GetDict(py_module);
 
     if (!strlen(py_module_path)) {
       if (generate_python_path(py_module_path, 1024)) {
-        LOG_ERROR("Failed to generate python search path");
+        BREAK_ERROR("Failed to generate python search path");
       }
     }
 
@@ -192,13 +192,13 @@ static int py_module_init() {
 
     if(!check) {
         py_log_error(NULL);
-        LOG_ERROR("initialising 'nextquestions' failed");
+        BREAK_ERROR("initialising 'nextquestions' failed");
     }
 
     py_func_traceback = PyObject_GetAttrString(py_module, "get_traceback");
     if(!py_func_traceback) {
         py_log_error(NULL);
-        LOG_ERROR("retrieving function get_traceback() from 'nextquestions' failed");
+        BREAK_ERROR("retrieving function get_traceback() from 'nextquestions' failed");
     }
   } while(0);
 

@@ -17,10 +17,10 @@ int validate_survey_id(char *survey_id) {
   int retVal = 0;
   do {
     if (!survey_id) {
-      LOG_ERROR("survey_id is NULL");
+      BREAK_ERROR("survey_id is NULL");
     }
     if (!survey_id[0]) {
-      LOG_ERROR("survey_id is empty string");
+      BREAK_ERROR("survey_id is empty string");
     }
 
     for (int i = 0; survey_id[i]; i++) {
@@ -34,7 +34,7 @@ int validate_survey_id(char *survey_id) {
 
       default:
         if (!isalnum(survey_id[i])) {
-          LOG_ERRORV("Illegal character 0x%02x in survey_id '%s'. Must be 0-9, a-z, space, period, comma, underscore", survey_id[i], survey_id);
+          BREAK_ERRORV("Illegal character 0x%02x in survey_id '%s'. Must be 0-9, a-z, space, period, comma, underscore", survey_id[i], survey_id);
         }
         break;
       } // endswitch
@@ -55,14 +55,14 @@ int validate_session_id(char *session_id) {
   int retVal = 0;
   do {
     if (!session_id) {
-      LOG_ERROR("session_id is NULL");
+      BREAK_ERROR("session_id is NULL");
     }
     LOG_WARNV("Validating session id '%s'", session_id);
     if (strlen(session_id) != 36) {
-      LOG_ERRORV("session_id '%s' must be exactly 36 characters long", session_id);
+      BREAK_ERRORV("session_id '%s' must be exactly 36 characters long", session_id);
     }
     if (session_id[0] == '-') {
-      LOG_ERRORV("session_id '%s' may not begin with a dash", session_id);
+      BREAK_ERRORV("session_id '%s' may not begin with a dash", session_id);
     }
 
     for (int i = 0; session_id[i]; i++) {
@@ -94,11 +94,11 @@ int validate_session_id(char *session_id) {
       case 'D':
       case 'E':
       case 'F':
-        LOG_ERRORV("session_id '%s' must be lower case", session_id);
+        BREAK_ERRORV("session_id '%s' must be lower case", session_id);
         break;
 
       default:
-        LOG_ERRORV( "Illegal character 0x%02x in session_id '%s'. Must be a valid UUID", session_id[i], session_id);
+        BREAK_ERRORV( "Illegal character 0x%02x in session_id '%s'. Must be a valid UUID", session_id[i], session_id);
         break;
       } // endswitch
 
@@ -119,20 +119,20 @@ int validate_session_delete_answer(char *question_id, struct session *ses) {
   do {
 
     if (!question_id) {
-      LOG_ERROR("question_id is NULL");
+      BREAK_ERROR("question_id is NULL");
     }
 
     if (!ses) {
-      LOG_ERROR("session is NULL");
+      BREAK_ERROR("session is NULL");
     }
 
     struct answer *ans = session_get_answer(question_id, ses);
     if (!ans) {
-      LOG_ERRORV("Could not load answer '%s'", question_id);
+      BREAK_ERRORV("Could not load answer '%s'", question_id);
     }
 
     if (!is_given_answer(ans)) {
-      LOG_ERRORV("Answer '%s' is not a given answer", question_id);
+      BREAK_ERRORV("Answer '%s' is not a given answer", question_id);
     }
 
   } while (0);
@@ -147,19 +147,19 @@ int validate_session_add_answer(struct session *ses, struct answer *ans) {
   do {
 
     if (!ans) {
-      LOG_ERROR("answer is NULL");
+      BREAK_ERROR("answer is NULL");
     }
 
     // validate exists
     struct question *qn = session_get_question(ans->uid, ses);
     if (!qn) {
-      LOG_ERRORV("No question defined for answer '%s'", ans->uid);
+      BREAK_ERRORV("No question defined for answer '%s'", ans->uid);
     }
 
     switch(qn->type) {
       case QTYPE_UUID:
         if(validate_session_id(ans->text)) {
-          LOG_ERRORV("not a valid uuid: '%s'", ans->text);
+          BREAK_ERRORV("not a valid uuid: '%s'", ans->text);
         }
       break;
     }

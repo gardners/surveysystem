@@ -31,18 +31,18 @@ static PyObject *py_get_hook_function(char *base_function, char *survey_id, char
 
   do {
     if (!py_module) {
-      LOG_ERROR("python module not initialised");
+      BREAK_ERROR("python module not initialised");
     }
     if (!base_function || base_function[0] == 0) {
-      LOG_ERROR("base_function is empty");
+      BREAK_ERROR("base_function is empty");
     }
     if (!survey_id || survey_id[0] == 0) {
-      LOG_ERROR("survey_id is empty");
+      BREAK_ERROR("survey_id is empty");
     }
 
     PyObject *parent = PyObject_GetAttrString(py_module, "nq");
     if (!parent) {
-        LOG_ERROR("cannot fetch parent reference 'nq' from Python module");
+        BREAK_ERROR("cannot fetch parent reference 'nq' from Python module");
     }
 
     // 1. <base_function>_<survey_id>_<survey_hash>()
@@ -79,11 +79,11 @@ static PyObject *py_get_hook_function(char *base_function, char *survey_id, char
     }
 
     if (!func) {
-        LOG_ERRORV("No matching python function for base '%s', survey '%s'", base_function, survey_id);
+        BREAK_ERRORV("No matching python function for base '%s', survey '%s'", base_function, survey_id);
     }
 
     if (!PyCallable_Check(func)) {
-        LOG_ERRORV("Python function '%s' is not a callable, survey '%s'", function_name, survey_id);
+        BREAK_ERRORV("Python function '%s' is not a callable, survey '%s'", function_name, survey_id);
     }
 
     LOG_INFOV("Preparing to call python hook '%s()' for base function '%s()'", base_function, function_name);
@@ -116,7 +116,7 @@ static PyObject *py_create_answer(struct answer *a) {
 
     dict = PyDict_New();
     if(!dict) {
-      LOG_ERROR("failed to create answer dict");
+      BREAK_ERROR("failed to create answer dict");
     }
 
     PyObject *uid = PyUnicode_FromString(a->uid);
@@ -165,7 +165,7 @@ static PyObject *py_create_answer(struct answer *a) {
     errors += PyDict_SetItem(dict, stored_l, stored);
 
     if (errors) {
-      LOG_ERRORV("setting dict item failed with %d errors", errors);
+      BREAK_ERRORV("setting dict item failed with %d errors", errors);
     }
 
   } while (0);
@@ -195,7 +195,7 @@ static PyObject *py_create_questions_list(struct session *ses) {
             PyObject *item = PyUnicode_FromString(ses->questions[i]->uid);
             if (PyList_SetItem(questions, i, item)) {
                 Py_DECREF(item);
-                LOG_ERRORV("Error inserting question name '%s' into Python list", ses->questions[i]->uid);
+                BREAK_ERRORV("Error inserting question name '%s' into Python list", ses->questions[i]->uid);
             }
         }
     } while(0);
@@ -219,10 +219,10 @@ static int py_answer_merge_question(PyObject *ans, struct question *qn) {
 
   do {
     if(!PyDict_Check(ans)) {
-      LOG_ERROR("py dict answer is NULL or not a dict");
+      BREAK_ERROR("py dict answer is NULL or not a dict");
     }
     if(!qn) {
-      LOG_ERROR("question is NULL");
+      BREAK_ERROR("question is NULL");
     }
 
     PyObject *_flags = PyUnicode_FromString("_flags");
@@ -247,7 +247,7 @@ static int py_answer_merge_question(PyObject *ans, struct question *qn) {
     errors += PyDict_SetItem(ans, _unit, unit);
 
     if (errors) {
-      LOG_ERRORV("setting dict item to py answer failed with %d errors", errors);
+      BREAK_ERRORV("setting dict item to py answer failed with %d errors", errors);
     }
 
   } while(0);
@@ -275,18 +275,18 @@ static PyObject *py_create_answers_list(struct session *ses) {
           if (is_given_answer(ses->answers[i])) {
             PyObject *item = py_create_answer(ses->answers[i]);
             if (!item) {
-              LOG_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.", ses->answers[i]->uid);
+              BREAK_ERRORV("Could not construct answer structure '%s' for Python. WARNING: Memory has been leaked.", ses->answers[i]->uid);
             }
 
             struct question *qn = session_get_question(ses->answers[i]->uid, ses);
             if (py_answer_merge_question(item, qn)) {
               Py_DECREF(item);
-              LOG_ERRORV("Error merging question properties into PyDict answer '%s'", ses->answers[i]->uid);
+              BREAK_ERRORV("Error merging question properties into PyDict answer '%s'", ses->answers[i]->uid);
             }
 
             if (PyList_SetItem(answers, listIndex, item)) {
               Py_DECREF(item);
-              LOG_ERRORV("Error inserting answer name '%s' into Python list", ses->answers[i]->uid);
+              BREAK_ERRORV("Error inserting answer name '%s' into Python list", ses->answers[i]->uid);
             }
 
             listIndex++;
@@ -321,25 +321,25 @@ static PyObject *py_invoke_hook_function(PyObject *function_reference, char *fun
 
   do {
     if (!ses) {
-      LOG_ERROR("session is null");
+      BREAK_ERROR("session is null");
     }
     if (!ses->survey_id) {
-      LOG_ERROR("survey id is NULL");
+      BREAK_ERROR("survey id is NULL");
     }
     if (!ses->session_id) {
-      LOG_ERROR("session id is NULL");
+      BREAK_ERROR("session id is NULL");
     }
 
     // build positional args
 
     questions = py_create_questions_list(ses);
     if (!questions) {
-        LOG_ERROR("Error building positional arg (questions list)");
+        BREAK_ERROR("Error building positional arg (questions list)");
     }
 
     answers = py_create_answers_list(ses);
     if (!answers) {
-        LOG_ERROR("Error building positional arg (answers list)");
+        BREAK_ERROR("Error building positional arg (answers list)");
     }
 
     PyObject *args = PyTuple_Pack(2, questions, answers);
@@ -364,7 +364,7 @@ static PyObject *py_invoke_hook_function(PyObject *function_reference, char *fun
 
     if (PyErr_Occurred()) {
       py_log_error(NULL);
-      LOG_ERRORV("Python function '%s' exited with an Error (PyErr_Occurred()). Check Python error message above", function_name);
+      BREAK_ERRORV("Python function '%s' exited with an Error (PyErr_Occurred()). Check Python error message above", function_name);
     }
 
   } while(0);
@@ -392,25 +392,25 @@ static int py_nextquestions_handle_progress(PyObject *result, struct nextquestio
   do {
 
     if (!result || !PyDict_Check(result)) {
-      LOG_ERROR("progress: PyObject *result is NULL or not a PyDict");
+      BREAK_ERROR("progress: PyObject *result is NULL or not a PyDict");
     }
 
     if (!nq) {
-      LOG_ERROR("progress: struct *nq is NULL");
+      BREAK_ERROR("progress: struct *nq is NULL");
     }
 
     PyObject *list = PyDict_GetItemString(result, "progress");
     if (!list) {
-      LOG_ERROR("progress PyObject *result has no member 'next_questions'");
+      BREAK_ERROR("progress PyObject *result has no member 'next_questions'");
     }
 
     if(!PyList_Check(list)) {
-      LOG_ERROR("progress PyObject *result['next_questions'] is not a PyList");
+      BREAK_ERROR("progress PyObject *result['next_questions'] is not a PyList");
     }
 
     int len = PyList_Size(list);
     if(len != 2) {
-      LOG_ERRORV("progress PyObject *result['next_questions'] list length must be exact 2, %d given", len);
+      BREAK_ERRORV("progress PyObject *result['next_questions'] list length must be exact 2, %d given", len);
     }
 
     PyObject *item;
@@ -450,58 +450,58 @@ int get_next_question_python(struct session *ses, struct nextquestions *nq, enum
 
   do {
     if (!ses) {
-      LOG_ERROR("session is null");
+      BREAK_ERROR("session is null");
     }
     if (!ses->survey_id) {
-      LOG_ERROR("survey id is NULL");
+      BREAK_ERROR("survey id is NULL");
     }
     if (!ses->session_id) {
-      LOG_ERROR("session id is NULL");
+      BREAK_ERROR("session id is NULL");
     }
     if (!nq) {
-      LOG_ERROR("nextquestions is NULL");
+      BREAK_ERROR("nextquestions is NULL");
     }
     if (nq->question_count) {
-      LOG_ERROR("nextquestions->question_count is > 0");
+      BREAK_ERROR("nextquestions->question_count is > 0");
     }
     // int python
     // #TODO #459 move to bootstrap, check py_module
     if (py_init()) {
-      LOG_ERROR("Failed to initialise python.\n");
+      BREAK_ERROR("Failed to initialise python.\n");
     }
     if (!py_module) {
-      LOG_ERROR( "Python module 'nextquestion' not loaded. Does it have an error?");
+      BREAK_ERROR( "Python module 'nextquestion' not loaded. Does it have an error?");
     }
 
     // select from avaliable hook functions
     char function_name[1024];
     PyObject *function_reference = py_get_hook_function("nextquestion", ses->survey_id, function_name, 1024);
     if (!function_reference) {
-      LOG_ERROR("Failed to get hook function for 'nextquestion'");
+      BREAK_ERROR("Failed to get hook function for 'nextquestion'");
     }
 
     // Okay, we have the function object, so build the argument list and call it.
     result = py_invoke_hook_function(function_reference, function_name, ses, action, affected_answers_count);
 
     if (!result) {
-      LOG_ERRORV("Python function '%s' did not return anything. Check Python error message above", function_name);
+      BREAK_ERRORV("Python function '%s' did not return anything. Check Python error message above", function_name);
     }
 
     // #332 add instance check for exported Python class 'NextQuestions'
 
     if(!PyDict_Check(result)) {
-      LOG_ERRORV("Reply from Python function '%s' is of invalid type (not a dict)", function_name);
+      BREAK_ERRORV("Reply from Python function '%s' is of invalid type (not a dict)", function_name);
     }
 
     // 1. extract status
     PyObject *py_status = PyDict_GetItemString(result, "status");
     if (!py_status) {
-      LOG_ERRORV("Reply from Python function '%s' has no member 'status'", function_name);
+      BREAK_ERRORV("Reply from Python function '%s' has no member 'status'", function_name);
     }
 
     long int status = PyLong_AsLong(py_status);
     if(status == -1) {
-      LOG_ERRORV("Reply from Python function '%s': invalid member 'status' (int)", function_name);
+      BREAK_ERRORV("Reply from Python function '%s': invalid member 'status' (int)", function_name);
     }
 
     // 2. assign status
@@ -510,12 +510,12 @@ int get_next_question_python(struct session *ses, struct nextquestions *nq, enum
     // 3. extract message
     PyObject *py_message = PyDict_GetItemString(result, "message");
     if (!py_message) {
-      LOG_ERRORV("Reply from Python function '%s' has no member 'message'", function_name);
+      BREAK_ERRORV("Reply from Python function '%s' has no member 'message'", function_name);
     }
 
     const char *message = PyUnicode_AsUTF8(py_message);
     if(!message) {
-      LOG_ERRORV("Reply from Python function '%s': invalid member 'message' (str)", function_name);
+      BREAK_ERRORV("Reply from Python function '%s': invalid member 'message' (str)", function_name);
     }
 
     // 4. assign message
@@ -523,17 +523,17 @@ int get_next_question_python(struct session *ses, struct nextquestions *nq, enum
 
     // 5. progress values
     if (py_nextquestions_handle_progress(result, nq)) {
-      LOG_ERRORV("Reply from Python function '%s': progess handler failed", function_name);
+      BREAK_ERRORV("Reply from Python function '%s': progess handler failed", function_name);
     }
 
     // 6. extract nextquestions
     PyObject *py_next_questions = PyDict_GetItemString(result, "next_questions");
     if (!py_next_questions) {
-      LOG_ERRORV("Reply from Python function '%s' has no member 'next_questions'", function_name);
+      BREAK_ERRORV("Reply from Python function '%s' has no member 'next_questions'", function_name);
     }
 
     if(!PyList_Check(py_next_questions)) {
-      LOG_ERRORV("Reply from Python function '%s': invalid member 'next_questions' (list(str))", function_name);
+      BREAK_ERRORV("Reply from Python function '%s': invalid member 'next_questions' (list(str))", function_name);
     }
 
     int list_len = PyList_Size(py_next_questions);
@@ -546,7 +546,7 @@ int get_next_question_python(struct session *ses, struct nextquestions *nq, enum
         const char *uid = PyUnicode_AsUTF8(item);
         if (!uid) {
           is_error = 1;
-          LOG_ERRORV("String in reply from Python function '%s' is null", function_name);
+          BREAK_ERRORV("String in reply from Python function '%s' is null", function_name);
         }
 
         // 6. assign next_questions
@@ -554,17 +554,17 @@ int get_next_question_python(struct session *ses, struct nextquestions *nq, enum
         struct question *qn = session_get_question((char *)uid, ses);
         if (!qn) {
           is_error = 1;
-          LOG_ERRORV("Error adding question '%s' to list of next questions, question does not exist.", uid);
+          BREAK_ERRORV("Error adding question '%s' to list of next questions, question does not exist.", uid);
         }
 
         if (add_next_question(action, qn, nq, ses)) {
           is_error = 1;
-          LOG_ERRORV("Error adding question '%s' to list of next questions", uid);
+          BREAK_ERRORV("Error adding question '%s' to list of next questions", uid);
         }
 
       } else {
         is_error = 1;
-        LOG_ERRORV("result.next_questions[%d] item is not a string in response from Python function '%s'", i, function_name);
+        BREAK_ERRORV("result.next_questions[%d] item is not a string in response from Python function '%s'", i, function_name);
       }
 
     } // endfor
@@ -592,28 +592,28 @@ int get_analysis_python(struct session *ses, const char **output) {
 
   do {
     if (!ses) {
-      LOG_ERROR("session is null");
+      BREAK_ERROR("session is null");
     }
     if (!ses->survey_id) {
-      LOG_ERROR("survey id is NULL");
+      BREAK_ERROR("survey id is NULL");
     }
     if (!ses->session_id) {
-      LOG_ERROR("session id is NULL");
+      BREAK_ERROR("session id is NULL");
     }
     // int python
     // #TODO #459 move to bootstrap, check py_module
     if (py_init()) {
-      LOG_ERROR("Failed to initialise python.\n");
+      BREAK_ERROR("Failed to initialise python.\n");
     }
     if (!py_module) {
-      LOG_ERROR( "Python module 'nextquestion' not loaded. Does it have an error?");
+      BREAK_ERROR( "Python module 'nextquestion' not loaded. Does it have an error?");
     }
 
     // select from avaliable hook functions
     char function_name[1024];
     PyObject *function_reference = py_get_hook_function("analyse", ses->survey_id, function_name, 1024);
     if (!function_reference) {
-      LOG_ERROR("Failed to get hook function for 'analyse'");
+      BREAK_ERROR("Failed to get hook function for 'analyse'");
     }
 
     // Okay, we have the function object, so build the argument list and call it.
@@ -621,7 +621,7 @@ int get_analysis_python(struct session *ses, const char **output) {
 
     if (!result) {
       py_log_error(NULL);
-      LOG_ERRORV("Python function '%s' did not return anything. Check Python error message above", function_name);
+      BREAK_ERRORV("Python function '%s' did not return anything. Check Python error message above", function_name);
     }
 
     // PyObject_Print(result,stderr,0);
@@ -633,14 +633,14 @@ int get_analysis_python(struct session *ses, const char **output) {
       const char *return_string = PyUnicode_AsUTF8AndSize(result, &size);
 
       if (!return_string) {
-        LOG_ERRORV("String in reply from Python function '%s' is null", function_name);
+        BREAK_ERRORV("String in reply from Python function '%s' is null", function_name);
       }
 
       // #288, allocate dedicated memory, managed by backend and write string
       *output = strndup(return_string, (size_t)size);
       // TODO should issues occur then consider hard-setting a \0 token at the last position of *output
     } else {
-      LOG_ERRORV("Return value from Python function '%s' is not a string.", function_name);
+      BREAK_ERRORV("Return value from Python function '%s' is not a string.", function_name);
     }
 
     LOG_INFO("call python next question(s) finished.");

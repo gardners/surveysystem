@@ -334,11 +334,11 @@ struct answer *fcgi_request_load_answer(struct kreq *req) {
     // Deserialise answer
     ans = calloc(sizeof(struct answer), 1);
     if (!ans) {
-      LOG_ERRORV("calloc() of answer structure failed.", 0);
+      BREAK_ERRORV("calloc() of answer structure failed.", 0);
     }
 
     if (deserialise_answer(serialised, ANSWER_SCOPE_PUBLIC, ans)) {
-      LOG_ERRORV("deserialise_answer() failed.", 0);
+      BREAK_ERRORV("deserialise_answer() failed.", 0);
     }
   } while(0);
 
@@ -361,17 +361,17 @@ struct session *fcgi_request_load_session(struct kreq *req) {
   do {
     char *session_id = fcgi_request_get_field_value(KEY_SESSIONID, req);
     if (validate_session_id(session_id)) {
-      LOG_ERROR("Invalid survey id");
+      BREAK_ERROR("Invalid survey id");
     }
 
     // joerg: break if session could not be updated
     if (lock_session(session_id)) {
-      LOG_ERRORV("failed to lock session '%s'", session_id);
+      BREAK_ERRORV("failed to lock session '%s'", session_id);
     }
 
     ses = load_session(session_id);
     if (!ses) {
-      LOG_ERRORV("Could not load session '%s'", session_id);
+      BREAK_ERRORV("Could not load session '%s'", session_id);
     }
   } while(0);
 

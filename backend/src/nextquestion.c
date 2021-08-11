@@ -63,7 +63,7 @@ int dump_next_questions(FILE *f, struct nextquestions *nq) {
   int i;
   do {
     if (!f) {
-      LOG_ERROR("dump_next_questions(): invalid file pointer.");
+      BREAK_ERROR("dump_next_questions(): invalid file pointer.");
     }
 
     if (!nq) {
@@ -125,13 +125,13 @@ int add_next_question(enum actions action, struct question *qn, struct nextquest
 
   do {
     if (!ses) {
-      LOG_ERROR("struct session is NULL");
+      BREAK_ERROR("struct session is NULL");
     }
     if (!nq) {
-      LOG_ERROR("nextquestions is NULL");
+      BREAK_ERROR("nextquestions is NULL");
     }
     if (!qn) {
-      LOG_ERROR("question is NULL");
+      BREAK_ERROR("question is NULL");
     }
 
     // #373 separate allocated space for questions
@@ -141,7 +141,7 @@ int add_next_question(enum actions action, struct question *qn, struct nextquest
       if (action == ACTION_SESSION_DELETEANSWER) {
         // #462 if SESSION_DELETEANSWER: delete answer for next question and all following answers
         if (session_delete_answer(ses, qn->uid) < 0) {
-          LOG_ERRORV("add_next_question(): Deleting existing answer for next question '%s' failed", qn->uid);
+          BREAK_ERRORV("add_next_question(): Deleting existing answer for next question '%s' failed", qn->uid);
         }
       }
 
@@ -152,20 +152,20 @@ int add_next_question(enum actions action, struct question *qn, struct nextquest
       if (exists->flags & ANSWER_DELETED) {
         if (qn->type != QTYPE_SHA1_HASH) {
           if (answer_get_value_raw(exists, default_value, 8192)) {
-            LOG_ERRORV("add_next_question(): Failed to fetch default value from previously deleted answer to next question '%s'", qn->uid);
+            BREAK_ERRORV("add_next_question(): Failed to fetch default value from previously deleted answer to next question '%s'", qn->uid);
           }
         }
       }
 
       copy = copy_question(qn, default_value);
       if (!copy) {
-        LOG_ERRORV("add_next_question(): Copying next question '%s' in list of next questions failed", qn->uid);
+        BREAK_ERRORV("add_next_question(): Copying next question '%s' in list of next questions failed", qn->uid);
       }
 
     } else {
       copy = copy_question(qn, NULL);
       if (!copy) {
-        LOG_ERRORV("add_next_question(): Copying next question '%s' in list of next questions failed", qn->uid);
+        BREAK_ERRORV("add_next_question(): Copying next question '%s' in list of next questions failed", qn->uid);
       }
     }
     nq->next_questions[nq->question_count] = copy;
@@ -186,19 +186,19 @@ int get_next_questions_generic(struct session *ses, struct nextquestions *nq, en
 
   do {
     if (!ses) {
-      LOG_ERROR("struct session is NULL");
+      BREAK_ERROR("struct session is NULL");
     }
     if (!ses->survey_id) {
-      LOG_ERROR("surveyname is NULL");
+      BREAK_ERROR("surveyname is NULL");
     }
     if (!ses->session_id) {
-      LOG_ERROR("session_uuid is NULL");
+      BREAK_ERROR("session_uuid is NULL");
     }
     if (!nq) {
-      LOG_ERROR("nextquestions is NULL");
+      BREAK_ERROR("nextquestions is NULL");
     }
     if (nq->question_count) {
-      LOG_ERROR("nextquestions->question_count is > 0");
+      BREAK_ERROR("nextquestions->question_count is > 0");
     }
 
     LOG_INFO("Calling get_next_questions_generic()");
@@ -218,7 +218,7 @@ int get_next_questions_generic(struct session *ses, struct nextquestions *nq, en
     }
 
     if (add_next_question(action, ses->questions[index], nq, ses)) {
-      LOG_ERRORV("Error adding question '%s' to list of next questions", ses->questions[index]->uid);
+      BREAK_ERRORV("Error adding question '%s' to list of next questions", ses->questions[index]->uid);
     }
 
     // #13 add suport for progress indicator, in generic (linear) mode we just copy the session counters
@@ -246,12 +246,12 @@ struct nextquestions *get_next_questions(struct session *s, enum actions action,
 
   do {
     if (!s) {
-      LOG_ERROR("session structure is NULL");
+      BREAK_ERROR("session structure is NULL");
     }
 
     nq = calloc(sizeof(struct nextquestions), 1);
     if (!nq) {
-      LOG_ERROR("init_next_questions() failed");
+      BREAK_ERROR("init_next_questions() failed");
     }
 
     if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_PYTHON) {
@@ -260,7 +260,7 @@ struct nextquestions *get_next_questions(struct session *s, enum actions action,
       fail = get_next_question_python(s, nq, action, affected_answers_count);
 
       if (fail) {
-        LOG_ERRORV("get_next_question_python() failed with return code %d", fail);
+        BREAK_ERRORV("get_next_question_python() failed with return code %d", fail);
       }
 
     } else if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_GENERIC) {
@@ -271,11 +271,11 @@ struct nextquestions *get_next_questions(struct session *s, enum actions action,
       fail = get_next_questions_generic(s, nq, action, affected_answers_count);
 
       if (fail) {
-        LOG_ERRORV("get_next_questions_generic() failed with return code %d", fail);
+        BREAK_ERRORV("get_next_questions_generic() failed with return code %d", fail);
       }
 
     } else {
-      LOG_ERRORV("Could not identify nextquestion mode, session contains unknown next_questions_flag '%d'", s->nextquestions_flag);
+      BREAK_ERRORV("Could not identify nextquestion mode, session contains unknown next_questions_flag '%d'", s->nextquestions_flag);
     }
 
     // #379 update state (finished)
@@ -343,7 +343,7 @@ int get_analysis(struct session *s, const char **output) {
 
   do {
     if (!s) {
-      LOG_ERROR("session structure is NULL");
+      BREAK_ERROR("session structure is NULL");
     }
 
     if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_PYTHON) {
@@ -352,7 +352,7 @@ int get_analysis(struct session *s, const char **output) {
       fail = get_analysis_python(s, output);
 
       if (fail) {
-        LOG_ERRORV("get_analysis_python() failed with return code %d", fail);
+        BREAK_ERRORV("get_analysis_python() failed with return code %d", fail);
       }
 
     } else if (s->nextquestions_flag & NEXTQUESTIONS_FLAG_GENERIC) {
@@ -363,18 +363,18 @@ int get_analysis(struct session *s, const char **output) {
       fail = get_analysis_generic(s, output);
 
       if (fail) {
-        LOG_ERRORV("get_analysis_generic() failed with return code %d", fail);
+        BREAK_ERRORV("get_analysis_generic() failed with return code %d", fail);
       }
 
     } else {
-      LOG_ERRORV("Could not identify nextquestion mode, Unknown next_questions_flag. %d", s->nextquestions_flag);
+      BREAK_ERRORV("Could not identify nextquestion mode, Unknown next_questions_flag. %d", s->nextquestions_flag);
     }
 
     // #379 update state (if not closed already) and save session
     if (s->state < SESSION_CLOSED) {
       s->state = SESSION_CLOSED;
       if (save_session(s)) {
-        LOG_ERROR("save_session( on SESSION_CLOSED failed");
+        BREAK_ERROR("save_session( on SESSION_CLOSED failed");
       }
     }
 

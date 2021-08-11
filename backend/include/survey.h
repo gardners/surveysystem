@@ -190,6 +190,32 @@ struct nextquestions {
     int question_count;
 };
 
+// #379 session live cycle
+// @see: session.c, char *session_state_names
+enum session_state {
+  SESSION_NULL, // init state, overwritten by load_session
+  SESSION_NEW,
+  SESSION_OPEN,
+  SESSION_FINISHED,
+  SESSION_CLOSED,
+};
+#define NUM_SESSION_STATES 5
+extern char *session_astate_names[NUM_SESSION_STATES];
+
+// #379 request actions (validated against session state)
+// @see: session.c, char *session_action_names
+enum actions {
+  ACTION_NONE,
+  ACTION_SESSION_NEW,
+  ACTION_SESSION_DELETE,
+  ACTION_SESSION_NEXTQUESTIONS,
+  ACTION_SESSION_ADDANSWER,
+  ACTION_SESSION_DELETEANSWER,
+  ACTION_SESSION_ANALYSIS,
+};
+#define NUM_SESSION_ACTIONS 7
+extern char *session_action_names[NUM_SESSION_ACTIONS];
+
 // #363 session meta
 struct session_meta {
   char *user;
@@ -206,15 +232,6 @@ struct session_meta {
 };
 
 void log_session_meta(struct session_meta *meta);
-
-// #379 session live cycle
-enum session_state {
-  SESSION_NULL, // init state, overwritten by load_session
-  SESSION_NEW,
-  SESSION_OPEN,
-  SESSION_FINISHED,
-  SESSION_CLOSED,
-};
 
 struct session {
   char *survey_id; // <survey name>/<hash>
@@ -243,20 +260,6 @@ struct session {
   // #379 session state, set on loading, updated during session actions, saved to session file if changed
   enum session_state state;
 };
-
-// #379 request actions (validated against session state)
-// keep in sync with session.c, char *session_action_names
-enum actions {
-  ACTION_NONE,
-  ACTION_SESSION_NEW,
-  ACTION_SESSION_DELETE,
-  ACTION_SESSION_NEXTQUESTIONS,
-  ACTION_SESSION_ADDANSWER,
-  ACTION_SESSION_DELETEANSWER,
-  ACTION_SESSION_ANALYSIS,
-};
-#define NUM_SESSION_ACTIONS 7
-extern char *session_action_names[NUM_SESSION_ACTIONS];
 
 int generate_path(char *path_in, char *path_out, int max_len);
 int generate_session_path(char *session_id, char *filename, char *path_out, int max_len);

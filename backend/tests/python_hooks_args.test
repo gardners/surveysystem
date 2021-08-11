@@ -35,17 +35,17 @@ def nextquestion(questions, answers, **kwargs):
 
     # first call: /nextquestions
     if len(answers) == 1:
-        expected_action = 'SESSION_NEXTQUESTIONS'
+        expected_action = 'ACTION_SESSION_NEXTQUESTIONS'
         expected_count = 0
 
     # first call: /answers
     if len(answers) == 2:
-        expected_action = 'SESSION_ADDANSWER'
+        expected_action = 'ACTION_SESSION_ADDANSWER'
         expected_count = 1
 
     # third call: /delanswer
     if len(answers) == 0:
-        expected_action = 'SESSION_DELETEANSWER'
+        expected_action = 'ACTION_SESSION_DELETEANSWER'
         expected_count = 2
 
     logging.info(' - expected_action: \'{}\', expected_count: {}'.format(expected_action, expected_count))
@@ -79,7 +79,7 @@ def analyse(questions, answers, **kwargs):
     # logging.info('answers: \'{}\''.format(answers))
     logging.info(' - kwargs: \'{}\''.format(kwargs))
 
-    expected_action = 'SESSION_ANALYSIS'
+    expected_action = 'ACTION_SESSION_ANALYSIS'
     expected_count = 0
 
     logging.info(' - expected_action: \'{}\', expected_count: {}'.format(expected_action, expected_count))

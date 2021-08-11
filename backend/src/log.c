@@ -48,7 +48,7 @@ int log_message(const char *file, const char *function, const int line, char *fo
   FILE *lf = NULL;
 
   do {
-    // Don't allow us reporting errors via LOG_ERROR cause infinite recursion
+    // Don't allow us reporting errors via BREAK_ERROR cause infinite recursion
     log_recursed++;
     if (log_recursed > 1) {
       break;
@@ -74,7 +74,7 @@ int log_message(const char *file, const char *function, const int line, char *fo
     }
 
     if (!lf) {
-      LOG_ERRORV("Could not open log file '%s'", log_name);
+      BREAK_ERRORV("Could not open log file '%s'", log_name);
     }
 
     va_list argp;

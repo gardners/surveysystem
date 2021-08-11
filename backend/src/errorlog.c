@@ -8,7 +8,24 @@
 char error_messages[MAX_ERRORS][1024];
 int error_count = 0;
 
-extern int instrumentation_muted;
+// migrated from code_instrumentation.c/code_instrumentation.h (removed)
+int instrumentation_muted = 0;
+
+void code_instrumentation_mute() {
+  if (instrumentation_muted < 1) {
+    instrumentation_muted = 1;
+  } else {
+    instrumentation_muted++;
+  }
+}
+
+void code_instrumentation_unmute() {
+  if (instrumentation_muted > 0) {
+    instrumentation_muted--;
+  } else {
+    instrumentation_muted = 0;
+  }
+}
 
 void clear_errors(void) {
   error_count = 0;
@@ -26,8 +43,7 @@ void dump_errors(FILE *f) {
   return;
 }
 
-int remember_error(const char *severity, const char *file, const int line,
-                   const char *function, const char *format, ...) {
+int remember_error(const char *severity, const char *file, const int line, const char *function, const char *format, ...) {
   if (instrumentation_muted) {
     return 0;
   }
@@ -48,13 +64,11 @@ int remember_error(const char *severity, const char *file, const int line,
     vsnprintf(message, 65536, format, argp);
     va_end(argp);
 
-    snprintf(error_messages[error_count], 1024, "%s:%d:%s(): %s", file, line,
-             function, message);
-
+    snprintf(error_messages[error_count], 65536, "%s:%d:%s(): %s", file, line, function, message);
     error_count++;
 
     // Also record the error into the general log
-    LOG_INFOV("%s : %s", severity, message);
+    log_message(file, function, line, "%s", message);
 
   } while (0);
 
