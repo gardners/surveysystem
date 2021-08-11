@@ -26,8 +26,7 @@ void dump_errors(FILE *f) {
   return;
 }
 
-int remember_error(const char *severity, const char *file, const int line,
-                   const char *function, const char *format, ...) {
+int remember_error(const char *severity, const char *file, const int line, const char *function, const char *format, ...) {
   if (instrumentation_muted) {
     return 0;
   }
@@ -48,13 +47,11 @@ int remember_error(const char *severity, const char *file, const int line,
     vsnprintf(message, 65536, format, argp);
     va_end(argp);
 
-    snprintf(error_messages[error_count], 1024, "%s:%d:%s(): %s", file, line,
-             function, message);
-
+    snprintf(error_messages[error_count], 65536, "%s:%d:%s(): %s", file, line, function, message);
     error_count++;
 
     // Also record the error into the general log
-    LOG_INFOV("%s : %s", severity, message);
+    log_message(file, function, line, "%s", message);
 
   } while (0);
 
