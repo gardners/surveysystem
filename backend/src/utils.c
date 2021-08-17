@@ -70,7 +70,7 @@ char *parse_line(const char *body, char separator, char **saveptr) {
 
   line = malloc(len + 1);
   if (!line) {
-    LOG_WARNV("Error allocating memory for parsing line", 0);
+    LOG_CODE(SS_ERROR_MEM, "Error allocating memory for parsing line");
     return NULL;
   }
   memmove (line, str, len);

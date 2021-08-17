@@ -15,6 +15,7 @@
  */
 int validate_survey_id(char *survey_id) {
   int retVal = 0;
+
   do {
     if (!survey_id) {
       BREAK_ERROR("survey_id is NULL");
@@ -53,11 +54,12 @@ int validate_survey_id(char *survey_id) {
  */
 int validate_session_id(char *session_id) {
   int retVal = 0;
+
   do {
     if (!session_id) {
       BREAK_ERROR("session_id is NULL");
     }
-    LOG_WARNV("Validating session id '%s'", session_id);
+
     if (strlen(session_id) != 36) {
       BREAK_ERRORV("session_id '%s' must be exactly 36 characters long", session_id);
     }
@@ -114,25 +116,23 @@ int validate_session_id(char *session_id) {
 /**
  * Verify that an answer exists in a given session and can be deleted
  */
-int validate_session_delete_answer(char *question_id, struct session *ses) {
+int validate_session_delete_answer(struct session *ses, char *uid) {
   int retVal = 0;
+
   do {
+    BREAK_IF(ses == NULL, SS_ERROR_ARG, "ses");
 
-    if (!question_id) {
-      BREAK_ERROR("question_id is NULL");
+    if (!uid) {
+      BREAK_CODE(SS_MISSING_ANSWER, "answer missing");
     }
 
-    if (!ses) {
-      BREAK_ERROR("session is NULL");
-    }
-
-    struct answer *ans = session_get_answer(question_id, ses);
+    struct answer *ans = session_get_answer(uid, ses);
     if (!ans) {
-      BREAK_ERRORV("Could not load answer '%s'", question_id);
+      BREAK_CODEV(SS_NOSUCH_ANSWER, "No such answer '%s' in session", uid);
     }
 
     if (!is_given_answer(ans)) {
-      BREAK_ERRORV("Answer '%s' is not a given answer", question_id);
+      BREAK_CODEV(SS_NOSUCH_ANSWER, "Answer '%s' is not a given answer", uid);
     }
 
   } while (0);
@@ -144,26 +144,29 @@ int validate_session_delete_answer(char *question_id, struct session *ses) {
  */
 int validate_session_add_answer(struct session *ses, struct answer *ans) {
   int retVal = 0;
+
   do {
+    BREAK_IF(ses == NULL, SS_ERROR_ARG, "ses");
 
     if (!ans) {
-      BREAK_ERROR("answer is NULL");
+      BREAK_CODE(SS_MISSING_ANSWER, "answer missing");
     }
 
     // validate exists
     struct question *qn = session_get_question(ans->uid, ses);
     if (!qn) {
-      BREAK_ERRORV("No question defined for answer '%s'", ans->uid);
+      BREAK_CODEV(SS_NOSUCH_QUESTION, "No question defined for answer '%s'", ans->uid);
     }
 
     switch(qn->type) {
       case QTYPE_UUID:
         if(validate_session_id(ans->text)) {
-          BREAK_ERRORV("not a valid uuid: '%s'", ans->text);
+          BREAK_CODEV(SS_INVALID_UUID, "not a valid uuid: '%s'", ans->text);
         }
       break;
     }
 
   } while (0);
+
   return retVal;
 }
