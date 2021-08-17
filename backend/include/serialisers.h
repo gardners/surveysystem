@@ -6,8 +6,9 @@
 #define MISMATCH_IS_NOT_AN_ERROR 0
 #define MISMATCH_IS_AN_ERROR 1
 
-int compare_questions(struct question *q1, struct question *q2,
-                      int mismatchIsError);
+#define MAX_LINE 65536
+
+int compare_questions(struct question *q1, struct question *q2, int mismatchIsError);
 int compare_answers(struct answer *a1, struct answer *a2, int mismatchIsError);
 int serialise_question(struct question *q, char *out, int max_len);
 int serialise_answer(struct answer *a, enum answer_scope scope, char *out, int max_len);
@@ -21,13 +22,22 @@ int deserialise_question_type(char *field, int *s); // #451
 int serialise_question_type(int qt, char *out, int out_max_len); // #358
 int escape_string(char *in, char *out, int max_len);
 
-char *serialise_list_append_alloc(char *src, char *in, const char separator); // #482
-char **deserialise_list_alloc(char *in, const char separator, size_t *len); // #482
-
 int dump_question(FILE *f, struct question *q);
 int dump_answer(FILE *f, struct answer *a);
 
 int serialiser_count_columns(char separator, char *line);
+
+char *serialise_list_append_alloc(char *src, char *in, const char separator); // #482
+char **deserialise_list_alloc(char *in, const char separator, size_t *len); // #482
+
+// #260, #482 deserialise a sequence of strings
+struct string_list {
+  char **items;
+  size_t len;
+};
+
+struct string_list *deserialise_string_list(char *in, const char separator); // #260, #482
+void free_string_list(struct string_list *list);
 
 // #461 deserialise a sequence of answers
 struct answer_list {
