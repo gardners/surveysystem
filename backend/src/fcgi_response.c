@@ -11,6 +11,77 @@
 #include "fcgi.h"
 #include "errorlog.h"
 
+enum khttp fcgi_status(int code, int is_section) {
+    switch (code) {
+      case SS_OK:                        return (!is_section) ? KHTTP_200 : KHTTP_500;
+
+      // sections
+      case SS_INVALID:                   return KHTTP_400;
+      case SS_CONFIG:                    return KHTTP_500;
+      case SS_SYSTEM:                    return KHTTP_500;
+
+      case SS_INVALID_METHOD:            return KHTTP_405;
+      case SS_INVALID_CREDENTIALS:       return KHTTP_401;
+      case SS_INVALID_CREDENTIALS_PROXY: return KHTTP_407;
+      case SS_INVALID_CONSISTENCY_HASH:  return KHTTP_412;
+      case SS_NOSUCH_SESSION:            return KHTTP_400;
+      case SS_CONFIG_PROXY:              return KHTTP_502;
+
+      default:
+        return (!is_section) ? KHTTP__MAX : KHTTP_500;
+    }
+}
+
+/**
+ * maps error code to http staus code awrites a json error response
+ */
+int fcgi_error_response(struct kreq *req, int code) {
+  int retVal = 0;
+
+  do {
+    if (code == SS_OK) {
+      break;
+    }
+
+    // map error code to http status, if no direct match, get section
+    int is_section = 0;
+    enum khttp status = fcgi_status(code, is_section);
+    if (status == KHTTP__MAX) {
+      is_section = 1;
+      status = fcgi_status(ERROR_SECTION(code), is_section);
+      LOG_INFOV("fgi error mapping: %d: %s > %d", code, get_error(code, 0, "null"), ERROR_SECTION(code));
+    }
+    const char *message = get_error(code, is_section, "[ERROR] unkown");
+
+    // open request
+    if(http_open(req, status, KMIME_APP_JSON, NULL)) {
+      BREAK_ERROR("http_json_error(): unable to initialise http response");
+    }
+
+    struct kjsonreq jsonreq;
+    kjson_open(&jsonreq, req);
+    kcgi_writer_disable(req);
+    kjson_obj_open(&jsonreq);
+
+    // Write some stuff in reply
+    kjson_putstringp(&jsonreq, "message", message);
+
+    // Display error log as well.
+    kjson_stringp_open(&jsonreq, "trace");
+    for (int i = 0; i < error_count; i++) {
+      char line[1024];
+      snprintf(line, 1024, "%s\n", error_messages[i]);
+      kjson_string_puts(&jsonreq, line);
+    }
+    kjson_string_close(&jsonreq);
+
+    kjson_obj_close(&jsonreq);
+    kjson_close(&jsonreq);
+
+  } while(0);
+
+  return retVal;
+}
 
 /**
  * Open an HTTP response with a status code, a content-type and a mime type, then open the HTTP content body.
