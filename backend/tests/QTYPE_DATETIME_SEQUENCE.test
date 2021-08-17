@@ -36,7 +36,7 @@ endofsession
 
 #! ------- delete question -------
 
-request 200 GET /delanswer?sessionid=<session_id>&questionid=dates
+request 200 DELETE /answers?sessionid=<session_id>&questionid=dates -H "If-Match: <response_etag>"
 match_string {"status": 0, "message": "", "progress": [0, 1], "next_questions": [{"id": "dates", "name": "dates", "title": "Your Life", "description": "", "type": "DATETIME_SEQUENCE", "default_value": "-26258313,171165687,345171687", "min_value": -1, "max_value": -1, "choices": ["Birthday", "Start primary school", "Start high school"], "unit": "seconds"}]}
 # Make sure answer ends up in file
 verify_session(skip_headers)

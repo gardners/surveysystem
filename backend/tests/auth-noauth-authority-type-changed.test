@@ -37,7 +37,7 @@ request 502 GET /nextquestion?sessionid=<session_id>
 #!-------
 #!- endpoint /delanswer [block]
 #!-------
-request 502 GET /delanswer?sessionid=<session_id>&questionid=question1
+request 502 DELETE /answers?sessionid=<session_id>&questionid=question1 -H "If-Match: <response_etag>"
 
 #!-------
 #!- endpoint /delprevanswer [block]

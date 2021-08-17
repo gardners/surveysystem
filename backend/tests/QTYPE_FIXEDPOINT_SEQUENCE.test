@@ -36,7 +36,7 @@ endofsession
 
 #! ------- delete question -------
 
-request 200 GET /delanswer?sessionid=<session_id>&questionid=sequence
+request 200 DELETE /answers?sessionid=<session_id>&questionid=sequence -H "If-Match: <response_etag>"
 match_string {"status": 0, "message": "", "progress": [0, 1], "next_questions": [{"id": "sequence", "name": "sequence", "title": "Plant height?", "description": "", "type": "FIXEDPOINT_SEQUENCE", "default_value": "0,5.5,30.8", "min_value": -1, "max_value": -1, "choices": ["week 1", "week 2", "week 3"], "unit": "cm"}]}
 
 # Make sure answer ends up in file

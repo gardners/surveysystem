@@ -36,7 +36,7 @@ endofsession
 
 #! ------- delete question -------
 
-request 200 GET /delanswer?sessionid=<session_id>&questionid=meals
+request 200 DELETE /answers?sessionid=<session_id>&questionid=meals -H "If-Match: <response_etag>"
 match_string {"status": 0, "message": "", "progress": [0, 1], "next_questions": [{"id": "meals", "name": "meals", "title": "Your average daily meal times", "description": "", "type": "DAYTIME_SEQUENCE", "default_value": "27000,43200,66600,75600", "min_value": -1, "max_value": -1, "choices": ["Breakfast", "Lunch", "Tea", "Late Snack"], "unit": "seconds"}]}
 
 # Make sure answer ends up in file

@@ -50,7 +50,7 @@ endofsession
 #! -------
 
 #! ------- test that empty efault_value is returned
-request 200 GET /delanswer?sessionid=<session_id>&questionid=secret2
+request 200 DELETE /answers?sessionid=<session_id>&questionid=secret2 -H "If-Match: <response_etag>"
 match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "secret2", "name": "secret2", "title": "Secret 2", "description": "Secret 2", "type": "SHA1_HASH", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 # Make sure answer ends up in file
@@ -61,7 +61,7 @@ secret2:SHA1_HASH:84983e441c3bd26ebaae4aa1f95129e5e54670f1:0:0:0:0:0:0:0::1:<UTI
 endofsession
 
 #! ------- test that default_value of question definition is returned
-request 200 GET /delanswer?sessionid=<session_id>&questionid=secret1
+request 200 DELETE /answers?sessionid=<session_id>&questionid=secret1 -H "If-Match: <response_etag>"
 match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "secret1", "name": "secret1", "title": "Secret 1", "description": "Secret 1", "type": "SHA1_HASH", "default_value": "default 1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 # Make sure answer ends up in file

@@ -116,7 +116,7 @@ endofsession
 #! - SESSION_CLOSED: deleting an answer fails (400)
 #! ------
 
-request 400 GET /delanswer?sessionid=<session_id>&questionid=question2
+request 400 DELETE /answers?sessionid=<session_id>&questionid=question2 -H "If-Match: <response_etag>"
 
 verify_session
 sessionlifetime/0a7caf5b02adad7583c7bfae30f6f119cb3581cc

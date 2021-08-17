@@ -105,7 +105,7 @@ match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": 
 request 200 POST /answers?sessionid=<session_id>&answer=question2:Answer+2:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": []}
 
-request 200 GET /delanswer?sessionid=<session_id>&questionid=question1
+request 200 DELETE /answers?sessionid=<session_id>&questionid=question1 -H "If-Match: <response_etag>"
 match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "Answer 1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 

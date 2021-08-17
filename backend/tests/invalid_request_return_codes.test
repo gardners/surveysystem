@@ -13,9 +13,9 @@ request 400 POST /answers
 request 500 POST /answers?sessionid=
 request 500 POST /answers?sessionid=invalid
 
-request 400 GET /delanswer
-request 500 GET /delanswer?sessionid=
-request 500 GET /delanswer?sessionid=invalid
+request 400 DELETE /answers -H "If-Match: <response_etag>"
+request 500 DELETE /answers?sessionid= -H "If-Match: <response_etag>"
+request 500 DELETE /answers?sessionid=invalid -H "If-Match: <response_etag>"
 
 request 400 GET /analyse
 request 500 GET /analyse?sessionid=

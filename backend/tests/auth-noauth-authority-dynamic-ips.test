@@ -40,7 +40,7 @@ request 200 GET /nextquestion?sessionid=<session_id>
 #!- endpoint /delanswer [pass]
 #!-------
 
-request 200 GET /delanswer?sessionid=<session_id>&questionid=question2
+request 200 DELETE /answers?sessionid=<session_id>&questionid=question2 -H "If-Match: <response_etag>"
 
 #!-------
 #!- endpoint /delprevanswer [pass]

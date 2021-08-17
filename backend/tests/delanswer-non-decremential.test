@@ -39,7 +39,7 @@ question3:TEXT:Answer 3:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #! ------- delanswer question 2 -------
-request 200 GET /delanswer?sessionid=<session_id>&questionid=question2
+request 200 DELETE /answers?sessionid=<session_id>&questionid=question2 -H "If-Match: <response_etag>"
 match_string {"status": 0, "message": "", "progress": [1, 3], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "Answer 2", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 verify_session(skip_headers)
@@ -50,7 +50,7 @@ question3:TEXT:Answer 3:0:0:0:0:0:0:0::1:<UTIME>
 endofsession
 
 #! ------- delanswer question 1 -------
-request 200 GET /delanswer?sessionid=<session_id>&questionid=question1
+request 200 DELETE /answers?sessionid=<session_id>&questionid=question1 -H "If-Match: <response_etag>"
 match_string {"status": 0, "message": "", "progress": [0, 3], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "Answer 1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 verify_session(skip_headers)

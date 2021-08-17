@@ -24,7 +24,7 @@ request 200 POST /answers?sessionid=<session_id>&answer=question1:Answer+1:0:0:0
 match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #! ------- delanswer question 1 -------
-request 404 GET /delanswerandfollowing?sessionid=<session_id>&questionid=question1
+request 404 DELETE /answersandfollowing?sessionid=<session_id>&questionid=question1 -H "If-Match: <response_etag>"
 
 verify_session(skip_headers)
 delanswerandfollowing/0b39e0c93f1b338433b8a8773d57f738dd405e17

@@ -93,7 +93,8 @@ endofsession
 #! - SESSION_FINISHED: deleting last answer of a finished session regresses back to SESSION_OPEN
 #! ------
 
-request 200 GET /delanswer?sessionid=<session_id>&questionid=question2
+request 200 GET /nextquestion?sessionid=<session_id>
+request 200 DELETE /answers?sessionid=<session_id>&questionid=question2 -H "If-Match: <response_etag>"
 match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "Answer 2", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 verify_session

@@ -79,7 +79,7 @@ question3:TEXT:Answer 3:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #! ------- delanswer question 2 -------
-request 200 GET /delanswer?sessionid=<session_id>&questionid=question2
+request 200 DELETE /answers?sessionid=<session_id>&questionid=question2 -H "If-Match: <response_etag>"
 
 # #462 changed question3 to deleted
 verify_session(skip_headers)

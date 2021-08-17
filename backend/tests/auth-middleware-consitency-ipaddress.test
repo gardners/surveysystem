@@ -38,7 +38,7 @@ request proxy 502 GET /nextquestion?sessionid=<session_id> --user test:1234 -H "
 #!-------
 #!- endpoint /delanswer [block]
 #!-------
-request proxy 502 GET /delanswer?sessionid=<session_id>&questionid=question1 --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 502 DELETE /answers?sessionid=<session_id>&questionid=question1 --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>"
 
 #!-------
 #!- endpoint /delprevanswer [block]

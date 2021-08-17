@@ -71,7 +71,7 @@ match_string <empty>
 #! - PASS /delanswer - no answer deleted
 #! ------
 
-request 200 OPTIONS /delanswer?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&questionid=question1
+request 200 OPTIONS /answers?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&questionid=question1 -H "If-Match: <response_etag>"
 match_string <empty>
 
 verify_session(skip_headers)

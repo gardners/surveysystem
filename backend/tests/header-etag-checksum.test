@@ -113,7 +113,7 @@ verify_response_etag(<custom_checksum>)
 #! -------
 
 #! ------ 200: hash: YES, required: NO -------
-request 200 GET /delanswer?sessionid=<session_id>&questionid=question3
+request 200 DELETE /answers?sessionid=<session_id>&questionid=question3 -H "If-Match: <response_etag>"
 verify_response_etag(<hashlike_etag>)
 
 #! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
