@@ -82,7 +82,7 @@ int log_message(const char *severity, const char *file, const char *function, co
     va_end(argp);
 
     if (tm) {
-      fprintf(lf, "%04d/%02d/%02d.%02d:%02d.%d:[%s] %s:%d:%s():%s\n",
+      fprintf(lf, "%04d/%02d/%02d.%02d:%02d.%d: %s %s:%d:%s(): %s\n",
               1900 + tm->tm_year, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour,
               tm->tm_min, tm->tm_sec, severity, file, line, function, message);
     } else {
