@@ -11,6 +11,195 @@
 #include "validators.h"
 #include "errorlog.h"
 
+
+/**
+ * Fetch the field value (param) for a given key from kreq.fieldmap or
+ */
+char *fcgi_request_get_field_value(enum key field, struct kreq *req) {
+  // man khttp_parse: struct kpair **fieldmap
+  if (!req->fieldsz) {
+    return NULL;
+  }
+  struct kpair *pair = req->fieldmap[field];
+  return (pair) ? pair->val : NULL;
+}
+
+/**
+ * Fetch anonymous body from req.fields (since #461)
+ */
+char *fcgi_request_get_anonymous_body(struct kreq *req) {
+  // man khttp_parse: struct kpair struct kpair *fields
+  if (!req->fieldsz) {
+    return NULL;
+  }
+
+  // verify that no key is assigned
+  if (req->fields[0].key && strlen(req->fields[0].key)) {
+    return  NULL;
+  }
+
+  return req->fields[0].val;
+}
+
+/**
+ * Fetch the field value (param) for a given key (string) from kreq.fields (#260)
+ */
+char *fcgi_request_get_field_value_by_name(char *field, struct kreq *req) {
+  for (size_t i = 0; i < req->fieldsz; i++) {
+    if (strcmp(req->fields[i].key, field) == 0) {
+      return req->fields[i].val;
+    }
+  }
+  return NULL;
+}
+
+/**
+ * Fetch consistency sha1 value from request, either ith 'if-Match' header or
+ * #260, #268
+ */
+char *fcgi_request_get_consistency_hash(struct kreq *req) {
+  // man khttp_parse: struct kpair struct kpair *fields
+  struct khead *header = req->reqmap[KREQU_IF_MATCH];
+  if (header) {
+    return header->val;
+  }
+
+  return fcgi_request_get_field_value(KEY_IF_MATCH, req);
+}
+
+
+/**
+ * parse and validate a list of deserialised answers from an incoming kreq (#260)
+ *  - validate answers against list of uids and session questions
+ *  - No error will be assigned if values could not be found in request
+ */
+struct answer_list *fcgi_request_parse_answers_serialised(struct kreq *req, struct session *ses, int *error) {
+  int retVal = 0;
+
+  struct answer_list *list = NULL;
+  struct string_list *uids = NULL;
+
+  do {
+    BREAK_IF(req == NULL, SS_ERROR_ARG, "req");
+    BREAK_IF(ses == NULL, SS_ERROR_ARG, "ses");
+
+    char *serialised  = fcgi_request_get_field_value(KEY_ANSWER, req);
+    if (!serialised) {
+      serialised = fcgi_request_get_anonymous_body(req);
+    }
+
+    if (!serialised) {
+      LOG_INFO("no serialised answers found in request");
+      break;
+    }
+
+    uids = deserialise_string_list(ses->next_questions, ',');
+    BREAK_IF(uids == NULL, SS_ERROR_MEM,  NULL);
+
+    // load answers from request TODO error check in fuction
+    list = deserialise_answers(serialised, ANSWER_SCOPE_PUBLIC);
+    if (!list) {
+      BREAK_CODE(SS_INVALID_ANSWER, "Could not deserialise answer list");
+    }
+
+    // validate answer uids against ses->next_questions
+    if (list->len != uids->len) {
+      BREAK_CODEV(SS_MISMATCH_NEXTQUESTIONS, "answers count doesn't match next questions (%ld != %ld)", list->len, uids->len);
+    }
+
+    for (size_t i = 0; i < uids->len; i++) {
+      if (strcmp(uids->items[i], list->answers[i]->uid)) {
+        BREAK_CODEV(SS_MISMATCH_NEXTQUESTIONS, "Could find answer '%s' in request values", uids->items[i]);
+      }
+    }
+
+  } while(0);
+
+  free_string_list(uids);
+
+  if (retVal) {
+    free_answer_list(list);
+    list = NULL;
+  }
+
+  *error = retVal;
+  return list;
+}
+
+/**
+ * Parse a list of deserialised answers values (uid1=value1&uid2=value2) from an incoming kreq
+ * Note: the *uids list serves only as a lookup for answer keys, the validation for completeness nedds to be done separately
+ * #260
+ */
+struct answer_list *fcgi_request_parse_answers_values(struct kreq *req, struct session *ses, int *error) {
+  int retVal = 0;
+
+  struct answer_list *list = NULL;
+  struct string_list *uids = NULL;
+
+  do {
+    BREAK_IF(req == NULL, SS_ERROR_ARG, "req");
+    BREAK_IF(ses == NULL, SS_ERROR_ARG, "ses");
+
+    uids = deserialise_string_list(ses->next_questions, ',');
+    BREAK_IF(uids == NULL, SS_ERROR_MEM,  NULL);
+
+    list = calloc(1, sizeof(struct answer_list));
+    BREAK_IF(list == NULL, SS_ERROR_MEM, "struct answer list");
+
+    char *value;
+    struct question *qn;
+
+    for (size_t i = 0; i < uids->len; i++) {
+      // get value
+      value = fcgi_request_get_field_value_by_name(uids->items[i], req);
+      if (!value) {
+        BREAK_CODEV(SS_MISMATCH_NEXTQUESTIONS, "Could find answer '%s' in request values", uids->items[i]);
+      }
+
+      // init answer
+      list->answers[i] = calloc(sizeof(struct answer), 1);
+      BREAK_IF(list == NULL, SS_ERROR_MEM, "struct answer");
+
+      // build answer
+      qn = session_get_question(uids->items[i], ses);
+      if (!qn) {
+        BREAK_CODEV(SS_NOSUCH_QUESTION, "Could  answer '%s' does not exist in session (session corrupted?)", uids->items[i]);
+      }
+      list->answers[i]->uid = strdup(qn->uid);
+      list->answers[i]->type = qn->type;
+
+      // set answer value
+      if (answer_set_value_raw(list->answers[i], value)) {
+        BREAK_ERRORV("failed to set raw value for answer '%s' in session", uids->items[i]);
+      }
+
+      // progress
+      list->len++;
+    }
+
+    // purge list if no values are found
+    if (!list->len) {
+      free_answer_list(list);
+      list = NULL;
+      LOG_INFO("no answer values found in request");
+      break;
+    }
+
+  } while(0);
+
+  free_string_list(uids);
+
+  if (retVal) {
+    free_answer_list(list);
+    list = NULL;
+  }
+
+  *error = retVal;
+  return list;
+}
+
+
 /**
  * Determines (but does not validate) authorisation type from an incoming kcgi request
  * #363
@@ -81,6 +270,46 @@ static enum khttp validate_session_authority( struct session_meta *meta, struct 
   }
 
   return KHTTP_200;
+}
+
+/**
+ * Validates session meta, parsed from incoming kcgi request, against previously stored session meta (header)
+ * We do not manage authorisation or idendity in the backend, only verify if the request source is consitent with thew initial newsession request
+ */
+int validate_session_authority_1(struct session_meta *meta, struct session *ses) {
+  int retVal = 0;
+
+  do {
+    BREAK_IF(meta == NULL, SS_ERROR_ARG, "meta");
+    BREAK_IF(ses == NULL, SS_ERROR_ARG, "ses");
+
+    // parse initial authority from session
+    struct answer *authority = session_get_header("@authority", ses);
+    if (!authority) {
+      BREAK_CODE(SS_CONFIG_MALFORMED_SESSION, "'@authority' header missing");
+    }
+
+    // all requests must match provider type
+    int provider = authority->value;
+    if(provider != meta->provider) {
+      BREAK_CODEV(SS_CONFIG_PROXY, "provider type mismatch %d != %d ", provider, meta->provider);
+    }
+
+    if (provider != IDENDITY_HTTP_TRUSTED) {
+      break; // skip and return ok
+    }
+
+    // if middleware: (fcgi env SS_TRUSTED_MIDDLEWARE is set) match current authority (ip, port)
+    if (!authority->text || !strlen(authority->text)){
+      BREAK_CODE(SS_CONFIG_PROXY, "Invalid request. authority value is empty ");
+    }
+
+    if (strcmp(authority->text, meta->authority)) {
+      BREAK_CODEV(SS_CONFIG_PROXY, "Invalid request. Provider authority string mismatch '%s' != '%s'", authority->text, meta->authority);
+    }
+  } while(0);
+
+  return retVal;
 }
 
 /**
@@ -189,6 +418,52 @@ enum khttp fcgi_request_validate_method(struct kreq *req, enum kmethod allowed[]
 }
 
 /**
+ * Validate a loaded session against request
+ * The backend does not manage authorisation or idendity, it relies on outer wrappers,
+ * We only verify if the request source is consitent with thew initial newsession request
+ */
+enum khttp fcgi_request_validate_meta_session(struct kreq *req, struct session *ses) {
+  enum khttp status;
+  struct session_meta *meta = NULL;
+
+  if (!req) {
+    LOG_WARNV("Cannot validate request. request is null for session '%s'.", ses->session_id);
+    return KHTTP_500;
+  }
+
+  if (!ses) {
+    LOG_WARNV("Cannot validate request. session is null.", 0);
+    return KHTTP_500;
+  }
+
+  // #363 parse session meta
+  meta = fcgi_request_parse_meta(req);
+  if (!meta) {
+    LOG_WARNV("create_session_meta_kreq() failed",  0);
+    return KHTTP_500;
+  }
+
+  // validate session meta against request
+  status = fcgi_request_validate_meta_kreq(req, meta);
+  if (status != KHTTP_200) {
+    free_session_meta(meta);
+    LOG_WARNV("fcgi_request_validate_meta_kreq() status %d != (%d)", KHTTP_200, status);
+    return status;
+  }
+
+  // validate session meta against session
+  status = validate_session_authority(meta, ses);
+  if (status != KHTTP_200) {
+    free_session_meta(meta);
+    LOG_WARNV("validate_session_authority() status %d != (%d)", KHTTP_200, status);
+    return status;
+  }
+
+  free_session_meta(meta);
+  return KHTTP_200;
+}
+
+/**
  * Validates incoming kcgi request against server config, using previously parsed session meta
  * #363
  */
@@ -261,63 +536,71 @@ enum khttp fcgi_request_validate_meta_kreq(struct kreq *req, struct session_meta
 }
 
 /**
- * Validate a loaded session against request
- * The backend does not manage authorisation or idendity, it relies on outer wrappers,
- * We only verify if the request source is consitent with thew initial newsession request
+ * Validates incoming kcgi request against server config, using previously parsed session meta
+ * #363
+ * #260 renamed fcgi_request_validate_meta_kreq()
  */
-enum khttp fcgi_request_validate_meta_session(struct kreq *req, struct session *ses) {
-  enum khttp status;
-  struct session_meta *meta = NULL;
+int fcgi_request_validate_session_idendity(struct kreq *req, struct session_meta *meta) {
+  int retVal = 0;
 
-  if (!req) {
-    LOG_WARNV("Cannot validate request. request is null for session '%s'.", ses->session_id);
-    return KHTTP_500;
-  }
+  do {
+    BREAK_IF(req == NULL, SS_ERROR_ARG, "req");
+    BREAK_IF(meta == NULL, SS_ERROR_ARG, "meta");
 
-  if (!ses) {
-    LOG_WARNV("Cannot validate request. session is null.", 0);
-    return KHTTP_500;
-  }
+    // no authorisation
+    if (meta->provider <= IDENDITY_HTTP_PUBLIC) {
+      break;
+    }
 
-  // #363 parse session meta
-  meta = fcgi_request_parse_meta(req);
-  if (!meta) {
-    LOG_WARNV("create_session_meta_kreq() failed",  0);
-    return KHTTP_500;
-  }
+    // direct auth via basic or digest
+    if (meta->provider == IDENDITY_HTTP_BASIC || meta->provider == IDENDITY_HTTP_DIGEST) {
+      // authorisation on server level passed? this should normally not occur and indicates some misconfiguration
+      if (!req->auth || !req->rawauth.authorised) {
+        BREAK_CODEV(SS_INVALID_CREDENTIALS, "invalid authorisation (provider: %d)", meta->provider);
+      }
+    }
 
-  // validate session meta against request
-  status = fcgi_request_validate_meta_kreq(req, meta);
-  if (status != KHTTP_200) {
-    free_session_meta(meta);
-    LOG_WARNV("fcgi_request_validate_meta_kreq() status %d != (%d)", KHTTP_200, status);
-    return status;
-  }
+    // indirect auth via trusted (and authorised) middleware
+    if (meta->provider == IDENDITY_HTTP_TRUSTED) {
+      char *mw = getenv("SS_TRUSTED_MIDDLEWARE");
 
-  // validate session meta against session
-  status = validate_session_authority(meta, ses);
-  if (status != KHTTP_200) {
-    free_session_meta(meta);
-    LOG_WARNV("validate_session_authority() status %d != (%d)", KHTTP_200, status);
-    return status;
-  }
+      // misconfiguration
+      if (!mw) {
+        BREAK_CODE(SS_CONFIG_PROXY, "Middleware authorisation, env 'SS_TRUSTED_MIDDLEWARE' missing");
+      }
 
-  free_session_meta(meta);
-  return KHTTP_200;
-}
+      // guard, in case meta was not handed through parsing
+      if (!meta->authority) {
+        BREAK_CODEV(SS_CONFIG_PROXY, "Middleware authorisation, authority missing (provider: %d)", meta->provider);
+      }
 
-/**
- * Fetch the field value (param) for a given key from kreq.fieldmap or
- * fetch anonymous body from req.fields if field is KEY__MAX (since #461)
- */
-char *fcgi_request_get_field_value(enum key field, struct kreq *req) {
-  // man khttp_parse: struct kpair struct kpair *fields
-  if (field == KEY__MAX) {
-    return (req->fieldsz) ? req->fields[0].val : NULL;
-  }
-  // man khttp_parse: struct kpair **fieldmap
-  struct kpair *pair = req->fieldmap[field];
-  return (pair) ? pair->val : NULL;
+      // string check: is middleware trusted ip:port correct?
+      if (strncmp(mw, meta->authority, 1024) != 0) {
+        BREAK_CODEV(SS_CONFIG_PROXY, "Middleware: source is invalid: '%s'", meta->authority);
+      }
+
+      // headers parsed before
+      if (!meta->user || !strlen(meta->user)) {
+        BREAK_CODE(SS_INVALID_CREDENTIALS_PROXY, "Invalid trusted middleware request, X_HEADER_MW_USER missing");
+      }
+
+      if (!meta->group || !strlen(meta->group)) {
+        BREAK_CODE(SS_INVALID_CREDENTIALS_PROXY, "Invalid trusted middleware request, X_HEADER_MW_GROUP missing");
+      }
+
+      // trusted mw needs to authenticate on server level
+      if (!req->auth) {
+        BREAK_CODE(SS_INVALID_CREDENTIALS_PROXY, "Middleware request is not authenticated.");
+      }
+
+      if(!req->rawauth.authorised) {
+        BREAK_CODE(SS_INVALID_CREDENTIALS_PROXY, "Middleware request is not authorised.");
+      }
+    }
+  } while(0);
+
+  // valid auth
+  return retVal;
 }
 
 /**
@@ -329,6 +612,8 @@ struct answer *fcgi_request_load_answer(struct kreq *req) {
   struct answer *ans = NULL;
 
   do {
+    BREAK_IF(req == NULL, SS_ERROR_ARG, "req");
+
     char *serialised = fcgi_request_get_field_value(KEY_ANSWER, req);
 
     // Deserialise answer
@@ -359,7 +644,10 @@ struct session *fcgi_request_load_session(struct kreq *req) {
   struct session *ses = NULL;
 
   do {
-    char *session_id = fcgi_request_get_field_value(KEY_SESSIONID, req);
+    int err;
+    BREAK_IF(req == NULL, SS_ERROR_ARG, "req");
+
+    char *session_id = fcgi_request_get_field_value(KEY_SESSION_ID, req);
     if (validate_session_id(session_id)) {
       BREAK_ERROR("Invalid survey id");
     }
@@ -369,9 +657,9 @@ struct session *fcgi_request_load_session(struct kreq *req) {
       BREAK_ERRORV("failed to lock session '%s'", session_id);
     }
 
-    ses = load_session(session_id);
+    ses = load_session(session_id, &err);
     if (!ses) {
-      BREAK_ERRORV("Could not load session '%s'", session_id);
+      BREAK_CODEV(err, "Could not load session '%s'", session_id);
     }
   } while(0);
 
@@ -379,5 +667,76 @@ struct session *fcgi_request_load_session(struct kreq *req) {
     return NULL;
   }
 
+  return ses;
+}
+
+
+/**
+ * Fetch and desrialise the kreq 'sessionid' param to a session struct.
+ * - param has to be validate beforehand
+ */
+struct session *fcgi_request_load_and_verify_session(struct kreq *req, enum actions action, int *error) {
+  int retVal = 0;
+
+  struct session *ses = NULL;
+  struct session_meta *meta = NULL;
+
+  do {
+    *error = 0;
+    int res;
+
+    BREAK_IF(req == NULL, SS_ERROR_ARG, "req");
+
+    char *session_id = fcgi_request_get_field_value(KEY_SESSION_ID, req);
+    if (validate_session_id(session_id)) {
+      BREAK_CODEV(SS_INVALID_SESSION_ID, "session: '%s'", (session_id) ? session_id : "(null)");
+    }
+
+    // joerg: break if session could not be updated
+    if (lock_session(session_id)) {
+      BREAK_CODEV(SS_SYSTEM_LOCK_SESSION, "session: '%s'", session_id);
+    }
+
+    // TODO verify path before loading, separate errors
+    ses = load_session(session_id, &res);
+    if (!ses) {
+      BREAK_CODEV(res, "session: '%s'", session_id);
+    }
+
+    // #363 parse session meta
+    meta = fcgi_request_parse_meta(req);
+    if (!meta) {
+      BREAK_CODEV(SS_SYSTEM_LOAD_SESSION_META, "session: '%s'", session_id);
+    }
+
+    // validate request against session meta (#363)
+    res = fcgi_request_validate_session_idendity(req, meta);
+    if (res) {
+      BREAK_CODEV(res, "session: '%s'", session_id);
+    }
+
+    // validate session meta against session
+    res = validate_session_authority_1(meta, ses);
+    if (res) {
+      BREAK_CODEV(res, "session: '%s'", session_id);
+    }
+
+    // validate requested action against session current state (#379)
+    char reason[1024]; // TODO remove reason
+    res = validate_session_action(action, ses, reason, 1024);
+    if (res) {
+      BREAK_CODEV(res, "session: '%s', reason: '%s';", reason);
+    }
+
+  } while(0);
+
+  free_session_meta(meta);
+
+  if (retVal) {
+    free_session(ses);
+    ses = NULL;
+  }
+
+  *error = retVal;
   return ses;
 }
