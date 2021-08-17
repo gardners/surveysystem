@@ -9,7 +9,7 @@ meals:Your average daily meal times::DAYTIME_SEQUENCE:0::-1:-1:-1:5:Breakfast,Lu
 endofsurvey
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=qtype_daytimesequence
+request 200 GET /session?surveyid=qtype_daytimesequence
 
 # Get the session ID that newsession should have returned
 extract_sessionid

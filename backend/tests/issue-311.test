@@ -53,7 +53,7 @@ def analyse(questions, answers, **kwargs):
 endofpython
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=delanswerinnerpythonpasses
+request 200 GET /session?surveyid=delanswerinnerpythonpasses
 
 # Get the session ID that newsession should have returned
 extract_sessionid

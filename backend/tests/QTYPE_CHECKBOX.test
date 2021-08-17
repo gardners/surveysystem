@@ -9,7 +9,7 @@ AreYouAwake:Are you awake?:Are you awake?:CHECKBOX:0::-1:-1:0:0:Unchecked,Checke
 endofsurvey
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=qtype_checkbox
+request 200 GET /session?surveyid=qtype_checkbox
 
 # Get the session ID that newsession should have returned
 extract_sessionid

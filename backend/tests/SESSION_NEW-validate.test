@@ -14,7 +14,7 @@ endofsurvey
 #! ------
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=sessionlifetime
+request 200 GET /session?surveyid=sessionlifetime
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -61,7 +61,7 @@ endofsession
 #! - SESSION_NEW: Deleting session fails (400)
 #! ------
 
-request 400 GET /delsession?sessionid=<session_id>
+request 405 DELETE /session?sessionid=<session_id>
 
 verify_session
 sessionlifetime/0a7caf5b02adad7583c7bfae30f6f119cb3581cc

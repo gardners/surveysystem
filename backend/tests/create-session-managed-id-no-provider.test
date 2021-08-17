@@ -5,7 +5,7 @@ definesurvey foo
 version 2
 Silly test survey updated
 without python
-question1:Question 1::TEXT:0::-1:-1:0:0::
+q1:Q1::TEXT:0::-1:-1:0:0::
 endofsurvey
 
 #! ------
@@ -13,9 +13,35 @@ endofsurvey
 #! test has changed since #260, it is now allowed to submit a session id
 #! ------
 
-# new session
-request proxy 200 POST /newsession?surveyid=foo --data sessionid=431afa6d-8a4f-47fe-8096-dd404328c81d
-# malicious attempt
-request proxy 200 POST /newsession?surveyid=foo --data sessionid=431afa6d-8a4f-47fe-8096-dd404328c81d --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+#! -- new session (no proxy)
+request proxy 200 POST /session?surveyid=foo --data sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 
-verify_sessionfiles_count 1
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session
+foo/current
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@state:META:q1:<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
+endofsession
+
+#! -- new session (proxy)
+request proxy 200 POST /session?surveyid=foo --data sessionid=bbbbbbbb-0000-0000-0000-bbbbbbbbbbbb --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session
+foo/current
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@state:META:q1:<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
+endofsession
+
+#! -- two sessions have been created
+verify_sessionfiles_count 2

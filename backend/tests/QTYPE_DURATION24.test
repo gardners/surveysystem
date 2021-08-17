@@ -9,7 +9,7 @@ duration24:How long do you brush your teeth?::DURATION24:0::0:86400:-1:0::second
 endofsurvey
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=qtype_duration24
+request 200 GET /session?surveyid=qtype_duration24
 
 # Get the session ID that newsession should have returned
 extract_sessionid

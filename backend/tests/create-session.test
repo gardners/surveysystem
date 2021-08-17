@@ -13,7 +13,7 @@ q1:Question 1::TEXT:0::-1:-1:0:0::
 endofsurvey
 
 #!-- PASS new session
-request 200 GET /newsession?surveyid=foo
+request 200 GET /session?surveyid=foo
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -40,7 +40,7 @@ q2:Question 2::TEXT:0::-1:-1:0:0::
 endofsurvey
 
 #!-- PASS new session
-request 200 POST /newsession?surveyid=bar&sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+request 200 POST /session?surveyid=bar&sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -55,15 +55,15 @@ bar/current
 endofsession
 
 #!-- FAIL existing session
-request 400 POST /newsession?surveyid=bar&sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+request 400 POST /session?surveyid=bar&sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 
 #!-- FAIL POST request without session id
-request 400 POST /newsession?surveyid=bar
+request 400 POST /session?surveyid=bar
 
 #!-- FAIL POST request with invalid session id
-request 400 POST /newsession?surveyid=bar&sessionid=
-request 400 POST /newsession?surveyid=bar&sessionid=invalid
+request 400 POST /session?surveyid=bar&sessionid=
+request 400 POST /session?surveyid=bar&sessionid=invalid
 
 #!-- PASS GET with param sessionid - ignore param
-request 200 GET /newsession?surveyid=bar&sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+request 200 GET /session?surveyid=bar&sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 nomatch aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa

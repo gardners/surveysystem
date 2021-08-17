@@ -10,7 +10,7 @@ q2:Q2::UUID:0::-1:-1:0:0::
 endofsurvey
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=qtype_uuid
+request 200 GET /session?surveyid=qtype_uuid
 
 # Get the session ID that newsession should have returned
 extract_sessionid

@@ -46,19 +46,19 @@ endofsession
 #!---------------------
 
 #!-- PASS:
-request 200 GET /newsession?surveyid=httpquery
+request 200 GET /session?surveyid=httpquery
 
 #!-- FAIL: missing surveyid
-request 400 GET /newsession
+request 400 GET /session
 
 #!-- FAIL: empty surveyid
-request 400 GET /newsession?surveyid=
+request 400 GET /session?surveyid=
 
 #!-- FAIL: invalid chars surveyid
-request 400 GET /newsession?surveyid=
+request 400 GET /session?surveyid=
 
 #!-- FAIL: unknown surveyid
-request 500 GET /newsession?surveyid=invalid
+request 500 GET /session?surveyid=invalid
 
 #!---------------------
 #! POST /newsession >>> run createsession-managed-id.test
@@ -263,7 +263,7 @@ request 400 GET /analyse?sessionid=21c00c79-0000-0000-1a30-e98476f71b42
 
 
 #!---------------------
-#! GET /delsession:
+#! DELETE /session:
 #!---------------------
 
 #!-- !!! currently deletion sessions in not allowed by default (see validate_session_action())
@@ -272,17 +272,17 @@ request 400 GET /analyse?sessionid=21c00c79-0000-0000-1a30-e98476f71b42
 #!-- PASS: not implemented!
 
 #!-- FAIL: missing sessionid
-request 400 GET /delsession
+request 405 DELETE /session
 
 #!-- FAIL: empty sessionid
-request 400 GET /delsession?sessionid=
+request 405 DELETE /session?sessionid=
 
 #!-- FAIL: invalid sessionid
-request 400 GET /delsession?sessionid=aaa
+request 405 DELETE /session?sessionid=aaa
 
 #!-- FAIL: uppercased sessionid
-request 400 GET /delsession?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA
+request 405 DELETE /session?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA
 
 #!-- FAIL: unknown sessionid
-request 400 GET /delsession?sessionid=21c00c79-0000-0000-1a30-e98476f71b42
+request 405 DELETE /session?sessionid=21c00c79-0000-0000-1a30-e98476f71b42
 

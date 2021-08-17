@@ -17,7 +17,7 @@ endofsurvey
 # NO Python module
 
 # Request creation of a  new session
-request 500 GET /newsession?surveyid=without_python
+request 500 GET /session?surveyid=without_python
 
 #! -- #484 removed request 500 /nextquestions test
 
@@ -64,7 +64,7 @@ def nextquestion(questions, answers, **kwargs):
 endofpython
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=with_python
+request 200 GET /session?surveyid=with_python
 
 # Get the session ID that newsession should have returned
 extract_sessionid

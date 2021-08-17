@@ -11,7 +11,7 @@ Silly test survey updated
 endofsurvey
 
 # Request creation of a  new session
-request 500 GET /newsession?surveyid=empty
+request 500 GET /session?surveyid=empty
 
 #! -- #484 removed request 500 /nextquestions test
 

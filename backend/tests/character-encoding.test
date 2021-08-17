@@ -10,7 +10,7 @@ characterencoding:Select one from the ‘following’:Description for ‘followi
 endofsurvey
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=characterencoding
+request 200 GET /session?surveyid=characterencoding
 
 # Get the session ID that newsession should have returned
 extract_sessionid

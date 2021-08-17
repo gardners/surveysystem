@@ -11,7 +11,7 @@ question2:How boring was question 1?:How boring was question 1?:TEXT:0:I don't k
 endofsurvey
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=nextquestion
+request 200 GET /session?surveyid=nextquestion
 
 # Get the session ID that newsession should have returned
 extract_sessionid

@@ -10,7 +10,7 @@ question2:This is the second title:This is the <strong>second HTML description</
 endofsurvey
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=field_description
+request 200 GET /session?surveyid=field_description
 
 # Get the session ID that newsession should have returned
 extract_sessionid

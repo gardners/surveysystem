@@ -9,7 +9,7 @@ singlechoice:Select one from the following:Select one from the following:SINGLEC
 endofsurvey
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=qtype_singlechoice
+request 200 GET /session?surveyid=qtype_singlechoice
 
 # Get the session ID that newsession should have returned
 extract_sessionid

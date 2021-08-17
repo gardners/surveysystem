@@ -13,7 +13,7 @@ question2:Question 2::TEXT:0::-1:-1:0:0::
 question3:Question 3::TEXT:0::-1:-1:0:0::
 endofsurvey
 
-request proxy 200 GET /newsession?surveyid=foo --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 200 GET /session?surveyid=foo --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 extract_sessionid
 
 # ... internal check if prev directive worked

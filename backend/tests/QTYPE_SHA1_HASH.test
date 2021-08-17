@@ -14,7 +14,7 @@ secret2:Secret 2:Secret 2:SHA1_HASH:0::-1:-1:0:0::
 endofsurvey
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=qtype_sha1_hash
+request 200 GET /session?surveyid=qtype_sha1_hash
 
 # Get the session ID that newsession should have returned
 extract_sessionid

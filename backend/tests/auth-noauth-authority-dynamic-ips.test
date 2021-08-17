@@ -49,10 +49,10 @@ request 200 GET /delanswer?sessionid=<session_id>&questionid=question2
 request 200 GET /delprevanswer?sessionid=<session_id> -H "If-Match: <response_etag>"
 
 #!-------
-#!- endpoint /delsession [pass](400 - currently blocked by default)
+#!- endpoint DELETE /session [pass](400 - currently blocked by default)
 #!-------
 
-request 400 GET /delsession?sessionid=<session_id>
+request 405 DELETE /session?sessionid=<session_id>
 
 #!-------
 #!- endpoint /accesstest [pass]

@@ -9,7 +9,7 @@ dates:Your Life::DATETIME_SEQUENCE:0::-1:-1:-1:5:Birthday,Start primary school,S
 endofsurvey
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=qtype_datetimesequence
+request 200 GET /session?surveyid=qtype_datetimesequence
 
 # Get the session ID that newsession should have returned
 extract_sessionid

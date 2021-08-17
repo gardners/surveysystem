@@ -64,7 +64,7 @@ def nextquestion(questions, answers, **kwargs):
 endofpython
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=dict_python
+request 200 GET /session?surveyid=dict_python
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -126,7 +126,7 @@ def nextquestion(questions, answers, **kwargs):
 endofpython
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=dict_python_invalid
+request 200 GET /session?surveyid=dict_python_invalid
 
 # Get the session ID that newsession should have returned
 extract_sessionid

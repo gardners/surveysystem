@@ -9,7 +9,7 @@ sequence:Plant height?::FIXEDPOINT_SEQUENCE:0::-1:-1:-1:5:week 1,week 2,week 3:c
 endofsurvey
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=qtype_fixedpointsequence
+request 200 GET /session?surveyid=qtype_fixedpointsequence
 
 # Get the session ID that newsession should have returned
 extract_sessionid

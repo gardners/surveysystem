@@ -40,7 +40,8 @@ def nextquestion(questions, answers, **kwargs):
     }
 
   val = answers[len(answers) - 1]['text']
-  # debug: raise ValueError(val)
+  logging.info(val)
+
   return {
       'status': 0,
       'message': '',
@@ -52,7 +53,7 @@ def nextquestion(questions, answers, **kwargs):
 endofpython
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=nextquestions_python_negative
+request 200 GET /session?surveyid=nextquestions_python_negative
 
 # Get the session ID that newsession should have returned
 extract_sessionid

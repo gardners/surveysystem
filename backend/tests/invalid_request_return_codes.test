@@ -1,9 +1,9 @@
 @description requests with invalid or missing params should HTTP 400 or 500
 @skip!
 
-request 400 GET /newsession
-request 500 GET /newsession?surveyid=
-request 500 GET /newsession?surveyid=invalid
+request 400 GET /session
+request 500 GET /session?surveyid=
+request 500 GET /session?surveyid=invalid
 
 request 400 GET /nextquestion
 request 500 GET /nextquestion?sessionid=
@@ -21,6 +21,6 @@ request 400 GET /analyse
 request 500 GET /analyse?sessionid=
 request 500 GET /analyse?sessionid=invalid
 
-request 400 GET /delsession
-request 500 GET /delsession?sessionid=
-request 500 GET /delsession?sessionid=invalid
+request 400 DELETE /session
+request 500 DELETE /session?sessionid=
+request 500 DELETE /session?sessionid=invalid

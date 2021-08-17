@@ -9,7 +9,7 @@ datacrawler:Do you consent to give us access?:You will be redirected!:DIALOG_DAT
 endofsurvey
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=qtype_dialog_data_crawler
+request 200 GET /session?surveyid=qtype_dialog_data_crawler
 
 # Get the session ID that newsession should have returned
 extract_sessionid

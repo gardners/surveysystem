@@ -16,7 +16,7 @@ question2:Question2::TEXT:0::-1:-1:0:0::
 endofsurvey
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=foo_serialised
+request 200 GET /session?surveyid=foo_serialised
 extract_sessionid
 
 # Check that we have an empty session file created
@@ -64,7 +64,7 @@ question2:Question2::TEXT:0::-1:-1:0:0::
 endofsurvey
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=foo_values
+request 200 GET /session?surveyid=foo_values
 extract_sessionid
 
 # Check that we have an empty session file created

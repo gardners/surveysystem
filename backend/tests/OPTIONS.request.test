@@ -31,7 +31,7 @@ match_string <empty>
 #! - PASS /newsession - no session created
 #! ------
 
-request 200 OPTIONS /newsession?surveyid=foo
+request 200 OPTIONS /session?surveyid=foo
 match_string <empty>
 verify_sessionfiles_count 0
 
@@ -92,10 +92,10 @@ question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #! ------
-#! - PASS /delsession - no session deleted
+#! - PASS DELETE /session - no session deleted
 #! ------
 
-request 200 OPTIONS /delsession?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
+request 200 OPTIONS /session?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
 match_string <empty>
 
 verify_session(skip_headers)

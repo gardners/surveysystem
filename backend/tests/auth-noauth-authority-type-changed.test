@@ -48,9 +48,9 @@ create_checksum(<session_id><SESSION_OPEN>question1:TEXT:Answer 1:0:0:0:0:0:0:0:
 request 502 GET /delprevanswer?sessionid=<session_id> -H "If-Match: <custom_checksum>"
 
 #!-------
-#!- endpoint /delsession [block]
+#!- endpoint DELETE /session [block]
 #!-------
-request 502 GET /delsession?sessionid=<session_id>
+request 405 DELETE /session?sessionid=<session_id>
 
 #!-------
 #!- endpoint /accesstest [pass]

@@ -49,9 +49,9 @@ create_checksum(<session_id><SESSION_OPEN>question1:TEXT:Answer 1:0:0:0:0:0:0:0:
 request proxy 502 GET /delprevanswer?sessionid=<session_id> -H "If-Match: <custom_checksum>" --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 
 #!-------
-#!- endpoint /delsession [block]
+#!- endpoint DELETE /session [block]
 #!-------
-request proxy 502 GET /delsession?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 405 DELETE /session?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 
 #!-------
 #!- endpoint /accesstest [pass]

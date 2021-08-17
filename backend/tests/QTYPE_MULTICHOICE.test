@@ -9,7 +9,7 @@ multichoice:Select any from the following:Select any from the following:MULTICHO
 endofsurvey
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=qtype_multichoice
+request 200 GET /session?surveyid=qtype_multichoice
 
 # Get the session ID that newsession should have returned
 extract_sessionid

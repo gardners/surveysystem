@@ -18,7 +18,7 @@ endofsurvey
 #!- /newsession header:empty, state:new
 #! -------
 
-request 200 GET /newsession?surveyid=foo
+request 200 GET /session?surveyid=foo
 extract_sessionid
 
 verify_session

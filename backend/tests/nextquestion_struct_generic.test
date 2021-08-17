@@ -15,7 +15,7 @@ question3:Question 3::TEXT:0::-1:-1:0:0::
 endofsurvey
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=nextquestions_generic
+request 200 GET /session?surveyid=nextquestions_generic
 
 # Get the session ID that newsession should have returned
 extract_sessionid
