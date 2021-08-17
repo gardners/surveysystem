@@ -10,11 +10,12 @@ endofsurvey
 
 #! ------
 #! create session [fail] 431afa6d-8a4f-47fe-8096-dd404328c81d
+#! test has changed since #260, it is now allowed to submit a session id
 #! ------
 
 # new session
-request proxy 400 POST /newsession?surveyid=foo --data sessionid=431afa6d-8a4f-47fe-8096-dd404328c81d
+request proxy 200 POST /newsession?surveyid=foo --data sessionid=431afa6d-8a4f-47fe-8096-dd404328c81d
 # malicious attempt
-request proxy 400 POST /newsession?surveyid=foo --data sessionid=431afa6d-8a4f-47fe-8096-dd404328c81d --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 200 POST /newsession?surveyid=foo --data sessionid=431afa6d-8a4f-47fe-8096-dd404328c81d --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 
-verify_sessionfiles_count 0
+verify_sessionfiles_count 1
