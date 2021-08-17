@@ -57,7 +57,7 @@ match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": 
 next
 
 #! -------
-#! ------- run 10 x /delanswer
+#! ------- run 10 x DELETE /answers?questionid
 #! -------
 
 #! -- removed #414 changed response from 200 to 400

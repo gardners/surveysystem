@@ -130,7 +130,7 @@ question3:TEXT:Answer 3:0:0:0:0:0:0:0::1:<UTIME>
 endofsession
 
 #! -------
-#!- /delanswer (all answers) header:saved, state:open
+#!- DELETE /answers?questionid (all answers) header:saved, state:open
 #! -------
 
 request 200 DELETE /answers?sessionid=<session_id>&questionid=question1 -H "If-Match: <response_etag>"

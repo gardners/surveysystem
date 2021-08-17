@@ -57,7 +57,7 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
-#!------- trying to /delanswer header question should fail
+#!------- trying to DELETE /answers?questionid header question should fail
 request proxy 200 GET /nextquestion?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 request proxy 400 DELETE /answers?sessionid=<session_id>&questionid=@state --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>"
 

@@ -68,7 +68,7 @@ request 200 OPTIONS /nextquestion?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
 match_string <empty>
 
 #! ------
-#! - PASS /delanswer - no answer deleted
+#! - PASS DELETE /answers?questionid - no answer deleted
 #! ------
 
 request 200 OPTIONS /answers?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&questionid=question1 -H "If-Match: <response_etag>"

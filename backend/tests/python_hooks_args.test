@@ -43,7 +43,7 @@ def nextquestion(questions, answers, **kwargs):
         expected_action = 'ACTION_SESSION_ADDANSWER'
         expected_count = 1
 
-    # third call: /delanswer
+    # third call: DELETE /answers?questionid
     if len(answers) == 0:
         expected_action = 'ACTION_SESSION_DELETEANSWER'
         expected_count = 2

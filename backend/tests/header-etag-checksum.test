@@ -109,7 +109,7 @@ create_checksum(<session_id><SESSION_FINISHED>question3:TEXT:Answer3:0:0:0:0:0:0
 verify_response_etag(<custom_checksum>)
 
 #! -------
-#! ------ /delanswer
+#! ------ DELETE DELETE /answers?questionid
 #! -------
 
 #! ------ 200: hash: YES, required: NO -------

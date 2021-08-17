@@ -86,7 +86,7 @@ question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
 META_3:META:Meta 3:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
-#!------- trying to /delanswer META question should fail
+#!------- trying to DELETE /answers?questionid META question should fail
 request proxy 200 GET /nextquestion?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 request proxy 400 DELETE /answers?sessionid=<session_id>&questionid=META_3 --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>"
 
@@ -109,7 +109,7 @@ question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
 META_3:META:Meta 3:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
-#!------- trying to /delanswer (incrementially) survey questions should succeed
+#!------- trying to DELETE /answers?questionid (incrementially) survey questions should succeed
 
 request proxy 200 GET /nextquestion?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 

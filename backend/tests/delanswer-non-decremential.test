@@ -1,4 +1,4 @@
-@description /delanswer?questionid does not invalidate answers following that questionid
+@description DELETE /answers?questionid does not invalidate answers following that questionid
 
 #!---------------------
 #!running delanswer randomly

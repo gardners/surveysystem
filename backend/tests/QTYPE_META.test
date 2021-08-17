@@ -43,7 +43,7 @@ question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #!-------
-#!- /delanswer is skipping over META question
+#!- DELETE /answers?questionid is skipping over META question
 #!-------
 
 # the first deletion is not relevant here
@@ -102,7 +102,7 @@ QMETA:META:Meta Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #!-------
-#!- /delanswer META is rejected
+#!- DELETE /answers?questionid META is rejected
 #!-------
 request 200 GET /nextquestion?sessionid=<session_id>
 request 400 DELETE /answers?sessionid=<session_id>&questionid=QMETA -H "If-Match: <response_etag>"
