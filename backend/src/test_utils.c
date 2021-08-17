@@ -961,6 +961,7 @@ void test_replace_tokens(char *line, struct Test *test, size_t len) {
     test_replace_int(line, "<IDENDITY_HTTP_DIGEST>", IDENDITY_HTTP_DIGEST, len);
     test_replace_int(line, "<IDENDITY_HTTP_TRUSTED>", IDENDITY_HTTP_TRUSTED, len);
     test_replace_int(line, "<IDENDITY_UNKOWN>", IDENDITY_UNKOWN, len);
+    test_replace_str(line, "<AUTHORITY_NONE>", test->fcgienv_middleware, len);
 
     // #379 session states
     test_replace_int(line, "<SESSION_NEW>", SESSION_NEW, len);
@@ -1039,7 +1040,7 @@ int test_compile_session_definition(FILE *in, char *session_id, struct Test *tes
  *   -3: session line too long (column count)
  *   -4: session field <UTIME> is invalid (must be within the past hour from now)
  */
-enum DiffResult compare_session_line(char *session_line, char *comparison_line, struct Test *test, int server_port, int *row_count) {
+enum DiffResult compare_session_line(char *session_line, char *comparison_line, struct Test *test, int server_port, int *row_count, char *mismatch, size_t sz) {
 
   char left_line[TEST_MAX_LINE];
   char right_line[TEST_MAX_LINE];
@@ -1073,6 +1074,7 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
       int then = atoi(left);
 
       if (now <= 0 || now < then || now - then > 8600) {
+        strncpy(mismatch, "<UTIME>", sz);
         return DIFF_MISMATCH_TOKEN;
       }
       pass++;
@@ -1083,6 +1085,7 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
       int val = atoi(left);
 
       if (val != IDENDITY_CLI) {
+        strncpy(mismatch, "<IDENDITY_CLI>", sz);
         return DIFF_MISMATCH_TOKEN;
       }
       pass++;
@@ -1093,6 +1096,7 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
       int val = atoi(left);
 
       if (val != IDENDITY_HTTP_PUBLIC) {
+        strncpy(mismatch, "<IDENDITY_HTTP_PUBLIC>", sz);
         return DIFF_MISMATCH_TOKEN;
       }
       pass++;
@@ -1103,6 +1107,7 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
       int val = atoi(left);
 
       if (val != IDENDITY_HTTP_BASIC) {
+        strncpy(mismatch, "<IDENDITY_HTTP_BASIC>", sz);
         return DIFF_MISMATCH_TOKEN;
       }
       pass++;
@@ -1113,6 +1118,7 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
       int val = atoi(left);
 
       if (val != IDENDITY_HTTP_DIGEST) {
+        strncpy(mismatch, "<IDENDITY_HTTP_DIGEST>", sz);
         return DIFF_MISMATCH_TOKEN;
       }
       pass++;
@@ -1123,6 +1129,7 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
       int val = atoi(left);
 
       if (val != IDENDITY_HTTP_TRUSTED) {
+        strncpy(mismatch, "<IDENDITY_HTTP_TRUSTED>", sz);
         return DIFF_MISMATCH_TOKEN;
       }
       pass++;
@@ -1133,6 +1140,7 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
       int val = atoi(left);
 
       if (val != IDENDITY_UNKOWN) {
+        strncpy(mismatch, "<IDENDITY_UNKOWN>", sz);
         return DIFF_MISMATCH_TOKEN;
       }
       pass++;
@@ -1143,6 +1151,7 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
       char tmp[16];
       snprintf(tmp, 16, "127.0.0.1(%d)", server_port);
       if (strcmp(left, tmp)) {
+        strncpy(mismatch, "<AUTHORITY_NONE>", sz);
         return DIFF_MISMATCH_TOKEN;
       }
       pass++;
@@ -1151,6 +1160,7 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
     // validate <UTIME> keyword (unix timestamp)
     if (!strcmp(right, "<FCGIENV_MIDDLEWARE>")) {
       if (strcmp(left, test->fcgienv_middleware)) {
+        strncpy(mismatch, "<FCGIENV_MIDDLEWARE>", sz);
         return DIFF_MISMATCH_TOKEN;
       }
       pass++;
@@ -1163,6 +1173,7 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
       int val = atoi(left);
 
       if (val != SESSION_NEW) {
+        strncpy(mismatch, "<SESSION_NEW>", sz);
         return DIFF_MISMATCH_TOKEN;
       }
       pass++;
@@ -1173,6 +1184,7 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
       int val = atoi(left);
 
       if (val != SESSION_OPEN) {
+        strncpy(mismatch, "<SESSION_OPEN>", sz);
         return DIFF_MISMATCH_TOKEN;
       }
       pass++;
@@ -1183,6 +1195,7 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
       int val = atoi(left);
 
       if (val != SESSION_FINISHED) {
+        strncpy(mismatch, "<SESSION_FINISHED>", sz);
         return DIFF_MISMATCH_TOKEN;
       }
       pass++;
@@ -1193,6 +1206,7 @@ enum DiffResult compare_session_line(char *session_line, char *comparison_line, 
       int val = atoi(left);
 
       if (val != SESSION_CLOSED) {
+        strncpy(mismatch, "<SESSION_CLOSED>", sz);
         return DIFF_MISMATCH_TOKEN;
       }
       pass++;
@@ -1227,6 +1241,7 @@ int test_compare_session(FILE *sess, int skip_s, FILE *comp, int skip_c, struct 
   // Now go through reading lines from here and from the session file
   char session_line[TEST_MAX_LINE];
   char comparison_line[TEST_MAX_LINE];
+  char mismatch[256];
 
   int c_count = 0; // comparsion line count
   int s_count = 0; // session line count
@@ -1297,7 +1312,8 @@ int test_compare_session(FILE *sess, int skip_s, FILE *comp, int skip_c, struct 
 
     // compare session line, we are relying on the string terminations set above
     int row_count = 0;
-    diff = compare_session_line(session_line, comparison_line, test, server_port, &row_count);
+
+    diff = compare_session_line(session_line, comparison_line, test, server_port, &row_count, mismatch, 256);
     // fprintf(stderr, "\n%d: line %d(%d), '%s' => '%s'", diff, s_count, c_count, session_line, comparison_line);
 
     switch (diff) {
@@ -1317,7 +1333,7 @@ int test_compare_session(FILE *sess, int skip_s, FILE *comp, int skip_c, struct 
 
       case DIFF_MISMATCH_TOKEN:
         fprintf(log,
-          "  [DIFF_MISMATCH_TOKEN] compare_session_line() <TOKEN> validation failed (session line %d row %d, comparsion line %d, code %d)\n", s_count, row_count, c_count, diff);
+          "  [DIFF_MISMATCH_TOKEN] compare_session_line() <TOKEN> validation failed (session line %d row %d, comparsion line %d, token '%s', code %d)\n", s_count, row_count, c_count, mismatch, diff);
         break;
 
       default:
