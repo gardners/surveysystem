@@ -18,10 +18,10 @@ enum key {
 };
 
 enum page {
-  PAGE_INDEX, // #389 add root page
-  PAGE_SESSION,
-  PAGE_ANSWERS, // #260, #461
-  PAGE_NEXTQUESTION,
+  PAGE_INDEX,     // #389 add root page
+  PAGE_SESSION,   // #260
+  PAGE_ANSWERS,   // #260, #461
+  PAGE_QUESTIONS, // #260
   PAGE_ACCESTEST,
   PAGE_FCGITEST,
   PAGE_ANALYSE,

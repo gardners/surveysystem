@@ -37,7 +37,7 @@ typedef void (*disp)(struct kreq *);
 static void fcgi_index(struct kreq *);
 static void fcgi_page_session(struct kreq *);
 static void fcgi_page_answers(struct kreq *);
-static void fcgi_nextquestion(struct kreq *);
+static void fcgi_page_questions(struct kreq *);
 static void fcgi_accesstest(struct kreq *);
 static void fcgi_fastcgitest(struct kreq *);
 static void fcgi_analyse(struct kreq *);
@@ -48,7 +48,7 @@ static const disp disps[PAGE__MAX] = {
     fcgi_index,
     fcgi_page_session,
     fcgi_page_answers,
-    fcgi_nextquestion,
+    fcgi_page_questions,
     fcgi_accesstest,
     fcgi_fastcgitest,
     fcgi_analyse
@@ -58,7 +58,7 @@ static const char *const pages[PAGE__MAX] = {
     "index",
     "session",
     "answers",
-    "nextquestion",
+    "questions",
     "accesstest",
     "fastcgitest",
     "analyse"
@@ -397,7 +397,6 @@ static void fcgi_page_answers(struct kreq *req) {
       break;
     }
 
-    // joerg: break if session could not be updated
     res = save_session(ses);
     if (res) {
       BREAK_CODE(res, "save_session failed");
@@ -552,55 +551,68 @@ static void fcgi_page_session(struct kreq *req) {
   return;
 }
 
-static void fcgi_nextquestion(struct kreq *req) {
+static void fcgi_page_questions(struct kreq *req) {
   //  enum kcgi_err    er;
   int retVal = 0;
 
   struct session *ses = NULL;
   struct nextquestions *nq = NULL;
-  enum actions action = ACTION_SESSION_NEXTQUESTIONS;
+  enum actions action;
+  int res;
 
   do {
-
     LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
 
-    ses = fcgi_request_load_session(req);
+    BREAK_IF(req == NULL, SS_ERROR_ARG, "req");
+
+    // validate allowed methods #260, #461
+    // ACTION__NONE indicates undefined action
+    switch (req->method) {
+      case KMETHOD_HEAD:
+      case KMETHOD_GET:
+        action = ACTION_SESSION_NEXTQUESTIONS;
+      break;
+
+      default:
+        action = ACTION_NONE;
+    }
+
+    LOG_INFOV("action: '%s'", session_action_names[action]);
+
+    if (action == ACTION_NONE) {
+      BREAK_CODE(SS_INVALID_METHOD, NULL);
+    }
+
+    ses = fcgi_request_load_and_verify_session(req, action, &res);
     if (!ses) {
-      http_json_error(req, KHTTP_400, "Could not load specified session. Does it exist?");
-      BREAK_ERROR("Could not load session");
-    }
-
-    // validate request against session meta (#363)
-    enum khttp status = fcgi_request_validate_meta_session(req, ses);
-    if (status != KHTTP_200) {
-      http_json_error(req, status, "Invalid idendity provider, check app configuration");
-      BREAK_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
-    }
-
-    // validate requested action against session current state (#379)
-    char reason[1024];
-    if (validate_session_action(action, ses, reason, 1024)) {
-      http_json_error(req, KHTTP_400, reason);
-      BREAK_ERROR("Session action validation failed");
+      BREAK_CODE(res, "failed to load session");
     }
 
     // #332 next_questions data struct
     nq = get_next_questions(ses, action, 0);
     if (!nq) {
-      http_json_error(req, KHTTP_500, "Unable to get next questions.");
-      BREAK_ERROR("get_next_questions() failed");
+      BREAK_CODE(SS_SYSTEM_GET_NEXTQUESTIONS, "failed to get next questions'");
     }
 
-    if (save_session(ses)) {
-      http_json_error(req, KHTTP_500, "Unable to update session.");
-      BREAK_ERROR("save_session() failed");
+    // #494  HEAD request: do not create and exit
+    if (req->method == KMETHOD_HEAD) {
+      http_open(req, KHTTP_200, KMIME_APP_JSON, ses->consistency_hash);
+      khttp_puts(req, NULL);
+      LOG_INFO("Leaving page handler.");
+      break;
+    }
+
+    // save updated ses->next_questions
+    res = save_session(ses);
+    if (res) {
+      BREAK_CODE(res, "save_session failed");
     }
 
     // All ok, so tell the caller the next question to be answered
     // #373, separate response handler for nextquestions
-    if (fcgi_response_nextquestion(req, ses, nq)) {
-      http_json_error(req, KHTTP_500, "Could not load next questions for specified session.");
-      BREAK_ERROR("Could not load next questions for specified session.");
+    res = fcgi_response_nextquestion(req, ses, nq);
+    if (res) {
+      BREAK_CODE(res, "Could write page response (next questions)");
     }
 
     LOG_INFO("Leaving page handler.");
@@ -610,6 +622,11 @@ static void fcgi_nextquestion(struct kreq *req) {
   free_session(ses);
   free_next_questions(nq);
 
+  if (retVal) {
+    fcgi_error_response(req, retVal);
+  }
+
+  // error response
   (void)retVal;
   return;
 }
@@ -617,14 +634,14 @@ static void fcgi_nextquestion(struct kreq *req) {
 #define TEST_READ(X)                                                           \
   snprintf(failmsg, 16384, "Could not generate path ${SURVEY_HOME}/%s", X);    \
   if (generate_path(X, test_path, 8192)) {                                     \
-    http_json_error(req, KHTTP_500, failmsg);                                      \
+    http_json_error(req, KHTTP_500, failmsg);                                  \
     break;                                                                     \
   }                                                                            \
   snprintf(failmsg, 16384,                                                     \
            "Could not open for reading path ${SURVEY_HOME}/%s", X);            \
   f = fopen(test_path, "r");                                                   \
   if (!f) {                                                                    \
-    http_json_error(req, KHTTP_500, failmsg);                                      \
+    http_json_error(req, KHTTP_500, failmsg);                                  \
     break;                                                                     \
   }                                                                            \
   fclose(f);
@@ -632,7 +649,7 @@ static void fcgi_nextquestion(struct kreq *req) {
 #define TEST_WRITE(X)                                                          \
   snprintf(failmsg, 16384, "Could not generate path ${SURVEY_HOME}/%s", X);    \
   if (generate_path(X, test_path, 8192)) {                                     \
-    http_json_error(req, KHTTP_500, failmsg);                                      \
+    http_json_error(req, KHTTP_500, failmsg);                                  \
     break;                                                                     \
   }                                                                            \
   f = fopen(test_path, "w");                                                   \
@@ -640,7 +657,7 @@ static void fcgi_nextquestion(struct kreq *req) {
     snprintf(failmsg, 16384,                                                   \
              "Could not open for writing path %s, errno=%d (%s)", test_path,   \
              errno, strerror(errno));                                          \
-    http_json_error(req, KHTTP_500, failmsg);                                      \
+    http_json_error(req, KHTTP_500, failmsg);                                  \
     break;                                                                     \
   }                                                                            \
   fclose(f);
@@ -648,20 +665,20 @@ static void fcgi_nextquestion(struct kreq *req) {
 #define TEST_MKDIR(X)                                                          \
   snprintf(failmsg, 16384, "Could not generate path ${SURVEY_HOME}/%s", X);    \
   if (generate_path(X, test_path, 8192)) {                                     \
-    http_json_error(req, KHTTP_500, failmsg);                                      \
+    http_json_error(req, KHTTP_500, failmsg);                                  \
     break;                                                                     \
   }                                                                            \
   if (mkdir(test_path, 0777)) {                                                \
     snprintf(failmsg, 16384, "Could not mkdir path %s, errno=%d (%s)",         \
              test_path, errno, strerror(errno));                               \
-    http_json_error(req, KHTTP_500, failmsg);                                      \
+    http_json_error(req, KHTTP_500, failmsg);                                  \
     break;                                                                     \
   }
 
 #define TEST_REMOVE(X)                                                         \
   snprintf(failmsg, 16384, "Could not generate path ${SURVEY_HOME}/%s", X);    \
   if (generate_path(X, test_path, 8192)) {                                     \
-    http_json_error(req, KHTTP_500, failmsg);                                      \
+    http_json_error(req, KHTTP_500, failmsg);                                  \
     break;                                                                     \
   }                                                                            \
   if (remove(test_path)) {                                                     \
@@ -669,7 +686,7 @@ static void fcgi_nextquestion(struct kreq *req) {
       snprintf(failmsg, 16384,                                                 \
                "Could not remove file for writing path %s, errno=%d (%s)",     \
                test_path, errno, strerror(errno));                             \
-      http_json_error(req, KHTTP_500, failmsg);                                    \
+      http_json_error(req, KHTTP_500, failmsg);                                \
       break;                                                                   \
     }                                                                          \
   }
