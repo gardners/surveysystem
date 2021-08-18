@@ -43,10 +43,10 @@ request 200 GET /nextquestion?sessionid=<session_id>
 request 200 DELETE /answers?sessionid=<session_id>&questionid=question2 -H "If-Match: <response_etag>"
 
 #!-------
-#!- endpoint /delprevanswer [pass]
+#!- endpoint DELETE /answers?prev [pass]
 #!-------
 
-request 200 GET /delprevanswer?sessionid=<session_id> -H "If-Match: <response_etag>"
+request 200 DELETE /answers?sessionid=<session_id> -H "If-Match: <response_etag>"
 
 #!-------
 #!- endpoint DELETE /session [pass](400 - currently blocked by default)

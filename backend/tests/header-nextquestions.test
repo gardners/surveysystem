@@ -112,10 +112,10 @@ question3:TEXT:Answer 3:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #! -------
-#!- /delprevanswer header:saved, state:open
+#!- DELETE /answers?prev header:saved, state:open
 #! -------
 
-request 200 GET /delprevanswer?sessionid=<session_id> -H "If-Match: <response_etag>"
+request 200 DELETE /answers?sessionid=<session_id> -H "If-Match: <response_etag>"
 match_string {"status": 0, "message": "", "progress": [2, 3], "next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "Answer 3", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 verify_session

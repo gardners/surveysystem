@@ -203,7 +203,7 @@ request 200 GET /nextquestion?sessionid=<session_id>
 request 400 DELETE /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=@system -H "If-Match: <response_etag>"
 
 #!---------------------
-#! GET /delprevanswer: not testing checksum validity here
+#! DELETE /answers?prev: not testing checksum validity here
 #!---------------------
 
 #!-- prepare test: re-answer question deleted before
@@ -211,35 +211,35 @@ request 200 POST /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=
 verify_response_etag(<hashlike_etag>)
 
 #!-- PASS:
-request 200 GET /delprevanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa -H "If-Match: <response_etag>"
+request 200 DELETE /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa -H "If-Match: <response_etag>"
 match_string {"status": 0, "message": "", "progress": [2, 4], "next_questions": [{"id": "question2", "name": "question2", "title": "Question2", "description": "", "type": "TEXT", "default_value": "Answer2", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #!-- FAIL: missing sessionid
-request 400 GET /delprevanswer -H "If-Match: <response_etag>"
+request 400 DELETE /answers -H "If-Match: <response_etag>"
 
 #!-- (prepare next, get valid etag)
 request 200 GET /nextquestion?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 
 #!-- FAIL: empty sessionid
-request 400 GET /delprevanswer?sessionid= -H "If-Match: <response_etag>"
+request 400 DELETE /answers?sessionid= -H "If-Match: <response_etag>"
 
 #!-- (prepare next, get valid etag)
 request 200 GET /nextquestion?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 
 #!-- FAIL: invalid sessionid
-request 400 GET /delprevanswer?sessionid=aaa -H "If-Match: <response_etag>"
+request 400 DELETE /answers?sessionid=aaa -H "If-Match: <response_etag>"
 
 #!-- (prepare next, get valid etag)
 request 200 GET /nextquestion?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 
 #!-- FAIL: uppercased sessionid
-request 400 GET /delprevanswer?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA -H "If-Match: <response_etag>"
+request 400 DELETE /answers?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA -H "If-Match: <response_etag>"
 
 #!-- (prepare next, get valid etag)
 request 200 GET /nextquestion?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 
 #!-- FAIL: unknown sessionid
-request 400 GET /delprevanswer?sessionid=21c00c79-0000-0000-1a30-e98476f71b42 -H "If-Match: <response_etag>"
+request 400 DELETE /answers?sessionid=21c00c79-0000-0000-1a30-e98476f71b42 -H "If-Match: <response_etag>"
 
 #!---------------------
 #! GET /analyse

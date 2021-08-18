@@ -79,13 +79,13 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
-#!------- !!! PASS /delprevanswer ignores header questions
+#!------- !!! PASS DELETE /answers?prev ignores header questions
 # create a valid checksum
 create_checksum(<session_id><SESSION_OPEN>question1:TEXT:Answer 1:0:0:0:0:0:0:0::0)
-request proxy 200 GET /delprevanswer?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <custom_checksum>"
-request proxy 200 GET /delprevanswer?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>"
-request proxy 200 GET /delprevanswer?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>"
-request proxy 200 GET /delprevanswer?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>"
+request proxy 200 DELETE /answers?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <custom_checksum>" -H "If-Match: <response_etag>"
+request proxy 200 DELETE /answers?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>"
+request proxy 200 DELETE /answers?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>"
+request proxy 200 DELETE /answers?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>"
 
 verify_session
 foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b

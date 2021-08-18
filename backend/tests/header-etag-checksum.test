@@ -112,7 +112,8 @@ verify_response_etag(<custom_checksum>)
 #! ------ DELETE DELETE /answers?questionid
 #! -------
 
-#! ------ 200: hash: YES, required: NO -------
+#! ------ 200: hash: YES, required: YES (changed in #260) -------
+
 request 200 DELETE /answers?sessionid=<session_id>&questionid=question3 -H "If-Match: <response_etag>"
 verify_response_etag(<hashlike_etag>)
 
@@ -120,28 +121,32 @@ verify_response_etag(<hashlike_etag>)
 create_checksum(<session_id><SESSION_OPEN>question2:TEXT:Answer2:0:0:0:0:0:0:0::0)
 verify_response_etag(<custom_checksum>)
 
+#! - INCORRECT checksum should fail
+request 412 DELETE /answers?sessionid=<session_id> -H "If-Match: 84983e441c3bd26ebaae4aa1f95129e5e54670f1"
+verify_response_etag()
+
 #! -------
-#! ------ /delprevanswer
+#! ------ DELETE /answers?prev
 #! -------
 
 #! ------ 200: hash: YES, required:YES -------
 
 #! - INCORRECT checksum should fail
-request 412 GET /delprevanswer?sessionid=<session_id> -H "If-Match: 84983e441c3bd26ebaae4aa1f95129e5e54670f1"
+request 412 DELETE /answers?sessionid=<session_id> -H "If-Match: 84983e441c3bd26ebaae4aa1f95129e5e54670f1"
 verify_response_etag()
 
 #! - create checksum from last answer
 create_checksum(<session_id><SESSION_OPEN>question2:TEXT:Answer2:0:0:0:0:0:0:0::0)
 
 #! - CORRECT checksum should pass
-request 200 GET /delprevanswer?sessionid=<session_id> -H "If-Match: <custom_checksum>"
+request 200 DELETE /answers?sessionid=<session_id> -H "If-Match: <custom_checksum>"
 verify_response_etag(<hashlike_etag>)
 
 #! - create checksum from last answer
 create_checksum(<session_id><SESSION_OPEN>question1:TEXT:Answer1:0:0:0:0:0:0:0::0)
 
 #! - CORRECT checksum should pass AGAIN (rewind session to start)
-request 200 GET /delprevanswer?sessionid=<session_id> -H "If-Match: <custom_checksum>"
+request 200 DELETE /answers?sessionid=<session_id> -H "If-Match: <custom_checksum>"
 verify_response_etag(<hashlike_etag>)
 
 #! - test hash was generated of <session_id><state> (all answers deleted!)
@@ -149,11 +154,11 @@ create_checksum(<session_id><SESSION_OPEN>)
 verify_response_etag(<custom_checksum>)
 
 #! - CORRECT checksum should pass AGAIN (rewind session to start)
-request 200 GET /delprevanswer?sessionid=<session_id> -H "If-Match: <custom_checksum>"
+request 200 DELETE /answers?sessionid=<session_id> -H "If-Match: <custom_checksum>"
 
 #! - LAST ANSWER should pass (session start)
 create_checksum(<session_id><SESSION_OPEN>)
-request 200 GET /delprevanswer?sessionid=<session_id> -H "If-Match: <custom_checksum>"
+request 200 DELETE /answers?sessionid=<session_id> -H "If-Match: <custom_checksum>"
 verify_response_etag(<custom_checksum>)
 
 #! -------

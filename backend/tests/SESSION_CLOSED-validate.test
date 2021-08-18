@@ -134,7 +134,7 @@ endofsession
 
 # create a valid checksum
 create_checksum(<session_id><SESSION_CLOSED>question2:TEXT:Answer 2:0:0:0:0:0:0:0::0)
-request 400 GET /delprevanswer?sessionid=<session_id> -H "If-Match: <response_etag>"
+request 400 DELETE /answers?sessionid=<session_id> -H "If-Match: <response_etag>"
 
 verify_session
 sessionlifetime/0a7caf5b02adad7583c7bfae30f6f119cb3581cc

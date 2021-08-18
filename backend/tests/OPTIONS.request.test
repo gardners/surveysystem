@@ -80,10 +80,10 @@ question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #! ------
-#! - PASS /delprevanswer - no answer deleted, no checksum required
+#! - PASS DELETE /answers?prev - no answer deleted, no checksum required
 #! ------
 
-request 200 OPTIONS /delprevanswer?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
+request 200 OPTIONS /answers?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901 -H "If-Match: <response_etag>"
 match_string <empty>
 
 verify_session(skip_headers)

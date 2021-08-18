@@ -41,12 +41,12 @@ request proxy 502 GET /nextquestion?sessionid=<session_id> --user test:1234 -H "
 request proxy 502 DELETE /answers?sessionid=<session_id>&questionid=question1 --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>"
 
 #!-------
-#!- endpoint /delprevanswer [block]
+#!- endpoint DELETE /answers?prev [block]
 #!-------
 
 # create a valid checksum
 create_checksum(<session_id><SESSION_OPEN>question1:TEXT:Answer 1:0:0:0:0:0:0:0::0)
-request proxy 502 GET /delprevanswer?sessionid=<session_id> -H "If-Match: <custom_checksum>" --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 502 DELETE /answers?sessionid=<session_id> -H "If-Match: <custom_checksum>" --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>"
 
 #!-------
 #!- endpoint DELETE /session [block]
