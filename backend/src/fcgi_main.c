@@ -34,7 +34,7 @@ static const struct kvalid keys[KEY__MAX] = {
 
 typedef void (*disp)(struct kreq *);
 
-static void fcgi_index(struct kreq *);
+static void fcgi_page_index(struct kreq *);
 static void fcgi_page_session(struct kreq *);
 static void fcgi_page_answers(struct kreq *);
 static void fcgi_page_questions(struct kreq *);
@@ -45,7 +45,7 @@ static void fcgi_analyse(struct kreq *);
 static enum khttp sanitise_page_request(const struct kreq *req);
 
 static const disp disps[PAGE__MAX] = {
-    fcgi_index,
+    fcgi_page_index,
     fcgi_page_session,
     fcgi_page_answers,
     fcgi_page_questions,
@@ -184,7 +184,7 @@ static enum khttp sanitise_page_request(const struct kreq *req) {
     return KHTTP_200;
 }
 
-static void fcgi_index(struct kreq *req) {
+static void fcgi_page_index(struct kreq *req) {
   int retVal = 0;
   do {
     LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
