@@ -75,7 +75,7 @@ endofsession
 #! - SESSION_NEW: Next question passes
 #! ------
 
-request 200 GET /nextquestion?sessionid=<session_id>
+request 200 GET /questions?sessionid=<session_id>
 match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 verify_session
@@ -90,7 +90,7 @@ endofsession
 #! - SESSION_NEW: Add answer passes
 #! ------
 
-request 200 GET /nextquestion?sessionid=<session_id>
+request 200 GET /questions?sessionid=<session_id>
 match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 verify_session

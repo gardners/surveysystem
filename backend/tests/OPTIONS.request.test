@@ -64,7 +64,7 @@ endofsession
 #! - PASS /nextquestion
 #! ------
 
-request 200 OPTIONS /nextquestion?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
+request 200 OPTIONS /questions?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
 match_string <empty>
 
 #! ------

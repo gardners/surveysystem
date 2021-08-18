@@ -32,7 +32,7 @@ request 502 POST /answers?sessionid=<session_id>&answer=question2:Answer+2:0:0:0
 #!-------
 #!- endpoint /nextquestion [block]
 #!-------
-request 502 GET /nextquestion?sessionid=<session_id>
+request 502 GET /questions?sessionid=<session_id>
 
 #!-------
 #!- endpoint DELETE /answers?questionid [block]

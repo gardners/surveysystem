@@ -5,9 +5,9 @@ request 400 GET /session
 request 500 GET /session?surveyid=
 request 500 GET /session?surveyid=invalid
 
-request 400 GET /nextquestion
-request 500 GET /nextquestion?sessionid=
-request 500 GET /nextquestion?sessionid=invalid
+request 400 GET /questions
+request 500 GET /questions?sessionid=
+request 500 GET /questions?sessionid=invalid
 
 request 400 POST /answers
 request 500 POST /answers?sessionid=

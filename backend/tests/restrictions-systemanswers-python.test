@@ -71,7 +71,7 @@ foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 endofsession
 
 #!------- /nextquestion  does not care about headers and returns first question
-request proxy 200 GET /nextquestion?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 200 GET /questions?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 match_string {"status": 0, "message": "python invoked", "progress": [0, 2], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #!------- /answers adds answer to first question and leaves headers untouched
@@ -104,7 +104,7 @@ metaquestion:META:@answer:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #!------- /nextquestion python is not aware of meta and @fields
-request proxy 200 GET /nextquestion?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 200 GET /questions?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 match_string {"status": 0, "message": "python invoked", "progress": [1, 2], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #!------- /answers adds answer to second question and leaves header, meta and @fields untouched
