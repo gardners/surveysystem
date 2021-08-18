@@ -7,14 +7,14 @@
 #define LOG_MSG_SHORT 1024
 
 enum ss_err {
-  SS_EVAL = -1,                // generic errors
+  SS_EVAL = -1,                 // generic errors
   SS_OK = 0,
 
   SS_ERROR,
-  SS_ERROR_MEM,                // memory
-  SS_ERROR_ARG,                // function args
-  SS_ERROR_READ_FILE,          // error opening file for read
-  SS_ERROR_CREATE_DIR,          // error opening file for read
+  SS_ERROR_MEM,                 // memory
+  SS_ERROR_ARG,                 // function args
+  SS_ERROR_OPEN_FILE,           // error opening file
+  SS_ERROR_CREATE_DIR,          // error creating directory
 
   // section: request validation
   SS_INVALID = 100,
@@ -25,14 +25,14 @@ enum ss_err {
   SS_INVALID_CREDENTIALS,
   SS_INVALID_CREDENTIALS_PROXY,
   SS_INVALID_CONSISTENCY_HASH,
-  SS_NOSUCH_SESSION,           // session not found
-  SS_SESSION_EXISTS,           // (new session) session exoists
-  SS_MISSING_ANSWER,           // missing in request
-  SS_NOSUCH_ANSWER,            // not in session
-  SS_INVALID_ANSWER,           // malformed (serialised)
-  SS_INVALID_UUID,             // malformed value for QTYPE_UUID
-  SS_MISMATCH_NEXTQUESTIONS,   // answers don't match ses->next_questions
-  SS_NOSUCH_QUESTION,          // question not defined
+  SS_NOSUCH_SESSION,            // session not found
+  SS_SESSION_EXISTS,            // (new session) session exoists
+  SS_MISSING_ANSWER,            // missing in request
+  SS_NOSUCH_ANSWER,             // not in session
+  SS_INVALID_ANSWER,            // malformed (serialised)
+  SS_INVALID_UUID,              // malformed value for QTYPE_UUID
+  SS_MISMATCH_NEXTQUESTIONS,    // answers don't match ses->next_questions
+  SS_NOSUCH_QUESTION,           // question not defined
 
   // section: system errors
   SS_SYSTEM = 200,
@@ -43,6 +43,7 @@ enum ss_err {
   SS_SYSTEM_LOAD_SESSION_META,
   SS_SYSTEM_WRITE_SESSION_META,
   SS_SYSTEM_GET_NEXTQUESTIONS,
+  SS_SYSTEM_GET_ANALYSIS,
   SS_SYSTEM_SAVE_SESSION,
 
   // section: configuration errors

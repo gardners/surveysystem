@@ -825,7 +825,7 @@ int session_load_survey(struct session *ses) {
 
     fp = fopen(survey_path, "r");
     if (!fp) {
-      BREAK_CODEV(SS_ERROR_READ_FILE, "Could not open survey file '%s'", survey_path);
+      BREAK_CODEV(SS_ERROR_OPEN_FILE, "Could not open survey file '%s'", survey_path);
     }
     char line[MAX_LINE];
 
@@ -1847,39 +1847,29 @@ int session_delete_answer(struct session *ses, char *uid) {
  * Should the logging fail, the process will not break and issue warnings to the log
  * Note that the session needed to be created previously, otherwise the session dir would not be accessible!
  */
-int session_add_datafile(char *session_id, char *filename_suffix,
-                         const char *data) {
+int session_add_datafile(char *session_id, char *filename, const char *data) {
 
   int retVal = 0;
   FILE *fp = NULL;
 
   do {
+    BREAK_IF(session_id == NULL, SS_ERROR_ARG, "session_id");
+    BREAK_IF(filename == NULL, SS_ERROR_ARG, "filename");
+
     char session_path[1024];
-    char session_path_suffix[1024];
-    char session_prefix[5];
 
-    for (int i = 0; i < 4; i++) {
-      session_prefix[i] = session_id[i];
-    }
-    session_prefix[4] = 0;
-
-    snprintf(session_path_suffix, 1024, "sessions/%s/%s.%s", session_prefix,
-             session_id, filename_suffix);
-    if (generate_path(session_path_suffix, session_path, 1024)) {
-      BREAK_ERRORV("generate_path('%s') failed to build path for udata file, "
-                 "session '%s'",
-                 session_path_suffix, session_id);
+    if (generate_session_path(session_id, filename, session_path, 1024)) {
+      BREAK_CODEV(SS_SYSTEM_FILE_PATH, "generate_path('%s') failed to build path for data file, session '%s'", filename, session_id);
     }
 
     fp = fopen(session_path, "w");
     if (!fp) {
-      BREAK_ERRORV("Could not create or open data file '%s' for write",
-                 session_path);
+      BREAK_CODEV(SS_ERROR_OPEN_FILE, "Could not create or open data file '%s' for write", session_path);
     }
 
-    fprintf(fp, "%s\n", data);
-    fclose(fp);
-    fp = NULL;
+    if (data) {
+      fprintf(fp, "%s\n", data);
+    }
   } while (0);
 
   if (fp) {

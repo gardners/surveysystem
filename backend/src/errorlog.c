@@ -26,7 +26,7 @@ const char *get_error(int err, int section, char *nope) {
     case SS_ERROR:                        return "[ERROR]";
     case SS_ERROR_MEM:                    return "[ERROR] memory allocation";
     case SS_ERROR_ARG:                    return "[ERROR] function argument";
-    case SS_ERROR_READ_FILE:              return "[ERROR] opening file  (read)";
+    case SS_ERROR_OPEN_FILE:              return "[ERROR] opening file  (read)";
     case SS_ERROR_CREATE_DIR:             return "[ERROR] creating directory";
 
     case SS_INVALID:                      return "[ERROR] invalid request";
@@ -54,6 +54,7 @@ const char *get_error(int err, int section, char *nope) {
     case SS_SYSTEM_LOAD_SESSION_META:     return "[ERROR] failed to load session header";
     case SS_SYSTEM_WRITE_SESSION_META:    return "[ERROR] failed to write session header";
     case SS_SYSTEM_GET_NEXTQUESTIONS:     return "[ERROR] failed to get next questions";
+    case SS_SYSTEM_GET_ANALYSIS:          return "[ERROR] failed to get next analysis";
     case SS_SYSTEM_SAVE_SESSION:          return "[ERROR] failed to save session";
 
     case SS_CONFIG:                       return "[ERROR] configuration error";
