@@ -49,7 +49,7 @@ int fcgi_error_response(struct kreq *req, int code) {
     if (status == KHTTP__MAX) {
       is_section = 1;
       status = fcgi_status(ERROR_SECTION(code), is_section);
-      LOG_INFOV("fgi error mapping: %d: %s > %d", code, get_error(code, 0, "null"), ERROR_SECTION(code));
+      LOG_INFOV("fcgi error mapping: code %d, section %d, '%s'", code, ERROR_SECTION(code), get_error(code, 0, "null"));
     }
     const char *message = get_error(code, is_section, "[ERROR] unkown");
 

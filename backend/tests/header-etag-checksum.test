@@ -16,8 +16,8 @@ endofsurvey
 #! ------ /index
 #! -------
 
-#! ------ (405: hash: EMPTY, required: NO -------
-request 405 GET /
+#! ------ (204: hash: EMPTY, required: NO (#260: status changed)-------
+request 204 GET /
 verify_response_etag()
 
 #! -------

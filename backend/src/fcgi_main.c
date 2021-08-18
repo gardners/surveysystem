@@ -38,9 +38,9 @@ static void fcgi_page_index(struct kreq *);
 static void fcgi_page_session(struct kreq *);
 static void fcgi_page_answers(struct kreq *);
 static void fcgi_page_questions(struct kreq *);
+static void fcgi_page_analysis(struct kreq *);
 static void fcgi_accesstest(struct kreq *);
 static void fcgi_fastcgitest(struct kreq *);
-static void fcgi_analyse(struct kreq *);
 
 static enum khttp sanitise_page_request(const struct kreq *req);
 
@@ -49,9 +49,9 @@ static const disp disps[PAGE__MAX] = {
     fcgi_page_session,
     fcgi_page_answers,
     fcgi_page_questions,
+    fcgi_page_analysis,
     fcgi_accesstest,
-    fcgi_fastcgitest,
-    fcgi_analyse
+    fcgi_fastcgitest
 };
 
 static const char *const pages[PAGE__MAX] = {
@@ -59,9 +59,9 @@ static const char *const pages[PAGE__MAX] = {
     "session",
     "answers",
     "questions",
+    "analyse",
     "accesstest",
     "fastcgitest",
-    "analyse"
 };
 
 void usage(void) {
@@ -186,14 +186,43 @@ static enum khttp sanitise_page_request(const struct kreq *req) {
 
 static void fcgi_page_index(struct kreq *req) {
   int retVal = 0;
+
+  enum actions action;
+
   do {
     LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
+    BREAK_IF(req == NULL, SS_ERROR_ARG, "req");
 
-    // #398 add root page
-    http_json_error(req, KHTTP_405, "Not implemented");
+    // validate allowed methods #260, #461
+    // ACTION__NONE indicates undefined action
+    switch (req->method) {
+      case KMETHOD_HEAD:
+      case KMETHOD_GET:
+        action = ACTION_NONE;
+      break;
+
+      default:
+        action = -1;
+    }
+
+    LOG_INFOV("action: '%s'", session_action_names[action]);
+
+    if (action < 0) {
+      BREAK_CODE(SS_INVALID_METHOD, NULL);
+    }
+
+    // #398 add root page, for now return 405 (not implemented)
+    if (http_open(req, KHTTP_204, KMIME_TEXT_PLAIN, NULL)) {
+      BREAK_ERROR("http_open(): unable to initialise http response");
+    }
 
     LOG_INFO("Leaving page handler");
   } while (0);
+
+  // error response
+  if (retVal) {
+    fcgi_error_response(req, retVal);
+  }
 
   (void)retVal;
   return;
@@ -752,59 +781,63 @@ static void fcgi_fastcgitest(struct kreq *req) {
  * fetch analysis json
  * #300 TODO deal with planned get_analysysis_generic() **output
  */
-static void fcgi_analyse(struct kreq *req) {
+static void fcgi_page_analysis(struct kreq *req) {
   enum kcgi_err er;
   int retVal = 0;
 
   struct session *ses = NULL;
   const char *analysis = NULL;
-  enum actions action = ACTION_SESSION_ANALYSIS;
+
+  enum actions action;
+  int res;
 
   do {
-
     LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
+    BREAK_IF(req == NULL, SS_ERROR_ARG, "req");
 
-    ses = fcgi_request_load_session(req);
+    // validate allowed methods #260, #461
+    // ACTION__NONE indicates undefined action
+    switch (req->method) {
+      case KMETHOD_HEAD:
+      case KMETHOD_GET:
+        action = ACTION_SESSION_ANALYSIS;
+      break;
+
+      default:
+        action = ACTION_NONE;
+    }
+
+    LOG_INFOV("action: '%s'", session_action_names[action]);
+
+    if (action == ACTION_NONE) {
+      BREAK_CODE(SS_INVALID_METHOD, NULL);
+    }
+
+    ses = fcgi_request_load_and_verify_session(req, action, &res);
     if (!ses) {
-      http_json_error(req, KHTTP_400, "Could not load specified session. Does it exist?");
-      BREAK_ERROR("Could not load session");
-    }
-
-    // validate request against session meta (#363)
-    enum khttp status = fcgi_request_validate_meta_session(req, ses);
-    if (status != KHTTP_200) {
-      http_json_error(req, status, "Invalid idendity provider, check app configuration");
-      BREAK_ERRORV("validate_session_meta_kreq() returned status %d != (%d)", KHTTP_200, status);
-    }
-
-    // validate requested action against session current state (#379)
-    char reason[1024];
-    if (validate_session_action(action, ses, reason, 1024)) {
-      http_json_error(req, KHTTP_400, reason);
-      BREAK_ERROR("Session action validation failed");
+      BREAK_CODE(res, "failed to load session");
     }
 
     // String is allocated into heap to since we have no control over the lifetime of the Python string.
     // You need to free it
-    if (get_analysis(ses, &analysis)) {
-      http_json_error(req, KHTTP_500, "Could not retrieve analysis.");
-      BREAK_ERROR("get_analysis() failed");
+    res = get_analysis(ses, &analysis);
+    if (res) {
+      BREAK_CODE(SS_SYSTEM_GET_ANALYSIS, "get_analysis() failed");
     }
 
     if (!analysis) {
-      http_json_error(req, KHTTP_500, "Could not retrieve analysis (NULL).");
-      BREAK_ERROR("get_analysis() returned NULL result");
+      BREAK_CODE(SS_SYSTEM_GET_ANALYSIS, "get_analysis() failed (null pointer)");
     }
 
     if (!analysis[0]) {
-      http_json_error(req, KHTTP_500, "Could not retrieve analysis (empty result).");
-      BREAK_ERROR("get_analysis() returned empty result");
+      BREAK_CODE(SS_SYSTEM_GET_ANALYSIS, "get_analysis() failed (empty)");
     }
 
     // store analysis with session
-    if (session_add_datafile(ses->session_id, "analysis.json", analysis)) {
-      LOG_WARNV("Could not add analysis.json for session.", 0);
-      // do not break here
+    res = session_add_datafile(ses->session_id, "analysis.json", analysis);
+    if (res) {
+      // do not break on error here, serve analysis to client in any case
+      LOG_CODE(res, "Could not add analysis.json for session.");
     }
 
     // reply, #268 add consistency hash
@@ -816,14 +849,16 @@ static void fcgi_analyse(struct kreq *req) {
     }
 
     LOG_INFO("Leaving page handler");
-
   } while (0);
 
   // destruct
   free_session(ses);
   freez((char *)analysis);
 
-  (void)retVal;
+  if (retVal) {
+    fcgi_error_response(req, retVal);
+  }
 
+  (void)retVal;
   return;
 }
