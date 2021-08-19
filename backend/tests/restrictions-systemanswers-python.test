@@ -124,5 +124,5 @@ question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #!------- python analyse header, meta and @fields untouched
-request proxy 200 GET /analyse?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 200 GET /analysis?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 match_string OK

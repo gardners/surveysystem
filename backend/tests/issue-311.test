@@ -90,4 +90,4 @@ question3:TEXT:Answer 3:0:0:0:0:0:0:0::1:<UTIME>
 endofsession
 
 #! ------- analyse fails (session not finished) -------
-request 400 GET /analyse?sessionid=<session_id>
+request 400 GET /analysis?sessionid=<session_id>

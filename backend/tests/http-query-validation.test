@@ -33,8 +33,8 @@ endofsession
 #! GET /check: any value allowed
 #!---------------------
 
-request 204 GET /session?extended=1
-request 204 GET /session?extended=
+request 204 GET /check?extended=1
+request 204 GET /check?extended=a
 
 #!---------------------
 #! GET /newsession
@@ -237,7 +237,7 @@ request 200 GET /questions?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 request 400 DELETE /answers?sessionid=21c00c79-0000-0000-1a30-e98476f71b42 -H "If-Match: <response_etag>"
 
 #!---------------------
-#! GET /analyse
+#! GET /analysis
 #!---------------------
 
 #!-- prepare test: re-answer question deleted before
@@ -246,23 +246,23 @@ request 200 POST /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=
 match_string {"status": 0, "message": "", "progress": [4, 4], "next_questions": []}
 
 #!-- PASS:
-request 200 GET /analyse?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+request 200 GET /analysis?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 match_string "NOT IMPLEMENTED"
 
 #!-- FAIL: missing sessionid
-request 400 GET /analyse
+request 400 GET /analysis
 
 #!-- FAIL: empty sessionid
-request 400 GET /analyse?sessionid=
+request 400 GET /analysis?sessionid=
 
 #!-- FAIL: invalid sessionid
-request 400 GET /analyse?sessionid=aaa
+request 400 GET /analysis?sessionid=aaa
 
 #!-- FAIL: uppercased sessionid
-request 400 GET /analyse?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA
+request 400 GET /analysis?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA
 
 #!-- FAIL: unknown sessionid
-request 400 GET /analyse?sessionid=21c00c79-0000-0000-1a30-e98476f71b42
+request 400 GET /analysis?sessionid=21c00c79-0000-0000-1a30-e98476f71b42
 
 
 #!---------------------

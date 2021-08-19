@@ -128,7 +128,7 @@ endofsession
 #! - SESSION_FINISHED: requesting analysis will progess finished session to closed
 #! ------
 
-request 200 GET /analyse?sessionid=<session_id>
+request 200 GET /analysis?sessionid=<session_id>
 match_string "NOT IMPLEMENTED"
 
 verify_session

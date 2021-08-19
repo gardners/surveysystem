@@ -61,7 +61,7 @@ request 405 DELETE /session?sessionid=<session_id>
 request proxy 200 GET /check
 
 #!-------
-#!- endpoint /analyse [pass]
+#!- endpoint /analysis [pass]
 #!-------
 
 # simultating existing session with different @authority ip address
@@ -75,6 +75,6 @@ question1:TEXT:ANSWER 1:0:0:0:0:0:0:0::0:<UTIME>
 question2:TEXT:ANSWER 2:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
-request proxy 200 GET /analyse?sessionid=<session_id>
+request proxy 200 GET /analysis?sessionid=<session_id>
 
 

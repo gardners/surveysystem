@@ -27,7 +27,7 @@ runanalysisgeneric/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 @state:META:question1:<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
 endofsession
 
-request 400 GET /analyse?sessionid=<session_id>
+request 400 GET /analysis?sessionid=<session_id>
 
 #! -------
 #!- FAIL if SESSION_OPEN
@@ -45,7 +45,7 @@ runanalysisgeneric/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
-request 400 GET /analyse?sessionid=<session_id>
+request 400 GET /analysis?sessionid=<session_id>
 
 #! -------
 #!- PASS if SESSION_FINISHED
@@ -69,7 +69,7 @@ endofsession
 #!- PASS if SESSION_CLOSED
 #! -------
 
-request 200 GET /analyse?sessionid=<session_id>
+request 200 GET /analysis?sessionid=<session_id>
 
 verify_session
 runanalysisgeneric/0a7caf5b02adad7583c7bfae30f6f119cb3581cc

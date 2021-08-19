@@ -27,7 +27,7 @@ sessionlifetime/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 @state:META:question1:<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
 endofsession
 
-request 400 GET /analyse?sessionid=<session_id>
+request 400 GET /analysis?sessionid=<session_id>
 
 #! ------
 #! - SESSION_NEW: deleting answer fails (400)
@@ -47,7 +47,7 @@ endofsession
 #! - SESSION_NEW: Analysing fails (400)
 #! ------
 
-request 400 GET /analyse?sessionid=<session_id>
+request 400 GET /analysis?sessionid=<session_id>
 
 verify_session
 sessionlifetime/0a7caf5b02adad7583c7bfae30f6f119cb3581cc

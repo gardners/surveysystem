@@ -111,8 +111,8 @@ request 200 OPTIONS /check
 match_string <empty>
 
 #! ------
-#! - PASS /analyse
+#! - PASS /analysis
 #! ------
 
-request 200 OPTIONS /analyse?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
+request 200 OPTIONS /analysis?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
 match_string <empty>

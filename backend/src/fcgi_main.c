@@ -61,7 +61,7 @@ static const char *const pages[PAGE__MAX] = {
     "session",
     "questions",
     "answers",
-    "analyse",
+    "analysis",
 
     "check",
 };

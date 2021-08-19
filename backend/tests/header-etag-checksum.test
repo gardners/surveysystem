@@ -178,7 +178,7 @@ request 200 GET /check
 verify_response_etag()
 
 #! -------
-#! ------ /analyse (without pyhton)
+#! ------ /analysis (without pyhton)
 #! -------
 
 # re-fill session
@@ -187,7 +187,7 @@ request 200 POST /answers?sessionid=<session_id>&answer=question2:Answer2:0:0:0:
 request 200 POST /answers?sessionid=<session_id>&answer=question3:Answer3:0:0:0:0:0:0:0
 
 #! ------ 200 : hash: Yes, required: NO -------
-request 200 GET /analyse?sessionid=<session_id>&questionid=question1
+request 200 GET /analysis?sessionid=<session_id>&questionid=question1
 verify_response_etag(<hashlike_etag>)
 
 #! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
