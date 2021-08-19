@@ -95,10 +95,10 @@ fi
 lighttpd -f sandbox/lighttpd.conf
 
 # test
-echo "Testing.. (GET /surveyapi/accesstest)"
+echo "Testing.. (GET /surveyapi/check?extended=1)"
 sleep 1
 
-status=$(curl --silent --output /dev/null --write-out "%{http_code}" "http://localhost:${SERVER_PORT}/surveyapi/accesstest")
+status=$(curl --silent --output /dev/null --write-out "%{http_code}" "http://localhost:${SERVER_PORT}/surveyapi/check?extended=1")
 
 if [ "${status}" -ne 200 ]; then
     EXIT_ERROR "curl GET /accesstest returned status ${status}"

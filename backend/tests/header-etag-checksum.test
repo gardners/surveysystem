@@ -170,19 +170,11 @@ request 405 DELETE /session?sessionid=<session_id>&questionid=question1
 verify_response_etag()
 
 #! -------
-#! ------ /accesstest
+#! ------ GET /check
 #! -------
 
 #! ------ 200: hash: EMPTY, required: NO -------
-request 200 GET /accesstest
-verify_response_etag()
-
-#! -------
-#! ------ /fastcgitest
-#! -------
-
-#! ------ 200: hash: EMPTY, required: NO -------
-request 200 GET /accesstest
+request 200 GET /check
 verify_response_etag()
 
 #! -------

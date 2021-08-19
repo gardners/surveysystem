@@ -30,16 +30,11 @@ endofsession
 #!-- SKIP: no query params supported
 
 #!---------------------
-#! GET /accesstest:
+#! GET /check: any value allowed
 #!---------------------
 
-#!-- SKIP: no query params supported
-
-#!---------------------
-#! GET /fastcgitest:
-#!---------------------
-
-#!-- SKIP: no query params supported
+request 204 GET /session?extended=1
+request 204 GET /session?extended=
 
 #!---------------------
 #! GET /newsession

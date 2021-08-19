@@ -104,17 +104,10 @@ question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #! ------
-#! - PASS /accesstest
+#! - PASS GET /check
 #! ------
 
-request 200 OPTIONS /accesstest
-match_string <empty>
-
-#! ------
-#! - PASS /fastcgitest
-#! ------
-
-request 200 OPTIONS /fastcgitest
+request 200 OPTIONS /check
 match_string <empty>
 
 #! ------

@@ -6,4 +6,4 @@ request 204 GET /
 request 204 GET /index
 
 #! -- everyting else works
-request 200 GET /accesstest
+request 200 GET /check

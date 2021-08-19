@@ -29,7 +29,8 @@ static const struct kvalid keys[KEY__MAX] = {
   { kvalid_stringne, "sessionid" },
   { kvalid_stringne, "questionid" },
   { kvalid_stringne, "answer" },
-  { kvalid_stringne, "if-match" }
+  { kvalid_stringne, "if-match" },
+  { kvalid_stringne, "extended" },
 };
 
 typedef void (*disp)(struct kreq *);
@@ -39,8 +40,7 @@ static void fcgi_page_session(struct kreq *);
 static void fcgi_page_questions(struct kreq *);
 static void fcgi_page_answers(struct kreq *);
 static void fcgi_page_analysis(struct kreq *);
-static void fcgi_accesstest(struct kreq *);
-static void fcgi_fastcgitest(struct kreq *);
+static void fcgi_page_check(struct kreq *);
 
 static enum khttp fcgi_sanitise_page_request(const struct kreq *req);
 
@@ -52,8 +52,7 @@ static const disp disps[PAGE__MAX] = {
     fcgi_page_answers,
     fcgi_page_analysis,
 
-    fcgi_accesstest,
-    fcgi_fastcgitest
+    fcgi_page_check,
 };
 
 static const char *const pages[PAGE__MAX] = {
@@ -64,8 +63,7 @@ static const char *const pages[PAGE__MAX] = {
     "answers",
     "analyse",
 
-    "accesstest",
-    "fastcgitest",
+    "check",
 };
 
 void usage(void) {
@@ -336,7 +334,7 @@ static void fcgi_page_index(struct kreq *req) {
       break;
 
       default:
-        action = -1;
+        action = ACTION_MAX;
     }
 
     LOG_INFOV("action: '%s'", session_action_names[action]);
@@ -349,6 +347,7 @@ static void fcgi_page_index(struct kreq *req) {
     if (http_open(req, KHTTP_204, KMIME_TEXT_PLAIN, NULL)) {
       BREAK_ERROR("http_open(): unable to initialise http response");
     }
+    khttp_puts(req, NULL);
 
     LOG_INFO("Leaving page handler");
   } while (0);
@@ -394,12 +393,12 @@ static void fcgi_page_session(struct kreq *req) {
       break;
 
       default:
-        action = ACTION_NONE;
+        action = ACTION_MAX;
     }
 
     LOG_INFOV("action: '%s'", session_action_names[action]);
 
-    if (action == ACTION_NONE) {
+    if (action == ACTION_MAX) {
       BREAK_CODE(SS_INVALID_METHOD, NULL);
     }
 
@@ -451,7 +450,9 @@ static void fcgi_page_session(struct kreq *req) {
 
     // #494  HEAD request: do not create and exit
     if (req->method == KMETHOD_HEAD) {
-      http_open(req, KHTTP_200, KMIME_APP_JSON, ses->consistency_hash);
+      if (http_open(req, KHTTP_200, KMIME_APP_JSON, ses->consistency_hash)) {
+        BREAK_ERROR("http_open(): unable to initialise http response");
+      }
       khttp_puts(req, NULL);
       LOG_INFO("Leaving page handler.");
       break;
@@ -517,12 +518,12 @@ static void fcgi_page_questions(struct kreq *req) {
       break;
 
       default:
-        action = ACTION_NONE;
+        action = ACTION_MAX;
     }
 
     LOG_INFOV("action: '%s'", session_action_names[action]);
 
-    if (action == ACTION_NONE) {
+    if (action == ACTION_MAX) {
       BREAK_CODE(SS_INVALID_METHOD, NULL);
     }
 
@@ -542,7 +543,9 @@ static void fcgi_page_questions(struct kreq *req) {
 
     // #494  HEAD request: do not create and exit
     if (req->method == KMETHOD_HEAD) {
-      http_open(req, KHTTP_200, KMIME_APP_JSON, ses->consistency_hash);
+      if (http_open(req, KHTTP_200, KMIME_APP_JSON, ses->consistency_hash)) {
+        BREAK_ERROR("http_open(): unable to initialise http response");
+      }
       khttp_puts(req, NULL);
       LOG_INFO("Leaving page handler.");
       break;
@@ -611,12 +614,12 @@ static void fcgi_page_answers(struct kreq *req) {
       break;
 
       default:
-        action = ACTION_NONE;
+        action = ACTION_MAX;
     }
 
     LOG_INFOV("action: '%s'", session_action_names[action]);
 
-    if (action == ACTION_NONE) {
+    if (action == ACTION_MAX) {
       BREAK_CODE(SS_INVALID_METHOD, NULL);
     }
 
@@ -662,7 +665,9 @@ static void fcgi_page_answers(struct kreq *req) {
 
     // #494  HEAD request: do not create and exit
     if (req->method == KMETHOD_HEAD) {
-      http_open(req, KHTTP_200, KMIME_APP_JSON, ses->consistency_hash);
+      if (http_open(req, KHTTP_200, KMIME_APP_JSON, ses->consistency_hash)) {
+        BREAK_ERROR("http_open(): unable to initialise http response");
+      }
       khttp_puts(req, NULL);
       LOG_INFO("Leaving page handler.");
       break;
@@ -726,12 +731,12 @@ static void fcgi_page_analysis(struct kreq *req) {
       break;
 
       default:
-        action = ACTION_NONE;
+        action = ACTION_MAX;
     }
 
     LOG_INFOV("action: '%s'", session_action_names[action]);
 
-    if (action == ACTION_NONE) {
+    if (action == ACTION_MAX) {
       BREAK_CODE(SS_INVALID_METHOD, NULL);
     }
 
@@ -769,7 +774,9 @@ static void fcgi_page_analysis(struct kreq *req) {
 
     // response
 
-    http_open(req, KHTTP_200, KMIME_APP_JSON, ses->consistency_hash);
+    if (http_open(req, KHTTP_200, KMIME_APP_JSON, ses->consistency_hash)) {
+      BREAK_ERROR("http_open(): unable to initialise http response");
+    }
 
     er = khttp_puts(req, analysis);
     if (er != KCGI_OK) {
@@ -851,12 +858,47 @@ static void fcgi_page_analysis(struct kreq *req) {
     }                                                                          \
   }
 
-static void fcgi_accesstest(struct kreq *req) {
-  // Try to access paths, and report status.
+static void fcgi_page_check(struct kreq *req) {
+  int retVal = 0;
+
+  enum actions action;
+  char *extended = NULL;
 
   do {
-
     LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
+    BREAK_IF(req == NULL, SS_ERROR_ARG, "req");
+
+    // validate allowed methods #260, #461
+
+    switch (req->method) {
+      case KMETHOD_HEAD:
+      case KMETHOD_GET:
+        action = ACTION_NONE;
+      break;
+
+      default:
+        action = ACTION_MAX;
+    }
+
+    LOG_INFOV("action: '%s'", session_action_names[action]);
+
+    if (action == ACTION_MAX) {
+      BREAK_CODE(SS_INVALID_METHOD, NULL);
+    }
+
+    if (req->method != KMETHOD_HEAD) {
+      extended = fcgi_request_get_field_value(KEY_CHECK_EXTENDED, req); // check only pure existence, value doesn't matter
+    }
+
+    if (!extended) {
+      if (http_open(req, KHTTP_200, KMIME_TEXT_PLAIN, NULL)) {
+        BREAK_ERROR("http_open(): unable to initialise http response");
+      }
+      khttp_puts(req, NULL);
+      break;
+    }
+
+    LOG_INFOV("proceeding with extended test (param KEY_CHECK_EXTENDED = '%s', extended", extended);
 
     char test_path[8192];
     char failmsg[16384];
@@ -886,24 +928,18 @@ static void fcgi_accesstest(struct kreq *req) {
     TEST_WRITE("sessions/testdir/testfile");
     TEST_READ("logs");
 
-    http_json_error(req, KHTTP_200, "All okay.");
-
+    if (http_open(req, KHTTP_204, KMIME_TEXT_PLAIN, NULL)) {
+      BREAK_ERROR("http_open(): unable to initialise http response");
+    }
+    khttp_puts(req, NULL);
     LOG_INFO("Leaving page handler.");
 
   } while (0);
 
-  return;
-}
+  if (retVal) {
+    fcgi_error_response(req, retVal);
+  }
 
-static void fcgi_fastcgitest(struct kreq *req) {
-  do {
-
-    LOG_INFOV("Entering page handler: '%s' '%s'", kmethods[req->method], req->fullpath);
-
-    http_json_error(req, KHTTP_200, "All okay.");
-
-    LOG_INFO("Leaving page handler.");
-
-  } while (0);
+  (void)retVal;
   return;
 }

@@ -419,28 +419,26 @@ void test_start_lighttpd(struct Test *test, char *pid_file, char *user, char *gr
   }
 
   snprintf(
-      cmd, 2048,
-      "curl -s -o /dev/null -f http://localhost:%d/surveyapi/fastcgitest",
-      server_port);
+    cmd, 2048,
+    "curl -sS -f http://localhost:%d/surveyapi/check?extended=1",
+    server_port);
 
   if (test->count == 1) {
     fprintf(stderr, "Running '%s'\n", cmd);
   }
 
-  int v = 0;
-  while ((v = system(cmd)) != 0) {
-    if (test->count == 1) {
-      fprintf(stderr, "curl returned code %d\n    - command: '%s'\n", v, cmd);
-    }
-    char log_dir[1024];
-    // This should be /logs, but it doesn't exist yet, and we really only need it for the
-    // ../ to get to breakage.log
-    snprintf(log_dir, 1024, "%s/sessions", test->dir);
-    if (test->count == 1) {
-      test_dump_logs(log_dir, stderr);
-    }
-    sleep(2);
-    continue;
+  int code = system(cmd);
+  if (code) {
+    fprintf(stderr, "system() failed, code %d: '%s'\n", code, cmd);
+    exit(-3);
+  }
+
+  // This should be /logs, but it doesn't exist yet, and we really only need it for the
+  // ../ to get to breakage.log
+  char log_dir[1024];
+  snprintf(log_dir, 1024, "%s/sessions", test->dir);
+  if (test->count == 1) {
+    test_dump_logs(log_dir, stderr);
   }
 
   if (test->count == 1) {
@@ -1502,28 +1500,27 @@ int test_run_process(char *cmd, char *out, size_t len) {
     FILE *fp;
     char ch;
 
+    out[0] = 0;
     if(!cmd || !out) {
       fprintf(stderr, "argument error\n");
       return -1;
     }
 
-    fp = popen(cmd,"r");
+    fp = popen(cmd, "r");
     if(fp == NULL){
-        fprintf(stderr,"Unable to open process for command '%s\n", cmd);
-        return -1;
+      fprintf(stderr,"Unable to open process for command '%s\n", cmd);
+      return -1;
     }
 
     size_t i = 0;
-    do {
+    while((ch = fgetc(fp)) != EOF) {
       if (i > len - 1) {
         break;
       }
-      ch = fgetc(fp);
-      if(feof(fp)) {
-         break ;
-      }
-      out[i++] = ch;
-   } while(1);
+      out[i] = ch;
+      i++;
+   }
+   out[i] = 0;
 
    int status = pclose(fp);
 

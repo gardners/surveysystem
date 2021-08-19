@@ -59,7 +59,7 @@ $SERVER["socket"] == ":" + server_port {
      }
 
      # everything needs to be authenticated except some test endpoints
-     $HTTP["url"] !~ "^/(surveyapi\/fastcgitest|surveyapi\/accesstest)"  {
+     $HTTP["url"] !~ "^/(surveyapi\/check)"  {
           auth.require = (
                "" => (
                     "method"  => "basic",

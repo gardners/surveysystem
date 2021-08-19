@@ -13,7 +13,9 @@ enum key {
   KEY_SESSION_ID,
   KEY_QUESTION_ID,
   KEY_ANSWER,
+
   KEY_IF_MATCH,
+  KEY_CHECK_EXTENDED,
   KEY__MAX
 };
 
@@ -25,8 +27,7 @@ enum page {
   PAGE_ANSWERS,   // #260, #461
   PAGE_ANALYSIS,  // #260
 
-  PAGE_ACCESTEST,
-  PAGE_FCGITEST,
+  PAGE_CHECK,
   PAGE__MAX
 };
 

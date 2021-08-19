@@ -53,13 +53,8 @@ request 502 DELETE /answers?sessionid=<session_id> -H "If-Match: <custom_checksu
 request 405 DELETE /session?sessionid=<session_id>
 
 #!-------
-#!- endpoint /accesstest [pass]
+#!- endpoint GET /check [pass]
 #!-------
-request proxy 200 GET /accesstest
-
-#!-------
-#!- endpoint /fastcgitest [pass]
-#!-------
-request proxy 200 GET /fastcgitest
+request proxy 200 GET /check
 
 
