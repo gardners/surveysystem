@@ -509,14 +509,17 @@ struct string_list *deserialise_string_list(char *in, const char separator) {
   struct string_list *list = NULL;
 
   do {
+    list = calloc(1, sizeof(struct string_list));
+    BREAK_IF(list == NULL, SS_ERROR_MEM, "string list");
+
     if(!in) {
       break; //return empty, allocated list
     }
 
-    list = calloc(1, sizeof(struct string_list));
-    BREAK_IF(list == NULL, SS_ERROR_MEM, "string list");
-
     int count = serialiser_count_columns(',', in);
+    if(!count) {
+      break;
+    }
 
     list->items = malloc(count * sizeof(char*));
     BREAK_IF(list->items == NULL, SS_ERROR_MEM, "string list items ptr");
