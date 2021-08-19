@@ -83,13 +83,13 @@ void code_instrumentation_unmute();
 }
 
 #define BREAK_ERRORV(MSG, ...) {                                                                              \
-  retVal = SS_ERROR;                                                                                          \
+  retVal = SS_EVAL;                                                                                          \
   remember_error(get_error(retVal, 0, "[ERROR] unkown"), __FILE__, __LINE__, __FUNCTION__, MSG, __VA_ARGS__); \
   break;                                                                                                      \
 }
 
 #define BREAK_ERROR(MSG) {                                                                                    \
-  retVal = SS_ERROR;                                                                                          \
+  retVal = SS_EVAL;                                                                                          \
   remember_error(get_error(retVal, 0, "[ERROR] unkown"), __FILE__, __LINE__, __FUNCTION__, "%s", MSG);        \
   break;                                                                                                      \
 }
