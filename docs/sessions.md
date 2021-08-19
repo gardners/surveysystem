@@ -90,7 +90,7 @@ example session line: `internalData:META:some text:12345:0:0:0:0:0:0::0:15955597
 
 * Meta answers have no corresponding question definitions and are set by the backend.
 * Meta answers report internal data and can occupy any data field in the answer. Since there is no question the uid is the identifier for parsing out the data.
-* Meta answers are not visible to the frontend or nextquestion controllers. They cannot be deleted or edited by these components either.
+* Meta answers are not visible to the frontend or next_question controllers. They cannot be deleted or edited by these components either.
 
 ## Session `@header` answers
 
@@ -98,7 +98,7 @@ On creation sessions report some internal data into header `META` fields.
 The fields are: `@user`, `@group`, `@authority`, `@closed` (in this exact oerder)
 
 * @header answers have no corresponding question definitions and are set by the backend *at the start of a session*
-* @header answers are not visible to the frontend or nextquestion controllers. They cannot be deleted or edited by these components either.
+* @header answers are not visible to the frontend or next_question controllers. They cannot be deleted or edited by these components either.
 
 # Session Lifetime (example)
 
@@ -116,7 +116,7 @@ question2:Question 2::TEXT:0::-1:-1:0:0::
 
 ## 1. New session (`SESSION_NEW`)
 
-* /newsession?surveyid=foo
+* `GET /session?surveyid=foo`
 
 A new 'empty' session is created, authority and session state are recorded into the header. Our example session id is `381544dc-0000-0000-0d04-01123f06e306`
 
@@ -130,15 +130,15 @@ foo/b884bcb19954b245d8be53db2b266c4798dc742d
 
 The `<value>` field in `@state` header is set to `SESSION_NEW`, the session creation is recorded in field `time_begin`.
 
-An internal nextquestion query is performed (since #484) and the next_questions uid are stored in  the `<text>` field.
+An internal next_question query is performed (since #484) and the next_questions uid are stored in  the `<text>` field.
 
 Notes:
 
- * Requesting next question within a new session will not change the state. */nextquestion?sessionid=381544dc-0000-0000-0d04-01123f06e306*
+ * Requesting next question within a new session will not change the state. *GET /questions?sessionid=381544dc-0000-0000-0d04-01123f06e306*
 
 ## 2. Open Session (`SESSION_OPEN`)
 
-* /addanswer?sessionid=381544dc-0000-0000-0d04-01123f06e306&answer=question1:Answer+1:0:0:0:0:0:0:0:
+* `POST /answers?sessionid=381544dc-0000-0000-0d04-01123f06e306&question1=Answer+1`
 
 We assume a simple gneric question logic where just the next question  (`question2`) is returned by our next_questions response
 Answering the first question records the answer into the session and progresses the session to "open".
@@ -157,11 +157,11 @@ The `<text>` field in `@state` contains the expected question id of the next ans
 
 Notes:
 
-* Deleting any or all answers within an open session will not change the state. */delanswer?sessionid=sessionid=381544dc-0000-0000-0d04-01123f06e306&questionid=question1*
+* Deleting any or all answers within an open session will not change the state. * DELETE /answer?sessionid=sessionid=381544dc-0000-0000-0d04-01123f06e306&questionid=question1*
 
 ## 3. Finish Session (`SESSION_FINISHED`)
 
-* /addanswer?sessionid=381544dc-0000-0000-0d04-01123f06e306&answer=question2:Answer+2:0:0:0:0:0:0:0:
+* `POST /answers?sessionid=381544dc-0000-0000-0d04-01123f06e306&question2=Answer+2`
 
 We are answering our last question. This progresses the session to "closed".
 
@@ -183,7 +183,7 @@ The `<text>` field in `@state` is empty
 
 ### 3.1 Reopen Session (`SESSION_OPEN`)
 
-* /delanswer?sessionid=sessionid=381544dc-0000-0000-0d04-01123f06e306&questionid=question2
+* `DELETE /answers?sessionid=sessionid=381544dc-0000-0000-0d04-01123f06e306&questionid=question2`
 
 We 'delete' our last answer. This regresses the state back to `SESSION_OPEN`
 
@@ -204,7 +204,7 @@ The `<text>` field in `@state` contains the expected question id of the next ans
 
 ### 3.2. Finish Session again (`SESSION_FINISHED`)
 
-* /addanswer?sessionid=381544dc-0000-0000-0d04-01123f06e306&answer=question2:Answer+2+Again:0:0:0:0:0:0:0:
+* `POST /answers?sessionid=381544dc-0000-0000-0d04-01123f06e306&question2=Answer+2`
 
 We are answering our last question again. This progresses the session to "closed".
 
@@ -225,7 +225,7 @@ The `<text>` field in `@state` is empty
 
 ## 4. Close Session (`SESSION_CLOSED`)
 
-* /analyse?sessionid=381544dc-0000-0000-0d04-01123f06e306
+* /analysis?sessionid=381544dc-0000-0000-0d04-01123f06e306
 
 We are fetching our analysis. This progresses the session to "closed".
 
@@ -243,6 +243,6 @@ question2:TEXT:Answer 2 Again:0:0:0:0:0:0:0::0:1596163402
 The `<value>` field in `@state` header has progressed again to `SESSION_CLOSED`. The time of closure has been recorded int field `<time_end>`.
 
 * This state is **final** and cannot be changed.
-* Any session request other than *analyse* will be **rejected**
+* Any session request other than */analysis* will be **rejected**
 
 The `<text>` field in `@state` is empty
