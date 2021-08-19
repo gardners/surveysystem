@@ -10,7 +10,7 @@ characterencoding:Select one from the ‘following’:Description for ‘followi
 endofsurvey
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=characterencoding
+request 200 GET /session?surveyid=characterencoding
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -21,7 +21,7 @@ characterencoding/ee0a452e61f1a1a6f11084f9af7cbf2ac69cb728
 endofsession
 
 # Ask for next question
-request 200 GET /nextquestion?sessionid=<session_id>
+request 200 GET /questions?sessionid=<session_id>
 match_string {"status": 0, "message": "", "progress": [0, 1], "next_questions": [{"id": "characterencoding", "name": "characterencoding", "title": "Select one from the ‘following’", "description": "Description for ‘following’", "type": "SINGLECHOICE", "default_value": "", "min_value": -1, "max_value": -1, "choices": ["`31`", "`42ö`", "ümlaut"], "unit": ""}]}
 
 request 200 POST /answers?sessionid=<session_id>&answer=characterencoding:96ö:0:0:0:0:0:0:0

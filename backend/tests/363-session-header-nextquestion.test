@@ -11,7 +11,7 @@ q3:Question 3::TEXT:0::-1:-1:0:0::
 endofsurvey
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=foo
+request 200 GET /session?surveyid=foo
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -21,7 +21,7 @@ verify_session(skip_headers)
 foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 endofsession
 
-request 200 GET /nextquestion?sessionid=<session_id>
+request 200 GET /questions?sessionid=<session_id>
 match_string {"status": 0, "message": "", "progress": [0, 3], "next_questions": [{"id": "q1", "name": "q1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 ## q1
@@ -29,7 +29,7 @@ match_string {"status": 0, "message": "", "progress": [0, 3], "next_questions": 
 request 200 POST /answers?sessionid=<session_id>&answer=q1:answer+1:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [1, 3], "next_questions": [{"id": "q2", "name": "q2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
-request 200 GET /nextquestion?sessionid=<session_id>
+request 200 GET /questions?sessionid=<session_id>
 match_string {"status": 0, "message": "", "progress": [1, 3], "next_questions": [{"id": "q2", "name": "q2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 ## q2
@@ -37,7 +37,7 @@ match_string {"status": 0, "message": "", "progress": [1, 3], "next_questions": 
 request 200 POST /answers?sessionid=<session_id>&answer=q2:answer+2:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [2, 3], "next_questions": [{"id": "q3", "name": "q3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
-request 200 GET /nextquestion?sessionid=<session_id>
+request 200 GET /questions?sessionid=<session_id>
 match_string {"status": 0, "message": "", "progress": [2, 3], "next_questions": [{"id": "q3", "name": "q3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 ## q3
@@ -45,7 +45,7 @@ match_string {"status": 0, "message": "", "progress": [2, 3], "next_questions": 
 request 200 POST /answers?sessionid=<session_id>&answer=q3:answer+3:0:0:0:0:0:0:0
 match_string {"status": 0, "message": "", "progress": [3, 3], "next_questions": []}
 
-request 200 GET /nextquestion?sessionid=<session_id>
+request 200 GET /questions?sessionid=<session_id>
 match_string {"status": 0, "message": "", "progress": [3, 3], "next_questions": []}
 
 verify_session

@@ -24,7 +24,6 @@
 #endif
 
 #include "sha1.h"
-// #428 enable logging
 #include "errorlog.h"
 
 /* code */

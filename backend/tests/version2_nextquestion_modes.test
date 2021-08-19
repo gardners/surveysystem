@@ -43,7 +43,7 @@ def nextquestion(questions, answers, **kwargs):
 endofpython
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=without_python
+request 200 GET /session?surveyid=without_python
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -54,7 +54,7 @@ without_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 endofsession
 
 # Ask for first question - should return question1
-request 200 GET /nextquestion?sessionid=<session_id>
+request 200 GET /questions?sessionid=<session_id>
 match_string {"status": 0, "message": "", "progress": [0, 3], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 # should not invoke python and return next question
@@ -124,7 +124,7 @@ def nextquestion(questions, answers, **kwargs):
 endofpython
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=with_python
+request 200 GET /session?surveyid=with_python
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -135,7 +135,7 @@ with_python/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
 endofsession
 
 # Ask for "first" question - should return question3
-request 200 GET /nextquestion?sessionid=<session_id>
+request 200 GET /questions?sessionid=<session_id>
 match_string {"status": 0, "message": "0", "progress": [0, 3], "next_questions": [{"id": "question3", "name": "question3", "title": "Question 3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 # answer first question - should return question1

@@ -212,9 +212,9 @@ enum actions {
   ACTION_SESSION_ADDANSWER,
   ACTION_SESSION_DELETEANSWER,
   ACTION_SESSION_ANALYSIS,
+  ACTION_MAX,
 };
-#define NUM_SESSION_ACTIONS 7
-extern char *session_action_names[NUM_SESSION_ACTIONS];
+extern char *session_action_names[ACTION_MAX + 1];
 
 // #363 session meta
 struct session_meta {
@@ -265,6 +265,7 @@ int generate_path(char *path_in, char *path_out, int max_len);
 int generate_session_path(char *session_id, char *filename, char *path_out, int max_len);
 int generate_python_path(char *path_out, int max_len);
 int generate_survey_path(char *survey_id, char *filename, char *path_out, int max_len);
+FILE *path_open(char *name, char *mode);
 
 // #363
 int is_given_answer(struct answer *a);
@@ -276,11 +277,12 @@ int get_analysis(struct session *s, const char **output);
 
 // #239
 int create_session_id(char *session_id_out, int max_len);
-struct session *create_session(char *survey_id, char *session_id, struct session_meta *meta);
-struct session *load_session(char *session_id);
-int session_load_survey(struct session *ses);
+struct session *create_session(char *survey_id, char *session_id, struct session_meta *meta, int *error);
+struct session *load_session(char *session_id, int *error);
 int delete_session(char *session_id);
 int save_session(struct session *s);
+
+int session_load_survey(struct session *ses);
 int session_add_answer(struct session *s, struct answer *a);
 int session_delete_answer(struct session *s, char *uid);
 

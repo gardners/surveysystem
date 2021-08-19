@@ -1,0 +1,163 @@
+@description DELETE requests /answers - previous and until uid
+
+#!
+#! --------
+#! - sequential
+#! --------
+#!
+
+# Create a dummy survey
+definesurvey foo
+version 2
+Silly test survey updated
+without python
+question1:Question1::TEXT:0::-1:-1:0:0::
+question2:Question2::TEXT:0::-1:-1:0:0::
+question3:Question3::TEXT:0::-1:-1:0:0::
+question4:Question4::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+# add session with one question answered and 2 system answers
+definesession aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+foo/current
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
+question3:TEXT:Answer 3:0:0:0:0:0:0:0::0:<UTIME>
+question4:TEXT:Answer 4:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#! -- verify if test session has been set up correctly
+request 200 GET /questions?sessionid=<session_id>
+match_string {"status": 0, "message": "", "progress": [4, 4], "next_questions": []}
+verify_response_etag(<hashlike_etag>)
+
+#! -- PASS delete PREVIOUS answer (HEADER If-Match)
+
+request 200 DELETE /answers?sessionid=<session_id> -H "If-Match: <response_etag>"
+match_string {"status": 0, "message": "", "progress": [3, 4], "next_questions": [{"id": "question4", "name": "question4", "title": "Question4", "description": "", "type": "TEXT", "default_value": "Answer 4", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+verify_response_etag(<hashlike_etag>)
+
+#! -- PASS delete PREVIOUS answer (PARAM If-Match)
+
+request 200 DELETE /answers?sessionid=<session_id>&if-match=<response_etag>
+match_string {"status": 0, "message": "", "progress": [2, 4], "next_questions": [{"id": "question3", "name": "question3", "title": "Question3", "description": "", "type": "TEXT", "default_value": "Answer 3", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+verify_response_etag(<hashlike_etag>)
+
+#! -- Make sure deleted answers end up in file
+verify_session
+foo/current
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@state:META:question3:<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
+question3:TEXT:Answer 3:0:0:0:0:0:0:0::1:<UTIME>
+question4:TEXT:Answer 4:0:0:0:0:0:0:0::1:<UTIME>
+endofsession
+
+#! -- PASS delete UID answer (HEADER If-Match)
+
+request 200 DELETE /answers?sessionid=<session_id>&uid=question2 -H "If-Match: <response_etag>"
+match_string {"status": 0, "message": "", "progress": [1, 4], "next_questions": [{"id": "question2", "name": "question2", "title": "Question2", "description": "", "type": "TEXT", "default_value": "Answer 2", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+verify_response_etag(<hashlike_etag>)
+
+#! -- PASS delete UID answer (PARAM If-Match)
+
+request 200 DELETE /answers?sessionid=<session_id>&uid=question1&if-match=<response_etag>
+match_string {"status": 0, "message": "", "progress": [0, 4], "next_questions": [{"id": "question1", "name": "question1", "title": "Question1", "description": "", "type": "TEXT", "default_value": "Answer 1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+verify_response_etag(<hashlike_etag>)
+
+#! -- Make sure deleted answers end up in file
+verify_session
+foo/current
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@state:META:question1:<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::1:<UTIME>
+question2:TEXT:Answer 2:0:0:0:0:0:0:0::1:<UTIME>
+question3:TEXT:Answer 3:0:0:0:0:0:0:0::1:<UTIME>
+question4:TEXT:Answer 4:0:0:0:0:0:0:0::1:<UTIME>
+endofsession
+
+#! -- PASS delete UID previous answer on 'empty' session (HEADER If-Match)
+
+request 200 DELETE /answers?sessionid=<session_id>&uid=question1 -H "If-Match: <response_etag>"
+match_string {"status": 0, "message": "", "progress": [0, 4], "next_questions": [{"id": "question1", "name": "question1", "title": "Question1", "description": "", "type": "TEXT", "default_value": "Answer 1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+verify_response_etag(<hashlike_etag>)
+
+#! -- PASS delete UID previous answer on 'empty' session (PARAM If-Match)
+
+request 200 DELETE /answers?sessionid=<session_id>&uid=question1&if-match=<response_etag>
+match_string {"status": 0, "message": "", "progress": [0, 4], "next_questions": [{"id": "question1", "name": "question1", "title": "Question1", "description": "", "type": "TEXT", "default_value": "Answer 1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+verify_response_etag(<hashlike_etag>)
+
+#! -- FAIL delete PREVIOUS answer (HEADER If-Match)
+# fetch etag
+request 200 GET /questions?sessionid=<session_id>
+verify_response_etag(<hashlike_etag>)
+request 400 DELETE /answers?sessionid=<session_id>&questionid=question1 -H "If-Match: <response_etag>"
+
+#! -- FAIL delete PREVIOUS answer (PARAM If-Match)
+# fetch etag
+request 200 GET /questions?sessionid=<session_id>
+verify_response_etag(<hashlike_etag>)
+request 400 DELETE /answers?sessionid=<session_id>&questionid=question1&if-match=<response_etag>
+
+#!
+#! --------
+#! - invalid requests
+#! --------
+#!
+
+# add session with one question answered and 2 system answers
+definesession bbbbbbbb-0000-0000-0000-bbbbbbbbbbbb
+foo/current
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#! -- verify if test session has been set up correctly
+request 200 GET /questions?sessionid=<session_id>
+match_string {"status": 0, "message": "", "progress": [2, 4], "next_questions": [{"id": "question3", "name": "question3", "title": "Question3", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+verify_response_etag(<hashlike_etag>)
+
+#! -- FAIL missing checksum
+# fetch etag
+request 200 GET /questions?sessionid=<session_id>
+verify_response_etag(<hashlike_etag>)
+request 412 DELETE /answers?sessionid=<session_id>&questionid=question3
+
+#! -- FAIL invalid checksum (header)
+# fetch etag
+request 200 GET /questions?sessionid=<session_id>
+verify_response_etag(<hashlike_etag>)
+request 412 DELETE /answers?sessionid=<session_id>&questionid=question3 -H "If-Match: invalid"
+
+#! -- FAIL invalid checksum (param)
+# fetch etag
+request 200 GET /questions?sessionid=<session_id>
+verify_response_etag(<hashlike_etag>)
+request 412 DELETE /answers?sessionid=<session_id>&questionid=question3&if-match=invalid
+
+#! -- FAIL delete UID unanswered answer (HEADER If-Match)
+# fetch etag
+request 200 GET /questions?sessionid=<session_id>
+verify_response_etag(<hashlike_etag>)
+request 400 DELETE /answers?sessionid=<session_id>&questionid=question3 -H "If-Match: <response_etag>"
+
+#! -- FAIL delete UID unanswered answer (PARAM If-Match)
+# fetch etag
+request 200 GET /questions?sessionid=<session_id>
+verify_response_etag(<hashlike_etag>)
+request 400 DELETE /answers?sessionid=<session_id>&questionid=question3&if-match=<response_etag>
+

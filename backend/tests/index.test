@@ -1,7 +1,9 @@
-@description index page returns 405 (issue #389)
+@description index page returns 204 (issue #389, #260)
 
-request 405 GET /
-request 405 GET /index
+#! -- #260, changed response status from 405 to 204 (no content)
+
+request 204 GET /
+request 204 GET /index
 
 #! -- everyting else works
-request 200 GET /accesstest
+request 200 GET /status

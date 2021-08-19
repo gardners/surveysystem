@@ -31,7 +31,7 @@ match_string <empty>
 #! - PASS /newsession - no session created
 #! ------
 
-request 200 OPTIONS /newsession?surveyid=foo
+request 200 OPTIONS /session?surveyid=foo
 match_string <empty>
 verify_sessionfiles_count 0
 
@@ -64,26 +64,14 @@ endofsession
 #! - PASS /nextquestion
 #! ------
 
-request 200 OPTIONS /nextquestion?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
+request 200 OPTIONS /questions?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
 match_string <empty>
 
 #! ------
-#! - PASS /delanswer - no answer deleted
+#! - PASS DELETE /answers?questionid - no answer deleted
 #! ------
 
-request 200 OPTIONS /delanswer?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&questionid=question1
-match_string <empty>
-
-verify_session(skip_headers)
-foo/current
-question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
-endofsession
-
-#! ------
-#! - PASS /delprevanswer - no answer deleted, no checksum required
-#! ------
-
-request 200 OPTIONS /delprevanswer?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
+request 200 OPTIONS /answers?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&questionid=question1 -H "If-Match: <response_etag>"
 match_string <empty>
 
 verify_session(skip_headers)
@@ -92,10 +80,10 @@ question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #! ------
-#! - PASS /delsession - no session deleted
+#! - PASS DELETE /answers?prev - no answer deleted, no checksum required
 #! ------
 
-request 200 OPTIONS /delsession?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
+request 200 OPTIONS /answers?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901 -H "If-Match: <response_etag>"
 match_string <empty>
 
 verify_session(skip_headers)
@@ -104,22 +92,27 @@ question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #! ------
-#! - PASS /accesstest
+#! - PASS DELETE /session - no session deleted
 #! ------
 
-request 200 OPTIONS /accesstest
+request 200 OPTIONS /session?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
+match_string <empty>
+
+verify_session(skip_headers)
+foo/current
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#! ------
+#! - PASS GET /status
+#! ------
+
+request 200 OPTIONS /status
 match_string <empty>
 
 #! ------
-#! - PASS /fastcgitest
+#! - PASS /analysis
 #! ------
 
-request 200 OPTIONS /fastcgitest
-match_string <empty>
-
-#! ------
-#! - PASS /analyse
-#! ------
-
-request 200 OPTIONS /analyse?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
+request 200 OPTIONS /analysis?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
 match_string <empty>

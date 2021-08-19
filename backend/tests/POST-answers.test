@@ -1,7 +1,13 @@
 @description POST requests /answers - content types csv and urlencoded
 
+#!
+#! --------
+#! - /answers serialised
+#! --------
+#!
+
 # Create a dummy survey
-definesurvey foo
+definesurvey foo_serialised
 version 2
 Silly test survey updated
 without python
@@ -10,15 +16,15 @@ question2:Question2::TEXT:0::-1:-1:0:0::
 endofsurvey
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=foo
+request 200 GET /session?surveyid=foo_serialised
 extract_sessionid
 
 # Check that we have an empty session file created
 verify_session(skip_headers)
-foo/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+foo_serialised/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
 endofsession
 
-request 200 GET /nextquestion?sessionid=<session_id>
+request 200 GET /questions?sessionid=<session_id>
 match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "question1", "name": "question1", "title": "Question1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #! -- PASS add single answer Content-Type: text/csv
@@ -37,7 +43,55 @@ match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": 
 
 # Make sure answer ends up in file
 verify_session(skip_headers)
-foo/current
+foo_serialised/current
+question1:TEXT:Answer1:0:0:0:0:0:0:0::0:<UTIME>
+question2:TEXT:Answer2:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#!
+#! --------
+#! - /answers values
+#! --------
+#!
+
+# Create a dummy survey
+definesurvey foo_values
+version 2
+Silly test survey updated
+without python
+question1:Question1::TEXT:0::-1:-1:0:0::
+question2:Question2::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+# Request creation of a  new session
+request 200 GET /session?surveyid=foo_values
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session(skip_headers)
+foo_values/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+endofsession
+
+request 200 GET /questions?sessionid=<session_id>
+match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "question1", "name": "question1", "title": "Question1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+#! -- PASS add single answer (no Content-Type set)
+
+request 200 POST /answers?sessionid=<session_id>&question1=Answer1
+match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question2", "name": "question2", "title": "Question2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+#! -- FAIL overwrite single answer (open session)
+
+request 400 POST /answers?sessionid=<session_id>&question1=Answer1
+
+#! -- PASS add single answer Content-Type: application/x-www-form-urlencoded
+
+request 200 POST /answers?sessionid=<session_id> -H "Content-Type: application/x-www-form-urlencoded" -d "question2=Answer2"
+match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": []}
+
+# Make sure answer ends up in file
+verify_session(skip_headers)
+foo_values/current
 question1:TEXT:Answer1:0:0:0:0:0:0:0::0:<UTIME>
 question2:TEXT:Answer2:0:0:0:0:0:0:0::0:<UTIME>
 endofsession

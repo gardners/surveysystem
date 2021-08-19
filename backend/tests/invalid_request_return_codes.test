@@ -1,26 +1,26 @@
 @description requests with invalid or missing params should HTTP 400 or 500
 @skip!
 
-request 400 GET /newsession
-request 500 GET /newsession?surveyid=
-request 500 GET /newsession?surveyid=invalid
+request 400 GET /session
+request 500 GET /session?surveyid=
+request 500 GET /session?surveyid=invalid
 
-request 400 GET /nextquestion
-request 500 GET /nextquestion?sessionid=
-request 500 GET /nextquestion?sessionid=invalid
+request 400 GET /questions
+request 500 GET /questions?sessionid=
+request 500 GET /questions?sessionid=invalid
 
 request 400 POST /answers
 request 500 POST /answers?sessionid=
 request 500 POST /answers?sessionid=invalid
 
-request 400 GET /delanswer
-request 500 GET /delanswer?sessionid=
-request 500 GET /delanswer?sessionid=invalid
+request 400 DELETE /answers -H "If-Match: <response_etag>"
+request 500 DELETE /answers?sessionid= -H "If-Match: <response_etag>"
+request 500 DELETE /answers?sessionid=invalid -H "If-Match: <response_etag>"
 
-request 400 GET /analyse
-request 500 GET /analyse?sessionid=
-request 500 GET /analyse?sessionid=invalid
+request 400 GET /analysis
+request 500 GET /analysis?sessionid=
+request 500 GET /analysis?sessionid=invalid
 
-request 400 GET /delsession
-request 500 GET /delsession?sessionid=
-request 500 GET /delsession?sessionid=invalid
+request 400 DELETE /session
+request 500 DELETE /session?sessionid=
+request 500 DELETE /session?sessionid=invalid

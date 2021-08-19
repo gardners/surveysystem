@@ -30,35 +30,30 @@ endofsession
 #!-- SKIP: no query params supported
 
 #!---------------------
-#! GET /accesstest:
+#! GET /status: any value allowed
 #!---------------------
 
-#!-- SKIP: no query params supported
-
-#!---------------------
-#! GET /fastcgitest:
-#!---------------------
-
-#!-- SKIP: no query params supported
+request 204 GET /status?extended=1
+request 204 GET /status?extended=a
 
 #!---------------------
 #! GET /newsession
 #!---------------------
 
 #!-- PASS:
-request 200 GET /newsession?surveyid=httpquery
+request 200 GET /session?surveyid=httpquery
 
 #!-- FAIL: missing surveyid
-request 400 GET /newsession
+request 400 GET /session
 
 #!-- FAIL: empty surveyid
-request 400 GET /newsession?surveyid=
+request 400 GET /session?surveyid=
 
 #!-- FAIL: invalid chars surveyid
-request 400 GET /newsession?surveyid=
+request 400 GET /session?surveyid=
 
 #!-- FAIL: unknown surveyid
-request 500 GET /newsession?surveyid=invalid
+request 500 GET /session?surveyid=invalid
 
 #!---------------------
 #! POST /newsession >>> run createsession-managed-id.test
@@ -69,24 +64,24 @@ request 500 GET /newsession?surveyid=invalid
 #!---------------------
 
 #!-- PASS:
-request 200 GET /nextquestion?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+request 200 GET /questions?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 # not a system answer
 match_string {"status": 0, "message": "", "progress": [1, 4], "next_questions": [{"id": "question1", "name": "question1", "title": "Question1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #!-- FAIL: missing sessionid
-request 400 GET /nextquestion
+request 400 GET /questions
 
 #!-- FAIL: empty sessionid
-request 400 GET /nextquestion?sessionid=
+request 400 GET /questions?sessionid=
 
 #!-- FAIL: invalid sessionid
-request 400 GET /nextquestion?sessionid=aaa
+request 400 GET /questions?sessionid=aaa
 
 #!-- FAIL: uppercased sessionid
-request 400 GET /nextquestion?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA
+request 400 GET /questions?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA
 
 #!-- FAIL: unknownsessionid
-request 400 GET /nextquestion?sessionid=21c00c79-0000-0000-1a30-e98476f71b42
+request 400 GET /questions?sessionid=21c00c79-0000-0000-1a30-e98476f71b42
 
 #!---------------------
 #! POST /answers
@@ -142,60 +137,68 @@ request 400 POST /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=
 request 400 POST /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@system:NOTALLOWED:0:0:0:0:0:0:0
 
 #!---------------------
-#! GET /delanswer
+#! DELETE /answers
 #!---------------------
 
 #!-- prepare test: progress a question (for deletion)
+request 200 GET /questions?sessionid=<session_id>
 request 200 POST /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=question2:Answer2:0:0:0:0:0:0:0
 
 #!-- PASS:
-request 200 GET /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=question2
+request 200 GET /questions?sessionid=<session_id>
+request 200 DELETE /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=question2 -H "If-Match: <response_etag>"
 match_string {"status": 0, "message": "", "progress": [2, 4], "next_questions": [{"id": "question2", "name": "question2", "title": "Question2", "description": "", "type": "TEXT", "default_value": "Answer2", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #!-- FAIL: missing sessionid and answer
-request 400 GET /delanswer
+request 200 GET /questions?sessionid=<session_id>
+request 400 DELETE /answers -H "If-Match: <response_etag>"
 
 #!-- FAIL: missing sessionid
-request 400 GET /delanswer?questionid=question2
+request 200 GET /questions?sessionid=<session_id>
+request 400 DELETE /answers?questionid=question2 -H "If-Match: <response_etag>"
 
 #!-- FAIL: empty sessionid
-request 400 GET /delanswer?sessionid=&questionid=question2
+request 200 GET /questions?sessionid=<session_id>
+request 400 DELETE /answers?sessionid=&questionid=question2 -H "If-Match: <response_etag>"
 
 #!-- FAIL: invalid sessionid
-request 400 GET /delanswer?sessionid=aaa&questionid=question2
+request 200 GET /questions?sessionid=<session_id>
+request 400 DELETE /answers?sessionid=aaa&questionid=question2 -H "If-Match: <response_etag>"
 
 #!-- FAIL: uppercased sessionid
-request 400 GET /delanswer?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA&questionid=question2
+request 200 GET /questions?sessionid=<session_id>
+request 400 DELETE /answers?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA&questionid=question2 -H "If-Match: <response_etag>"
 
 #!-- FAIL: unknown sessionid
-request 400 GET /delanswer?sessionid=21c00c79-0000-0000-1a30-e98476f71b42&questionid=question2
-
-#!-- FAIL: missing answer
-request 400 GET /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
-
-#!-- FAIL: empty answer
-request 400 GET /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=
+request 200 GET /questions?sessionid=<session_id>
+request 400 DELETE /answers?sessionid=21c00c79-0000-0000-1a30-e98476f71b42&questionid=question2 -H "If-Match: <response_etag>"
 
 #!-- FAIL: invalid answer
-request 400 GET /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=invalid
+request 200 GET /questions?sessionid=<session_id>
+request 400 DELETE /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=invalid -H "If-Match: <response_etag>"
 
 #!-- FAIL: already deleted answer
-request 400 GET /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=question3
+request 200 GET /questions?sessionid=<session_id>
+request 400 DELETE /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=question3 -H "If-Match: <response_etag>"
 
 #!-- FAIL: unknown answer
-request 400 GET /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=question4
+request 200 GET /questions?sessionid=<session_id>
+request 400 DELETE /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=question4 -H "If-Match: <response_etag>"
 
 #!-- FAIL: header answer
-request 400 GET /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@user:NOTALLOWED:0:0:0:0:0:0:0:
+request 200 GET /questions?sessionid=<session_id>
+request 400 DELETE /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=@user -H "If-Match: <response_etag>"
 
 #!-- FAIL: META answer
-request 400 GET /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=meta:NOTALLOWED:0:0:0:0:0:0:0:
+request 200 GET /questions?sessionid=<session_id>
+request 400 DELETE /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=meta -H "If-Match: <response_etag>"
 
 #!-- FAIL: system answer
-request 400 GET /delanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=@system:NOTALLOWED:0:0:0:0:0:0:0:
+request 200 GET /questions?sessionid=<session_id>
+request 400 DELETE /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&questionid=@system -H "If-Match: <response_etag>"
 
 #!---------------------
-#! GET /delprevanswer: not testing checksum validity here
+#! DELETE /answers?prev: not testing checksum validity here
 #!---------------------
 
 #!-- prepare test: re-answer question deleted before
@@ -203,38 +206,38 @@ request 200 POST /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=
 verify_response_etag(<hashlike_etag>)
 
 #!-- PASS:
-request 200 GET /delprevanswer?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa -H "If-Match: <response_etag>"
+request 200 DELETE /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa -H "If-Match: <response_etag>"
 match_string {"status": 0, "message": "", "progress": [2, 4], "next_questions": [{"id": "question2", "name": "question2", "title": "Question2", "description": "", "type": "TEXT", "default_value": "Answer2", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #!-- FAIL: missing sessionid
-request 400 GET /delprevanswer -H "If-Match: <response_etag>"
+request 400 DELETE /answers -H "If-Match: <response_etag>"
 
 #!-- (prepare next, get valid etag)
-request 200 GET /nextquestion?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+request 200 GET /questions?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 
 #!-- FAIL: empty sessionid
-request 400 GET /delprevanswer?sessionid= -H "If-Match: <response_etag>"
+request 400 DELETE /answers?sessionid= -H "If-Match: <response_etag>"
 
 #!-- (prepare next, get valid etag)
-request 200 GET /nextquestion?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+request 200 GET /questions?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 
 #!-- FAIL: invalid sessionid
-request 400 GET /delprevanswer?sessionid=aaa -H "If-Match: <response_etag>"
+request 400 DELETE /answers?sessionid=aaa -H "If-Match: <response_etag>"
 
 #!-- (prepare next, get valid etag)
-request 200 GET /nextquestion?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+request 200 GET /questions?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 
 #!-- FAIL: uppercased sessionid
-request 400 GET /delprevanswer?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA -H "If-Match: <response_etag>"
+request 400 DELETE /answers?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA -H "If-Match: <response_etag>"
 
 #!-- (prepare next, get valid etag)
-request 200 GET /nextquestion?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+request 200 GET /questions?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 
 #!-- FAIL: unknown sessionid
-request 400 GET /delprevanswer?sessionid=21c00c79-0000-0000-1a30-e98476f71b42 -H "If-Match: <response_etag>"
+request 400 DELETE /answers?sessionid=21c00c79-0000-0000-1a30-e98476f71b42 -H "If-Match: <response_etag>"
 
 #!---------------------
-#! GET /analyse
+#! GET /analysis
 #!---------------------
 
 #!-- prepare test: re-answer question deleted before
@@ -243,27 +246,27 @@ request 200 POST /answers?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa&answer=
 match_string {"status": 0, "message": "", "progress": [4, 4], "next_questions": []}
 
 #!-- PASS:
-request 200 GET /analyse?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+request 200 GET /analysis?sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 match_string "NOT IMPLEMENTED"
 
 #!-- FAIL: missing sessionid
-request 400 GET /analyse
+request 400 GET /analysis
 
 #!-- FAIL: empty sessionid
-request 400 GET /analyse?sessionid=
+request 400 GET /analysis?sessionid=
 
 #!-- FAIL: invalid sessionid
-request 400 GET /analyse?sessionid=aaa
+request 400 GET /analysis?sessionid=aaa
 
 #!-- FAIL: uppercased sessionid
-request 400 GET /analyse?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA
+request 400 GET /analysis?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA
 
 #!-- FAIL: unknown sessionid
-request 400 GET /analyse?sessionid=21c00c79-0000-0000-1a30-e98476f71b42
+request 400 GET /analysis?sessionid=21c00c79-0000-0000-1a30-e98476f71b42
 
 
 #!---------------------
-#! GET /delsession:
+#! DELETE /session:
 #!---------------------
 
 #!-- !!! currently deletion sessions in not allowed by default (see validate_session_action())
@@ -272,17 +275,17 @@ request 400 GET /analyse?sessionid=21c00c79-0000-0000-1a30-e98476f71b42
 #!-- PASS: not implemented!
 
 #!-- FAIL: missing sessionid
-request 400 GET /delsession
+request 405 DELETE /session
 
 #!-- FAIL: empty sessionid
-request 400 GET /delsession?sessionid=
+request 405 DELETE /session?sessionid=
 
 #!-- FAIL: invalid sessionid
-request 400 GET /delsession?sessionid=aaa
+request 405 DELETE /session?sessionid=aaa
 
 #!-- FAIL: uppercased sessionid
-request 400 GET /delsession?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA
+request 405 DELETE /session?sessionid=AAAAAAAA-0000-0000-0000-AAAAAAAAAAAA
 
 #!-- FAIL: unknown sessionid
-request 400 GET /delsession?sessionid=21c00c79-0000-0000-1a30-e98476f71b42
+request 405 DELETE /session?sessionid=21c00c79-0000-0000-1a30-e98476f71b42
 

@@ -15,4 +15,4 @@ endofsurvey
 #! with valid MW credentials but invalid remote
 #!---------------------
 
-request proxy 407 GET /newsession?surveyid=authmiddlewareunknownmwip --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 502 GET /session?surveyid=authmiddlewareunknownmwip --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"

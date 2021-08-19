@@ -13,7 +13,7 @@ endofsurvey
 #! ------
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=foo
+request 200 GET /session?surveyid=foo
 
 # Get the session ID that newsession should have returned
 extract_sessionid
@@ -30,7 +30,7 @@ verify_sessionfiles_count 1
 #! ------
 
 # Request creation of a  new session
-request 200 GET /newsession?surveyid=foo
+request 200 GET /session?surveyid=foo
 
 # Get the session ID that newsession should have returned
 extract_sessionid

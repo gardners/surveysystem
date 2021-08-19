@@ -368,7 +368,7 @@ int deserialise_string(char *field, char **s) {
 #define APPEND_COLON(O, L, ML)                                                 \
   {                                                                            \
     if (space_check(1, L, ML)) {                                               \
-      BREAK_ERROR("serialised string too long");                                 \
+      BREAK_ERROR("serialised string too long");                               \
     }                                                                          \
     O[L++] = ':';                                                              \
     O[L] = 0;                                                                  \
@@ -377,7 +377,7 @@ int deserialise_string(char *field, char **s) {
 #define SERIALISE_BEGIN(O, L, ML)                                              \
   {                                                                            \
     int encoded_len = 0;                                                       \
-    const int encoded_max_len = 65536;                                         \
+    const int encoded_max_len = MAX_LINE;                                      \
     char encoded[encoded_max_len];                                             \
     L = 0;
 
@@ -498,6 +498,62 @@ char *serialise_list_append_alloc(char *src, char *in, const char separator) {
   }
 
   return src;
+}
+
+/**
+ * deserialises a string into a char** array by a given separator.
+ * if *in is NULL then an empty list will be returned
+ */
+struct string_list *deserialise_string_list(char *in, const char separator) {
+  int retVal = 0;
+  struct string_list *list = NULL;
+
+  do {
+    list = calloc(1, sizeof(struct string_list));
+    BREAK_IF(list == NULL, SS_ERROR_MEM, "string list");
+
+    if(!in) {
+      break; //return empty, allocated list
+    }
+
+    int count = serialiser_count_columns(',', in);
+    if(!count) {
+      break;
+    }
+
+    list->items = malloc(count * sizeof(char*));
+    BREAK_IF(list->items == NULL, SS_ERROR_MEM, "string list items ptr");
+
+    char *sav;
+    char *line = parse_line(in, separator, &sav);
+
+    while(line != NULL) {
+      list->items[list->len] = line; // allocated already
+      list->len++;
+      // next
+      line = parse_line(NULL, separator, &sav);
+    }
+  } while (0);
+
+  if (retVal) {
+    free_string_list(list);
+    return NULL;
+  }
+
+  return list;
+}
+
+void free_string_list(struct string_list *list) {
+  if (!list) {
+    return;
+  }
+
+  for (size_t i = 0; i < list->len; i++) {
+    free(list->items[i]);
+  }
+
+  list->len = 0;
+  free(list);
 }
 
 
@@ -857,11 +913,11 @@ int deserialise_answer(char *in, enum answer_scope scope, struct answer *a) {
   {                                                                                \
     if (q1->S > q2->S) {                                                           \
       if (mismatchIsError) {                                                       \
-        BREAK_ERRORV(#S " fields do not match: '%d' vs '%d'", q1->S, q1->S);         \
+        BREAK_ERRORV(#S " fields do not match: '%d' vs '%d'", q1->S, q1->S);       \
       }                                                                            \
     } else if (q1->S < q2->S) {                                                    \
       if (mismatchIsError) {                                                       \
-        BREAK_ERROR(#S " fields do not match");                                      \
+        BREAK_ERROR(#S " fields do not match");                                    \
       }                                                                            \
     } else                                                                         \
       retVal = 0;                                                                  \
@@ -873,12 +929,12 @@ int deserialise_answer(char *in, enum answer_scope scope, struct answer *a) {
   {                                                                                \
     if ((!q1->S) || (!q2->S)) {                                                    \
       if (q1->S != q2->S && mismatchIsError) {                                     \
-        BREAK_ERRORV(#S " fields dot not match '%s' vs '%s'", q1->S, q2->S);         \
+        BREAK_ERRORV(#S " fields dot not match '%s' vs '%s'", q1->S, q2->S);       \
       }                                                                            \
     } else {                                                                       \
       if (strcmp(q1->S, q2->S)) {                                                  \
         if (mismatchIsError) {                                                     \
-          BREAK_ERRORV( #S " fields do not match '%s' vs '%s'", q1->S, q2->S);       \
+          BREAK_ERRORV( #S " fields do not match '%s' vs '%s'", q1->S, q2->S);     \
         }                                                                          \
       }                                                                            \
     }                                                                              \

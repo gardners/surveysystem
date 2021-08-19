@@ -15,10 +15,11 @@ void usage(void) {
   fprintf(
       stderr,
       "usage: surveycli newsession <survey name> -- create a new session\n"
-      "       surveycli addanswer <sessionid> <serialised answer> -- add an answer to an existing session\n"
+      "       surveycli addanswer <sessionid> <serialised answer> -- add a serialised answer to an existing session\n"
+      "       surveycli addanswervalue <sessionid> <question_id> <value> -- add an answer value to an existing session\n"
       "       surveycli nextquestion <sessionid> -- get the next question that  be asked\n"
-      "       surveycli delanswer <sessionid> <question id> -- delete an answer from an existing session\n"
-      "       surveycli delprevanswer <sessionid> <question id> -- delete an answer from an existing session\n"
+      "       surveycli delanswer <sessionid> <question id> -- delete an answer (and all following) from an existing session\n"
+      "       surveycli delprevanswer <sessionid> <checksum> -- delete previous answer from an existing session\n"
       "       surveycli delsession <sessionid> -- delete an existing session\n"
       "       surveycli analyse <sessionid> -- get the analysis of a finished session\n"
       "       surveycli progress <sessionid> -- get the progress count of an existing session\n"
@@ -105,8 +106,8 @@ void print_nextquestion(struct nextquestions *nq) {
     }
 
     // return adjacent next question only
-    char out [65536];
-    if (serialise_question(nq->next_questions[0], out, 65536)) {
+    char out [MAX_LINE];
+    if (serialise_question(nq->next_questions[0], out, MAX_LINE)) {
       LOG_WARNV("serialising next question '%s' failed", nq->next_questions[0]->uid);
     }
 
@@ -121,6 +122,7 @@ int do_newsession(char *survey_id) {
   struct session *ses = NULL;
   struct nextquestions *nq = NULL;
   enum actions action = ACTION_SESSION_NEW;
+  int err;
 
   do {
     LOG_INFO("Entering newsession handler.");
@@ -138,9 +140,9 @@ int do_newsession(char *survey_id) {
     }
 
     // #268 create_session() now returns returns a session struct
-    ses = create_session(survey_id, session_id, &meta);
+    ses = create_session(survey_id, session_id, &meta, &err);
     if (!ses) {
-      fprintf(stderr, "failed to create session.\n");
+      fprintf(stderr, "Failed to create session, error: '%s'\n", get_error(err, 0, "[ERROR] unknown"));
       BREAK_ERROR("Create session failed.");
     }
 
@@ -172,11 +174,12 @@ int do_progress(char *session_id) {
   enum actions action = ACTION_SESSION_NEXTQUESTIONS;
 
   do {
-    LOG_INFO("Entering countquestions handler.");
+    LOG_INFO("Entering progress handler.");
+    int err;
 
-    ses = load_session(session_id);
+    ses = load_session(session_id, &err);
     if (!ses) {
-      fprintf(stderr, "Could not load specified session. Does it exist?\n");
+      fprintf(stderr, "Could not load specified session, error: '%s'\n", get_error(err, 0, "[ERROR] unknown"));
       BREAK_ERROR("Could not load session");
     }
 
@@ -205,10 +208,11 @@ int do_nextquestions(char *session_id) {
 
   do {
     LOG_INFO("Entering nextquestion handler.");
+    int err;
 
-    ses = load_session(session_id);
+    ses = load_session(session_id, &err);
     if (!ses) {
-      fprintf(stderr, "Could not load specified session. Does it exist?\n");
+      fprintf(stderr, "Could not load specified session, error: '%s'\n", get_error(err, 0, "[ERROR] unknown"));
       BREAK_ERROR("Could not load session");
     }
 
@@ -251,10 +255,11 @@ int do_addanswer(char *session_id, char *serialised_answer) {
 
   do {
     LOG_INFO("Entering addanswer handler.");
+    int err;
 
-    ses = load_session(session_id);
+    ses = load_session(session_id, &err);
     if (!ses) {
-      fprintf(stderr, "Could not load specified session. Does it exist?");
+      fprintf(stderr, "Could not load specified session, error: '%s'\n", get_error(err, 0, "[ERROR] unknown"));
       BREAK_ERROR("Could not load session");
     }
 
@@ -334,10 +339,11 @@ int do_addanswervalue(char *session_id, char *uid, char *value) {
 
   do {
     LOG_INFO("Entering addanswervalue handler.");
+    int err;
 
-    ses = load_session(session_id);
+    ses = load_session(session_id, &err);
     if (!ses) {
-      fprintf(stderr, "Could not load specified session. Does it exist?");
+      fprintf(stderr, "Could not load specified session, error: '%s'\n", get_error(err, 0, "[ERROR] unknown"));
       BREAK_ERROR("Could not load session");
     }
 
@@ -417,10 +423,11 @@ int do_delanswer(char *session_id, char *question_id) {
 
   do {
     LOG_INFO("Entering delanswer handler.");
+    int err;
 
-    ses = load_session(session_id);
+    ses = load_session(session_id, &err);
     if (!ses) {
-      fprintf(stderr, "Could not load specified session. Does it exist?");
+      fprintf(stderr, "Could not load specified session, error: '%s'\n", get_error(err, 0, "[ERROR] unknown"));
       BREAK_ERROR("Could not load session");
     }
 
@@ -428,6 +435,11 @@ int do_delanswer(char *session_id, char *question_id) {
     if (validate_session_action(action, ses, reason, 1024)) {
       fprintf(stderr, "%s\n", reason);
       BREAK_ERROR("Session action validation failed");
+    }
+
+    if (validate_session_delete_answer(ses, question_id)) {
+      fprintf(stderr, "validating answer for deletion failed\n");
+      BREAK_ERROR("validate_session_delete_answer() failed");
     }
 
     // #445 count affected answers
@@ -469,7 +481,7 @@ int do_delprevanswer(char *session_id, char *checksum) {
 
   do {
     LOG_INFO("Entering delprevanswer handler.");
-
+    int err;
 
     // (weak) valiation if header->val is hash like string
     if (sha1_validate_string_hashlike(checksum)) {
@@ -477,9 +489,9 @@ int do_delprevanswer(char *session_id, char *checksum) {
       BREAK_ERROR("carg 'checksum' is invalid!");
     }
 
-    ses = load_session(session_id);
+    ses = load_session(session_id, &err);
     if (!ses) {
-      fprintf(stderr, "Could not load specified session. Does it exist?");
+      fprintf(stderr, "Could not load specified session, error: '%s'\n", get_error(err, 0, "[ERROR] unknown"));
       BREAK_ERROR("Could not load session");
     }
 
@@ -505,6 +517,11 @@ int do_delprevanswer(char *session_id, char *checksum) {
     int affected_count = -1;
 
     if (last) {
+      if (validate_session_delete_answer(ses, last->uid)) {
+        fprintf(stderr, "validating answer for deletion failed\n");
+        BREAK_ERROR("validate_session_delete_answer() failed");
+      }
+
       LOG_INFOV("deleting last given answer '%s'", last->uid);
       affected_count = session_delete_answer(ses, last->uid);
     } else {
@@ -549,10 +566,11 @@ int do_getchecksum(char *session_id) {
 
   do {
     LOG_INFO("Entering getchecksum handler.");
+    int err;
 
-    ses = load_session(session_id);
+    ses = load_session(session_id, &err);
     if (!ses) {
-      fprintf(stderr, "Could not load specified session. Does it exist?");
+      fprintf(stderr, "Could not load specified session, error: '%s'\n", get_error(err, 0, "[ERROR] unknown"));
       BREAK_ERROR("Could not load session");
     }
 
@@ -586,10 +604,11 @@ int do_delsession(char *session_id) {
 
   do {
     LOG_INFO("Entering delsession handler.");
+    int err;
 
-    ses = load_session(session_id);
+    ses = load_session(session_id, &err);
     if (!ses) {
-      fprintf(stderr, "Could not load specified session. Does it exist?");
+      fprintf(stderr, "Could not load specified session, error: '%s'\n", get_error(err, 0, "[ERROR] unknown"));
       BREAK_ERROR("Could not load session");
     }
 
@@ -625,10 +644,11 @@ int do_analyse(char *session_id) {
 
   do {
     LOG_INFO("Entering analyse handler.");
+    int err;
 
-    ses = load_session(session_id);
+    ses = load_session(session_id, &err);
     if (!ses) {
-      fprintf(stderr, "Could not load specified session. Does it exist?");
+      fprintf(stderr, "Could not load specified session, error: '%s'\n", get_error(err, 0, "[ERROR] unknown"));
       BREAK_ERROR("Could not load session");
     }
 

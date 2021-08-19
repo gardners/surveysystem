@@ -51,7 +51,19 @@ corresponding frontend module:
 
 * `front/src/Answer.js`
 
-Format of an answer row:
+## Format of an answer row:
+
+### request
+
+request payload format (serialisation mode: public):
+
+```csv
+<uid>:<text>:<value>:<lat>:<lon>:<time_begin>:<time_end>:<time_zone_delta>:<dst_delta>
+```
+
+### session
+
+session storageformat (serialisation mode: private):
 
 ```csv
 <uid>:<text>:<value>:<lat>:<lon>:<time_begin>:<time_end>:<time_zone_delta>:<dst_delta>:<unit>:<flag>:<stored>
@@ -86,4 +98,4 @@ Location: `sessions/<session-prefix>/sessionID`
 
 **stored**
 
-- timestamp is set on adding, deleting or updating an answer: *addanswer*, *updateanswer*, *delanswer*, *delanswerandfollowing*
+- timestamp is set on adding, deleting or updating an answer

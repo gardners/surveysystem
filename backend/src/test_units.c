@@ -504,45 +504,49 @@ int main(int argc, char **argv) {
       free(text);
     }
 
-    SECTION("deserialise char* array: deserialise_list_alloc()");
+    SECTION("deserialise char* array: deserialise_string_list()");
 
     {
       char *line = "uid1,uid2,uid3";
-      size_t len;
-      char **list = deserialise_list_alloc(line, ',', &len);
+      struct string_list *list = deserialise_string_list(line, ',');
 
-      ASSERT(len == 3, "list length 3 == %ld", len);
-      ASSERT_STR_EQ(list[0], "uid1", "list item 1");
-      ASSERT_STR_EQ(list[1], "uid2", "list item 2");
-      ASSERT_STR_EQ(list[2], "uid3", "list item 3");
+      ASSERT(list->len == 3, "list length 3 == %ld", list->len);
+      ASSERT_STR_EQ(list->items[0], "uid1", "list item 1");
+      ASSERT_STR_EQ(list->items[1], "uid2", "list item 2");
+      ASSERT_STR_EQ(list->items[2], "uid3", "list item 3");
 
-      for (size_t i = 0; i < len; i++) {
-          free(list[i]);
+      for (size_t i = 0; i < list->len; i++) {
+        free(list->items[i]);
       }
       free(list);
     }
 
     {
       char *line = "uid1";
-      size_t len;
-      char **list = deserialise_list_alloc(line, ',', &len);
+      struct string_list *list = deserialise_string_list(line, ',');
 
-      ASSERT(len == 1, "list length 1 == %ld", len);
-      ASSERT_STR_EQ(list[0], "uid1", "list item 1");
+      ASSERT(list->len == 1, "list length 1 == %ld", list->len);
+      ASSERT_STR_EQ(list->items[0], "uid1", "list item 1");
 
-      free(list[0]);
+      for (size_t i = 0; i < list->len; i++) {
+        free(list->items[i]);
+      }
       free(list);
     }
 
     {
       char *line = NULL;
-      size_t len;
-      char **list = deserialise_list_alloc(line, ',', &len);
-printf(" * computed len=%ld\n", len);
-      ASSERT(len == 0, "list length 0 == %ld", len);
-      ASSERT(list == NULL, "list is NULL", "");
+      struct string_list *list = deserialise_string_list(line, ',');
 
+      ASSERT(list->len == 0, "list length 0 == %ld", list->len);
+      ASSERT(list->items == NULL, "list items is NULL", "");
+
+      for (size_t i = 0; i < list->len; i++) {
+        free(list->items[i]);
+      }
+      free(list);
     }
+
     /* tests for #392 */
     SECTION("escape_string() tests, issue #392");
 

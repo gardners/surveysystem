@@ -12,7 +12,7 @@ question1:Question 1::TEXT:0::-1:-1:0:0::
 question2:Question 2::TEXT:0::-1:-1:0:0::
 endofsurvey
 
-request proxy 200 GET /newsession?surveyid=foo --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 200 GET /session?surveyid=foo --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 extract_sessionid
 
 #!------- add meta answer MANUALLY to session (first)
@@ -29,7 +29,7 @@ META_1:META:Meta 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #!------- /nextquestion (1) does not care about meta answer and returns first question
-request proxy 200 GET /nextquestion?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 200 GET /questions?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #!------- /answers adds answer to first question and leaves meta question untouched
@@ -50,7 +50,7 @@ endofsession
 session_add_answer META_2:META:Meta 2:0:0:0:0:0:0:0::0:<UTIME>
 
 #!------- /nextquestion (2) does not care about meta answer and returns second question
-request proxy 200 GET /nextquestion?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 200 GET /questions?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 #!------- (survey finished) /answers adds answer to second question and leaves meta question untouched
@@ -86,10 +86,15 @@ question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
 META_3:META:Meta 3:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
-#!------- trying to /delanswer META question should fail
-request proxy 400 GET /delanswer?sessionid=<session_id>&questionid=META_3 --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
-request proxy 400 GET /delanswer?sessionid=<session_id>&questionid=META_2 --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
-request proxy 400 GET /delanswer?sessionid=<session_id>&questionid=META_1 --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+#!------- trying to DELETE /answers?questionid META question should fail
+request proxy 200 GET /questions?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 400 DELETE /answers?sessionid=<session_id>&questionid=META_3 --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>"
+
+request proxy 200 GET /questions?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 400 DELETE /answers?sessionid=<session_id>&questionid=META_2 --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>"
+
+request proxy 200 GET /questions?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 400 DELETE /answers?sessionid=<session_id>&questionid=META_1 --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>"
 
 verify_session
 foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
@@ -104,11 +109,14 @@ question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
 META_3:META:Meta 3:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
-#!------- trying to /delanswer (incrementially) survey questions should succeed
-request proxy 200 GET /delanswer?sessionid=<session_id>&questionid=question2 --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+#!------- trying to DELETE /answers?questionid (incrementially) survey questions should succeed
+
+request proxy 200 GET /questions?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+
+request proxy 200 DELETE /answers?sessionid=<session_id>&questionid=question2 --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>"
 match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "Answer 2", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
-request proxy 200 GET /delanswer?sessionid=<session_id>&questionid=question1 --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 200 DELETE /answers?sessionid=<session_id>&questionid=question1 --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1" -H "If-Match: <response_etag>"
 match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "Answer 1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 verify_session
@@ -144,11 +152,11 @@ question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
 META_3:META:Meta 3:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
-#!------- trying to /delprevanswer survey questions should succeed
-request proxy 200 GET /delprevanswer?sessionid=<session_id> --user test:1234 -H "If-Match: <response_etag>" -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+#!------- trying to DELETE /answers?prev survey questions should succeed
+request proxy 200 DELETE /answers?sessionid=<session_id> --user test:1234 -H "If-Match: <response_etag>" -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "Answer 2", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
-request proxy 200 GET /delprevanswer?sessionid=<session_id> --user test:1234 -H "If-Match: <response_etag>" -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 200 DELETE /answers?sessionid=<session_id> --user test:1234 -H "If-Match: <response_etag>" -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "question1", "name": "question1", "title": "Question 1", "description": "", "type": "TEXT", "default_value": "Answer 1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
 
 verify_session
