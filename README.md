@@ -91,27 +91,28 @@ Note that the following section reflects the *current state* of development and 
 
 ### Paths and queries
 
-| method | endpoint                                                           | response                                                | description                                                                                             |
-| ---    | ---                                                                |                                                         | ---                                                                                                     |
-| GET    | `/`                                                                |                                                         | index (not used, returns `204 no content`)                                                              |
-| GET    | `/session?surveyid`                                                | text: sessionid                                         | create session and retrieve generated session id                                                        |
-| POST   | `/session?surveyid&sessionid`                                      | text: sessionid                                         | create session with a given session id (uuidv4)                                                         |
-| GET    | `/questions?sessionid`                                             | json: [next questions](docs/next-questions-response.md) | get next questions to answer (questions, progress, status)                                              |
-| POST   | `/answers?sessionid` <sup>1)</sup> <sup>2)</sup>                   | json: [next questions](docs/next-questions-response.md) | answer previous questions, format: serialised answers (lines of colon separated values) in request body |
-| POST   | `/answers?sessionid&answer` <sup>1)</sup>                          | json: [next questions](docs/next-questions-response.md) | answer single previous question, format: serialised answer (colon separated values)                     |
-| POST   | `/answers?sessionid&{uid1}={value1}&{uid2}={value2}` <sup>1)</sup> | json: [next questions](docs/next-questions-response.md) | answer previous questions by ids and values, format: question id = answer value                         |
-| DELETE | `/answers?sessionid` <sup>3)</sup>                                 | json: [next questions](docs/next-questions-response.md) | delete last answers (roll back to previous questions)                                                   |
-| DELETE | `/answers?sessionid&questionid` <sup>3)</sup>                      | json: [next questions](docs/next-questions-response.md) | delete last answers until (and including) the given question id (rollback)                              |
-| GET    | `/analysis` <sup>4)</sup>                                          | json                                                    | get analysis based on your answers                                                                      |
-| GET    | `/status(?extended)`                                               | status 200/204 no content                               | system status use the `extended` param for checking correct configuration and paths                     |
+
+| method | endpoint                                                           | response                                                | description                                                                                                          |
+| ---    | ---                                                                | ---                                                     | ---                                                                                                                  |
+| GET    | `/`                                                                |                                                         | index (not used, returns `204 no content`)                                                                           |
+| GET    | `/session?surveyid`                                                | text: sessionid                                         | create session and retrieve generated session id                                                                     |
+| POST   | `/session?surveyid&sessionid`                                      | text: sessionid                                         | create session with a given session id (uuidv4)                                                                      |
+| GET    | `/questions?sessionid`                                             | json: [next questions](docs/next-questions-response.md) | get next questions to answer (questions, progress, status)                                                           |
+| POST   | `/answers?sessionid` <sup>1)</sup> <sup>2)</sup>                   | json: [next questions](docs/next-questions-response.md) | answer previous questions, format: serialised answers<sup>5)</sup> (lines of colon separated values) in request body |
+| POST   | `/answers?sessionid&answer` <sup>1)</sup>                          | json: [next questions](docs/next-questions-response.md) | answer single previous question, format: serialised answer<sup>5)</sup> (colon separated values)                     |
+| POST   | `/answers?sessionid&{uid1}={value1}&{uid2}={value2}` <sup>1)</sup> | json: [next questions](docs/next-questions-response.md) | answer previous questions by ids and values, format: question id = answer value                                      |
+| DELETE | `/answers?sessionid` <sup>3)</sup>                                 | json: [next questions](docs/next-questions-response.md) | delete last answers (roll back to previous questions)                                                                |
+| DELETE | `/answers?sessionid&questionid` <sup>3)</sup>                      | json: [next questions](docs/next-questions-response.md) | delete last answers until (and including) the given question id (rollback)                                           |
+| GET    | `/analysis` <sup>4)</sup>                                          | json                                                    | get analysis based on your answers                                                                                   |
+| GET    | `/status(?extended)`                                               | status 200/204 no content                               | system status use the `extended` param for checking correct configuration and paths                                  |
 
 - **1)**: Answers must match previous questions
 - **2)**: requires header: `Content-Type: text/csv`
 - **3)**: Request requires the `If-Modified`or `if-modified` param header with a valid consistency checksum. The checksum is provided  by the previous `ETag` response header value
 - **4)**: Session must be finished (all questions answered)
+- **5)** example for a serialised answer csv (QTYPE_TEXT): `question1:Hello+World:0:0:0:0:0:0:0`, see [serialisation docs for **public** answer definitions](docs/data-serialisation.md#answer-definitions)
 
-
-The survey model is sequential. `/surveyapi/addanswer`, `/surveyapi/updateanswer` are required to submit the answers for question ids in the exact same order as they were recieved. Similar with `delanswer` requests, where question ids have to be submitted in the exact reverse order.
+The survey model is sequential. `POST /surveyapi/answer` is required to submit the answers for question ids in the exact same order as they were recieved. Similar with `DELETE /answer` requests, where question ids have to be submitted in the exact reverse order.
 
 ## Documentation
 
