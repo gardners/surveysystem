@@ -212,6 +212,7 @@ enum actions {
   ACTION_SESSION_ADDANSWER,
   ACTION_SESSION_DELETEANSWER,
   ACTION_SESSION_ANALYSIS,
+  ACTION_MAX,
 };
 #define NUM_SESSION_ACTIONS 7
 extern char *session_action_names[NUM_SESSION_ACTIONS];
@@ -265,6 +266,7 @@ int generate_path(char *path_in, char *path_out, int max_len);
 int generate_session_path(char *session_id, char *filename, char *path_out, int max_len);
 int generate_python_path(char *path_out, int max_len);
 int generate_survey_path(char *survey_id, char *filename, char *path_out, int max_len);
+FILE *path_open(char *name, char *mode);
 
 // #363
 int is_given_answer(struct answer *a);
