@@ -63,7 +63,7 @@ static const char *const pages[PAGE__MAX] = {
     "answers",
     "analysis",
 
-    "check",
+    "status",
 };
 
 void usage(void) {

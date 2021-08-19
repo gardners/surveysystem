@@ -55,10 +55,10 @@ request 200 DELETE /answers?sessionid=<session_id> -H "If-Match: <response_etag>
 request 405 DELETE /session?sessionid=<session_id>
 
 #!-------
-#!- endpoint GET /check [pass]
+#!- endpoint GET /status [pass]
 #!-------
 
-request proxy 200 GET /check
+request proxy 200 GET /status
 
 #!-------
 #!- endpoint /analysis [pass]

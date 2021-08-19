@@ -30,11 +30,11 @@ endofsession
 #!-- SKIP: no query params supported
 
 #!---------------------
-#! GET /check: any value allowed
+#! GET /status: any value allowed
 #!---------------------
 
-request 204 GET /check?extended=1
-request 204 GET /check?extended=a
+request 204 GET /status?extended=1
+request 204 GET /status?extended=a
 
 #!---------------------
 #! GET /newsession

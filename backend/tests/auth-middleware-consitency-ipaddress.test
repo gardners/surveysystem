@@ -54,7 +54,7 @@ request proxy 502 DELETE /answers?sessionid=<session_id> -H "If-Match: <custom_c
 request proxy 405 DELETE /session?sessionid=<session_id> --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 
 #!-------
-#!- endpoint GET /check [pass]
+#!- endpoint GET /status [pass]
 #!-------
-request proxy 200 GET /check --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+request proxy 200 GET /status --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
 

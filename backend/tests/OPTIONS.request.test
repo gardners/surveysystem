@@ -104,10 +104,10 @@ question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
 endofsession
 
 #! ------
-#! - PASS GET /check
+#! - PASS GET /status
 #! ------
 
-request 200 OPTIONS /check
+request 200 OPTIONS /status
 match_string <empty>
 
 #! ------

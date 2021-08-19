@@ -59,7 +59,7 @@ $SERVER["socket"] == ":" + server_port {
      }
 
      # everything needs to be authenticated except some test endpoints
-     $HTTP["url"] !~ "^/(surveyapi\/check)"  {
+     $HTTP["url"] !~ "^/(surveyapi\/status)"  {
           auth.require = (
                "" => (
                     "method"  => "basic",

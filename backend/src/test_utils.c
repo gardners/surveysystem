@@ -420,7 +420,7 @@ void test_start_lighttpd(struct Test *test, char *pid_file, char *user, char *gr
 
   snprintf(
     cmd, 2048,
-    "curl -sS -f http://localhost:%d/surveyapi/check?extended=1",
+    "curl -sS -f http://localhost:%d/surveyapi/status?extended=1",
     server_port);
 
   if (test->count == 1) {
