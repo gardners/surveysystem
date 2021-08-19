@@ -22,7 +22,7 @@
  * @see: survey.h enum actions
  * #455
  */
-char *session_action_names[NUM_SESSION_ACTIONS] = {
+char *session_action_names[ACTION_MAX + 1] = {
   "ACTION_NONE",
   "ACTION_SESSION_NEW",
   "ACTION_SESSION_DELETE",

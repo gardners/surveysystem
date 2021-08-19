@@ -214,8 +214,7 @@ enum actions {
   ACTION_SESSION_ANALYSIS,
   ACTION_MAX,
 };
-#define NUM_SESSION_ACTIONS 7
-extern char *session_action_names[NUM_SESSION_ACTIONS];
+extern char *session_action_names[ACTION_MAX + 1];
 
 // #363 session meta
 struct session_meta {
