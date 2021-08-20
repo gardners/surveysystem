@@ -154,7 +154,7 @@ def get_ids(res):
 
 def response(res, json=True):
     if res.status_code > 300:
-        print('{} \'{}\' returned error {}\n - \'{}\''.format(red('Error:'), res.request.url, res.status_code, res.text))
+        print('{} {} \'{}\' returned error {}\n - \'{}\''.format(red('Error:'), res.request.method.upper(), res.request.url, res.status_code, res.text))
         exit(1)
 
     if 'Etag' in res.headers:
@@ -171,7 +171,7 @@ def req_newsession(survey_id):
         'surveyid': survey_id
     }
 
-    res = requests.get('{}/newsession'.format(Config['uri']), params=params)
+    res = requests.get('{}/session'.format(Config['uri']), params=params)
     return response(res, False)
 
 
@@ -180,7 +180,7 @@ def req_nextquestion(session_id):
         'sessionid': session_id,
     }
 
-    res = requests.get('{}/nextquestion'.format(Config['uri']), params=params)
+    res = requests.get('{}/questions'.format(Config['uri']), params=params)
     return response(res)
 
 
@@ -208,7 +208,7 @@ def req_delprevanswer(session_id, etag):
         'If-Match': etag
     }
 
-    res = requests.get('{}/delprevanswer'.format(Config['uri']), params=params, headers=headers)
+    res = requests.delete('{}/answers'.format(Config['uri']), params=params, headers=headers)
     return response(res)
 
 

@@ -101,7 +101,7 @@ const Api = {
      * @returns {Promise}
      */
     createNewSession: function(survey_id) {
-        const uri = url('/newsession', {
+        const uri = url('/session', {
             'surveyid': survey_id
         });
 
@@ -133,7 +133,7 @@ const Api = {
      * @returns {Promise} deserialized json including next questions
      */
     nextQuestion: function(session_id) {
-        const uri = url('/nextquestion', {
+        const uri = url('/questions', {
             'sessionid': session_id,
         });
 
@@ -159,53 +159,23 @@ const Api = {
     },
 
     /**
-     * Send answer to current question and receive next question(s)
-     * @param {string} session_id
-     * @param {string} serialized answer
-     * @returns {Promise} deserialized json including next questions
-     */
-    updateAnswer: function(session_id, answer) {
-        const uri = url('/updateanswer', {
-            'sessionid': session_id,
-            answer,
-        });
-
-        const opts =  {
-            signal,
-            headers: requestHeaders(),
-        };
-
-        return fetch(uri, opts)
-            .then((response) => {
-                if (!response.ok) {
-                    return responseError(response);
-                }
-                cacheResponse(response);
-                return response.json();
-            })
-            .catch((error) => {
-                if(error && error.name === 'AbortError') {
-                    return;
-                }
-                throw error;
-            });
-    },
-
-    /**
-     * Delete answer for a specified question id and receive next question(s)
+     * Add answers for previous question id sand receive next question(s)
      * @param {string} session_id
      * @param {string} question_id
      * @returns {Promise} deserialized json including next questions
      */
-    deleteAnswer: function(session_id, question_id) {
-        const uri = url('/delanswer', {
+    addAnswers: function(session_id, answers) {
+        const uri = url('/answers', {
             'sessionid': session_id,
-            'questionid': question_id,
         });
 
         const opts =  {
+            method: 'POST',
+            headers: requestHeaders({
+                'Content-Type': 'text/csv',
+            }),
             signal,
-            headers: requestHeaders(),
+            body: answers.join('\n'),
         };
 
         return fetch(uri, opts)
@@ -225,17 +195,18 @@ const Api = {
     },
 
     /**
-     * Delete previous answer and receive next question(s) (#268)
+     * Delete previous answers and receive next question(s) (#268)
      * Requies the last consistency checksum supplied by a next_questions response stored in localStorage
      * @param {string} session_id
      * @returns {Promise} deserialized json including next questions
      */
     deletePreviousAnswer: function(session_id) {
-        const uri = url('/delprevanswer', {
+        const uri = url('/answers', {
             'sessionid': session_id,
         });
 
         const opts =  {
+            method: 'DELETE',
             signal,
             headers: requestHeaders(),
         };
@@ -264,49 +235,13 @@ const Api = {
      * @returns {Promise} deserialized json with evaluationdata
      */
     finishSurvey: function(session_id) {
-        const uri = url('/analyse', {
+        const uri = url('/analysis', {
             'sessionid': session_id,
         });
 
         const opts =  {
             signal,
             headers: requestHeaders(),
-        };
-
-        return fetch(uri, opts)
-            .then((response) => {
-                if (!response.ok) {
-                    return responseError(response);
-                }
-                cacheResponse(response);
-                return response.json();
-            })
-            .catch((error) => {
-                if(error && error.name === 'AbortError') {
-                    return;
-                }
-                throw error;
-            });
-    },
-
-    /**
-     * Delete answer for a specified question id and receive next question(s)
-     * @param {string} session_id
-     * @param {string} question_id
-     * @returns {Promise} deserialized json including next questions
-     */
-    addAnswers: function(session_id, answers) {
-        const uri = url('/answers', {
-            'sessionid': session_id,
-        });
-
-        const opts =  {
-            method: 'POST',
-            headers: requestHeaders({
-                'Content-Type': 'text/csv',
-            }),
-            signal,
-            body: answers.join('\n'),
         };
 
         return fetch(uri, opts)

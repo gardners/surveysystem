@@ -100,7 +100,7 @@ sleep 1
 
 status=$(curl --silent --output /dev/null --write-out "%{http_code}" "http://localhost:${SERVER_PORT}/surveyapi/status?extended=1")
 
-if [ "${status}" -ne 200 ]; then
+if [ "${status}" -ne 204 ]; then
     EXIT_ERROR "curl GET /accesstest returned status ${status}"
 fi
 
