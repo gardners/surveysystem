@@ -238,11 +238,16 @@ const mapQuestionGroups = function(questions) {
 const findQuestionGroupCommons = function(group) {
     const { length } = group;
 
-    if(!length) {
+    if (!length) {
         return 'NONE';
     }
 
-    let start = (group[0].type === 'HIDDEN') ? 1 : 0;
+    let start = 0;
+    // optional group heading
+    if (length > 1 && group[0].type === 'HIDDEN') {
+        start++;
+    }
+
     let type = group[start].type;
     let choices = (typeof group[start].choices !== 'undefined') ? group[start].choices.toString() : '';
 
