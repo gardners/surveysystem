@@ -230,6 +230,12 @@ describe('findQuestionGroupCommons', () => {
         qc = findQuestionGroupCommons([]);
         expect(qc).toBe('NONE');
 
+        // single HIDDEN
+        qc = findQuestionGroupCommons([
+            makeQuestion('test1__1', 'HIDDEN'),
+        ]);
+        expect(qc).toBe('TYPE');
+
         // no choices
         qc = findQuestionGroupCommons([
             makeQuestion('test1__1', 'HIDDEN'),
