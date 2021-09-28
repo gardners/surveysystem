@@ -5,6 +5,7 @@ import { is_protected, init, exit_authorize, remove_token, get_user, verify_toke
 export const AppContext = React.createContext({
     breakpoint: '',
     matchesBreakpointOrAbove: () => {},
+    debug: false,
 });
 
 export const SurveyContext = React.createContext({

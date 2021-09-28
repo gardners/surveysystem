@@ -1,11 +1,33 @@
 import React, { Component, useContext } from 'react';
 import PropTypes from 'prop-types';
 
-import { AuthContext } from '../Context';
+import { AppContext, AuthContext } from '../Context';
 
 import RestartSurveyButton from './survey/RestartSurveyButton';
 
 const { NODE_ENV } = process.env;
+
+const serialiseJson = function(data) {
+    let json = null;
+    try {
+        json = JSON.stringify(data, null, 4);
+    } catch(e) {
+        json = '[PARSER ERROR] ' + e.toString();
+    }
+    return json;
+};
+
+const IfDebug = function({ children }) {
+    return(
+        <AppContext.Consumer>
+        {
+            ({ debug }) => (
+                (debug) ? children : null
+            )
+        }
+        </AppContext.Consumer>
+    );
+};
 
 class Pretty extends Component {
 
@@ -22,30 +44,13 @@ class Pretty extends Component {
     }
 
     render() {
-
-        // don't display in production mode
-        if (NODE_ENV === 'production') {
-            return (null);
-        }
-
         const { data, label } = this.props;
-        let json = null;
-
-        try {
-            json = JSON.stringify(data, null, 4);
-        } catch(e) {
-            json = '[PARSER ERROR] ' + e.toString();
-        }
+        const { open } = this.state;
 
         return (
             <div>
-                <span role="menuitem" onClick={ this.toggle.bind(this) }>{ (this.state.open) ? '[-]' : '[+]' } { label }</span>
-            {
-                this.state.open &&
-
-                    <pre>{ json }</pre>
-
-            }
+                <span role="menuitem" onClick={ this.toggle.bind(this) }>{ (open) ? '[-]' : '[+]' } { label }</span>
+                { open &&<pre>{ serialiseJson(data) }</pre> }
             </div>
         );
     }
@@ -57,26 +62,33 @@ Pretty.propTypes = {
     open: PropTypes.bool,
 };
 
-const SurveyBar = function({ session, className }) {
-    // don't display in production mode
-    if (NODE_ENV === 'production') {
-        return (null);
-    }
+const SurveyBar = function({ session, loadSessionCallback, className }) {
 
-    if(!session) {
+    if (!session) {
         return (null);
     }
+    const { survey_id, session_id } = session;
+    const input  = React.createRef();
 
     return(
-        <pre className={ className }>
-            session: { session.session_id }, env: { process.env.NODE_ENV }
-            { <RestartSurveyButton className="btn btn-link btn-sm">Clear LocalStorage</RestartSurveyButton> }
-        </pre>
+        <React.Fragment>
+            <pre className={ className }>
+                <input type="text" style={ { width: '36ch' } } defaultValue={ session_id } ref={ input } />
+                <button className="btn btn-link btn-sm" onClick={
+                    (e) => {
+                        e && e.preventDefault();
+                        loadSessionCallback(survey_id, input.current.value);
+                    }
+                }>Load Session</button>
+                { <RestartSurveyButton session={ session } className="btn btn-link btn-sm">New Session</RestartSurveyButton> }
+            </pre>
+        </React.Fragment>
     );
 };
 
 SurveyBar.propTypes = {
     className: PropTypes.string,
+    loadSessionCallback: PropTypes.func.isRequired,
     session: PropTypes.shape({
         session_id: PropTypes.string,
     })
@@ -85,12 +97,7 @@ SurveyBar.propTypes = {
 const Question = function(props) {
     const { question } = props;
 
-    // don't display in production mode
-    if (NODE_ENV === 'production') {
-        return (null);
-    }
-
-    if(!question) {
+    if (!question) {
         return (null);
     }
 
@@ -119,14 +126,12 @@ Question.propTypes = {
 const Auth = function(props) {
     const auth = useContext(AuthContext);
 
-    if (NODE_ENV === 'production') {
+    if (!auth) {
         return (null);
     }
 
     return(
-        <pre className={ props.className }>
-            { JSON.stringify(auth) }
-        </pre>
+        <pre className={ props.className }> { JSON.stringify(auth) } </pre>
     );
 };
 
@@ -137,6 +142,7 @@ Auth.propTypes = {
 
 // @see eslint import/no-anonymous-default-export
 const ex = {
+    IfDebug,
     Pretty,
     SurveyBar,
     Question,

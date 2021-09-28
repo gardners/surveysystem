@@ -124,7 +124,10 @@ class Analysis extends Component {
 
                 <AnalysisMeta survey_id={ survey_id } session_id={ session_id } analysis={ analysis } />
                 <EvaluationGroup evaluations={ evaluations } />
-                <Dev.Pretty label="raw analyis" data={ evaluations } open={ false }/>
+
+                <Dev.IfDebug>
+                    <Dev.Pretty label="raw analyis" data={ evaluations } open={ false }/>
+                </Dev.IfDebug>
             </section>
         );
     }

@@ -123,7 +123,10 @@ const Question = function({ handleChange, question, value, error, grouped, compo
     const cls = addClassNames('question', className, (grouped) ? 'grouped' : '');
     return (
         <div className={ cls }>
-            <Dev.Question question={ question } />
+            <Dev.IfDebug>
+                <Dev.Question question={ question } />
+            </Dev.IfDebug>
+
             <Component
                 { ...fallthroughProps }
                 handleChange={ handleChange }
