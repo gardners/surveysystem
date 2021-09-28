@@ -149,7 +149,7 @@ class Survey extends Component {
     /**
      * Create a new session
      *
-     * @param {Event}
+     * @param {object} session Session instance
      * @returns {void}
      */
     initNewSession(session) {
@@ -178,7 +178,7 @@ class Survey extends Component {
     /**
      * Initialize a previously cached session
      *
-     * @param {Event}
+     * @param {object} session Session instance
      * @returns {void}
      */
     initNextQuestion(session) {
@@ -198,6 +198,21 @@ class Survey extends Component {
             alerts: [], // clear alerts
         }))
         .catch(err => this.alert(err));
+    }
+
+    /**
+     * Load an (existing) session by survey id and session id
+     *
+     * @param {string} survey_id
+     * @param {string} session_id
+     * @returns {void}
+     */
+    loadSession(survey_id, session_id) {
+        this.setState({ loading: 'Load session...' });
+
+        // technically we don't need the survey id to fetch a session
+        const session = new Session(survey_id, session_id);
+        this.initNextQuestion(session);
     }
 
     /**
@@ -315,7 +330,7 @@ class Survey extends Component {
 
         return (
             <React.Fragment>
-                <Dev.SurveyBar session={ session } />
+
                 <SurveySection session={ session }>
                     <Preloader loading={ loading } message={ loading }/>
 
@@ -402,11 +417,14 @@ class Survey extends Component {
                     </SurveyContext.Provider>
                 </SurveySection>
 
-                <Dev.Pretty label="cache" data={ localStorage.getItem(process.env.REACT_APP_SURVEY_CACHEKEY) } open={ false }/>
-                <Dev.Pretty label="session" data={ session } open={ false }/>
-                <Dev.Pretty label="questions" data={ next_questions } open={ false }/>
-                <Dev.Pretty label="answers" data={ answers } open={ false }/>
-                <Dev.Pretty label="errors" data={ errors } open={ false }/>
+                <Dev.IfDebug>
+                    <Dev.SurveyBar className="bg-light p-1" session={ session } loadSessionCallback={ this.loadSession.bind(this) } />
+                    <Dev.Pretty label="cache" data={ localStorage.getItem(process.env.REACT_APP_SURVEY_CACHEKEY) } open={ false } />
+                    <Dev.Pretty label="session" data={ session } open={ false } />
+                    <Dev.Pretty label="questions" data={ next_questions } open={ false } />
+                    <Dev.Pretty label="answers" data={ answers } open={ false } />
+                    <Dev.Pretty label="errors" data={ errors } open={ false } />
+                </Dev.IfDebug>
 
             </React.Fragment>
         );

@@ -140,8 +140,8 @@ class DemoManifest extends Component {
         return (
             <div>
                 <h2>Manifest</h2>
-                <textarea style={ { width: '100%', height: '400px' } } onChange={ this.handleChange.bind(this) } defaultValue={ defaultValue } />
 
+                <textarea style={ { width: '100%', height: '400px' } } onChange={ this.handleChange.bind(this) } defaultValue={ defaultValue } />
                 <Dev.Pretty label='parsed "next_questions" JSON' data={ this.state.next_questions } />
 
                 <h2>Display Form</h2>

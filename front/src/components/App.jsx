@@ -20,7 +20,7 @@ import Demo from './demo/Demo';
 import DemoAnalysis from './demo/DemoAnalysis';
 import DemoManifest from './demo/DemoManifest';
 
-const { PUBLIC_URL } = process.env;
+const { PUBLIC_URL, NODE_ENV } = process.env;
 const Header = withRouter(HeaderNav);
 
 const ProtectedRoute = function ({ component: Component, ...rest }) {
@@ -58,16 +58,18 @@ class App extends Component {
             appContext: {
                 breakpoint: DEFAULT_BREAKPOINT,
                 matchesBreakpointOrAbove,
+                debug: (NODE_ENV === 'development')
             },
             authContext,
             error: null,
         };
-
-        window.addEventListener('resize', this.onWindowResize.bind(this));
     }
 
     componentDidMount() {
         const { authContext } = this.state;
+
+        window.addEventListener('resize', this.onWindowResize.bind(this));
+        window.addEventListener('keydown', this.onWindowKeyDown.bind(this));
 
         authContext.init()
         .then((user) => {
@@ -82,17 +84,36 @@ class App extends Component {
         }));
     }
 
+    componentWillUnmount() {
+        window.removeEventListener('resize', this.onWindowResize);
+        window.removeEventListener('keydown', this.onWindowKeyDown);
+    }
+
     onWindowResize() {
-        testMediaBreakpoint(bp => {
+        const { appContext } = this.state;
+
+        testMediaBreakpoint((bp) => {
             if(bp !== this.state.breakpoint) {
-                this.setState({
-                    appContext: {
-                        breakpoint: bp,
-                        matchesBreakpointOrAbove,
-                    },
-                });
+                appContext.breakpoint = bp;
+                this.setState({ appContext });
             }
         });
+    }
+
+    onWindowKeyDown(e) {
+        const { appContext } = this.state;
+        const { debug } = appContext;
+
+        if (!e) {
+            return;
+        }
+
+        // keys: ALT + ;
+        if (e.altKey === true && e.keyCode === 59) {
+            console.log('toggle debug mode');
+            appContext.debug = !debug;
+            this.setState({ appContext });
+        }
     }
 
     render() {
