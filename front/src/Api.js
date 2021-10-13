@@ -6,6 +6,14 @@ import { serializeParams } from './Utils';
 import { request_headers } from './OAuth2';
 
 const BaseUri = process.env.REACT_APP_SURVEYAPI_ENDPOINT.replace(/\/$/, "");
+const BaseHeaders = {};
+
+try {
+    const cHeaders = JSON.parse(process.env.REACT_APP_SURVEYAPI_HEADERS || '[]');
+    Object.assign(BaseHeaders, cHeaders);
+} catch(e) {
+    // nothing
+}
 
 const url = function(path, params) {
   path = path || '';
@@ -36,7 +44,7 @@ const requestHeaders = function(headers) {
     headers = headers || {};
 
     // add consistency header
-    Object.assign(headers, {
+    Object.assign(headers, BaseHeaders, {
         'If-Match': localStorage.getItem('ss_consinstency_hash')
     }, request_headers());
 
