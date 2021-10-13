@@ -19,7 +19,7 @@ const TheadRow = function({ question, expanded }) {
         <tr>
             <th className="radiomatrix--firstcol"></th>
             {
-                labels.map((label, index) => <th key={ index }>{ label }</th>)
+                labels.map((label, index) => <th className="text-center" key={ index }>{ label }</th>)
             }
         </tr>
     );
@@ -77,7 +77,7 @@ const Row = function({ question, index, value, handleChange, expanded, required,
                 choices.map((choice, index) => {
                     const checked= (choice == value); /* intentionally using non-typesafe operator (number) */
                     return (
-                        <td key={ index } className="align-middle">
+                        <td key={ index } className="text-center align-middle">
                             <button
                                 key={ index }
                                 id={ `${question.id}[${index}]` }
