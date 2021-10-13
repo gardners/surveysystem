@@ -28,7 +28,7 @@ const SurveyMessage = function({ session }) {
     }
     const cls = getStatusClass(status);
     return (
-        <div className={ `list-group-item list-group-item-${cls}` }><InnerHtml htmlContent={ message } /></div>
+        <div className={ `list-group-item list-group-item-${cls} mb-2` }><InnerHtml htmlContent={ message } /></div>
     );
 
 };
