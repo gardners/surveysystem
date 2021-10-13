@@ -5,8 +5,6 @@ import { AppContext, AuthContext } from '../Context';
 
 import RestartSurveyButton from './survey/RestartSurveyButton';
 
-const { NODE_ENV } = process.env;
-
 const serialiseJson = function(data) {
     let json = null;
     try {

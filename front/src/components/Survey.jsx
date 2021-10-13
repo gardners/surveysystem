@@ -399,7 +399,7 @@ class Survey extends Component {
                             }
 
                             {
-                                !hasAllAnswers && <FeedbackItem className="list-group-item list-group-item-warning">Please answer all questions</FeedbackItem>
+                                !hasAllAnswers && <FeedbackItem className="list-group-item list-group-item-warning">{ (next_questions.length > 1) ? 'Please answer all questions': 'Answer required' }</FeedbackItem>
                             }
 
                             <SurveyButtons
