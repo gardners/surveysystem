@@ -87,7 +87,7 @@ DayTimeSlider.defaultProps = {
     required: false,
 
     // react-input-range props
-    step: 60, // seconds
+    step:  5 * 60, // 5 minutes
     handleChangeComplete: () => {},
 };
 
