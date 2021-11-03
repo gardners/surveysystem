@@ -60,7 +60,9 @@ const cacheResponse = function(response) {
         return;
     }
     const etag = response.headers.get('ETag');
-    localStorage.setItem('ss_consinstency_hash', etag);
+    if (etag) {
+        localStorage.setItem('ss_consinstency_hash', etag);
+    }
 };
 
 /**
