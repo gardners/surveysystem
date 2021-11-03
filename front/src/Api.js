@@ -155,6 +155,7 @@ const Api = {
                 if (!response.ok) {
                     return responseError(response);
                 }
+                cacheResponse(response);
                 return response.json();
             })
             .catch((error) => {

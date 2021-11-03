@@ -6,6 +6,7 @@ import QuestionModel from '../../Question';
 
 import { isArray } from '../../Utils';
 
+
 class CheckboxGroup extends Component {
     constructor(props) {
         super(props);
@@ -39,6 +40,17 @@ class CheckboxGroup extends Component {
         handleChange(null, question, values);
     }
 
+    clearValues(question) {
+        const { handleChange } = this.props;
+        const values = [];
+        console.log('-------- HERE ---------');
+        this.setState({
+            values,
+        });
+
+        handleChange(null, question, values);
+    }
+
     render() {
         const { question, error, required, grouped, className } = this.props;
         const { choices } = question;
@@ -51,30 +63,43 @@ class CheckboxGroup extends Component {
                     <Field.Unit className="badge badge-secondary ml-1" question={ question } grouped={ grouped } />
                 </Field.Title>
                 <div className="list-group">
-                {
-                    choices.map((choice, index) => {
-                        const checked = (values.indexOf(choice) > -1);
-                        return (
-                            <button
-                                key={ index }
-                                id={ `${question.id}[${index}]` }
-                                name={ question.name }
-                                className={ (checked) ? 'text-left list-group-item list-group-item-primary' : 'text-left list-group-item' }
-                                value={ choice }
-                                onClick={
-                                    //
-                                    (e) => {
-                                        e.preventDefault();
-                                        this.handleChange(question, choice);
+                    {
+                        choices.map((choice, index) => {
+                            const checked = (values.indexOf(choice) > -1);
+                            return (
+                                <button
+                                    key={ index }
+                                    id={ `${question.id}[${index}]` }
+                                    name={ question.name }
+                                    className={ (checked) ? 'text-left list-group-item list-group-item-primary' : 'text-left list-group-item' }
+                                    value={ choice }
+                                    onClick={
+                                        (e) => {
+                                            e.preventDefault();
+                                            this.handleChange(question, choice);
+                                        }
                                     }
+                                >
+                                    { (checked) ? <i className="mr-2 fas fa-check-square text-primary" /> : <i className="mr-2 far fa-square text-muted" /> }
+                                    { choice }
+                                </button>
+                            );
+                        })
+                    } {
+                        <button
+                            className={ (!values.length) ? 'text-left list-group-item list-group-item-primary' : 'text-left list-group-item' }
+                            onClick={
+
+                                (e) => {
+                                    e.preventDefault();
+                                    this.clearValues(question);
                                 }
-                            >
-                                { (checked) ? <i className="mr-2 fas fa-check-square text-primary" /> : <i className="mr-2 far fa-square text-muted" /> }
-                                { choice }
-                            </button>
-                        );
-                    })
-                }
+                            }
+                        >
+                            { (!values.length) ? <i className="mr-2 fas fa-check-square text-primary" /> : <i className="mr-2 far fa-square text-muted" /> }
+                            <em>None of the above</em>
+                        </button>
+                    }
                 </div>
                 <Field.Error error={ error } grouped={ grouped } />
             </Field.Row>
