@@ -7,6 +7,36 @@ import QuestionModel from '../../Question';
 import { isArray } from '../../Utils';
 
 
+const CheckBoxButton = function({ id, name, checked, value, handleChange, children }) {
+    return (
+        <button
+            id={ id }
+            name={ name }
+            className={ (checked) ? 'text-left list-group-item list-group-item-primary' : 'text-left list-group-item' }
+            value={ value }
+            onClick={ handleChange }
+        >
+            { (checked) ? <i className="mr-2 fas fa-check-square text-primary" /> : <i className="mr-2 far fa-square text-muted" /> }
+            { children }
+        </button>
+    );
+};
+
+CheckBoxButton.defaultProps = {
+    id: '',
+    name: '',
+};
+
+CheckBoxButton.propTypes = {
+    id: PropTypes.string,
+    name: PropTypes.string,
+
+    checked: PropTypes.bool.isRequired,
+    value: PropTypes.string.isRequired,
+    handleChange: PropTypes.func.isRequired,
+};
+
+
 class CheckboxGroup extends Component {
     constructor(props) {
         super(props);
@@ -23,7 +53,8 @@ class CheckboxGroup extends Component {
         });
     }
 
-    handleChange(question, value) {
+    handleChange(question, value, e) {
+        e && e.preventDefault();
         const { handleChange } = this.props;
         let { values } = this.state;
 
@@ -40,10 +71,11 @@ class CheckboxGroup extends Component {
         handleChange(null, question, values);
     }
 
-    clearValues(question) {
+    clearValues(question, e) {
+        e && e.preventDefault();
         const { handleChange } = this.props;
         const values = [];
-        console.log('-------- HERE ---------');
+
         this.setState({
             values,
         });
@@ -67,38 +99,29 @@ class CheckboxGroup extends Component {
                         choices.map((choice, index) => {
                             const checked = (values.indexOf(choice) > -1);
                             return (
-                                <button
+                                <CheckBoxButton
                                     key={ index }
                                     id={ `${question.id}[${index}]` }
                                     name={ question.name }
-                                    className={ (checked) ? 'text-left list-group-item list-group-item-primary' : 'text-left list-group-item' }
+
+                                    checked = { checked }
                                     value={ choice }
-                                    onClick={
-                                        (e) => {
-                                            e.preventDefault();
-                                            this.handleChange(question, choice);
-                                        }
-                                    }
+                                    handleChange={ this.handleChange.bind(this, question, choice) }
                                 >
-                                    { (checked) ? <i className="mr-2 fas fa-check-square text-primary" /> : <i className="mr-2 far fa-square text-muted" /> }
                                     { choice }
-                                </button>
+                                </CheckBoxButton>
                             );
                         })
                     } {
-                        <button
-                            className={ (!values.length) ? 'text-left list-group-item list-group-item-primary' : 'text-left list-group-item' }
-                            onClick={
-
-                                (e) => {
-                                    e.preventDefault();
-                                    this.clearValues(question);
-                                }
-                            }
+                        <CheckBoxButton
+                            id={ `${question.id}[-1]` }
+                            name={ question.name }
+                            checked={ !values.length }
+                            value=""
+                            handleChange={ this.clearValues.bind(this, question) }
                         >
-                            { (!values.length) ? <i className="mr-2 fas fa-check-square text-primary" /> : <i className="mr-2 far fa-square text-muted" /> }
                             <em>None of the above</em>
-                        </button>
+                        </CheckBoxButton>
                     }
                 </div>
                 <Field.Error error={ error } grouped={ grouped } />

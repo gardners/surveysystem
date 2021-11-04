@@ -19,7 +19,7 @@ beforeAll(() => {
                 unit: '',
                 default_value: 'choice2',
             } }
-            handleChange= { () => {} } />,
+            handleChange= {} />,
     );
 });
 
@@ -28,21 +28,25 @@ it('renders without crashing', () => {
     expect(tree).toMatchSnapshot();
 });
 
-it('renders inut[type=checkbox] components as children', () => {
+it('renders input[type=checkbox] components as children', () => {
     const instance = component.root;
     const boxes = instance.findAll(node => node.type === 'button');
     const values = boxes.map(node => node.props.value);
 
-    expect(values.toString()).toEqual('choice1,choice2');
-    expect(boxes.length).toEqual(2);
+    // #507, added 'deselect' option
+    expect(values.length).toBe(3);
+    expect(values[0]).toEqual('choice1');
+    expect(values[1]).toEqual('choice2');
+    expect(values[2]).toEqual(''); // deselect option
 });
 
-it('form element renders default value', () => { 
+it('form element renders default value', () => {
     const instance = component.root;
     const boxes = instance.findAll(node => node.type === 'button');
-    
+
     // selected button
     expect(boxes[1].props.value).toEqual('choice2');
     const fa = boxes[1].find(node => node.type === 'i');
     expect(fa.props.className).toContain('fa-check-square');
 });
+

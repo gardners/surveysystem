@@ -4,6 +4,37 @@ import PropTypes from 'prop-types';
 import Field from './Field';
 import QuestionModel from '../../Question';
 
+
+const RadioButton = function({ id, name, checked, value, handleChange, children }) {
+    return (
+        <button
+            id={ id }
+            name={ name }
+            className={ (checked) ? 'text-left list-group-item list-group-item-primary' : 'text-left list-group-item' }
+            value={ value }
+            onClick={ handleChange }
+        >
+            { (checked) ? <i className="mr-2 fas fa-check-circle text-primary" /> : <i className="mr-2 far fa-circle text-muted" /> }
+            { children }
+        </button>
+    );
+};
+
+RadioButton.defaultProps = {
+    id: '',
+    name: '',
+};
+
+RadioButton.propTypes = {
+    id: PropTypes.string,
+    name: PropTypes.string,
+
+    checked: PropTypes.bool.isRequired,
+    value: PropTypes.string.isRequired,
+    handleChange: PropTypes.func.isRequired,
+};
+
+
 class RadioGroup extends Component {
     constructor(props) {
         super(props);
@@ -19,7 +50,8 @@ class RadioGroup extends Component {
         });
     }
 
-    handleChange(value) {
+    handleChange(value, e) {
+        e && e.preventDefault();
         const { question } = this.props;
 
         this.setState({
@@ -28,6 +60,7 @@ class RadioGroup extends Component {
 
         this.props.handleChange(null, question, value);
     }
+
 
     render() {
         const { question, error, required, grouped, className } = this.props;
@@ -41,30 +74,24 @@ class RadioGroup extends Component {
                     <Field.Unit className="badge badge-secondary ml-1" question={ question } grouped={ grouped } />
                 </Field.Title>
                 <div className="list-group">
-                {
-                    choices.map((choice, index) => {
-                        const checked = (choice === value);
-                        return (
-                            <button
-                                key={ index }
-                                id={ `${question.id}[${index}]` }
-                                name={ question.name }
-                                className={ (checked) ? 'text-left list-group-item list-group-item-primary' : 'text-left list-group-item' }
-                                value={ choice }
-                                onClick={
-                                    //
-                                    (e) => {
-                                        e.preventDefault();
-                                        this.handleChange(choice);
-                                    }
-                                }
-                            >
-                                { (checked) ? <i className="mr-2 fas fa-check-circle text-primary" /> : <i className="mr-2 far fa-circle text-muted" /> }
-                                { choice }
-                            </button>
-                        );
-                    })
-                }
+                    {
+                        choices.map((choice, index) => {
+                            const checked = (choice === value);
+                            return (
+                                <RadioButton
+                                    key={ index }
+                                    id={ `${question.id}[${index}]` }
+                                    name={ question.name }
+
+                                    checked={ checked }
+                                    value={ choice }
+                                    handleChange={ this.handleChange.bind(this, choice) }
+                                >
+                                    { choice }
+                                </RadioButton>
+                            );
+                        })
+                    }
                 </div>
                 <Field.Error error={ error } grouped={ grouped } />
             </Field.Row>
