@@ -6,6 +6,37 @@ import QuestionModel from '../../Question';
 
 import { isArray } from '../../Utils';
 
+
+const CheckBoxButton = function({ id, name, checked, value, handleChange, children }) {
+    return (
+        <button
+            id={ id }
+            name={ name }
+            className={ (checked) ? 'text-left list-group-item list-group-item-primary' : 'text-left list-group-item' }
+            value={ value }
+            onClick={ handleChange }
+        >
+            { (checked) ? <i className="mr-2 fas fa-check-square text-primary" /> : <i className="mr-2 far fa-square text-muted" /> }
+            { children }
+        </button>
+    );
+};
+
+CheckBoxButton.defaultProps = {
+    id: '',
+    name: '',
+};
+
+CheckBoxButton.propTypes = {
+    id: PropTypes.string,
+    name: PropTypes.string,
+
+    checked: PropTypes.bool.isRequired,
+    value: PropTypes.string.isRequired,
+    handleChange: PropTypes.func.isRequired,
+};
+
+
 class CheckboxGroup extends Component {
     constructor(props) {
         super(props);
@@ -22,7 +53,8 @@ class CheckboxGroup extends Component {
         });
     }
 
-    handleChange(question, value) {
+    handleChange(question, value, e) {
+        e && e.preventDefault();
         const { handleChange } = this.props;
         let { values } = this.state;
 
@@ -31,6 +63,18 @@ class CheckboxGroup extends Component {
         } else {
             values.push(value);
         }
+
+        this.setState({
+            values,
+        });
+
+        handleChange(null, question, values);
+    }
+
+    clearValues(question, e) {
+        e && e.preventDefault();
+        const { handleChange } = this.props;
+        const values = [];
 
         this.setState({
             values,
@@ -51,30 +95,34 @@ class CheckboxGroup extends Component {
                     <Field.Unit className="badge badge-secondary ml-1" question={ question } grouped={ grouped } />
                 </Field.Title>
                 <div className="list-group">
-                {
-                    choices.map((choice, index) => {
-                        const checked = (values.indexOf(choice) > -1);
-                        return (
-                            <button
-                                key={ index }
-                                id={ `${question.id}[${index}]` }
-                                name={ question.name }
-                                className={ (checked) ? 'text-left list-group-item list-group-item-primary' : 'text-left list-group-item' }
-                                value={ choice }
-                                onClick={
-                                    //
-                                    (e) => {
-                                        e.preventDefault();
-                                        this.handleChange(question, choice);
-                                    }
-                                }
-                            >
-                                { (checked) ? <i className="mr-2 fas fa-check-square text-primary" /> : <i className="mr-2 far fa-square text-muted" /> }
-                                { choice }
-                            </button>
-                        );
-                    })
-                }
+                    {
+                        choices.map((choice, index) => {
+                            const checked = (values.indexOf(choice) > -1);
+                            return (
+                                <CheckBoxButton
+                                    key={ index }
+                                    id={ `${question.id}[${index}]` }
+                                    name={ question.name }
+
+                                    checked = { checked }
+                                    value={ choice }
+                                    handleChange={ this.handleChange.bind(this, question, choice) }
+                                >
+                                    { choice }
+                                </CheckBoxButton>
+                            );
+                        })
+                    } {
+                        <CheckBoxButton
+                            id={ `${question.id}[-1]` }
+                            name={ question.name }
+                            checked={ !values.length }
+                            value=""
+                            handleChange={ this.clearValues.bind(this, question) }
+                        >
+                            <em>None of the above</em>
+                        </CheckBoxButton>
+                    }
                 </div>
                 <Field.Error error={ error } grouped={ grouped } />
             </Field.Row>

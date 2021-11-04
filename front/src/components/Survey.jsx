@@ -330,7 +330,6 @@ class Survey extends Component {
 
         return (
             <React.Fragment>
-
                 <SurveySection session={ session }>
                     <Preloader loading={ loading } message={ loading }/>
 
