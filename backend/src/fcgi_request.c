@@ -271,7 +271,7 @@ int validate_session_authority(struct session_meta *meta, struct session *ses) {
  */
 struct session_meta *fcgi_request_parse_meta(struct kreq *req) {
 
-
+  /*
   LOG_INFOV(
     "kreq: auth info\n"
     " |_ req->auth '%d',\n"
@@ -288,7 +288,7 @@ struct session_meta *fcgi_request_parse_meta(struct kreq *req) {
     (req->rawauth.type == KAUTH_DIGEST) ? req->rawauth.d.digest.user: "none",
     (req->rawauth.type == KAUTH_DIGEST) ? req->rawauth.d.digest.realm: "none",
     (req->rawauth.type == KAUTH_BASIC) ? req->rawauth.d.basic.response : "none");
- /* */
+  */
 
   // #363 parse session meta
   struct session_meta *meta = calloc(sizeof(struct session_meta), 1);
