@@ -265,7 +265,6 @@ int generate_path(char *path_in, char *path_out, int max_len);
 int generate_session_path(char *session_id, char *filename, char *path_out, int max_len);
 int generate_python_path(char *path_out, int max_len);
 int generate_survey_path(char *survey_id, char *filename, char *path_out, int max_len);
-FILE *path_open(char *name, char *mode);
 
 // #363
 int is_given_answer(struct answer *a);
