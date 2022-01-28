@@ -939,9 +939,9 @@ int session_load_survey(struct session *ses) {
   return retVal;
 }
 
-/*
-  Load the specified session, and return the corresponding session structure.
-  This will load not only the answers, but also the full set of questions.
+/**
+ * Load the specified session, and return the corresponding session structure.
+ * This will load not only the answers, but also the full set of questions.
  */
 struct session *load_session(char *session_id, int *error) {
   int retVal = 0;
@@ -1208,6 +1208,38 @@ int save_session(struct session *s) {
   if (o) {
     fclose(o);
   }
+  return retVal;
+}
+
+/**
+ * checks whether a session (file) already exists
+ * returns
+ *  - SS_SESSION_EXISTS if session exists
+ *  - SS_NOSUCH_SESSION if session does not exists
+ *  - or an System/Validation Error code
+ */
+int session_exists(char *session_id) {
+  int retVal = 0;
+
+  do {
+    if (validate_session_id(session_id)) {
+      BREAK_CODEV(SS_INVALID_SESSION_ID, "validate_session_id('%s') failed", (session_id) ? session_id : "NULL");
+    }
+
+    char path[1024];
+    if (generate_session_path(session_id, session_id, path, 1024)) {
+      BREAK_CODEV(SS_SYSTEM_FILE_PATH, "generate_session_path() failed to build path for loading session '%s'", session_id);
+    }
+
+    if (!access(path, R_OK)) {
+      retVal = SS_SESSION_EXISTS;
+    }
+  } while (0);
+
+  if(!retVal) {
+    retVal = SS_NOSUCH_SESSION;
+  }
+
   return retVal;
 }
 
