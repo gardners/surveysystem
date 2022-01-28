@@ -281,6 +281,7 @@ struct session *load_session(char *session_id, int *error);
 int delete_session(char *session_id);
 int save_session(struct session *s);
 
+int session_exists(char *session_id);
 int session_load_survey(struct session *ses);
 int session_add_answer(struct session *s, struct answer *a);
 int session_delete_answer(struct session *s, char *uid);

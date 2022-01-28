@@ -420,37 +420,37 @@ static void fcgi_page_session(struct kreq *req) {
       BREAK_CODEV(res, "session: '%s'", session_id);
     }
 
-    // session_id
-
     switch (req->method) {
-      // create new session id
-      case KMETHOD_GET:
-        if (create_session_id(session_id, 40)) {
-          BREAK_CODE(SS_ERROR, "Unable to create session id");
-        }
-      break;
-
       // fetch param session_id
       case KMETHOD_POST:
+      case KMETHOD_HEAD:
         param = fcgi_request_get_field_value(KEY_SESSION_ID, req);
-        if (validate_session_id(param)) {
-          BREAK_CODEV(SS_INVALID_SESSION_ID, "session: '%s'", (param) ? param : "(null)");
-        }
-        strncpy(session_id, param, 40);
       break;
 
-      // (HEAD) nothing
+      // nothing, create session id
       default:
       break;
     }
 
-    if (retVal) {
-      break;
+    if (param) {
+        if (validate_session_id(param)) {
+          BREAK_CODEV(SS_INVALID_SESSION_ID, "session: '%s'", (param) ? param : "(null)");
+        }
+        strncpy(session_id, param, 40);
+    } else {
+        if (create_session_id(session_id, 40)) {
+          BREAK_CODE(SS_ERROR, "Unable to create session id");
+        }
+    }
+
+    int res = session_exists(session_id);
+    if (res != SS_NOSUCH_SESSION) {
+      BREAK_CODE(res, NULL);
     }
 
     // #494  HEAD request: do not create and exit
     if (req->method == KMETHOD_HEAD) {
-      if (http_open(req, KHTTP_200, KMIME_APP_JSON, ses->consistency_hash)) {
+      if (http_open(req, KHTTP_200, KMIME_APP_JSON, NULL)) {
         BREAK_ERROR("http_open(): unable to initialise http response");
       }
       khttp_puts(req, NULL);
