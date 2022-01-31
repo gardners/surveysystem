@@ -39,7 +39,9 @@ without python
 q2:Question 2::TEXT:0::-1:-1:0:0::
 endofsurvey
 
+#! ------
 #!-- PASS new session
+#! ------
 request 200 POST /session?surveyid=bar&sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 
 # Get the session ID that newsession should have returned
@@ -54,16 +56,23 @@ bar/current
 @state:META:q2:<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
 endofsession
 
+#! ------
 #!-- FAIL existing session
+#! ------
 request 400 POST /session?surveyid=bar&sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
 
+#! ------
 #!-- FAIL POST request without session id
+#! ------
 request 400 POST /session?surveyid=bar
 
+#! ------
 #!-- FAIL POST request with invalid session id
+#! ------
 request 400 POST /session?surveyid=bar&sessionid=
 request 400 POST /session?surveyid=bar&sessionid=invalid
 
-#!-- PASS GET with param sessionid - ignore param
-request 200 GET /session?surveyid=bar&sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
-nomatch aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+#! ------
+#!-- FAIL GET with param sessionid
+#! ------
+request 400 GET /session?surveyid=bar&sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
