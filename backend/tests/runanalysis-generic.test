@@ -87,3 +87,9 @@ endofsession
 
 match_string "NOT IMPLEMENTED"
 
+#! -------
+#!- Verify analysis json
+#! -------
+
+verify_file_exists /sessions/<session_prefix>/<session_id>.analysis.json
+

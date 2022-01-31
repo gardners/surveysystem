@@ -113,3 +113,10 @@ endofsession
 
 request 200 GET /analysis?sessionid=<session_id>
 match_string You will live
+
+#! -------
+#!- Verify analysis json
+#! -------
+
+verify_file_exists /sessions/<session_prefix>/<session_id>.analysis.json
+
