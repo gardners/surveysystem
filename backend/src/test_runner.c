@@ -36,6 +36,8 @@
  *
  * verify_sessionfiles_count <expected_number>
  *
+ * verify_file_exists /<path>/<to>/<file> (check if file exists within test dir)
+ *
  * copy_session_to <file path>
  *
  * create_checksum(<string and/or token>)
@@ -481,6 +483,27 @@ int run_test(struct Test *test) {
         }
         if(left != right) {
           fprintf(log, "T+%4.3fms : ERROR : verify_sessions_count failed: %d sessions expected, %d found\n", test_time_delta(start_time), left, right);
+          goto error;
+        }
+
+      } else if (sscanf(line, "verify_file_exists %[^\r\n]", tmp) == 1) {
+
+        ////
+        // keyword: "verify_file_exists"
+        ////
+
+        char file_path[1024];
+        snprintf(file_path, 1024, "%s%s", test->dir, tmp); // tmp needs to start with '/'!
+        tmp[0] = 0;
+
+        char session_prefix[5] = {last_sessionid[0], last_sessionid[1], last_sessionid[2], last_sessionid[3], '\0'};
+
+        test_replace_str(file_path, "<session_id>", last_sessionid, TEST_MAX_BUFFER);
+        test_replace_str(file_path, "<session_prefix>", session_prefix, TEST_MAX_BUFFER);
+
+        int err = access(file_path, R_OK);
+        if (err) {
+          fprintf(log, "T+%4.3fms : ERROR : verify_file_exists failed for path '%s'\n", test_time_delta(start_time), file_path);
           goto error;
         }
 
