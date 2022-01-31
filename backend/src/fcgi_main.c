@@ -371,11 +371,13 @@ static void fcgi_page_session(struct kreq *req) {
   struct session_meta *meta = NULL;
   struct session *ses = NULL;
 
+  int can_define_session_id = 0;
   enum actions action;
   char session_id[40];
 
   char *survey_id = NULL;
-  char *param = NULL;
+  char *sid = NULL;
+
   int res;
 
   do {
@@ -387,8 +389,12 @@ static void fcgi_page_session(struct kreq *req) {
 
     switch (req->method) {
       case KMETHOD_HEAD:
-      case KMETHOD_GET:
       case KMETHOD_POST:
+        can_define_session_id = 1;
+        action = ACTION_SESSION_NEW;
+      break;
+
+      case KMETHOD_GET:
         action = ACTION_SESSION_NEW;
       break;
 
@@ -402,11 +408,21 @@ static void fcgi_page_session(struct kreq *req) {
       BREAK_CODE(SS_INVALID_METHOD, NULL);
     }
 
-    // survey id
+    // params
 
     survey_id = fcgi_request_get_field_value(KEY_SURVEY_ID, req);
     if (validate_survey_id(survey_id)) {
       BREAK_CODEV(SS_INVALID_SURVEY_ID, "survey: '%s'", (survey_id) ? survey_id : "(null)");
+    }
+
+    sid = fcgi_request_get_field_value(KEY_SESSION_ID, req);
+    if (req->method != KMETHOD_HEAD) {
+      if (sid && !can_define_session_id) {
+        BREAK_CODE(SS_INVALID, "only POST requests can define param session_id");
+      }
+      if (!sid && can_define_session_id) {
+        BREAK_CODE(SS_INVALID, "POST require param session_id");
+      }
     }
 
     // request meta(#363)
@@ -420,27 +436,15 @@ static void fcgi_page_session(struct kreq *req) {
       BREAK_CODEV(res, "session: '%s'", session_id);
     }
 
-    switch (req->method) {
-      // fetch param session_id
-      case KMETHOD_POST:
-      case KMETHOD_HEAD:
-        param = fcgi_request_get_field_value(KEY_SESSION_ID, req);
-      break;
-
-      // nothing, create session id
-      default:
-      break;
-    }
-
-    if (param) {
-        if (validate_session_id(param)) {
-          BREAK_CODEV(SS_INVALID_SESSION_ID, "session: '%s'", (param) ? param : "(null)");
-        }
-        strncpy(session_id, param, 40);
+    if (sid) {
+      if (validate_session_id(sid)) {
+          BREAK_CODEV(SS_INVALID_SESSION_ID, "session: '%s'", (sid) ? sid : "(null)");
+      }
+      strncpy(session_id, sid, 40);
     } else {
-        if (create_session_id(session_id, 40)) {
+      if (create_session_id(session_id, 40)) {
           BREAK_CODE(SS_ERROR, "Unable to create session id");
-        }
+      }
     }
 
     int res = session_exists(session_id);
@@ -449,6 +453,7 @@ static void fcgi_page_session(struct kreq *req) {
     }
 
     // #494  HEAD request: do not create and exit
+
     if (req->method == KMETHOD_HEAD) {
       if (http_open(req, KHTTP_200, KMIME_APP_JSON, NULL)) {
         BREAK_ERROR("http_open(): unable to initialise http response");
