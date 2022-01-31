@@ -765,8 +765,9 @@ static void fcgi_page_analysis(struct kreq *req) {
     }
 
     // save analysis
-
-    res = session_add_datafile(ses->session_id, "analysis.json", analysis);
+    char fname[256];
+    snprintf(fname, 256, "%s.analysis.json", ses->session_id);
+    res = session_add_datafile(ses->session_id, fname, analysis);
     if (res) {
       // do not break on error here, serve analysis to client in any case
       LOG_CODE(res, "Could not add analysis.json for session.");

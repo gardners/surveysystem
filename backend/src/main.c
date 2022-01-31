@@ -674,7 +674,9 @@ int do_analyse(char *session_id) {
     }
 
     // store analysis with session
-    if (session_add_datafile(ses->session_id, "analysis.json", analysis)) {
+    char fname[256];
+    snprintf(fname, 256, "%s.analysis.json", session_id);
+    if (session_add_datafile(ses->session_id, fname, analysis)) {
       LOG_WARNV("Could not add analysis.json for session.", 0);
       // do not break here
     }
