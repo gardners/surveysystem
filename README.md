@@ -107,7 +107,7 @@ Note that the following section reflects the *current state* of development and 
 | POST   | `/answers?sessionid&{uid1}={value1}&{uid2}={value2}` <sup>1)</sup> | json: [next questions](docs/next-questions-response.md) | answer previous questions by ids and values, format: question id = answer value                                      |
 | DELETE | `/answers?sessionid` <sup>3)</sup>                                 | json: [next questions](docs/next-questions-response.md) | delete last answers (roll back to previous questions)                                                                |
 | DELETE | `/answers?sessionid&questionid` <sup>3)</sup>                      | json: [next questions](docs/next-questions-response.md) | delete last answers until (and including) the given question id (rollback)                                           |
-| GET    | `/analysis` <sup>4)</sup>                                          | json                                                    | get analysis based on your answers                                                                                   |
+| GET    | `/analysis?sessionid` <sup>4)</sup>                                | json                                                    | get analysis based on your answers                                                                                   |
 | GET    | `/status(?extended)`                                               | status 200/204 no content                               | system status use the `extended` param for checking correct configuration and paths                                  |
 
 - **1)**: Answers must match previous questions
