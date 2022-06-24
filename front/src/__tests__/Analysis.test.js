@@ -1,24 +1,16 @@
-import { normalizeEvaluation, normalizeAnalysis } from '../Analysis';
+import { normalizeInsight, normalizeCondition, normalizeAnalysis } from '../Analysis';
 
-const evaluationReference = function() {
-     return {
-        category: '',
-        classification: '',
-        displayResults: {
-            additionalInsights: [],
-            conditions: {
-                condition: '',
-                subcondition: '',
-                mainText: '',
-                learnMore: '',
-                mainRecommendation: '',
-                mandatoryTips: '',
-                additionalInsights: [],
-            }
-        },
-        rank: 0,
-        recommendation: '',
-        riskRating: 0
+const conditionReference = function() {
+    return {
+        'Code': '',
+        'Classification': '',
+        'Category': '',
+        'Condition': '',
+        'Learn More': '',
+        'Tips': '',
+        'Recommendation': '',
+        'Description': '',
+        'Insights': [],
     };
 };
 
@@ -26,220 +18,177 @@ const analysisReference = function() {
      return {
         version: '',
         created: '',
-        constraints: [],
-        evaluations: [],
+        survey_id: '',
+        session_id: '',
+        conditions: [],
     };
 };
 
-describe('normalizeEvaluation', () => {
-
-    test('deal with incomplete data', () => {
+describe('normalizeInsight', () => {
+    test('Insight, empty', () => {
         let e;
-        e = normalizeEvaluation(null);
-        expect(e).toEqual(evaluationReference());
+        e = normalizeInsight([]);
 
-        e = normalizeEvaluation({ 'category': 'test' });
-        expect(e.category).toBe('test');
-        e.category = '';
-        expect(e).toEqual(evaluationReference());
+        expect(Array.isArray(e)).toBe(true);
+        expect(e.length).toBe(2);
+
+        expect(e[0]).toBe('');
+        expect(e[1]).toBe('');
     });
 
-    test('displayResults', () => {
+    test('Insight, populated', () => {
         let e;
-        e = normalizeEvaluation({
-            category: '',
-            classification: '',
-            /* displayResults: {} */
-            rank: 0,
-            recommendation: '',
-            riskRating: 0
-        });
-        expect(e).toEqual(evaluationReference());
+        e = normalizeInsight(['TEST_KEY', 'TEST_CONTENT']);
 
-        e = normalizeEvaluation({
-            category: '',
-            classification: '',
-            displayResults: {},
-            rank: 0,
-            recommendation: '',
-            riskRating: 0
-        });
-        expect(e).toEqual(evaluationReference());
+        expect(Array.isArray(e)).toBe(true);
+        expect(e.length).toBe(2);
+
+        expect(e[0]).toBe('TEST_KEY');
+        expect(e[1]).toBe('TEST_CONTENT');
     });
 
-    test('displayResults.conditions', () => {
+    test('Insight, incomplete', () => {
         let e;
-        e = normalizeEvaluation({
-            category: '',
-            classification: '',
-            displayResults: {
-                conditions: {},
-            },
-            rank: 0,
-            recommendation: '',
-            riskRating: 0
-        });
-        expect(e).toEqual(evaluationReference());
-    });
+        e = normalizeInsight(['TEST_KEY']);
 
-    test('displayResults.conditions.condition', () => {
-        let e;
-        e = normalizeEvaluation({
-            category: '',
-            classification: '',
-            displayResults: {
-                conditions: {
-                    condition: 'test',
-                }
-            },
-            rank: 0,
-            recommendation: '',
-            riskRating: 0
-        });
-        expect(e.displayResults.conditions.condition).toBe('test');
-        e.displayResults.conditions.condition = '';
-        expect(e).toEqual(evaluationReference());
-    });
+        expect(Array.isArray(e)).toBe(true);
+        expect(e.length).toBe(2);
 
-    test('displayResults.conditions.additionalInsights', () => {
-        let e;
-        e = normalizeEvaluation({
-            category: '',
-            classification: '',
-            displayResults: {
-                additionalInsights: [{
-                    displayName: 'test-key',
-                    /* displayText: 'test-value', */
-                }]
-            },
-            rank: 0,
-            recommendation: '',
-            riskRating: 0
-        });
-
-        expect(e.displayResults.additionalInsights.length).toBe(1);
-        expect(e.displayResults.additionalInsights[0]).toEqual({
-            displayName: 'test-key',
-            displayText: '',
-        });
-        e.displayResults.additionalInsights = [];
-        expect(e).toEqual(evaluationReference());
-     });
-
-    test('displayResults.conditions.additionalInsights (incomplete)', () => {
-        let e;
-        e = normalizeEvaluation({
-            category: '',
-            classification: '',
-            displayResults: {
-                additionalInsights: [{
-                    displayName: 'test-key',
-                    displayText: 'test-value',
-                }]
-            },
-            rank: 0,
-            recommendation: '',
-            riskRating: 0
-        });
-
-        expect(e.displayResults.additionalInsights.length).toBe(1);
-        expect(e.displayResults.additionalInsights[0]).toEqual({
-            displayName: 'test-key',
-            displayText: 'test-value',
-        });
-        e.displayResults.additionalInsights = [];
-        expect(e).toEqual(evaluationReference());
+        expect(e[0]).toBe('TEST_KEY');
+        expect(e[1]).toBe('');
     });
 });
 
+describe('normalizeCondition', () => {
+
+    test('Condtion', () => {
+        let e;
+        e = normalizeCondition({});
+        expect(e).toEqual(conditionReference());
+
+        e = normalizeCondition(conditionReference());
+        expect(e).toEqual(conditionReference());
+    });
+
+    test('Condition.Code', () => {
+        let e;
+        e = normalizeCondition({ 'Code': 'test' });
+        expect(e['Code']).toBe('test');
+    });
+
+    test('Condition.Classification', () => {
+        let e;
+        e = normalizeCondition({ 'Classification': 'test' });
+        expect(e['Classification']).toBe('test');
+    });
+
+    test('Condition.Category', () => {
+        let e;
+        e = normalizeCondition({ 'Category': 'test' });
+        expect(e['Category']).toBe('test');
+    });
+
+    test('Condition.Condition', () => {
+        let e;
+        e = normalizeCondition({ 'Condition': 'test' });
+        expect(e['Condition']).toBe('test');
+    });
+
+    test('Condition.Learn More', () => {
+        let e;
+        e = normalizeCondition({ 'Learn More': 'test' });
+        expect(e['Learn More']).toBe('test');
+    });
+
+    test('Condition.Tips', () => {
+        let e;
+        e = normalizeCondition({ 'Tips': 'test' });
+        expect(e['Tips']).toBe('test');
+    });
+
+    test('Condition.Recommendation', () => {
+        let e;
+        e = normalizeCondition({ 'Recommendation': 'test' });
+        expect(e['Recommendation']).toBe('test');
+    });
+
+    test('Condition.Description', () => {
+        let e;
+        e = normalizeCondition({ 'Description': 'test' });
+        expect(e['Description']).toBe('test');
+    });
+
+    test('Condition.Insights, empty', () => {
+        let e;
+        e = normalizeCondition({ 'Insights': [] });
+        expect(Array.isArray(e['Insights'])).toBe(true);
+        expect(e['Insights'].length).toBe(0);
+    });
+
+    test('Condition.Insights, populated', () => {
+        let e;
+        e = normalizeCondition({
+            'Insights': [
+                ['TEST_KEY', 'TEST_CONTENT']
+            ]
+        });
+        expect(Array.isArray(e['Insights'])).toBe(true);
+        expect(e['Insights'].length).toBe(1);
+
+        expect(Array.isArray(e['Insights'][0])).toBe(true);
+        expect(e['Insights'][0].length).toBe(2);
+
+        expect(e['Insights'][0][0]).toBe('TEST_KEY');
+        expect(e['Insights'][0][1]).toBe('TEST_CONTENT');
+    });
+
+});
+
+
 describe('normalizeAnalysis', () => {
-   test('normalizeAnalysis LEGACY', () => {
-        const e = evaluationReference();
-        const legacy  = [e, e];
 
-        let a;
-        a = normalizeAnalysis([]);
-        expect(a).toEqual(analysisReference());
+    test('Analysis', () => {
+        let e;
+        e = normalizeAnalysis({});
+        expect(e).toEqual(analysisReference());
 
-        a = normalizeAnalysis(legacy);
-        const reference = analysisReference();
-        reference.evaluations = [evaluationReference(), evaluationReference()]
-        expect(a).toEqual(reference);
-   });
-
-   // #352 lts
-    test('normalizeEAnalysis insight empty', () => {
-        const ref = evaluationReference();
-        const e = normalizeEvaluation(ref);
-
-        expect(e.displayResults.conditions.additionalInsights.length).toBe(0);
+        e = normalizeAnalysis(analysisReference());
+        expect(e).toEqual(analysisReference());
     });
 
-    test('normalizeEAnalysis insight', () => {
-        const ref = evaluationReference();
-        ref.displayResults.conditions.additionalInsights = [{
-            displayName: 'testName',
-            displayText: 'testText'
-        }];
-
-        const e = normalizeEvaluation(ref);
-
-        expect(e.displayResults.conditions.additionalInsights.length).toBe(1);
-        expect(e.displayResults.conditions.additionalInsights[0]).toEqual({
-            displayName: 'testName',
-            displayText: 'testText',
-        });
+    test('Analysis.version', () => {
+        let e;
+        e = normalizeAnalysis({ version: 'TEST' });
+        expect(e.version).toBe('TEST');
     });
 
-   // #352 legacy additional insights
-    test('normalizeEAnalysis insight LEGACY (string)', () => {
-        const ref = evaluationReference();
-        ref.displayResults.conditions.additionalInsights = 'test';
-
-        const e = normalizeEvaluation(ref);
-
-        expect(e.displayResults.conditions.additionalInsights.length).toBe(1);
-        expect(e.displayResults.conditions.additionalInsights[0]).toEqual({
-            displayName: '',
-            displayText: 'test',
-        });
+    test('Analysis.created', () => {
+        let e;
+        e = normalizeAnalysis({ created: 'TEST' });
+        expect(e.created).toBe('TEST');
     });
 
-    test('normalizeEAnalysis insight LEGACY (string[])', () => {
-        const ref = evaluationReference();
-        ref.displayResults.conditions.additionalInsights = ['test'];
-
-        const e = normalizeEvaluation(ref);
-
-        expect(e.displayResults.conditions.additionalInsights.length).toBe(1);
-        expect(e.displayResults.conditions.additionalInsights[0]).toEqual({
-            displayName: '',
-            displayText: 'test',
-        });
-
+    test('Analysis.survey_id', () => {
+        let e;
+        e = normalizeAnalysis({ survey_id: 'TEST' });
+        expect(e.survey_id).toBe('TEST');
     });
 
-    test('normalizeEAnalysis insight LEGACY (mixed[])', () => {
-        const ref = evaluationReference();
-        ref.displayResults.conditions.additionalInsights = [
-            'test',
-            {
-                displayName: 'testName',
-                displayText: 'testText'
-            }
-        ];
+    test('Analysis.session_id', () => {
+        let e;
+        e = normalizeAnalysis({ session_id: 'TEST' });
+        expect(e.session_id).toBe('TEST');
+    });
 
-        const e = normalizeEvaluation(ref);
+    test('Analysis.conditions, empty', () => {
+        let e;
+        e = normalizeAnalysis({ conditions: [] });
+        expect(e.conditions).toEqual([]);
+    });
 
-        expect(e.displayResults.conditions.additionalInsights.length).toBe(2);
-        expect(e.displayResults.conditions.additionalInsights[0]).toEqual({
-            displayName: '',
-            displayText: 'test',
-        });
-        expect(e.displayResults.conditions.additionalInsights[1]).toEqual({
-            displayName: 'testName',
-            displayText: 'testText',
-        });
-
+    test('Analysis.conditions, populated', () => {
+        let e;
+        e = normalizeAnalysis({ conditions: [ conditionReference() ] });
+        expect(e.conditions).toEqual([ conditionReference() ]);
     });
 });
