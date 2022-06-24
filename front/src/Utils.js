@@ -236,6 +236,19 @@ const serializeParams = function(params) {
     }).join('&');
 };
 
+const isoDateToLocale = function(str) {
+
+    // work around the various Date() pitifalls
+    let d = NaN;
+    try {
+        d = new Date(str);
+    } catch (e) {
+        // nothing
+    }
+
+    return (!d || isNaN(d)) ? '' : d.toLocaleString();
+};
+
 export {
     isScalar,
     DirtyJson,
@@ -250,4 +263,5 @@ export {
     formatDayTimeDiff,
     setDaytimeDate,
     serializeParams,
+    isoDateToLocale,
 };

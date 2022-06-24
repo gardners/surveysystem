@@ -1,19 +1,44 @@
-[{
-    "category": "Vogonic",
-    "classification": "Mild conditions",
-    "displayResults": {
-        "additionalInsights": [],
-        "conditions": {
-            "condition": "Vogonic Flue",
-            "subcondition": "Confusion",
-            "mainText": "It is known that there are an infinite number of worlds, simply because there is an infinite amount of space for them to be in. \n However, not every one of them is inhabited. Therefore, there must be a finite number of inhabited worlds. \n Any finite number divided by infinity is as near to nothing as makes no odds, so the average population of all the planets in the Universe can be said to be zero. \n From this it follows that the population of the whole Universe is also zero, and that any people you may meet from time to time are merely the products of a deranged imagination.",
-            "learnMore": "Make it totally clear that this gun has a right end and a wrong end. Make it totally clear to anyone standing at the wrong end that things are going badly for them.",
-            "mainRecommendation": "Make it totally clear that this gun has a right end and a wrong end. Make it totally clear to anyone standing at the wrong end that things are going badly for them.",
-            "mandatoryTips": "Eskimos had over two hundred different words for snow, without which their conversation would probably have got very monotonous.",
-            "additionalInsights": "The Total Perspective Vortex derives its picture of the whole Universe on the principle of extrapolated matter analyses.To explain — since every piece of matter in the Universe is in some way affected by every other piece of matter in the Universe, it is in theory possible to extrapolate the whole of creation — every sun, every planet, their orbits, their composition and their economic and social history from, say, one small piece of fairy cake. The man who invented the Total Perspective Vortex did so basically in order to annoy his wife."
+{
+    "created": "2022-06-24T00:30:44.876Z",
+    "version": "0.0.0",
+    "survey_id": "FOO",
+    "session_id": "aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa",
+    "conditions": [
+        {
+            "Code": "VogonicFlue",
+            "Classification": "Mild",
+            "Category": "Vogon Nuisances",
+            "Condition": "Vogonic Flue",
+            "Learn More": "Make it totally clear that this gun has a right end and a wrong end. Make it totally clear to anyone standing at the wrong end that things are going badly for them.",
+            "Tips": "Eskimos had over two hundred different words for snow, without which their conversation would probably have got very monotonous.",
+            "Recommendation": "Make it totally clear that this gun has a right end and a wrong end. Make it totally clear to anyone standing at the wrong end that things are going badly for them.",
+            "Description": "It is known that there are an infinite number of worlds, simply because there is an infinite amount of space for them to be in. \n However, not every one of them is inhabited. Therefore, there must be a finite number of inhabited worlds. \n Any finite number divided by infinity is as near to nothing as makes no odds, so the average population of all the planets in the Universe can be said to be zero. \n From this it follows that the population of the whole Universe is also zero, and that any people you may meet from time to time are merely the products of a deranged imagination.",
+            "Insights": [
+                [
+                    "Avoid Vogons breath",
+                    "Avoid vogons, I that cannot be avoided, turn away in presence of a Vogon."
+                ],
+                [
+                    "Don't panic",
+                    "There is a theory which states that if ever anyone discovers exactly what the Universe is for and why it is here, it will instantly disappear and be replaced by something even more bizarre and inexplicable. There is another theory which states that this has already happened."
+                ]
+            ]
+        },
+        {
+            "Code": "Disorientation",
+            "Classification": "Severe",
+            "Category": "General",
+            "Condition": "Disorientation",
+            "Learn More": "You are lost in space.",
+            "Tips": "Eskimos had over two hundred different words for snow, without which their conversation would probably have got very monotonous.",
+            "Recommendation": "Anyone who is capable of getting themselves made President should on no account be allowed to do the job.",
+            "Description": "Isn't it enough to see that a garden is beautiful without having to believe that there are fairies at the bottom of it too?",
+            "Insights": [
+                [
+                    "Towel",
+                    "A towel is about the most massively useful thing an interstellar hitchhiker can have."
+                ]
+            ]
         }
-    },
-    "rank": 2,
-    "recommendation": "",
-    "riskRating": 0
-}]
+    ]
+}

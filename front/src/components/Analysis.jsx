@@ -8,12 +8,13 @@ import { normalizeAnalysis } from '../Analysis';
 import Session, { load_cached_session, save_cached_session } from '../Session';
 
 // components
-import AnalysisMeta from './analysis/AnalysisMeta';
-import { EvaluationGroup } from './analysis/Evaluation';
 import Preloader from './Preloader';
+import AnalysisMeta from './analysis/AnalysisMeta';
+import AnalysisBody from './analysis/AnalysisBody';
 
 // devel
 import Dev from './Dev';
+
 
 class Analysis extends Component {
 
@@ -82,8 +83,7 @@ class Analysis extends Component {
 
     render() {
         const { session, analysis, loading, alerts } = this.state;
-        const { survey_id, session_id } = session;
-        const evaluations = (analysis) ? analysis.evaluations : [];
+        const { survey_id } = session; // from router, for generating error links
 
         if(alerts.length) {
             return (
@@ -93,18 +93,6 @@ class Analysis extends Component {
                     { this.state.alerts.map((entry, index) => <ApiAlert key={ index } error={ entry } />) }
                      <button onClick={ () => window.location.reload() } className="btn btn-secondary">Reload</button>&nbsp;
                      <Link to={ `/survey/${survey_id}` } className="btn bn-lg btn-secondary">Back to survey</Link>
-                </section>
-            );
-        }
-
-        if(!evaluations.length && !loading) {
-            return (
-                <section>
-                    <h1>{ session_id }: Analysis</h1>
-                    <div className="text-danger">
-                        <p><i className="fas fa-exclamation-circle"></i> This survey is not finished yet!</p>
-                        <Link to={ `/survey/${survey_id}` } className="btn btn-lg btn-primary">Continue survey</Link>
-                    </div>
                 </section>
             );
         }
@@ -119,14 +107,12 @@ class Analysis extends Component {
 
         return (
             <section>
-                <Preloader loading={ loading } message={ loading }/>
                 <h1>Analysis</h1>
-
-                <AnalysisMeta survey_id={ survey_id } session_id={ session_id } analysis={ analysis } />
-                <EvaluationGroup evaluations={ evaluations } />
+                <AnalysisMeta analysis={ analysis } />
+                <AnalysisBody analysis={ analysis } />
 
                 <Dev.IfDebug>
-                    <Dev.Pretty label="raw analyis" data={ evaluations } open={ false }/>
+                    <Dev.Pretty label="raw analyis" data={ analysis } open={ false }/>
                 </Dev.IfDebug>
             </section>
         );
