@@ -1,5 +1,9 @@
 import {  DEFAULT_BREAKPOINT, testMediaBreakpoint, matchesBreakpointOrAbove } from '../Media';
 
+// disable warnings from Media.js
+const log = console.log;
+console.warn = () => {};
+
 let deviceWidth = 0;
 
 window.matchMedia = jest.fn().mockImplementation(query => {
@@ -19,6 +23,8 @@ window.matchMedia = jest.fn().mockImplementation(query => {
     };
 });
 
+// restore logging
+console.log = log;
  /**
   * @see bootstrapp/scss/mixins/_breakpoints.scss
   * (xs: 0, sm: 576px, md: 768px, lg: 992px, xl: 1200px)

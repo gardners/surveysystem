@@ -529,7 +529,6 @@ describe('Answer.serialize()', () => {
         a = make_answer({ uid: 'test',
             text: `back\slash`
         });
-        console.log(Answer.serialize(a));
         expect(Answer.serialize(a)).toBe('test:backslash:0:0:0:0:0:0:0');
     });
 
