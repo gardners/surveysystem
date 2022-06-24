@@ -1,8 +1,10 @@
 import React, { Component } from 'react';
 
 import { mockAnalysis } from '../../Analysis';
+
 import AnalysisMeta from '../analysis/AnalysisMeta';
-import { EvaluationGroup } from '../analysis/Evaluation';
+import AnalysisBody from '../analysis/AnalysisBody';
+
 
 class DemoAnalysis extends Component {
 
@@ -27,7 +29,7 @@ class DemoAnalysis extends Component {
         }
 
         if(json[0] !== '{') {
-            analysis = new Error('Error: analysis has to be an object containing an array evaluation objects');
+            analysis = new Error('Error: analysis has to be an object containing an array of Condition objects');
         }
 
         this.setState({
@@ -39,23 +41,22 @@ class DemoAnalysis extends Component {
     render() {
         const { json, analysis } = this.state;
 
-        const { evaluations } = analysis;
-        const survey_id = 'DEMO-SURVEY';
-        const session_id = 'DEMO-SESSION';
         return (
-            <section>
-                <textarea className="p-3 bg-dark text-white" style={ { width: '100%', height: '200px' } } onChange={ this.handleChange.bind(this) } value={ json } />
-                <hr className="mt-2 mb-2"/>
-                {
-                    (evaluations instanceof Error) ?
-                        <div class="alert alert-danger">{ evaluations.toString() }</div>
-                        :
-                        <React.Fragment>
-                            <AnalysisMeta survey_id={ survey_id } session_id={ session_id } analysis={ analysis } />
-                            <EvaluationGroup survey_id={ survey_id } session_id={ session_id } evaluations={ evaluations } />
-                        </React.Fragment>
-                }
-            </section>
+            <React.StrictMode>
+                <section>
+                    <textarea className="p-3 bg-dark text-white" style={ { width: '100%', height: '200px' } } onChange={ this.handleChange.bind(this) } value={ json } />
+                    <hr className="mt-2 mb-2"/>
+                    {
+                        (analysis instanceof Error) ?
+                            <div class="alert alert-danger">{ analysis.toString() }</div>
+                            :
+                            <React.Fragment>
+                                <AnalysisMeta analysis={ analysis } />
+                                <AnalysisBody analysis={ analysis } />
+                            </React.Fragment>
+                    }
+                </section>
+            </React.StrictMode>
         );
     }
 }
