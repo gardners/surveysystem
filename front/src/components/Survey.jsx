@@ -300,6 +300,7 @@ class Survey extends Component {
         const { history } = this.props;
 
         if (!session.isFinished()) {
+            console.warn('session not finished');
             return;
         }
         // the session will be closed in <Analysis>
