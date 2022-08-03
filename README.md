@@ -42,6 +42,10 @@ Use this only for *testing* or *development* environments, as this substantially
 
 Register a trusted authentication middleware source. For details see [authorisation-and-middleware.md](docs/authorisation-and-middleware.md)
 
+**SS_LOG_FILE**
+
+Path to a writable custom log file
+
 # Installation (backend)
 
 This system requires Python >= 3.8 and clang. Additionally, `zlib and bmake` is required for compiling [kcgi](https://kristaps.bsd.lv/kcgi/index.html). To install on Ubuntu:
@@ -103,7 +107,7 @@ Note that the following section reflects the *current state* of development and 
 | POST   | `/answers?sessionid&{uid1}={value1}&{uid2}={value2}` <sup>1)</sup> | json: [next questions](docs/next-questions-response.md) | answer previous questions by ids and values, format: question id = answer value                                      |
 | DELETE | `/answers?sessionid` <sup>3)</sup>                                 | json: [next questions](docs/next-questions-response.md) | delete last answers (roll back to previous questions)                                                                |
 | DELETE | `/answers?sessionid&questionid` <sup>3)</sup>                      | json: [next questions](docs/next-questions-response.md) | delete last answers until (and including) the given question id (rollback)                                           |
-| GET    | `/analysis` <sup>4)</sup>                                          | json                                                    | get analysis based on your answers                                                                                   |
+| GET    | `/analysis?sessionid` <sup>4)</sup>                                | json                                                    | get analysis based on your answers                                                                                   |
 | GET    | `/status(?extended)`                                               | status 200/204 no content                               | system status use the `extended` param for checking correct configuration and paths                                  |
 
 - **1)**: Answers must match previous questions

@@ -30,6 +30,7 @@ yarn-error.log*
 
 # scratch area for development
 _dev/*
+dev.*
 
 # deployment script
 deploy
