@@ -11,9 +11,9 @@ const AnalysisBody = function({ analysis }) {
         <React.Fragment>
             {
                 conditions.map((condition, index) =>
-                    <div>
+                    <div key={ index }>
                         <span className="text-muted">Condition { index + 1 }/{ conditions.length }:</span>
-                        <Condition key={ index } prefix={ `${index + 1}/${conditions.length}` } condition={ condition }/>
+                        <Condition prefix={ `${index + 1}/${conditions.length}` } condition={ condition }/>
                     </div>
                 )
             }

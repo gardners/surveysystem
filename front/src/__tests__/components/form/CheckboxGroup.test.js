@@ -19,7 +19,7 @@ beforeAll(() => {
                 unit: '',
                 default_value: 'choice2',
             } }
-            handleChange= {} />,
+            handleChange={ () => {} } />,
     );
 });
 

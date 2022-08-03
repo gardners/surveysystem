@@ -232,8 +232,40 @@ const setDaytimeDate = function(hours12, minutes, ampm) {
 const serializeParams = function(params) {
     return Object.keys(params).map((key) => {
         return encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
-
     }).join('&');
+};
+
+/**
+ * Builds a url
+ * @param {string} base Base url (typically defined in .env)
+ * @param {string} path
+ * @param {object} params
+ *
+ * normalizes url strings to have a trailing slash, if no query is defined
+ *  - (http|s)://base/path/
+ *  - (http|s)://base/path?param=value
+ *
+ *  * @returns {string}
+ */
+const buildUrl = function(base, path, params) {
+    base = base || '';
+    path = path || '';
+    params = params || null;
+
+    let q = '';
+    let b = base;
+    let p = path;
+
+    if (params) {
+        q = serializeParams(params);
+        q = (q) ? '?' + q : '';
+    }
+
+    b = b.replace(/\/$/, '');      // remove trailing slash
+    p = p.replace(/^\/|\/$/g, ''); // remove leading + trailing slash
+    q = (!q && p) ? '/' : q ;      // add trailing slash if path no query
+
+    return `${b}/${p}${q}`;
 };
 
 const isoDateToLocale = function(str) {
@@ -263,5 +295,6 @@ export {
     formatDayTimeDiff,
     setDaytimeDate,
     serializeParams,
+    buildUrl,
     isoDateToLocale,
 };

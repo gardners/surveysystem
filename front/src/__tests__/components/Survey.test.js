@@ -2,6 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Survey from '../../components/Survey';
 
+// disable warnings from Session.js
+const log = console.log;
+console.warn = () => {};
+
 const createMockXHR = (responseJSON) => {
     const mockXHR = {
         open: jest.fn(),
@@ -9,7 +13,8 @@ const createMockXHR = (responseJSON) => {
         readyState: 4,
         responseText: JSON.stringify(
             responseJSON || {}
-        )
+        ),
+        setRequestHeader: jest.fn(),
     };
     return mockXHR;
 }
@@ -51,3 +56,6 @@ describe('withXHR mock', () => {
     });
 });
 xit('should be implemented', () => {});
+
+// restore logging
+console.log = log;

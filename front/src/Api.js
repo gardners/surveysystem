@@ -2,30 +2,23 @@
  * @module APIhttp request API to surveysystem/backend
  */
 
-import { serializeParams } from './Utils';
+import { buildUrl } from './Utils';
 import { request_headers } from './OAuth2';
 
-const BaseUri = process.env.REACT_APP_SURVEYAPI_ENDPOINT.replace(/\/$/, "");
+
+const {
+    REACT_APP_SURVEYAPI_ENDPOINT,
+    REACT_APP_SURVEYAPI_HEADERS
+} = process.env;
+
 const BaseHeaders = {};
 
 try {
-    const cHeaders = JSON.parse(process.env.REACT_APP_SURVEYAPI_HEADERS || '[]');
+    const cHeaders = JSON.parse(REACT_APP_SURVEYAPI_HEADERS || '{}');
     Object.assign(BaseHeaders, cHeaders);
 } catch(e) {
     // nothing
 }
-
-const url = function(path, params) {
-  path = path || '';
-  params = params || null;
-
-  let q = '';
-  if (params) {
-    q = '?' + serializeParams(params);
-  }
-
-  return (!path) ? `${BaseUri}${q}` : `${BaseUri}${path}${q}`;
-};
 
 class ApiError extends Error {
     constructor(message, response = {}) {
@@ -34,6 +27,14 @@ class ApiError extends Error {
         this.statusText = response.statusText || null;
         this.url = response.url || null;
     }
+}
+
+/**
+ * Constructs an url , based on REACT_APP_SURVEYAPI_ENDPOINT
+ * @returns {string}
+ */
+const url = function(path, params) {
+    return buildUrl(REACT_APP_SURVEYAPI_ENDPOINT, path, params);
 }
 
 /**
@@ -274,4 +275,4 @@ const Api = {
 
 Api.getAnalysis = Api.finishSurvey; //TODO tmp
 
-export { Api as default, ApiError, BaseUri,responseError };
+export { Api as default, ApiError, responseError };
