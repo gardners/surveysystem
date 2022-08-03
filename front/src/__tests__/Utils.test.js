@@ -1,4 +1,4 @@
-import { isScalar, sanitizeKcgiJsonString, isArray, isObject, camelToNormal } from '../Utils';
+import { isScalar, sanitizeKcgiJsonString, isArray, isObject, camelToNormal, buildUrl } from '../Utils';
 
 const days = function(factor) {
     return factor * 86400;
@@ -114,5 +114,29 @@ describe('Time', () => {
 describe('sanitizeKcgiJsonString', () => {
     test('sanitize', () => {
         expect(sanitizeKcgiJsonString('description <p><strong>with HTML<\/strong><\/p>')).toBe('description <p><strong>with HTML</strong></p>');
+    });
+});
+
+describe('buldUrl', () => {
+    test('empty', () => {
+        expect(buildUrl()).toBe('/');
+    });
+
+    test('base_url', () => {
+        expect(buildUrl('base')).toBe('base/');
+        expect(buildUrl('base/')).toBe('base/'); // strip trailing slash
+    });
+
+    test('path', () => {
+        expect(buildUrl('base', 'path')).toBe('base/path/');
+        expect(buildUrl('base', 'path/')).toBe('base/path/');
+        expect(buildUrl('base/', '/path')).toBe('base/path/');
+        expect(buildUrl('base/', '/')).toBe('base/');
+    });
+
+    test('params', () => {
+        expect(buildUrl('base', 'path', null)).toBe('base/path/');
+        expect(buildUrl('base', 'path', {})).toBe('base/path/');
+        expect(buildUrl('base', 'path', { 'param': 'value' })).toBe('base/path?param=value');
     });
 });
