@@ -3,22 +3,23 @@
  */
 
 import { buildUrl } from './Utils';
-import { request_headers } from './OAuth2';
+import JwtAuth from './JwtAuth';
 
 
 const {
     REACT_APP_SURVEYAPI_ENDPOINT,
-    REACT_APP_SURVEYAPI_HEADERS
+    REACT_APP_SURVEYAPI_HEADERS,
+    REACT_APP_SURVEYAPI_APPEND_SLASH,
 } = process.env;
 
 const BaseHeaders = {};
-
 try {
     const cHeaders = JSON.parse(REACT_APP_SURVEYAPI_HEADERS || '{}');
     Object.assign(BaseHeaders, cHeaders);
 } catch(e) {
     // nothing
 }
+
 
 class ApiError extends Error {
     constructor(message, response = {}) {
@@ -34,7 +35,11 @@ class ApiError extends Error {
  * @returns {string}
  */
 const url = function(path, params) {
-    return buildUrl(REACT_APP_SURVEYAPI_ENDPOINT, path, params);
+    let p = path || '';
+    if (REACT_APP_SURVEYAPI_APPEND_SLASH === 'true') {
+        p += '/';
+    }
+    return buildUrl(REACT_APP_SURVEYAPI_ENDPOINT, p, params);
 }
 
 /**
@@ -44,10 +49,13 @@ const url = function(path, params) {
 const requestHeaders = function(headers) {
     headers = headers || {};
 
+    const requestHeaders = {
+        'If-Match': localStorage.getItem('ss_consinstency_hash'),
+    };
+    const authHeaders = JwtAuth.request_headers();
+
     // add consistency header
-    Object.assign(headers, BaseHeaders, {
-        'If-Match': localStorage.getItem('ss_consinstency_hash')
-    }, request_headers());
+    Object.assign(headers, BaseHeaders, requestHeaders, authHeaders);
 
     return headers;
 };
@@ -128,6 +136,10 @@ const Api = {
                 }
                 cacheResponse(response);
                 return response.text();
+            })
+            .then((txt) => {
+                // some systems return the session id with 'application/json' and a json string '"aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa"'
+                return txt.replace(/^"+|"+$/g, '');
             })
             .catch((error) => {
                 if(error && error.name === 'AbortError') {

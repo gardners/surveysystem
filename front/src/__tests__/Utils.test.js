@@ -128,15 +128,16 @@ describe('buldUrl', () => {
     });
 
     test('path', () => {
-        expect(buildUrl('base', 'path')).toBe('base/path/');
+        expect(buildUrl('base', 'path')).toBe('base/path');
         expect(buildUrl('base', 'path/')).toBe('base/path/');
-        expect(buildUrl('base/', '/path')).toBe('base/path/');
+        expect(buildUrl('base/', '/path')).toBe('base/path');
         expect(buildUrl('base/', '/')).toBe('base/');
     });
 
     test('params', () => {
-        expect(buildUrl('base', 'path', null)).toBe('base/path/');
-        expect(buildUrl('base', 'path', {})).toBe('base/path/');
+        expect(buildUrl('base', 'path', null)).toBe('base/path');
+        expect(buildUrl('base', 'path', {})).toBe('base/path');
         expect(buildUrl('base', 'path', { 'param': 'value' })).toBe('base/path?param=value');
+        expect(buildUrl('base', 'path/', { 'param': 'value' })).toBe('base/path/?param=value');
     });
 });

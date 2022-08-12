@@ -1,8 +1,10 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { NavLink } from 'react-router-dom';
 
+import { addClassNames } from '../../Utils';
 import { Fade } from '../Transitions';
+
 
 const MenuLink = function({ to, children }) {
     return (
@@ -14,62 +16,52 @@ MenuLink.propTypes = {
     to: PropTypes.string.isRequired,
 };
 
-class DropdownMenu extends Component {
-    constructor(props){
-        super(props);
 
-        this.state = {
-            show: false,
-        };
+const DropdownMenu = function({ title, buttonClass, alignmentClass, children }) {
+    const [show, setShow] = useState(false);
 
-        this.show = this.show.bind(this);
-        this.hide = this.hide.bind(this);
-
+    const toggled = (show) ? 'show' : '';
+    const onclick = function(e) {
+        e.preventDefault();
+        setShow(!show);
     };
 
-    show(e) {
-        e && e.preventDefault()
-        this.setState({ show: true }, () => {
-            document.addEventListener('click', this.hide);
-        });
-    }
-
-    hide() {
-        this.setState({ show: false }, () => {
-            document.removeEventListener('click', this.hide);
-        });
-    }
-
-    render() {
-        const cls = (this.state.show) ? 'show' : '';
-
-        return (
-            <div className={ `dropdown ${cls}` }>
-                <button className={ `${this.props.buttonClassName}  dropdown-toggle` } type="button" aria-haspopup="true" aria-expanded="false"
-                    onClick={ this.show }>
-                    { this.props.title }
-                </button>
-
-                { this.state.show &&
-                    <Fade timeout={ 100 }>
-                        <div className={ `dropdown-menu ${cls}` } aria-labelledby="dropdownMenuButton">
-                            { this.props.children }
-                        </div>
-                    </Fade>
-                }
-            </div>
-        );
-    }
-}
+    return (
+        <div className={ addClassNames('dropdown', toggled) }>
+            <button
+                type="button"
+                className={ addClassNames(buttonClass, 'dropdown-toggle') }
+                onClick={ onclick }
+                aria-haspopup="true"
+                aria-expanded="false"
+            >
+                { title }
+            </button>
+            { show &&
+                <Fade timeout={ 100 }>
+                    <div className={ addClassNames('dropdown-menu', toggled, alignmentClass) }>
+                        { children }
+                    </div>
+                </Fade>
+            }
+        </div>
+    );
+};
 
 DropdownMenu.defaultProps = {
-    buttonClassName: 'btn btn-secondary',
+    buttonClass: 'btn btn-secondary',
+    alignmentClass: '',
 };
 
 DropdownMenu.propTypes = {
-    title: PropTypes.string.isRequired,
-    buttonClassName: PropTypes.string,
+    title: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.element,
+    ]).isRequired,
+    buttonClass: PropTypes.string,
+    alignmentClass: PropTypes.string,
 };
+
 
 export {
     DropdownMenu,

@@ -35,7 +35,14 @@ class ApiAlert extends Component {
         // @see fcgmain.c: quick_error()
         try {
             const json = JSON.parse(reason);
-            reason = json.message || reason;
+
+            if (json.hasOwnProperty('message')) {
+                reason = json.message;
+            }
+            if (json.hasOwnProperty('detail')) {
+                reason = json.detail;
+            }
+
             details = json.trace || '';
         } catch (e) {
             // nothing
