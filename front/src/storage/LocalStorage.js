@@ -40,6 +40,14 @@ const LocalStorage = {
     delete: function(key) {
         localStorage.removeItem(key);
     },
+
+    /**
+     * Delete all data
+     * @returns {void}
+     */
+    clear: function() {
+        localStorage.clear();
+    },
 };
 
 export default LocalStorage;
