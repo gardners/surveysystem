@@ -1,3 +1,17 @@
+/**
+ * @module
+ *
+ * jwt token auth (RFC 7519), supported endpoints are:
+ * GET|POST /token > response: { access, refresh }
+ * POST /token/refresh > response: { access, refresh }
+ * GET /user > response: { username, password }
+ *
+ * tokens are  tored in LocalStorage
+ * TODO use refresh token
+ * @see https://www.rfc-editor.org/rfc/rfc7519
+ * @see https://jwt.io/introduction
+ **/
+
 import { buildUrl } from './Utils';
 import { responseError } from './Api';
 import LocalStorage from './storage/LocalStorage';
@@ -13,10 +27,10 @@ const {
  */
 const url = function(path, params) {
     let p = path || '';
-    if (REACT_APP_JWT_PROVIDER_APPEND_SLASH === 'true') {
+    if (process.env.REACT_APP_JWT_PROVIDER_APPEND_SLASH === 'true') {
         p += '/';
     }
-    return buildUrl(REACT_APP_JWT_PROVIDER_URI, p, params);
+    return buildUrl(process.env.REACT_APP_JWT_PROVIDER_URI, p, params);
 }
 
 /**
@@ -25,7 +39,7 @@ const url = function(path, params) {
  * @returns {Boolean}
  */
 const is_protected = function() {
-    return !! REACT_APP_JWT_PROVIDER_URI;
+    return !! process.env.REACT_APP_JWT_PROVIDER_URI;
 }
 
 const add_token = function(name, value) {
@@ -65,6 +79,7 @@ const get_token_or_expire = function(name) {
 
     const when = Math.floor(Date.now() / 1000) + (10 * 60); // now + 10 minutes
     const exp = token_exp(token);
+
     if (exp <= when) {
         remove_token(name);
         return null;
@@ -187,7 +202,7 @@ const get_user = function () {
  * Init authentication by checking tokens. Refresh tokens if required.
  * Return user if logged in.
  *
- * @returns {Promise}
+ * @returns {Promise} user object or null
  */
 const init = function () {
     let token = null;
