@@ -21,20 +21,6 @@ const isObject = function(v) {
 };
 
 /**
- * Checks if a value is an empty Object {}
- * @param {object} obj
- * @returns {boolean}
- */
-const isEmptyObject = function(obj) {
-    for(let key in obj) {
-        if (obj.hasOwnProperty(key)) {
-            return false;
-        }
-    }
-    return true;
-};
-
-/**
  * Checks if a value is scalar
  * @param {*} v value
  * @returns {boolean}
@@ -42,45 +28,6 @@ const isEmptyObject = function(obj) {
 const isScalar = function(v) {
     const type = typeof v;
     return v === null || ['string', 'number', 'boolean'].indexOf(type) > -1;
-};
-
-/**
- * @module Utils/Dirtyjson
- */
-const DirtyJson = {
-
-    /**
-     * Coerces value into Array
-     * @param {*} v value
-     * @returns {Array}
-     */
-    coerceArray(v = null) {
-        if (!v) {
-            return [];
-        }
-
-        if (isScalar(v)) {
-            return [v];
-        }
-
-        if (isObject(v) && !isEmptyObject(v)) {
-            return [v];
-        }
-
-        return (isArray(v)) ? v : [];
-    },
-
-    /**
-     * Gets property value from Object or provides return value
-     *  - non recursive!
-     * @param {object} v lookup object
-     * @param {string} key Property
-     * @param {string} [r] optional return value if property not found
-     * @returns {*|null} value or r or null
-     */
-    get(v, key, r = null) {
-        return (v && typeof v[key] !== 'undefined') ? v[key] : r;
-    },
 };
 
 /**
@@ -262,8 +209,7 @@ const buildUrl = function(base, path, params) {
     }
 
     b = b.replace(/\/$/, '');      // remove trailing slash
-    p = p.replace(/^\/|\/$/g, ''); // remove leading + trailing slash
-    q = (!q && p) ? '/' : q ;      // add trailing slash if path no query
+    p = p.replace(/^\/+/g, '');    // remove leading slash
 
     return `${b}/${p}${q}`;
 };
@@ -283,7 +229,6 @@ const isoDateToLocale = function(str) {
 
 export {
     isScalar,
-    DirtyJson,
     camelToNormal,
     isArray,
     isObject,

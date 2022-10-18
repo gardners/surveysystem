@@ -1,11 +1,22 @@
-//Basic HeaderNav made with bootstrap
+//Basic Header made with bootstrap
 import React, { useContext } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, withRouter } from 'react-router-dom';
 
-import { AuthContext } from '../Context';
+import { AuthContext } from './AuthProvider';
 import { DropdownMenu, MenuLink } from './bootstrap/DropdownMenu';
 
 import logo from '../assets/logo.png';
+
+
+const {
+    NODE_ENV,
+    REACT_APP_SURVEY_PROVIDER,
+    REACT_APP_SITE_NAME,
+} = process.env;
+
+const surveyProvider = REACT_APP_SURVEY_PROVIDER.trim();
+const siteName = REACT_APP_SITE_NAME.trim();
+
 
 // toggles navbar collapse
 // element.classList support is ie > 10, we need this to work always!
@@ -20,39 +31,69 @@ const toggle = function(el){
     el.className += ' show';
 };
 
-const {
-    REACT_APP_SURVEY_PROVIDER,
-    REACT_APP_SITE_NAME,
-} = process.env;
-
-const surveyProvider = REACT_APP_SURVEY_PROVIDER.trim();
-const siteName = REACT_APP_SITE_NAME.trim();
 
 const User = function() {
     const auth = useContext(AuthContext);
 
-    let name = 'Login';
-    let cls = 'btn btn-danger';
-
-    if (!auth.protected) {
+    if (!auth.is_protected) {
         return(null);
     }
 
-    if (auth.user) {
-        name = (auth.user.name) ? auth.user.name : auth.user.email;
-        cls = 'btn btn-success';
+    if (!auth.user) {
+        return (
+            <NavLink className="btn btn-danger" to="/login">
+                <i className="fa fa-user"></i>
+            </NavLink>
+        );
     }
 
-    return(
-        <NavLink className={ cls } activeClassName="btn-light" to="/login">
-            { name }
+    return (
+        <NavLink className="btn btn-success" to="/login">
+            <i className="fa fa-user"></i>
         </NavLink>
+    );
+
+/*
+    const username = auth.username || '[UNKNOWN]';
+    const logout = function(e) {
+        e.preventDefault();
+        auth.logout();
+    };
+
+    return(
+        <DropdownMenu
+            title={ <i className="fa fa-user"></i> }
+            buttonClass="btn btn-success"
+            alignmentClass="dropdown-menu-right"
+        >
+            <div className="dropdown-item-text">Hello <strong>{ username }</strong></div>
+            <div className="dropdown-divider"></div>
+            <div className="dropdown-item-text"><button className="btn btn-sm btn-block btn-light" onClick={ logout } >Logout</button></div>
+        </DropdownMenu>
+    );
+*/
+
+};
+
+const DemoMenu = function() {
+    const buttonClass = (/^\/demo/.test(window.location.pathname)) ? 'btn btn-light' : 'btn btn-secondary';
+
+    return (
+        <DropdownMenu
+            title="Demos"
+            buttonClass={ buttonClass }
+            alignmentClass="dropdown-menu-right"
+        >
+            <MenuLink to="/demo/form">Form Elements</MenuLink>
+            <MenuLink to="/demo/analyse">Analysis</MenuLink>
+            <MenuLink to="/demo/manifest">Manifest</MenuLink>
+        </DropdownMenu>
     );
 };
 
 User.propTypes = {};
 
-const HeaderNav = function({ location }) {
+const Header = function({ location }) {
 
     return (
         <header>
@@ -77,17 +118,7 @@ const HeaderNav = function({ location }) {
                         <li className="nav-item">
                             <NavLink className="btn btn-secondary" activeClassName="btn-light" to="/surveys">Surveys</NavLink>
                         </li>
-                        {
-                            (process.env.NODE_ENV !== 'production') ?
-                                <li className="nav-item ml-3">
-                                    <DropdownMenu title="Demos" buttonClassName={ (/^\/demo/.test(location.pathname)) ? 'btn btn-light' : 'btn btn-secondary' }>
-                                        <MenuLink to="/demo/form">Form Elements</MenuLink>
-                                        <MenuLink to="/demo/analyse">Analysis</MenuLink>
-                                        <MenuLink to="/demo/manifest">Manifest</MenuLink>
-                                    </DropdownMenu>
-                                </li>
-                            : null
-                        }
+                        { (NODE_ENV !== 'production') && <li className="nav-item ml-3"><DemoMenu /></li> }
                         <li className="nav-item ml-3">
                             <User/>
                         </li>
@@ -98,6 +129,6 @@ const HeaderNav = function({ location }) {
     );
 };
 
-HeaderNav.propTypes = {};
+Header.propTypes = {};
 
-export default HeaderNav;
+export default withRouter(Header);

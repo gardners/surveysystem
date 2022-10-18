@@ -43,5 +43,8 @@
     "env-cmd": "^10.1.0",
     "node-sass": "^7.0.1",
     "react-test-renderer": "^16.14.0"
+  },
+  "overrides": {
+    "react-error-overlay": "6.0.9"
   }
 }
