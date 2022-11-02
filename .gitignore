@@ -12,3 +12,11 @@ static/*
 *.gz
 *.tar.*
 *.zip
+
+# development
+_dev/*
+dev.*
+TODO.*
+*.bak
+*.dev
+
