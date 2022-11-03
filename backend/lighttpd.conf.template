@@ -30,7 +30,7 @@ server.modules = (
      "mod_alias",
 
      "mod_fastcgi",
-     "mod_compress",
+     "mod_deflate",
      "mod_redirect",
      "mod_accesslog",
 )

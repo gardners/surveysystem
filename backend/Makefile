@@ -2,16 +2,12 @@ SRCDIR= src
 INCDIR= include
 OBJDIR= obj
 
-# gh#396, @see https://docs.python.org/3.8/whatsnew/3.8.html#debug-build-uses-the-same-abi-as-release-build
-# API stuff
-PYTHONVERSION=	3.8
-PYCONFIG=/usr/bin/python$(PYTHONVERSION)-config
-ifeq ("$(wildcard $(PYCONFIG))","")
-PYCONFIG=/opt/local/Library/Frameworks/Python.framework/Versions/$(PYTHONVERSION)/bin/python$(PYTHONVERSION)-config
-endif
-ifeq ("$(wildcard $(PYCONFIG))","")
-PYCONFIG=/Library/Frameworks/Python.framework/Versions/$(PYTHONVERSION)/bin/python$(PYTHONVERSION)-config
-endif
+# Python API: #539, #396
+PY_VERSION_MAJOR = 3
+PY_VERSION_MINOR = 8
+PY_COPT  := $(shell python3-config --embed --includes)
+PY_LOPT := $(shell python3-config --embed --ldflags)
+PY_CHECK = "import sys; assert sys.version_info >= (${PY_VERSION_MAJOR}, ${PY_VERSION_MINOR}), \"Python >= ${PY_VERSION_MAJOR}.${PY_VERSION_MINOR} required!\""
 
 KCGIARS=	kcgi/libkcgihtml.a kcgi/libkcgi.a kcgi/libkcgijson.a
 
@@ -76,11 +72,10 @@ FCGIOBJS=	$(COREOBJS) \
 HEADERS=	$(STATICHEADERS) $(GENERATEDHEADERS) $(FCGIHEADERS)
 
 CC=	clang
-COPT=	-Wall -O3 -g -Iinclude `$(PYCONFIG) --embed --includes` -Ikcgi
-LOPT=	`$(PYCONFIG) --libs --embed --ldflags`
+COPT=	-Wall -O3 -g -Iinclude $(PY_COPT) -Ikcgi
+LOPT=	$(PY_LOPT)
 
-
-all:	test_units surveycli surveyfcgi test_runner
+all:	pycheck test_units surveycli surveyfcgi test_runner
 
 test_runner:	Makefile $(SRCDIR)/test_runner.o $(TESTOBJS)
 	$(CC) $(COPT) -o test_runner $(SRCDIR)/test_runner.o $(COREOBJS) $(LOPT)
@@ -89,19 +84,19 @@ test_runner:	Makefile $(SRCDIR)/test_runner.o $(TESTOBJS)
 	$(CC) $(COPT) -c $< -o $@
 
 $(INCDIR)/question_types.h:	$(INCDIR)/survey.h $(STATICHEADERS)
-	echo "// clang-format on" > $@
+	@echo "// clang-format on" > $@
 	grep '#define QTYPE_' $(INCDIR)/survey.h | cut -c8- | sort -k2n -t' ' | tail -1 | awk -F' ' '{ printf("#define NUM_QUESTION_TYPES %s\n",$$2); }' >> $@
-	echo "extern char *question_type_names[1+NUM_QUESTION_TYPES+1];" >> $@
-	echo "// clang-format off" >> $@
+	@echo "extern char *question_type_names[1+NUM_QUESTION_TYPES+1];" >> $@
+	@echo "// clang-format off" >> $@
 
 $(SRCDIR)/question_types.c:	$(INCDIR)/survey.h $(HEADERS)
-	echo "// clang-format on" > $@
-	echo "#include \"question_types.h\"" >> $@
-	echo "char *question_type_names[1+NUM_QUESTION_TYPES+1]={" >> $@
-	echo "  \"start of list\"," >> $@
-	grep '#define QTYPE_' $(INCDIR)/survey.h | cut -f2- -d_ | sort -k2n -t' ' | awk -F' ' '{ printf("  \"%s\",\n",$$1); }' >> $@
-	echo "  \"end of list\"\n};" >> $@
-	echo "// clang-format off" >> $@
+	@echo "// clang-format on" > $@
+	@echo "#include \"question_types.h\"" >> $@
+	@echo "char *question_type_names[1+NUM_QUESTION_TYPES+1]={" >> $@
+	@echo "  \"start of list\"," >> $@
+	@grep '#define QTYPE_' $(INCDIR)/survey.h | cut -f2- -d_ | sort -k2n -t' ' | awk -F' ' '{ printf("  \"%s\",\n",$$1); }' >> $@
+	@echo "  \"end of list\"\n};" >> $@
+	@echo "// clang-format off" >> $@
 
 test_units:	$(TESTOBJS)
 	$(CC) $(COPT) -o $@ $^ $(LOPT)
@@ -119,18 +114,23 @@ $(KCGIARS):	/usr/bin/bmake kcgi/kcgijson.c
 surveyfcgi:	$(FCGIOBJS) $(KCGIARS)
 	$(CC) $(COPT) -o $@ $^ $(LOPT) $(KCGIARS) -lz
 
+pycheck:
+	@echo ----
+	python3 -c $(PY_CHECK)
+	@echo ----
+
 clean:
-	rm $(SRCDIR)/*.o $(GENERATEDHEADERS) $(GENERATEDSRCS) $(KCGIARS)
+	rm -f $(SRCDIR)/*.o $(GENERATEDHEADERS) $(GENERATEDSRCS) $(KCGIARS)
 
 /usr/bin/bmake:
-	echo "Run sudo apt-get install bmake"
+	@echo "running: sudo apt-get install bmake"
 
 # Run static analysis of code using sparse and scan-build
 analyse_scanbuild:
 	scan-build make
 
 analyse_sparse:
-	sparse -std=c99 -D__USE_MISC=1 -Iinclude/ -Ikcgi `$(PYCONFIG) --includes`  -Wsparse-all -Wnoundef -Wsomething src/*.c
+	sparse -std=c99 -D__USE_MISC=1 -Iinclude/ -Ikcgi $(PY_COPT) -Wsparse-all -Wnoundef -Wsomething src/*.c
 
 analyse_cppcheck:
 	cppcheck --enable=all src/*c

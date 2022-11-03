@@ -115,11 +115,12 @@ cppcheck-build/*
 propTests.*
 tmux*
 
-# development scratchareas
+# development
 _dev/*
 dev.*
 TODO.*
 *.bak
+*.dev
 
 # deploy scripts and configs
 deploy
