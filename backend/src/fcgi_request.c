@@ -503,7 +503,7 @@ struct session *fcgi_request_load_and_verify_session(struct kreq *req, enum acti
     char reason[1024]; // TODO remove reason
     res = validate_session_action(action, ses, reason, 1024);
     if (res) {
-      BREAK_CODEV(res, "session: '%s', reason: '%s';", reason);
+      BREAK_CODEV(res, "session: '%s', reason: '%s'", session_id, reason);
     }
 
   } while(0);
