@@ -229,7 +229,6 @@ int test_dump_logs(char *dir, FILE *log) {
       snprintf(breakage_log, 16384, "%s/../breakage.log", dir);
       FILE *f = fopen(breakage_log, "r");
       if (f) {
-        fprintf(log, "--------- %s ----------\n", breakage_log);
         char line[4096];
         line[0] = 0;
         fgets(line, 4096, f);
@@ -249,7 +248,6 @@ int test_dump_logs(char *dir, FILE *log) {
     fprintf(log, "============================================================="
                  "===========\n");
 
-    int ret = 0;
     FTS *ftsp;
     FTSENT *curr;
 
@@ -265,8 +263,8 @@ int test_dump_logs(char *dir, FILE *log) {
     // FTS_XDEV     - Don't cross filesystem boundaries
     ftsp = fts_open(files, FTS_NOCHDIR | FTS_PHYSICAL | FTS_XDEV, NULL);
     if (!ftsp) {
-      fprintf(log, "%s: fts_open failed: %s\n", dir, strerror(errno));
-      ret = -1;
+      fprintf(log, "ERROR: %s: fts_open failed: %s\n", dir, strerror(errno));
+      retVal = -1;
       goto finish;
     }
 
@@ -275,7 +273,8 @@ int test_dump_logs(char *dir, FILE *log) {
       case FTS_NS:
       case FTS_DNR:
       case FTS_ERR:
-        fprintf(log, "%s: fts_read error: %s\n", curr->fts_accpath,
+        retVal = -1;
+        fprintf(log, "ERROR: %s: fts_read error: %s\n", curr->fts_accpath,
                 strerror(curr->fts_errno));
         break;
 
@@ -284,10 +283,9 @@ int test_dump_logs(char *dir, FILE *log) {
         FILE *in = fopen(curr->fts_accpath, "r");
 
         if (!in) {
-          fprintf(log, "ERROR: Could not read log file '%s'\n",
-                  curr->fts_accpath);
+          retVal = -1;
+          fprintf(log, "ERROR: Could not read log file '%s'\n", curr->fts_accpath);
         } else {
-          fprintf(log, "--------- %s ----------\n", curr->fts_accpath);
           char line[TEST_MAX_LINE];
           line[0] = 0;
           fgets(line, TEST_MAX_LINE, in);
@@ -408,13 +406,16 @@ void test_start_lighttpd(struct Test *test, char *pid_file, char *user, char *gr
     exit(-3);
   }
 
-  snprintf(cmd, 2048, "sudo lighttpd -f %s", conf_path);
+  // supress display of some superflous warning messages in lighttpd 1.4.6x TODO: remove when solved by author
+  //  - https://redmine.lighttpd.net/boards/2/topics/10182
+  //  - https://redmine.lighttpd.net/issues/3121
+  snprintf(cmd, 2048, "sudo lighttpd -f %s > %s/lighttpd-out.log 2>&1", conf_path, test->dir);
   if (test->count == 1) {
     fprintf(stderr, "Running '%s'\n", cmd);
   }
 
   if (system(cmd)) {
-    fprintf(stderr, "system() call to start lighttpd failed: '%s', error: %s\n", cmd, strerror(errno));
+    fprintf(stderr, "system() call to start lighttpd failed: '%s', error: %s\n    - output logged to '%s/lighttpd-out.log'", cmd, strerror(errno), test->dir);
     exit(-3);
   }
 
@@ -1281,9 +1282,15 @@ int test_compare_session(FILE *sess, int skip_s, FILE *comp, int skip_c, struct 
     fprintf(log, ">>> %s\n", session_line);
 
     // end comparasion
+    if (!c) {
+      retVal++;
+      fprintf(log,"  [INVALID_TEST] Unexpected end of comparaion data before directive'endofsession' at comparsion line %d ('%s')\n", c_count, comparison_line);
+      break;
+    }
     if (!strcmp(comparison_line, "endofsession")) {
       fprintf(log, "<<<<<< END OF EXPECTED SESSION DATA\n");
       if (s != NULL) {
+        retVal++;
         fprintf(log,"  [SESSION_TOO_LONG] comparsion 'endofsession' at line %d, but session file has content at line %d: '%s'\n", c_count, s_count, session_line);
       }
       break;
