@@ -1,6 +1,5 @@
-SRCDIR= src
-INCDIR= include
-OBJDIR= obj
+SRCDIR = src
+INCDIR = include
 
 # Python API: #539, #396
 PY_VERSION_MAJOR = 3
