@@ -200,7 +200,7 @@ enum session_state {
   SESSION_CLOSED,
 };
 #define NUM_SESSION_STATES 5
-extern char *session_astate_names[NUM_SESSION_STATES];
+extern char *session_state_names[NUM_SESSION_STATES];
 
 // #379 request actions (validated against session state)
 // @see: session.c, char *session_action_names
