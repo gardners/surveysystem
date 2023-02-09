@@ -28,12 +28,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# development
+# scratch area for development
 _dev/*
 dev.*
-TODO.*
-*.bak
-*.dev
 
 # deployment script
 deploy

@@ -26,11 +26,7 @@ const {
  * @returns {string}
  */
 const url = function(path, params) {
-    let p = path || '';
-    if (process.env.REACT_APP_JWT_PROVIDER_APPEND_SLASH === 'true') {
-        p += '/';
-    }
-    return buildUrl(process.env.REACT_APP_JWT_PROVIDER_URI, p, params);
+    return buildUrl(REACT_APP_JWT_PROVIDER_URI, path, params);
 }
 
 /**
@@ -173,6 +169,7 @@ const refresh = function() {
         })
         .then((res) => {
             // add tokens (refresh might be optional)
+                        console.log(res['access']);
             add_token('access', res['access']);
             if (res['refresh'] !== undefined) {
                 add_token('refresh', res['refresh']);

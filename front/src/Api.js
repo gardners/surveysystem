@@ -9,7 +9,6 @@ import JwtAuth from './JwtAuth';
 const {
     REACT_APP_SURVEYAPI_ENDPOINT,
     REACT_APP_SURVEYAPI_HEADERS,
-    REACT_APP_SURVEYAPI_APPEND_SLASH,
 } = process.env;
 
 const BaseHeaders = {};
@@ -35,11 +34,7 @@ class ApiError extends Error {
  * @returns {string}
  */
 const url = function(path, params) {
-    let p = path || '';
-    if (REACT_APP_SURVEYAPI_APPEND_SLASH === 'true') {
-        p += '/';
-    }
-    return buildUrl(REACT_APP_SURVEYAPI_ENDPOINT, p, params);
+    return buildUrl(REACT_APP_SURVEYAPI_ENDPOINT, path, params);
 }
 
 /**
