@@ -211,6 +211,10 @@ const buildUrl = function(base, path, params) {
     b = b.replace(/\/$/, '');      // remove trailing slash
     p = p.replace(/^\/+/g, '');    // remove leading slash
 
+    if (process.env.REACT_APP_SURVEYAPI_APPEND_SLASH === 'true') {
+        p += '/';
+    }
+
     return `${b}/${p}${q}`;
 };
 
