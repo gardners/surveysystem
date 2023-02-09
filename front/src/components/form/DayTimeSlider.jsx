@@ -70,7 +70,7 @@ class DayTimeSlider extends Component {
                                 onChange={ this.handleChange.bind(this) }
                                 onChangeComplete={ handleChangeComplete }
                                 formatLabel={ val => formatDayTime(val) }
-                                step= { step }
+                                step={ step }
                             />
                             <Gutter className="mb-4" component={ DaytimeLabel } min={ 0 } max={ DaySeconds } />
                         </div>
