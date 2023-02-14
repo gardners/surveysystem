@@ -1,0 +1,95 @@
+@description Run post-survey analysis (generic) - verify session lifetime and result
+
+# Create a dummy survey
+definesurvey runanalysisgeneric
+version 2
+Silly test survey updated
+without python
+question1:Question 1::TEXT:0::-1:-1:0:0::
+question2:Question 2::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+# Request creation of a  new session
+request 200 GET /session?surveyid=runanalysisgeneric
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+#! -------
+#!- FAIL if SESSION_NEW
+#! -------
+
+verify_session
+runanalysisgeneric/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@state:META:question1:<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
+endofsession
+
+request 400 GET /analysis?sessionid=<session_id>
+
+#! -------
+#!- FAIL if SESSION_OPEN
+#! -------
+
+request 200 POST /answers?sessionid=<session_id>&answer=question1:Answer+1:0:0:0:0:0:0:0
+match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+verify_session
+runanalysisgeneric/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@state:META:question2:<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+request 400 GET /analysis?sessionid=<session_id>
+
+#! -------
+#!- PASS if SESSION_FINISHED
+#!- in progress, currently we expect only a placeholder json string here, see issue 300
+#! -------
+
+request 200 POST /answers?sessionid=<session_id>&answer=question2:Answer+2:0:0:0:0:0:0:0
+match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": []}
+
+verify_session
+runanalysisgeneric/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_FINISHED>:0:0:<UTIME>:0:0:0::0:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#! -------
+#!- PASS if SESSION_CLOSED
+#! -------
+
+request 200 GET /analysis?sessionid=<session_id>
+
+verify_session
+runanalysisgeneric/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_CLOSED>:0:0:<UTIME>:<UTIME>:0:0::0:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+question2:TEXT:Answer 2:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#! -------
+#!- Verify analysis response
+#! -------
+
+match_string "NOT IMPLEMENTED"
+
+#! -------
+#!- Verify analysis json
+#! -------
+
+verify_file_exists /sessions/<session_prefix>/<session_id>.analysis.json
+

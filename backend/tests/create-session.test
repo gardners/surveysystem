@@ -1,0 +1,78 @@
+@description Create a new session
+
+#! -------
+#!- id created by system
+#! -------
+
+# Create a dummy survey
+definesurvey foo
+version 2
+Silly test survey updated
+without python
+q1:Question 1::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+#!-- PASS new session
+request 200 GET /session?surveyid=foo
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session
+foo/current
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@state:META:q1:<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
+endofsession
+
+#! -------
+#!- custom id
+#! -------
+
+# Create a dummy survey
+definesurvey bar
+version 2
+Silly test survey updated
+without python
+q2:Question 2::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+#! ------
+#!-- PASS new session
+#! ------
+request 200 POST /session?surveyid=bar&sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session
+bar/current
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@state:META:q2:<SESSION_NEW>:0:0:<UTIME>:0:0:0::0:<UTIME>
+endofsession
+
+#! ------
+#!-- FAIL existing session
+#! ------
+request 400 POST /session?surveyid=bar&sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa
+
+#! ------
+#!-- FAIL POST request without session id
+#! ------
+request 400 POST /session?surveyid=bar
+
+#! ------
+#!-- FAIL POST request with invalid session id
+#! ------
+request 400 POST /session?surveyid=bar&sessionid=
+request 400 POST /session?surveyid=bar&sessionid=invalid
+
+#! ------
+#!-- FAIL GET with param sessionid
+#! ------
+request 400 GET /session?surveyid=bar&sessionid=aaaaaaaa-0000-0000-0000-aaaaaaaaaaaa

@@ -1,0 +1,15 @@
+#!/bin/bash
+fpath="${@}"
+
+# run from source directory
+cd "${0%/*}"
+
+source ./scripts/inc/utils
+
+if [ -z "${fpath}" ]; then
+      EXIT_ERROR "File path required: $(DIM "${0} src/main.c")"
+fi
+
+REQUIRE_FILE "${fpath}"
+
+clang-tidy "${fpath}" -- -Iinclude -Ikcgi

@@ -1,0 +1,118 @@
+@description OPTIONS requests - verify that sessions are not being processed
+
+# PAGE_INDEX,
+# PAGE_NEWSESSION,
+# PAGE_ADDANSWER,
+# PAGE_UPDATEANSWER,
+# PAGE_NEXTQUESTION,
+# PAGE_DELANSWER,
+# PAGE_DELPREVANSWER,
+# PAGE_DELSESSION,
+# PAGE_ACCESTEST,
+# PAGE_FCGITEST,
+# PAGE_ANALYSE,
+
+# Create a dummy survey
+definesurvey foo
+Silly test survey updated
+question1:Question 1::TEXT:0::-1:-1:0:0::
+question2:Question 2::TEXT:0::-1:-1:0:0::
+question3:Question 3::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+#! ------
+#! - PASS /index
+#! ------
+
+request 200 OPTIONS /index
+match_string <empty>
+
+#! ------
+#! - PASS /newsession - no session created
+#! ------
+
+request 200 OPTIONS /session?surveyid=foo
+match_string <empty>
+verify_sessionfiles_count 0
+
+#! ---- preparation: simulate an existing session
+
+definesession 23996a5d-0000-0000-86e3-48fb9ca00901
+foo/current
+@user:META::0:0:0:0:0:0:0::0:<UTIME>
+@group:META::0:0:0:0:0:0:0::0:<UTIME>
+@authority:META:<AUTHORITY_NONE>:<IDENDITY_HTTP_PUBLIC>:0:0:0:0:0:0::0:<UTIME>
+@state:META::<SESSION_OPEN>:0:0:<UTIME>:0:0:0::0:<UTIME>
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+verify_sessionfiles_count 1
+
+#! ------
+#! - PASS /answers - no answer added
+#! ------
+
+request 200 OPTIONS /answers?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&answer=question2:Answer+2:0:0:0:0:0:0:0
+match_string <empty>
+
+verify_session(skip_headers)
+foo/current
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#! ------
+#! - PASS /nextquestion
+#! ------
+
+request 200 OPTIONS /questions?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
+match_string <empty>
+
+#! ------
+#! - PASS DELETE /answers?questionid - no answer deleted
+#! ------
+
+request 200 OPTIONS /answers?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901&questionid=question1 -H "If-Match: <response_etag>"
+match_string <empty>
+
+verify_session(skip_headers)
+foo/current
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#! ------
+#! - PASS DELETE /answers?prev - no answer deleted, no checksum required
+#! ------
+
+request 200 OPTIONS /answers?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901 -H "If-Match: <response_etag>"
+match_string <empty>
+
+verify_session(skip_headers)
+foo/current
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#! ------
+#! - PASS DELETE /session - no session deleted
+#! ------
+
+request 200 OPTIONS /session?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
+match_string <empty>
+
+verify_session(skip_headers)
+foo/current
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#! ------
+#! - PASS GET /status
+#! ------
+
+request 200 OPTIONS /status
+match_string <empty>
+
+#! ------
+#! - PASS /analysis
+#! ------
+
+request 200 OPTIONS /analysis?sessionid=23996a5d-0000-0000-86e3-48fb9ca00901
+match_string <empty>

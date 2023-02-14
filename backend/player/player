@@ -1,0 +1,372 @@
+#!/usr/bin/python3
+
+import sys
+from os import execlp
+from os.path import abspath, isfile
+from glob import glob
+sys.path.append(abspath('../'))
+
+import requests
+from importlib import import_module
+from argparse import ArgumentParser
+
+print(sys.argv, sys.executable)
+
+from surveyh.serialiser import set_answer, serialise_answer, normalise_uid, hhmmss
+
+
+def green(msg):
+    return '\033[32m{}\033[0m'.format(msg)
+
+
+def red(msg):
+    return '\033[31m{}\033[0m'.format(msg)
+
+
+def yellow(msg):
+    return '\033[33m{}\033[0m'.format(msg)
+
+
+def cyan(msg):
+    return '\033[36m{}\033[0m'.format(msg)
+
+
+def dim(msg):
+    return '\033[2m{}\033[0m'.format(msg)
+
+
+def select(search, headline):
+    print(headline)
+
+    available = glob(search)
+    mods = []
+    for index, conf in enumerate(available):
+        mod = conf.split('.')[0]
+        mods.append(mod)
+        print('  {}: {}'.format(index + 1, yellow(mod)))
+
+    selected = int(input('Select: '))
+    return mods[selected - 1]
+
+
+####
+# globals
+####
+
+
+Config = None
+Scenario = None
+
+State = {
+    'step': 0,
+    'count': 0,
+
+    'session_id': None,
+    'etag': None,
+
+    'log_answers': None,
+    'log_questions': None,
+    'log_analysis': None,
+    'log_questions_reverse': None,
+
+    'first_next_questions': None,
+
+    'session_state': None,
+}
+
+parser = ArgumentParser('Run a survey')
+
+parser.add_argument('-c', '--config', help='server config')
+args = parser.parse_args()
+
+# parse or select arguments
+if not args.config:
+    args.config = select('config_*.py', 'Available server configs:')
+
+# fetch module data
+ms = import_module(args.config)
+Config = ms.config
+Scenario = ms.scenario
+
+
+####
+# log
+####
+
+
+prefix = '{}-{}'.format(Config['uri'].split('/').pop(), Config['survey_id'])
+
+State['log_answers'] = './log/{}-anwers.log'.format(prefix)
+State['log_questions'] = './log/{}-questions.log'.format(prefix)
+State['log_analysis'] = './log/{}-analysis.json'.format(prefix)
+State['log_questions_reverse'] = './log/{}-questions-reverse.log'.format(prefix)
+
+# discard previous logs
+fp = open(State['log_answers'], 'w')
+fp.close()
+
+fp = open(State['log_questions'], 'w')
+fp.close()
+
+fp = open(State['log_analysis'], 'w')
+fp.close()
+
+fp = open(State['log_questions_reverse'], 'w')
+fp.close()
+
+
+def log_answer(answer):
+    fp = open(State['log_answers'], 'a')
+    fp.write(answer + '\n')
+    fp.close()
+    print('{} {}'.format(yellow('answer    >>'), answer))
+
+
+def log_nextquestions(qids):
+    fp = open(State['log_questions'], 'a')
+    fp.write(qids + '\n')
+    fp.close()
+    print('{} {}'.format(cyan('questions >>'), qids))
+
+
+def log_analysis(json):
+    fp = open(State['log_analysis'], 'w')
+    fp.write(json)
+    fp.close()
+
+
+def log_delprevanswers(qids, prev_etag):
+    fp = open(State['log_questions_reverse'], 'a')
+    fp.write(qids + '\n')
+    fp.close()
+    print('{} {}'.format(yellow('delete    >>'), prev_etag))
+    print('{} {}'.format(cyan('questions <<'), qids))
+
+
+def get_ids(res):
+    return list(map(lambda q: q['id'], res['next_questions']))
+
+
+####
+# requests
+####
+
+
+def response(res, json=True):
+    if res.status_code > 300:
+        print('{} {} \'{}\' returned error {}\n - \'{}\''.format(red('Error:'), res.request.method.upper(), res.request.url, res.status_code, res.text))
+        exit(1)
+
+    if 'Etag' in res.headers:
+        State['etag'] = res.headers['Etag']
+
+    if json:
+        return res.json()
+
+    return res.text
+
+
+def req_newsession(survey_id):
+    params = {
+        'surveyid': survey_id
+    }
+
+    res = requests.get('{}/session'.format(Config['uri']), params=params)
+    return response(res, False)
+
+
+def req_nextquestion(session_id):
+    params = {
+        'sessionid': session_id,
+    }
+
+    res = requests.get('{}/questions'.format(Config['uri']), params=params)
+    return response(res)
+
+
+def req_answers(session_id, answers):
+    params = {
+        'sessionid': session_id,
+    }
+    headers= {
+        'Content-Type': 'text/csv',
+    }
+    data = '\n'.join(answers)
+
+    res = requests.post('{}/answers'.format(Config['uri']), params=params, headers=headers, data=data)
+    print(res.request.headers)
+    print(res.request.body)
+    return response(res)
+
+
+def req_delprevanswer(session_id, etag):
+    params = {
+        'sessionid': session_id,
+    }
+
+    headers = {
+        'If-Match': etag
+    }
+
+    res = requests.delete('{}/answers'.format(Config['uri']), params=params, headers=headers)
+    return response(res)
+
+
+def req_analyse(session_id):
+    params = {
+        'sessionid': session_id,
+    }
+
+    res = requests.get('{}/analyse'.format(Config['uri']), params=params)
+    return response(res, False)
+
+
+####
+# runner
+####
+
+def nextquestions(prev):
+    res = None
+
+    State['step'] += 1
+    answers = []
+    for question in prev['next_questions']:
+
+        qid = question['id']
+        qtype = question['type']
+        value = Scenario.get(normalise_uid(qid))
+        answer = set_answer(qid, qtype, value)
+        serialised = serialise_answer(answer, False)
+        answers.append(serialised)
+
+        log_answer(serialised)
+        State['count'] += 1
+
+    res = req_answers(State['session_id'], answers)
+
+    log_nextquestions(','.join(map(lambda q: q['id'], res['next_questions'])))
+
+    # last response
+    if len(res['next_questions']) == 0:
+        return res
+
+    return nextquestions(res)
+
+
+def delprevanswers(prev):
+    res = None
+
+    State['step'] -= 1
+
+    etag = State['etag']
+    res = req_delprevanswer(State['session_id'], etag)
+
+    log_delprevanswers(','.join(map(lambda q: q['id'], res['next_questions'])), etag)
+
+    # last response
+    if str(get_ids(res)) == State['first_next_questions']:
+        return res
+
+    return delprevanswers(prev)
+
+
+####
+# process
+####
+
+
+# create session
+State['session_id'] = req_newsession(Config['survey_id'])
+State['session_id'] = req_newsession(Config['survey_id'])
+State['session_state'] = 'SESSION_NEW'
+
+print('START: session \'{}\''.format(State['session_id']))
+print('------------\n')
+
+# initialise
+res = req_nextquestion(State['session_id'])
+State['session_state'] = 'SESSION_RUNNING'
+State['first_next_questions'] = str(get_ids(res)) # mark first response for revere run
+
+# run
+res = nextquestions(res)
+
+if len(res['next_questions']) == 0:
+    State['session_state'] = 'SESSION_FINISHED'
+
+####
+# summary
+####
+
+
+print('\n------------')
+print('END: {} answers, {} requests'.format(State['count'], State['step']))
+print('------------')
+print('{} {}'.format(dim(' * session:'), State['session_id']))
+print('{} ./player --config {}'.format(dim(' * run:'), args.config))
+print('{} {}'.format(dim(' * questions log:'), State['log_questions']))
+print('{} {}'.format(dim(' * answers log:'), State['log_answers']))
+
+
+####
+# next action
+####
+
+
+choice = ''
+
+options = {
+    'r': 'repeat this scenario',
+    'q': 'quit program',
+}
+
+if State['session_state'] == 'SESSION_FINISHED':
+    options['a'] = 'run analysis'
+    options['d'] = 'run delete answers sequence'
+
+print('------------')
+print(yellow('next action?'))
+
+for key in options:
+    print('  {}: {}'.format(key, dim(options[key])))
+
+while choice not in options.keys():
+    choice = input('next: ')
+
+if choice.lower() == 'a':
+
+    # analyse
+    analysis = req_analyse(State['session_id'])
+    State['session_state'] = 'SESSION_ANALYSE'
+    log_analysis(analysis)
+
+    print('------------')
+    print('{}: analysis saved to \n * {}'.format(green('End'), State['log_analysis']))
+    print('------------')
+    print('{} {}'.format(dim(' * session:'), State['session_id']))
+    print('{} ./player --config {}'.format(dim(' * run:'), args.config))
+
+elif choice.lower() == 'd':
+
+    # delprevanswer
+    res = req_delprevanswer(State['session_id'], State['etag'])  # initialise
+    State['session_state'] = 'SESSION_RUNNING'
+    res = delprevanswers(res)  # run
+
+    print('------------')
+    print(green('End'))
+    print('------------')
+    print('{} {}'.format(dim(' * session:'), State['session_id']))
+    print('{} ./player --config {}'.format(dim(' * run:'), args.config))
+    print('{} {}'.format(dim(' * questions delete log:'), State['log_questions_reverse']))
+
+
+elif choice.lower() == 'r':
+
+    # restart program
+    nargs = [sys.argv[0], '--config', args.config]
+    execlp(__file__, *nargs)
+
+
+print('------------')
+print(' * {}'.format(green('Goodbye')))

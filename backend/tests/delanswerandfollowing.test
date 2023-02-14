@@ -1,0 +1,33 @@
+@description delanswerandfollowing returns 404 (removed since #462)
+
+#!---------------------
+#!running delanswer randomly
+#!---------------------
+
+# Create a dummy survey
+definesurvey delanswerandfollowing
+version 2
+Silly test survey updated
+without python
+question1:Question 1::TEXT:0::-1:-1:0:0::
+question2:Question 2::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+# Request creation of a  new session
+request 200 GET /session?surveyid=delanswerandfollowing
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+#! ------- answer 1 questions -------
+request 200 POST /answers?sessionid=<session_id>&answer=question1:Answer+1:0:0:0:0:0:0:0
+match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "question2", "name": "question2", "title": "Question 2", "description": "", "type": "TEXT", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+#! ------- delanswer question 1 -------
+request 404 DELETE /answersandfollowing?sessionid=<session_id>&questionid=question1 -H "If-Match: <response_etag>"
+
+verify_session(skip_headers)
+delanswerandfollowing/0b39e0c93f1b338433b8a8773d57f738dd405e17
+question1:TEXT:Answer 1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
