@@ -1,3 +1,0 @@
-[submodule "backend/kcgi"]
-	path = backend/kcgi
-	url = https://github.com/kristapsdz/kcgi.git
