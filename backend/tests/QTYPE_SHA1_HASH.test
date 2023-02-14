@@ -1,0 +1,72 @@
+@description SHA1_HASH question type: Answer a SHA1_HASH question in a survey
+
+#!---------------------
+#! Note: the sha matches are stolen from sha1.c:main()
+#!---------------------
+
+# Create a dummy survey
+definesurvey qtype_sha1_hash
+version 2
+Silly test survey updated
+without python
+secret1:Secret 1:Secret 1:SHA1_HASH:0:default 1:-1:-1:0:0::
+secret2:Secret 2:Secret 2:SHA1_HASH:0::-1:-1:0:0::
+endofsurvey
+
+# Request creation of a  new session
+request 200 GET /session?surveyid=qtype_sha1_hash
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session(skip_headers)
+qtype_sha1_hash/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+endofsession
+
+#! -------
+#! ------- add answers
+#! -------
+
+# Ask for next question
+request 200 GET /questions?sessionid=<session_id>
+match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "secret1", "name": "secret1", "title": "Secret 1", "description": "Secret 1", "type": "SHA1_HASH", "default_value": "default 1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+request 200 POST /answers?sessionid=<session_id>&answer=secret1:abc:0:0:0:0:0:0:0
+match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "secret2", "name": "secret2", "title": "Secret 2", "description": "Secret 2", "type": "SHA1_HASH", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+request 200 POST /answers?sessionid=<session_id>&answer=secret2:abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq:0:0:0:0:0:0:0
+match_string {"status": 0, "message": "", "progress": [2, 2], "next_questions": []}
+
+# Make sure answer ends up in file
+verify_session(skip_headers)
+field_unit/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+secret1:SHA1_HASH:a9993e364706816aba3e25717850c26c9cd0d89d:0:0:0:0:0:0:0::0:<UTIME>
+secret2:SHA1_HASH:84983e441c3bd26ebaae4aa1f95129e5e54670f1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#! -------
+#! ------- delete answers: previous sha should not be appear as default_value
+#! -------
+
+#! ------- test that empty efault_value is returned
+request 200 DELETE /answers?sessionid=<session_id>&questionid=secret2 -H "If-Match: <response_etag>"
+match_string {"status": 0, "message": "", "progress": [1, 2], "next_questions": [{"id": "secret2", "name": "secret2", "title": "Secret 2", "description": "Secret 2", "type": "SHA1_HASH", "default_value": "", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+# Make sure answer ends up in file
+verify_session(skip_headers)
+field_unit/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+secret1:SHA1_HASH:a9993e364706816aba3e25717850c26c9cd0d89d:0:0:0:0:0:0:0::0:<UTIME>
+secret2:SHA1_HASH:84983e441c3bd26ebaae4aa1f95129e5e54670f1:0:0:0:0:0:0:0::1:<UTIME>
+endofsession
+
+#! ------- test that default_value of question definition is returned
+request 200 DELETE /answers?sessionid=<session_id>&questionid=secret1 -H "If-Match: <response_etag>"
+match_string {"status": 0, "message": "", "progress": [0, 2], "next_questions": [{"id": "secret1", "name": "secret1", "title": "Secret 1", "description": "Secret 1", "type": "SHA1_HASH", "default_value": "default 1", "min_value": -1, "max_value": -1, "choices": [], "unit": ""}]}
+
+# Make sure answer ends up in file
+verify_session(skip_headers)
+field_unit/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+secret1:SHA1_HASH:a9993e364706816aba3e25717850c26c9cd0d89d:0:0:0:0:0:0:0::1:<UTIME>
+secret2:SHA1_HASH:84983e441c3bd26ebaae4aa1f95129e5e54670f1:0:0:0:0:0:0:0::1:<UTIME>
+endofsession

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+####
+# lists session files by date modified asc
+# columns, separated by whitespaces: "<date> <time> <path>"
+####
+
+find sessions/ -type f ! -name "*.json" ! -name ".git*" -printf "%TY-%Tm-%Td %TT %p\n" | sort -n

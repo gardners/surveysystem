@@ -1,0 +1,50 @@
+@description Answer field visibility, protected fields
+
+# Create a dummy survey
+definesurvey foo
+version 2
+Silly test survey updated
+without python
+question1:Question 1::TEXT:0::-1:-1:0:0::
+question2:Question 2::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+# Request creation of a new session
+request 200 GET /session?surveyid=foo
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+# Check that we have an empty session file created
+verify_session(skip_headers)
+foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
+endofsession
+
+#! ------- default /answers: request does not include values for protected fields -------
+request 200 POST /answers?sessionid=<session_id>&answer=question1:answer1:0:0:0:0:0:0:0
+
+# Make sure answer ends up in file
+verify_session(skip_headers)
+foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
+question1:TEXT:answer1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+#! ------- isssue #999, "overambitious" /answers: reject the request's included values for protected fields: 'type' -------
+request 400 POST /answers?sessionid=<session_id>&answer=question2:SOMEQTYPE:answer2:0:0:0:0:0:0:0
+
+# Make sure answer 'flag' and 'stored' are unchanged (not accepting the silly values in request)
+verify_session(skip_headers)
+foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
+question1:TEXT:answer1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession
+
+# behavioural change since #413 prev ignored -> now an error
+# #448 remove 'unit' from public answer
+#! ------- "overambitious" addanswer: reject the request's including values for protected fields: 'unit', 'flag' and 'stored' -------
+request 400 POST /answers?sessionid=<session_id>&answer=question2:answer2:0:0:0:0:0:0:0::-1:-1
+
+# Make sure answer 'flag' and 'stored' are unchanged (not accepting the silly values in request)
+verify_session(skip_headers)
+foo/a8df47cf88569fdd9d16b9b40ab41e5ddef4a21b
+question1:TEXT:answer1:0:0:0:0:0:0:0::0:<UTIME>
+endofsession

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="1">
+    <root name="."/>
+    <builddir>cppcheck-build</builddir>
+    <check-headers>true</check-headers>
+    <check-unused-templates>false</check-unused-templates>
+    <analyze-all-vs-configs>true</analyze-all-vs-configs>
+    <includedir>
+        <dir name="include/"/>
+        <dir name="kcgi/"/>
+    </includedir>
+    <paths>
+        <dir name="src/"/>>
+    </paths>
+    <exclude>
+        <dir name="kcgi/"/>
+        <path name="src/nextquestion.c"/>
+        <path name="src/test_runner.c"/>
+        <path name="src/test_utils.c"/>
+        <path name="src/test_units.c"/>
+    </exclude>
+</project>

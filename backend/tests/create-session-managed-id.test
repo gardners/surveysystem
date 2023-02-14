@@ -1,0 +1,53 @@
+@description Create a new session with a provided session id
+@useproxy!
+
+# Create a dummy survey
+definesurvey foo
+version 2
+Silly test survey updated
+without python
+question1:Question 1::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+#! ------
+#! create session [pass] 431afa6d-8a4f-47fe-8096-dd404328c81d
+#! ------
+
+# Request creation of a  new session
+request proxy 200 POST /session?surveyid=foo --data sessionid=431afa6d-8a4f-47fe-8096-dd404328c81d --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+
+# Get the session ID that newsession should have returned
+verify_session_id 431afa6d-8a4f-47fe-8096-dd404328c81d
+verify_sessionfiles_count 1
+
+# Check that we have an empty session file created
+extract_sessionid
+verify_session(skip_headers)
+foo/0a7caf5b02adad7583c7bfae30f6f119cb3581cc
+endofsession
+
+
+#! ------
+#! try to create invalid session [fail]
+#! ------
+
+request proxy 400 POST /session?surveyid=foo --data sessionid=invalid --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+
+verify_sessionfiles_count 1
+
+#! ------
+#! try to create invalid session [fail]
+#! ------
+
+request proxy 400 POST /session?surveyid=foo --data sessionid=431afa6d-8a4f-47fe-XXXX-dd404328c81d --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+
+verify_sessionfiles_count 1
+
+#! ------
+#! try to create existing session [fail] 431afa6d-8a4f-47fe-8096-dd404328c81d
+#! ------
+
+# Request creation of a  new session
+request proxy 400 POST /session?surveyid=foo --data sessionid=431afa6d-8a4f-47fe-8096-dd404328c81d --user test:1234 -H "X-SurveyProxy-Auth-User: user1" -H "X-SurveyProxy-Auth-Group: group1"
+
+verify_sessionfiles_count 1

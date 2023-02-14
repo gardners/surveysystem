@@ -1,0 +1,195 @@
+@description test all endpoints for 'ETag' checksum headers (#268)
+
+create_checksum(test fdsaf)
+
+# Create a dummy survey
+definesurvey foo
+version 2
+Silly test survey updated
+without python
+question1:Question 1::TEXT:0::-1:-1:0:0::
+question2:Question 2::TEXT:0::-1:-1:0:0::
+question3:Question 3::TEXT:0::-1:-1:0:0::
+endofsurvey
+
+#! -------
+#! ------ /index
+#! -------
+
+#! ------ (204: hash: EMPTY, required: NO (#260: status changed)-------
+request 204 GET /
+verify_response_etag()
+
+#! -------
+#! ------ /newsession
+#! -------
+
+#! ------ 200: hash: YES, required: NO -------
+request 200 GET /session?surveyid=foo
+verify_response_etag(<hashlike_etag>)
+#
+
+# Get the session ID that newsession should have returned
+extract_sessionid
+
+#! - test hash was generated of <session_id><state>
+create_checksum(<session_id><SESSION_NEW>)
+verify_response_etag(<custom_checksum>)
+
+#! -------
+#! ------ /answers (first)
+#! -------
+
+#! ------ 200: hash: YES, required: NO -------
+request 200 POST /answers?sessionid=<session_id>&answer=question1:Answer1:0:0:0:0:0:0:0
+verify_response_etag(<hashlike_etag>)
+
+#! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
+create_checksum(<session_id><SESSION_OPEN>question1:TEXT:Answer1:0:0:0:0:0:0:0::0)
+verify_response_etag(<custom_checksum>)
+
+#! -------
+#! ------ /nextquestion (first)
+#! -------
+
+#! ------ 200: hash: YES, required: NO -------
+request 200 GET /questions?sessionid=<session_id>
+verify_response_etag(<hashlike_etag>)
+
+#! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
+create_checksum(<session_id><SESSION_OPEN>question1:TEXT:Answer1:0:0:0:0:0:0:0::0)
+verify_response_etag(<custom_checksum>)
+
+#! -------
+#! ------ /answers (inner)
+#! -------
+
+#! ------ 200: hash: YES, required: NO -------
+request 200 POST /answers?sessionid=<session_id>&answer=question2:Answer2:0:0:0:0:0:0:0
+verify_response_etag(<hashlike_etag>)
+
+#! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
+create_checksum(<session_id><SESSION_OPEN>question2:TEXT:Answer2:0:0:0:0:0:0:0::0)
+verify_response_etag(<custom_checksum>)
+
+#! -------
+#! ------ /nextquestion (inner)
+#! -------
+
+#! ------ 200: hash: YES, required: NO -------
+request 200 GET /questions?sessionid=<session_id>
+verify_response_etag(<hashlike_etag>)
+
+#! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
+create_checksum(<session_id><SESSION_OPEN>question2:TEXT:Answer2:0:0:0:0:0:0:0::0)
+verify_response_etag(<custom_checksum>)
+
+#! -------
+#! ------ /answers (last)
+#! -------
+
+#! ------ 200: hash: YES, required: NO -------
+request 200 POST /answers?sessionid=<session_id>&answer=question3:Answer3:0:0:0:0:0:0:0
+verify_response_etag(<hashlike_etag>)
+
+#! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
+create_checksum(<session_id><SESSION_FINISHED>question3:TEXT:Answer3:0:0:0:0:0:0:0::0)
+verify_response_etag(<custom_checksum>)
+
+#! -------
+#! ------ /nextquestion (last)
+#! -------
+
+#! ------ 200: hash: YES, required: NO -------
+request 200 GET /questions?sessionid=<session_id>
+verify_response_etag(<hashlike_etag>)
+
+#! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
+create_checksum(<session_id><SESSION_FINISHED>question3:TEXT:Answer3:0:0:0:0:0:0:0::0)
+verify_response_etag(<custom_checksum>)
+
+#! -------
+#! ------ DELETE DELETE /answers?questionid
+#! -------
+
+#! ------ 200: hash: YES, required: YES (changed in #260) -------
+
+request 200 DELETE /answers?sessionid=<session_id>&questionid=question3 -H "If-Match: <response_etag>"
+verify_response_etag(<hashlike_etag>)
+
+#! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
+create_checksum(<session_id><SESSION_OPEN>question2:TEXT:Answer2:0:0:0:0:0:0:0::0)
+verify_response_etag(<custom_checksum>)
+
+#! - INCORRECT checksum should fail
+request 412 DELETE /answers?sessionid=<session_id> -H "If-Match: 84983e441c3bd26ebaae4aa1f95129e5e54670f1"
+verify_response_etag()
+
+#! -------
+#! ------ DELETE /answers?prev
+#! -------
+
+#! ------ 200: hash: YES, required:YES -------
+
+#! - INCORRECT checksum should fail
+request 412 DELETE /answers?sessionid=<session_id> -H "If-Match: 84983e441c3bd26ebaae4aa1f95129e5e54670f1"
+verify_response_etag()
+
+#! - create checksum from last answer
+create_checksum(<session_id><SESSION_OPEN>question2:TEXT:Answer2:0:0:0:0:0:0:0::0)
+
+#! - CORRECT checksum should pass
+request 200 DELETE /answers?sessionid=<session_id> -H "If-Match: <custom_checksum>"
+verify_response_etag(<hashlike_etag>)
+
+#! - create checksum from last answer
+create_checksum(<session_id><SESSION_OPEN>question1:TEXT:Answer1:0:0:0:0:0:0:0::0)
+
+#! - CORRECT checksum should pass AGAIN (rewind session to start)
+request 200 DELETE /answers?sessionid=<session_id> -H "If-Match: <custom_checksum>"
+verify_response_etag(<hashlike_etag>)
+
+#! - test hash was generated of <session_id><state> (all answers deleted!)
+create_checksum(<session_id><SESSION_OPEN>)
+verify_response_etag(<custom_checksum>)
+
+#! - CORRECT checksum should pass AGAIN (rewind session to start)
+request 200 DELETE /answers?sessionid=<session_id> -H "If-Match: <custom_checksum>"
+
+#! - LAST ANSWER should pass (session start)
+create_checksum(<session_id><SESSION_OPEN>)
+request 200 DELETE /answers?sessionid=<session_id> -H "If-Match: <custom_checksum>"
+verify_response_etag(<custom_checksum>)
+
+#! -------
+#! ------ DELETE /session
+#! -------
+
+#! ------ 405: hash: YES, required: NO -------
+request 405 DELETE /session?sessionid=<session_id>&questionid=question1
+verify_response_etag()
+
+#! -------
+#! ------ GET /status
+#! -------
+
+#! ------ 200: hash: EMPTY, required: NO -------
+request 200 GET /status
+verify_response_etag()
+
+#! -------
+#! ------ /analysis (without pyhton)
+#! -------
+
+# re-fill session
+request 200 POST /answers?sessionid=<session_id>&answer=question1:Answer1:0:0:0:0:0:0:0
+request 200 POST /answers?sessionid=<session_id>&answer=question2:Answer2:0:0:0:0:0:0:0
+request 200 POST /answers?sessionid=<session_id>&answer=question3:Answer3:0:0:0:0:0:0:0
+
+#! ------ 200 : hash: Yes, required: NO -------
+request 200 GET /analysis?sessionid=<session_id>&questionid=question1
+verify_response_etag(<hashlike_etag>)
+
+#! - test hash was generated of <session_id><state><serialise_answer(lastAnswer, ANSWER_SCOPE_CHECKSUM)>
+create_checksum(<session_id><SESSION_CLOSED>question3:TEXT:Answer3:0:0:0:0:0:0:0::0)
+verify_response_etag(<custom_checksum>)
