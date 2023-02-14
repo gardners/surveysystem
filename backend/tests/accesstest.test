@@ -1,4 +1,0 @@
-@description FastCGI binary can access required paths
-
-request 200 GET /status
-request 204 GET /status?extended=1

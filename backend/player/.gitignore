@@ -1,8 +1,0 @@
-__pycache__/
-*.pyc
-
-log/*
-!log/.gitkeep
-
-config_*.py
-!config_template.py
