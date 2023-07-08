@@ -42,7 +42,7 @@
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^5.15.4",
     "env-cmd": "^10.1.0",
-    "node-sass": "^7.0.3",
+    "node-sass": "^9.0.0",
     "react-test-renderer": "^16.14.0"
   },
   "overrides": {
