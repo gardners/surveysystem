@@ -23,7 +23,7 @@ Stale sessions can simply be deleted via the file system, and surveys added or u
 
 ## Environment Variables
 
-**SURVVEY_HOME** (required):
+**SURVEY_HOME** (required):
 
 All data lives in `SURVEY_HOME`. The `SURVEY_HOME` environment variable **must** be defined and represents an absolute directory path to the backend dir (no trailing slash).
 
