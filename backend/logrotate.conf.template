@@ -6,7 +6,7 @@
 # - test: logrotate -d /etc/logrotate.d/surveysystem.conf
 # ------------
 
-/my/path/to/backend/logs/* {
+/my/path/to/backend/logs/*.log {
     daily
     rotate 14
     size 1M
