@@ -5,18 +5,30 @@ default_server_user=www-data
 default_server_group=www-data
 default_server_port=8099
 default_fastcgi_port=9009
+default_sandbox=./sandbox
+
 out=
+sandbox=
 
 # paths
 SCRIPT=$(readlink -f "$0")
-BASE_PATH=$(dirname "$SCRIPT")
+HERE=$(dirname "$SCRIPT")
 
 # init
+
 source scripts/inc/utils
 REQUIRE_SUDO
 
-# gather requirements
+# base path
 
+read -rp "Base path: [${default_sandbox}]: " sandbox
+sandbox="${sandbox:-$default_sandbox}"
+sandbox="$(realpath -s "${sandbox}")" # remove trailing slash
+
+# parent dir must exist
+REQUIRE_DIR "$(dirname "${sandbox}")"
+
+# gather requirements
 REQUIRE_FILE "surveyfcgi" # binary compiled?
 
 read -rp "Server port: [${default_server_port}]: " SERVER_PORT
@@ -52,47 +64,47 @@ if [ -z "$out" ]; then
 fi
 
 # flush previous sandbox
-rm -rf sandbox/
+rm -rf "${sandbox}"/
 
 # set up new sandbox
-mkdir -p sandbox/surveys/
-mkdir -p sandbox/sessions/
-mkdir -p sandbox/python/
-mkdir -p sandbox/locks/
-mkdir -p sandbox/logs/
-mkdir -p sandbox/static/
-mkdir -p sandbox/www/ # not used, required by lighttpd
+mkdir -p "${sandbox}"/surveys/
+mkdir -p "${sandbox}"/sessions/
+mkdir -p "${sandbox}"/python/
+mkdir -p "${sandbox}"/locks/
+mkdir -p "${sandbox}"/logs/
+mkdir -p "${sandbox}"/static/
+mkdir -p "${sandbox}"/www/ # not used, required by lighttpd
 
 # copy survey definitions (without hash copies)
-cp --parents -R surveys/**/current ./sandbox/
+cp --parents -R surveys/**/current "${sandbox}"/
 # copy python
-cp --parents -R python/*.py ./sandbox/
+cp --parents -R python/*.py "${sandbox}"/
 # copy fastcgi bin
-cp surveyfcgi ./sandbox/surveyfcgi
+cp surveyfcgi "${sandbox}"/surveyfcgi
 
 # fill in lighttpd vars
 sed \
-    -e "s|{BASE_PATH}|${BASE_PATH}/sandbox|g" \
-    -e "s|{STATIC_PATH}|${BASE_PATH}/sandbox/www/static|g" \
+    -e "s|{BASE_PATH}|${sandbox}|g" \
+    -e "s|{STATIC_PATH}|${sandbox}/www/static|g" \
     -e "s|{SERVER_USER}|${SERVER_USER}|g" \
     -e "s|{SERVER_GROUP}|${SERVER_GROUP}|g" \
     -e "s|{SERVER_PORT}|${SERVER_PORT}|g" \
     -e "s|{FASTCGI_PORT}|${FASTCGI_PORT}|g" \
     < lighttpd.conf.template \
-    > sandbox/lighttpd.conf
+    > "${sandbox}"/lighttpd.conf
 
 # apply ownerships
-sudo chown  -R "${SERVER_USER}:${SERVER_GROUP}" ./sandbox
+sudo chown  -R "${SERVER_USER}:${SERVER_GROUP}" "${sandbox}"
 
 # test syntax
-lighttpd -t -f sandbox/lighttpd.conf > /dev/null
+lighttpd -t -f "${sandbox}"/lighttpd.conf > /dev/null
 ret=$?
 if [ $ret -ne 0 ]; then
     EXIT_ERROR "Errors syntax checking parsed lighttpd conf"
 fi
 
 # start lighttpd
-lighttpd -f sandbox/lighttpd.conf
+lighttpd -f "${sandbox}"/lighttpd.conf
 
 # test
 echo "Testing.. (GET /surveyapi/status?extended=1)"
@@ -105,4 +117,3 @@ if [ "${status}" -ne 204 ]; then
 fi
 
 echo "$(GREEN " ==> running:") http://localhost:${SERVER_PORT}"
-
