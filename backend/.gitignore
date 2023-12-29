@@ -87,9 +87,11 @@ test_runner
 test_units
 
 # data
+locks/*
 sessions/*
 surveys/*
-locks/*
+!surveys/demo/
+
 
 # logs
 logs/*

@@ -11,7 +11,6 @@
 #include "validators.h"
 #include "errorlog.h"
 
-
 /**
  * Fetch the field value (param) for a given key from kreq.fieldmap or
  */

@@ -6,3 +6,6 @@ log/*
 
 config_*.py
 !config_template.py
+
+.venv/*
+venv/*

@@ -1,9 +1,7 @@
-
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-
 
 #include "errorlog.h"
 #include "question_types.h"
@@ -156,4 +154,3 @@ int generate_python_path(char *path_out, int max_len) {
   } while (0);
   return retVal;
 }
-

@@ -1,0 +1,7 @@
+version 2
+Silly test survey updated
+without python
+welcome:Welcome::HIDDEN:0::-1:-1:0:0::
+question1:Question 1::SINGLECHOICE:0::-1:-1:0:0:yes,no,don't kow:
+question2:Question 2::TEXT:0:Default Answer 1:-1:-1:0:0::
+question3:Question 3::TEXT:0::-1:-1:0:0::

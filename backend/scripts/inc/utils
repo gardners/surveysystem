@@ -48,7 +48,7 @@ function REQUIRE_SUDO {
   fi
 }
 
-## files system
+## file system
 
 function REQUIRE_DIR {
     if [ ! -d "${1}" ]; then
