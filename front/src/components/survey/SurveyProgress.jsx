@@ -23,7 +23,7 @@ const SurveyProgress = function({ session, className }) {
         <div className={ cls }>
             <div className="progress-bar" role="progressbar" style = { {
                 width: `${percent}%`,
-            } } aria-valuenow={ percent } aria-valuemin="0" aria-valuemax="100">{ progress[0] }/{ progress[1] }</div>
+            } } aria-valuenow={ percent } aria-valuemin="0" aria-valuemax="100"></div>
         </div>
     );
 
